@@ -170,11 +170,11 @@ TEST_F(ObservationTest, addValue) {
     EXPECT_EQ("1234fiveSixSevenEight", d.getString().first);
     EXPECT_EQ(int128_t(12e34) + int128_t(43e21), e.getBigInteger().first);
 
-    ASSERT_EQ(a.getSize(), 2);
-    ASSERT_EQ(b.getSize(), 2);
-    ASSERT_EQ(c.getSize(), 2);
-    ASSERT_EQ(d.getSize(), 2);
-    ASSERT_EQ(e.getSize(), 2);
+    ASSERT_EQ(a.getSize(), 2U);
+    ASSERT_EQ(b.getSize(), 2U);
+    ASSERT_EQ(c.getSize(), 2U);
+    ASSERT_EQ(d.getSize(), 2U);
+    ASSERT_EQ(e.getSize(), 2U);
 }
 
 // This test checks if collecting more than one sample
@@ -200,11 +200,11 @@ TEST_F(ObservationTest, moreThanOne) {
     EXPECT_NO_THROW(d.setValue("fiveSixSevenEight"));
     EXPECT_NO_THROW(e.setValue(int128_t(43e21)));
 
-    ASSERT_EQ(a.getSize(), 3);
-    ASSERT_EQ(b.getSize(), 3);
-    ASSERT_EQ(c.getSize(), 3);
-    ASSERT_EQ(d.getSize(), 3);
-    ASSERT_EQ(e.getSize(), 3);
+    ASSERT_EQ(a.getSize(), 3U);
+    ASSERT_EQ(b.getSize(), 3U);
+    ASSERT_EQ(c.getSize(), 3U);
+    ASSERT_EQ(d.getSize(), 3U);
+    ASSERT_EQ(e.getSize(), 3U);
 
     ASSERT_NO_THROW(a.getIntegers());
     ASSERT_NO_THROW(b.getFloats());
@@ -249,11 +249,11 @@ TEST_F(ObservationTest, moreThanOne) {
 // is equal to the true value
 TEST_F(ObservationTest, getSize) {
     // Check if size of storages is equal to 1
-    ASSERT_EQ(a.getSize(), 1);
-    ASSERT_EQ(b.getSize(), 1);
-    ASSERT_EQ(c.getSize(), 1);
-    ASSERT_EQ(d.getSize(), 1);
-    ASSERT_EQ(e.getSize(), 1);
+    ASSERT_EQ(a.getSize(), 1U);
+    ASSERT_EQ(b.getSize(), 1U);
+    ASSERT_EQ(c.getSize(), 1U);
+    ASSERT_EQ(d.getSize(), 1U);
+    ASSERT_EQ(e.getSize(), 1U);
 
     a.addValue(static_cast<int64_t>(5678));
     b.addValue(56.78);
@@ -268,11 +268,11 @@ TEST_F(ObservationTest, getSize) {
     EXPECT_NO_THROW(e.getSize());
 
     // Check if size of storages is equal to 2
-    ASSERT_EQ(a.getSize(), 2);
-    ASSERT_EQ(b.getSize(), 2);
-    ASSERT_EQ(c.getSize(), 2);
-    ASSERT_EQ(d.getSize(), 2);
-    ASSERT_EQ(e.getSize(), 2);
+    ASSERT_EQ(a.getSize(), 2U);
+    ASSERT_EQ(b.getSize(), 2U);
+    ASSERT_EQ(c.getSize(), 2U);
+    ASSERT_EQ(d.getSize(), 2U);
+    ASSERT_EQ(e.getSize(), 2U);
 
     a.setValue(static_cast<int64_t>(5678));
     b.setValue(56e+78);
@@ -286,11 +286,11 @@ TEST_F(ObservationTest, getSize) {
     EXPECT_NO_THROW(d.getSize());
 
     // Check if size of storages is equal to 3
-    ASSERT_EQ(a.getSize(), 3);
-    ASSERT_EQ(b.getSize(), 3);
-    ASSERT_EQ(c.getSize(), 3);
-    ASSERT_EQ(d.getSize(), 3);
-    ASSERT_EQ(e.getSize(), 3);
+    ASSERT_EQ(a.getSize(), 3U);
+    ASSERT_EQ(b.getSize(), 3U);
+    ASSERT_EQ(c.getSize(), 3U);
+    ASSERT_EQ(d.getSize(), 3U);
+    ASSERT_EQ(e.getSize(), 3U);
 }
 
 // Checks whether setting amount limits works properly
@@ -337,11 +337,11 @@ TEST_F(ObservationTest, setCountLimit) {
     std::list<BigIntegerSample> samples_bigint = e.getBigIntegers();
 
     // Check if size of storages is equal to 20
-    ASSERT_EQ(a.getSize(), 20);
-    ASSERT_EQ(b.getSize(), 20);
-    ASSERT_EQ(c.getSize(), 20);
-    ASSERT_EQ(d.getSize(), 20);
-    ASSERT_EQ(e.getSize(), 20);
+    ASSERT_EQ(a.getSize(), 20U);
+    ASSERT_EQ(b.getSize(), 20U);
+    ASSERT_EQ(c.getSize(), 20U);
+    ASSERT_EQ(d.getSize(), 20U);
+    ASSERT_EQ(e.getSize(), 20U);
 
     // And whether stored values are correct
     uint32_t i = 20; // index of the last element in array of test's samples
@@ -384,11 +384,11 @@ TEST_F(ObservationTest, setCountLimit) {
     samples_bigint = e.getBigIntegers();
 
     // Check if size of storages is equal to 10
-    ASSERT_EQ(a.getSize(), 10);
-    ASSERT_EQ(b.getSize(), 10);
-    ASSERT_EQ(c.getSize(), 10);
-    ASSERT_EQ(d.getSize(), 10);
-    ASSERT_EQ(e.getSize(), 10);
+    ASSERT_EQ(a.getSize(), 10U);
+    ASSERT_EQ(b.getSize(), 10U);
+    ASSERT_EQ(c.getSize(), 10U);
+    ASSERT_EQ(d.getSize(), 10U);
+    ASSERT_EQ(e.getSize(), 10U);
 
     // And whether storages contain only the 10 newest values
     i = 20; // index of last element in array of test's samples
@@ -425,11 +425,11 @@ TEST_F(ObservationTest, setCountLimit) {
     ASSERT_NO_THROW(e.setMaxSampleCount(50));
 
     // Check if size of storages did not change without adding new value
-    ASSERT_EQ(a.getSize(), 10);
-    ASSERT_EQ(b.getSize(), 10);
-    ASSERT_EQ(c.getSize(), 10);
-    ASSERT_EQ(d.getSize(), 10);
-    ASSERT_EQ(e.getSize(), 10);
+    ASSERT_EQ(a.getSize(), 10U);
+    ASSERT_EQ(b.getSize(), 10U);
+    ASSERT_EQ(c.getSize(), 10U);
+    ASSERT_EQ(d.getSize(), 10U);
+    ASSERT_EQ(e.getSize(), 10U);
 
     // Add new values to each type of Observation
     a.setValue(static_cast<int64_t>(21));
@@ -444,11 +444,11 @@ TEST_F(ObservationTest, setCountLimit) {
     samples_string = d.getStrings();
     samples_bigint = e.getBigIntegers();
 
-    ASSERT_EQ(a.getSize(), 11);
-    ASSERT_EQ(b.getSize(), 11);
-    ASSERT_EQ(c.getSize(), 11);
-    ASSERT_EQ(d.getSize(), 11);
-    ASSERT_EQ(e.getSize(), 11);
+    ASSERT_EQ(a.getSize(), 11U);
+    ASSERT_EQ(b.getSize(), 11U);
+    ASSERT_EQ(c.getSize(), 11U);
+    ASSERT_EQ(d.getSize(), 11U);
+    ASSERT_EQ(e.getSize(), 11U);
 
     i = 21; // index of last element in array of test's samples
     for (auto const& it : samples_int) {
@@ -491,7 +491,7 @@ TEST_F(ObservationTest, setAgeLimit) {
     // get the list of all samples
     std::list<DurationSample> samples_duration = c.getDurations();
     // check whether the size of samples is equal to 1
-    ASSERT_EQ(c.getSize(), 1);
+    ASSERT_EQ(c.getSize(), 1U);
     // and whether it contains an expected value
     EXPECT_EQ((*samples_duration.begin()).first, milliseconds(3));
 
@@ -506,7 +506,7 @@ TEST_F(ObservationTest, setAgeLimit) {
 
     samples_duration = c.getDurations();
     // check whether the size of samples is equal to 10
-    ASSERT_EQ(c.getSize(), 10);
+    ASSERT_EQ(c.getSize(), 10U);
 
     // and whether it contains expected values
     uint32_t i = 9;
@@ -532,11 +532,11 @@ TEST_F(ObservationTest, getLimits) {
     EXPECT_EQ(d.getMaxSampleCount().first, true);
     EXPECT_EQ(e.getMaxSampleCount().first, true);
 
-    EXPECT_EQ(a.getMaxSampleCount().second, 20);
-    EXPECT_EQ(b.getMaxSampleCount().second, 20);
-    EXPECT_EQ(c.getMaxSampleCount().second, 20);
-    EXPECT_EQ(d.getMaxSampleCount().second, 20);
-    EXPECT_EQ(e.getMaxSampleCount().second, 20);
+    EXPECT_EQ(a.getMaxSampleCount().second, 20U);
+    EXPECT_EQ(b.getMaxSampleCount().second, 20U);
+    EXPECT_EQ(c.getMaxSampleCount().second, 20U);
+    EXPECT_EQ(d.getMaxSampleCount().second, 20U);
+    EXPECT_EQ(e.getMaxSampleCount().second, 20U);
 
     // change limit to time duration
     ASSERT_NO_THROW(a.setMaxSampleAge(dur453));
@@ -563,11 +563,11 @@ TEST_F(ObservationTest, getLimits) {
     EXPECT_EQ(d.getMaxSampleCount().first, false);
     EXPECT_EQ(e.getMaxSampleCount().first, false);
 
-    EXPECT_EQ(a.getMaxSampleCount().second, 20);
-    EXPECT_EQ(b.getMaxSampleCount().second, 20);
-    EXPECT_EQ(c.getMaxSampleCount().second, 20);
-    EXPECT_EQ(d.getMaxSampleCount().second, 20);
-    EXPECT_EQ(e.getMaxSampleCount().second, 20);
+    EXPECT_EQ(a.getMaxSampleCount().second, 20U);
+    EXPECT_EQ(b.getMaxSampleCount().second, 20U);
+    EXPECT_EQ(c.getMaxSampleCount().second, 20U);
+    EXPECT_EQ(d.getMaxSampleCount().second, 20U);
+    EXPECT_EQ(e.getMaxSampleCount().second, 20U);
 }
 
 // limit defaults are tested with StatsMgr.
@@ -698,11 +698,11 @@ TEST_F(ObservationTest, reset) {
     EXPECT_EQ("", d.getString().first);
     EXPECT_EQ(0, e.getBigInteger().first);
 
-    ASSERT_EQ(a.getSize(), 1);
-    ASSERT_EQ(b.getSize(), 1);
-    ASSERT_EQ(c.getSize(), 1);
-    ASSERT_EQ(d.getSize(), 1);
-    ASSERT_EQ(e.getSize(), 1);
+    ASSERT_EQ(a.getSize(), 1U);
+    ASSERT_EQ(b.getSize(), 1U);
+    ASSERT_EQ(c.getSize(), 1U);
+    ASSERT_EQ(d.getSize(), 1U);
+    ASSERT_EQ(e.getSize(), 1U);
 }
 
 // Checks whether an observation can keep its name.

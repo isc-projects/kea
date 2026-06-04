@@ -196,11 +196,11 @@ TEST_F(Rdata_SOA_Test, toText) {
 }
 
 TEST_F(Rdata_SOA_Test, getSerial) {
-    EXPECT_EQ(2010012601, rdata_soa.getSerial().getValue());
+    EXPECT_EQ(2010012601U, rdata_soa.getSerial().getValue());
 }
 
 TEST_F(Rdata_SOA_Test, getMinimum) {
-    EXPECT_EQ(1200, rdata_soa.getMinimum());
+    EXPECT_EQ(1200U, rdata_soa.getMinimum());
 
     // Also check with a very large number (with the MSB being 1).
     EXPECT_EQ(2154848336u, generic::SOA(Name("ns.example.com"),

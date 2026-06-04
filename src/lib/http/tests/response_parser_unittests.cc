@@ -134,8 +134,8 @@ TEST_F(HttpResponseParserTest, responseWithJson) {
     HttpResponseJson response = testResponseWithJson(http_resp, json);
 
     // Verify HTTP version, status code and phrase.
-    EXPECT_EQ(1, response.getHttpVersion().major_);
-    EXPECT_EQ(1, response.getHttpVersion().minor_);
+    EXPECT_EQ(1U, response.getHttpVersion().major_);
+    EXPECT_EQ(1U, response.getHttpVersion().minor_);
     EXPECT_EQ(HttpStatusCode::REQUEST_TIMEOUT, response.getStatusCode());
     EXPECT_EQ("Request Timeout", response.getStatusPhrase());
 
@@ -202,8 +202,8 @@ TEST_F(HttpResponseParserTest, getLWS) {
     ASSERT_NO_FATAL_FAILURE(doParse(http_resp));
 
     // Verify parsed values.
-    EXPECT_EQ(1, response_.getHttpVersion().major_);
-    EXPECT_EQ(1, response_.getHttpVersion().minor_);
+    EXPECT_EQ(1U, response_.getHttpVersion().major_);
+    EXPECT_EQ(1U, response_.getHttpVersion().minor_);
     EXPECT_EQ(HttpStatusCode::OK, response_.getStatusCode());
     EXPECT_EQ("OK", response_.getStatusPhrase());
     EXPECT_EQ("text/html", response_.getHeaderValue("Content-Type"));
@@ -219,8 +219,8 @@ TEST_F(HttpResponseParserTest, noHeaders) {
     ASSERT_NO_FATAL_FAILURE(doParse(http_resp));
 
     // Verify the values.
-    EXPECT_EQ(1, response_.getHttpVersion().major_);
-    EXPECT_EQ(1, response_.getHttpVersion().minor_);
+    EXPECT_EQ(1U, response_.getHttpVersion().major_);
+    EXPECT_EQ(1U, response_.getHttpVersion().minor_);
     EXPECT_EQ(HttpStatusCode::NO_CONTENT, response_.getStatusCode());
 }
 
@@ -234,8 +234,8 @@ TEST_F(HttpResponseParserTest, headersCaseInsensitive) {
 
     EXPECT_EQ("text/html", response_.getHeader("Content-Type")->getValue());
     EXPECT_EQ("close", response_.getHeader("Connection")->getLowerCaseValue());
-    EXPECT_EQ(1, response_.getHttpVersion().major_);
-    EXPECT_EQ(1, response_.getHttpVersion().minor_);
+    EXPECT_EQ(1U, response_.getHttpVersion().major_);
+    EXPECT_EQ(1U, response_.getHttpVersion().minor_);
     EXPECT_EQ(HttpStatusCode::OK, response_.getStatusCode());
     EXPECT_EQ("OK", response_.getStatusPhrase());
 }
@@ -249,8 +249,8 @@ TEST_F(HttpResponseParserTest, noHeaderWhitespace) {
     ASSERT_NO_FATAL_FAILURE(doParse(http_resp));
 
     EXPECT_EQ("text/html", response_.getHeaderValue("Content-Type"));
-    EXPECT_EQ(1, response_.getHttpVersion().major_);
-    EXPECT_EQ(0, response_.getHttpVersion().minor_);
+    EXPECT_EQ(1U, response_.getHttpVersion().major_);
+    EXPECT_EQ(0U, response_.getHttpVersion().minor_);
     EXPECT_EQ(HttpStatusCode::OK, response_.getStatusCode());
     EXPECT_EQ("OK", response_.getStatusPhrase());
 }
@@ -264,8 +264,8 @@ TEST_F(HttpResponseParserTest, multipleLeadingHeaderWhitespaces) {
     ASSERT_NO_FATAL_FAILURE(doParse(http_resp));
 
     EXPECT_EQ("text/html", response_.getHeaderValue("Content-Type"));
-    EXPECT_EQ(1, response_.getHttpVersion().major_);
-    EXPECT_EQ(0, response_.getHttpVersion().minor_);
+    EXPECT_EQ(1U, response_.getHttpVersion().major_);
+    EXPECT_EQ(0U, response_.getHttpVersion().minor_);
     EXPECT_EQ(HttpStatusCode::OK, response_.getStatusCode());
     EXPECT_EQ("OK", response_.getStatusPhrase());
 }
@@ -342,8 +342,8 @@ TEST_F(HttpResponseParserTest, parseEmptyResponse) {
     HttpResponseJson response = testResponseWithJson(http_resp, json);
 
     EXPECT_EQ("", response_.getBody());
-    EXPECT_EQ(1, response_.getHttpVersion().major_);
-    EXPECT_EQ(1, response_.getHttpVersion().minor_);
+    EXPECT_EQ(1U, response_.getHttpVersion().major_);
+    EXPECT_EQ(1U, response_.getHttpVersion().minor_);
     EXPECT_EQ(HttpStatusCode::OK, response_.getStatusCode());
     EXPECT_EQ("OK", response_.getStatusPhrase());
 }

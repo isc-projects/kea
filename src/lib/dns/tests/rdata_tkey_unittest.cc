@@ -117,30 +117,30 @@ protected:
 TEST_F(Rdata_TKEY_Test, fromText) {
     // normal case.  it also tests getter methods.
     EXPECT_EQ(Name("gss-tsig"), rdata_tkey.getAlgorithm());
-    EXPECT_EQ(1619870400, rdata_tkey.getInception());
+    EXPECT_EQ(1619870400U, rdata_tkey.getInception());
     EXPECT_EQ("20210501120000", rdata_tkey.getInceptionDate());
-    EXPECT_EQ(1619874000, rdata_tkey.getExpire());
+    EXPECT_EQ(1619874000U, rdata_tkey.getExpire());
     EXPECT_EQ("20210501130000", rdata_tkey.getExpireDate());
-    EXPECT_EQ(3, rdata_tkey.getMode());
-    EXPECT_EQ(0, rdata_tkey.getError());
-    EXPECT_EQ(0, rdata_tkey.getKeyLen());
+    EXPECT_EQ(3U, rdata_tkey.getMode());
+    EXPECT_EQ(0U, rdata_tkey.getError());
+    EXPECT_EQ(0U, rdata_tkey.getKeyLen());
     EXPECT_FALSE(rdata_tkey.getKey());
-    EXPECT_EQ(0, rdata_tkey.getOtherLen());
+    EXPECT_EQ(0U, rdata_tkey.getOtherLen());
     EXPECT_FALSE(rdata_tkey.getOtherData());
 
     generic::TKEY tkey2(valid_text2);
-    EXPECT_EQ(12, tkey2.getKeyLen());
+    EXPECT_EQ(12U, tkey2.getKeyLen());
     EXPECT_EQ(TSIGError::BAD_SIG_CODE, tkey2.getError());
 
     generic::TKEY tkey3(valid_text3);
-    EXPECT_EQ(6, tkey3.getOtherLen());
+    EXPECT_EQ(6U, tkey3.getOtherLen());
 
     // The other data is unusual, but we don't reject it.
     EXPECT_NO_THROW(generic::TKEY tkey4(valid_text4));
 
     // numeric representation of TKEY error
     generic::TKEY tkey5(valid_text5);
-    EXPECT_EQ(2845, tkey5.getError());
+    EXPECT_EQ(2845U, tkey5.getError());
 
     // symbolic representation of TKEY mode
     generic::TKEY tkey6(valid_text6);
@@ -208,18 +208,18 @@ TEST_F(Rdata_TKEY_Test, badText) {
 void
 fromWireCommonChecks(const generic::TKEY& tkey) {
     EXPECT_EQ(Name("gss-tsig"), tkey.getAlgorithm());
-    EXPECT_EQ(1619870400, tkey.getInception());
+    EXPECT_EQ(1619870400U, tkey.getInception());
     EXPECT_EQ("20210501120000", tkey.getInceptionDate());
-    EXPECT_EQ(1619874000, tkey.getExpire());
+    EXPECT_EQ(1619874000U, tkey.getExpire());
     EXPECT_EQ("20210501130000", tkey.getExpireDate());
-    EXPECT_EQ(3, tkey.getMode());
-    EXPECT_EQ(0, tkey.getError());
+    EXPECT_EQ(3U, tkey.getMode());
+    EXPECT_EQ(0U, tkey.getError());
 
     vector<uint8_t> expect_key(32, 'x');
     matchWireData(&expect_key[0], expect_key.size(),
                   tkey.getKey(), tkey.getKeyLen());
 
-    EXPECT_EQ(0, tkey.getOtherLen());
+    EXPECT_EQ(0U, tkey.getOtherLen());
     EXPECT_FALSE(tkey.getOtherData());
 }
 
@@ -247,7 +247,7 @@ TEST_F(Rdata_TKEY_Test, createFromWireWithoutKey) {
     RdataPtr rdata(rdataFactoryFromFile(RRType::TKEY(), RRClass::ANY(),
                                         "rdata_tkey_fromWire3.wire"));
     const generic::TKEY& tkey(dynamic_cast<generic::TKEY&>(*rdata));
-    EXPECT_EQ(0, tkey.getKeyLen());
+    EXPECT_EQ(0U, tkey.getKeyLen());
     EXPECT_FALSE(tkey.getKey());
 
     expect_data = { 'a', 'b', 'c', 'd', '0', '1', '2', '3' };

@@ -102,7 +102,7 @@ TEST_F(TranslatorPoolsTestIetfV6, getIetf) {
     EXPECT_NO_THROW_LOG(pools = translator_->getPoolsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(pools);
     ASSERT_EQ(Element::list, pools->getType());
-    ASSERT_EQ(1, pools->size());
+    ASSERT_EQ(1U, pools->size());
     EXPECT_TRUE(pool->equals(*pools->get(0)));
 }
 
@@ -146,7 +146,7 @@ TEST_F(TranslatorPoolsTestKeaV6, getKea) {
     EXPECT_NO_THROW_LOG(pools = translator_->getPoolsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(pools);
     ASSERT_EQ(Element::list, pools->getType());
-    ASSERT_EQ(1, pools->size());
+    ASSERT_EQ(1U, pools->size());
     EXPECT_TRUE(pool->equals(*pools->get(0)));
 }
 
@@ -217,7 +217,7 @@ TEST_F(TranslatorPoolsTestIetfV6, setIetf) {
     EXPECT_NO_THROW_LOG(pools = translator_->getPoolsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(pools);
     ASSERT_EQ(Element::list, pools->getType());
-    ASSERT_EQ(1, pools->size());
+    ASSERT_EQ(1U, pools->size());
     EXPECT_TRUE(pool->equals(*pools->get(0)));
 }
 
@@ -245,7 +245,7 @@ TEST_F(TranslatorPoolsTestKeaV6, setKea) {
     EXPECT_NO_THROW_LOG(pools = translator_->getPoolsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(pools);
     ASSERT_EQ(Element::list, pools->getType());
-    ASSERT_EQ(1, pools->size());
+    ASSERT_EQ(1U, pools->size());
     EXPECT_TRUE(pool->equals(*pools->get(0)));
 }
 

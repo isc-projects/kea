@@ -80,7 +80,7 @@ TEST_F(TranslatorClassesTestv6, get) {
     EXPECT_NO_THROW_LOG(classes = translator_->getClassesFromAbsoluteXpath(xpath));
     ASSERT_TRUE(classes);
     ASSERT_EQ(Element::list, classes->getType());
-    ASSERT_EQ(1, classes->size());
+    ASSERT_EQ(1U, classes->size());
     EXPECT_TRUE(cclass->equals(*classes->get(0)));
 }
 
@@ -116,7 +116,7 @@ TEST_F(TranslatorClassesTestv6, set) {
     EXPECT_NO_THROW_LOG(got = translator_->getClassesFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
     ASSERT_EQ(Element::list, got->getType());
-    ASSERT_EQ(1, got->size());
+    ASSERT_EQ(1U, got->size());
     EXPECT_TRUE(cclass->equals(*got->get(0)));
 }
 

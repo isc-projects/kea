@@ -76,10 +76,10 @@ public:
 TEST_F(D2UpdateMessageTest, setId) {
     // Message ID is initialized to 0.
     D2UpdateMessage msg;
-    EXPECT_EQ(0, msg.getId());
+    EXPECT_EQ(0U, msg.getId());
     // Override the default value and verify that it has been set.
     msg.setId(0x1234);
-    EXPECT_EQ(0x1234, msg.getId());
+    EXPECT_EQ(0x1234U, msg.getId());
 }
 
 // This test verifies that the DNS Update message RCODE can be set
@@ -201,20 +201,20 @@ TEST_F(D2UpdateMessageTest, fromWire) {
     ASSERT_NO_THROW(msg.fromWire(bin_msg, sizeof(bin_msg)));
 
     // Check that the message header is valid.
-    EXPECT_EQ(0x05AF, msg.getId());
+    EXPECT_EQ(0x05AFU, msg.getId());
     EXPECT_EQ(D2UpdateMessage::RESPONSE, msg.getQRFlag());
     EXPECT_EQ(Rcode::YXDOMAIN_CODE, msg.getRcode().getCode());
 
     // The ZOCOUNT must contain exactly one zone. If it does, we should get
     // the name, class and type of the zone and verify they are valid.
-    ASSERT_EQ(1, msg.getRRCount(D2UpdateMessage::SECTION_ZONE));
+    ASSERT_EQ(1U, msg.getRRCount(D2UpdateMessage::SECTION_ZONE));
     D2ZonePtr zone = msg.getZone();
     ASSERT_TRUE(zone);
     EXPECT_EQ("example.com.", zone->getName().toText());
     EXPECT_EQ(RRClass::IN().getCode(), zone->getClass().getCode());
 
     // Check the Prerequisite section. It should contain two records.
-    ASSERT_EQ(2, msg.getRRCount(D2UpdateMessage::SECTION_PREREQUISITE));
+    ASSERT_EQ(2U, msg.getRRCount(D2UpdateMessage::SECTION_PREREQUISITE));
 
     // Proceed to the first prerequisite.
     RRsetIterator rrset_it =
@@ -226,8 +226,8 @@ TEST_F(D2UpdateMessageTest, fromWire) {
     EXPECT_EQ(RRType::AAAA().getCode(), prereq1->getType().getCode()); // TYPE
     EXPECT_EQ(RRClass::NONE().getCode(),
               prereq1->getClass().getCode()); // CLASS
-    EXPECT_EQ(0, prereq1->getTTL().getValue()); // TTL
-    EXPECT_EQ(0, prereq1->getRdataCount()); // RDLENGTH
+    EXPECT_EQ(0U, prereq1->getTTL().getValue()); // TTL
+    EXPECT_EQ(0U, prereq1->getRdataCount()); // RDLENGTH
 
     // Move to next prerequisite section.
     ++rrset_it;
@@ -237,12 +237,12 @@ TEST_F(D2UpdateMessageTest, fromWire) {
     EXPECT_EQ("bar.example.com.", prereq2->getName().toText()); // NAME
     EXPECT_EQ(RRType::AAAA().getCode(), prereq2->getType().getCode()); // TYPE
     EXPECT_EQ(RRClass::ANY().getCode(), prereq2->getClass().getCode()); // CLASS
-    EXPECT_EQ(0, prereq2->getTTL().getValue()); // TTL
-    EXPECT_EQ(0, prereq2->getRdataCount()); // RDLENGTH
+    EXPECT_EQ(0U, prereq2->getTTL().getValue()); // TTL
+    EXPECT_EQ(0U, prereq2->getRdataCount()); // RDLENGTH
 
     // Check the Update section. There is only one record, so beginSection()
     // should return the pointer to this sole record.
-    ASSERT_EQ(1, msg.getRRCount(D2UpdateMessage::SECTION_UPDATE));
+    ASSERT_EQ(1U, msg.getRRCount(D2UpdateMessage::SECTION_UPDATE));
     rrset_it = msg.beginSection(D2UpdateMessage::SECTION_UPDATE);
     RRsetPtr update = *rrset_it;
     ASSERT_TRUE(update);
@@ -250,12 +250,12 @@ TEST_F(D2UpdateMessageTest, fromWire) {
     EXPECT_EQ("foo.example.com.", update->getName().toText()); // NAME
     EXPECT_EQ(RRType::AAAA().getCode(), update->getType().getCode()); // TYPE
     EXPECT_EQ(RRClass::IN().getCode(), update->getClass().getCode()); // CLASS
-    EXPECT_EQ(0xAABBCCDD, update->getTTL().getValue()); // TTL
+    EXPECT_EQ(0xAABBCCDDU, update->getTTL().getValue()); // TTL
     // There should be exactly one record holding the IPv6 address.
     // This record can be accessed using RdataIterator. This record
     // can be compared with the reference record, holding expected IPv6
     // address using compare function.
-    ASSERT_EQ(1, update->getRdataCount());
+    ASSERT_EQ(1U, update->getRdataCount());
     RdataIteratorPtr rdata_it = update->getRdataIterator();
     ASSERT_TRUE(rdata_it);
     in::AAAA rdata_ref("2001:db8:1::1");
@@ -399,7 +399,7 @@ TEST_F(D2UpdateMessageTest, toWire) {
     ASSERT_NO_THROW(msg.toWire(renderer));
 
     // Make sure that created packet is not truncated.
-    ASSERT_EQ(77, renderer.getLength());
+    ASSERT_EQ(77U, renderer.getLength());
 
     // Create input buffer from the rendered data. InputBuffer
     // is handy to validate the byte contents of the rendered
@@ -409,7 +409,7 @@ TEST_F(D2UpdateMessageTest, toWire) {
     // Start validating the message header.
 
     // Verify message ID.
-    EXPECT_EQ(0x1234, buf.readUint16());
+    EXPECT_EQ(0x1234U, buf.readUint16());
     // The 2-bytes following message ID comprise the following fields:
     // - QR - 1 bit indicating that it is REQUEST. Should be 0.
     // - Opcode - 4 bits which should hold value of 5 indicating this is
@@ -425,22 +425,22 @@ TEST_F(D2UpdateMessageTest, toWire) {
     // | 0 | 0   1   0   1 | 0   0   0   0   0   0   0 | 0   0   0   0 |
     // +---+---+---+-------+---+---+---+---+---+---+---+---+---+---+---+
     // and the hexadecimal representation is 0x2800.
-    EXPECT_EQ(0x2800, buf.readUint16());
+    EXPECT_EQ(0x2800U, buf.readUint16());
 
     // ZOCOUNT - holds the number of zones for the update. For Request
     // message it must be exactly one record (RFC2136, section 2.3).
-    EXPECT_EQ(1, buf.readUint16());
+    EXPECT_EQ(1U, buf.readUint16());
 
     // PRCOUNT - holds the number of prerequisites. Earlier we have added
     // two prerequisites. Thus, expect that this counter is 2.
-    EXPECT_EQ(2, buf.readUint16());
+    EXPECT_EQ(2U, buf.readUint16());
 
     // UPCOUNT - holds the number of RRs in the Update Section. We have
     // added 1 RR, which adds the name foo.example.com to the Zone.
-    EXPECT_EQ(1, buf.readUint16());
+    EXPECT_EQ(1U, buf.readUint16());
 
     // ADCOUNT - holds the number of RRs in the Additional Data Section.
-    EXPECT_EQ(0, buf.readUint16());
+    EXPECT_EQ(0U, buf.readUint16());
 
     // Start validating the Zone section. This section comprises the
     // following data:
@@ -499,30 +499,30 @@ TEST_F(D2UpdateMessageTest, toWire) {
     std::string name_prereq1 = readNameFromWire(buf, 4, true);
     EXPECT_EQ("foo.", name_prereq1);
     // The remaining two bytes hold the pointer to 'example.com'.
-    EXPECT_EQ(0xC00C, buf.readUint16());
+    EXPECT_EQ(0xC00CU, buf.readUint16());
     // TYPE is ANY
     EXPECT_EQ(RRType::ANY().getCode(), buf.readUint16());
     // CLASS is NONE
     EXPECT_EQ(RRClass::NONE().getCode(), buf.readUint16());
     // TTL is a 32-but value, expecting 0
-    EXPECT_EQ(0, buf.readUint32());
+    EXPECT_EQ(0U, buf.readUint32());
     // There is no RDATA, so RDLENGTH is 0
-    EXPECT_EQ(0, buf.readUint16());
+    EXPECT_EQ(0U, buf.readUint16());
 
     // Start checking second prerequisite.
 
     std::string name_prereq2 = readNameFromWire(buf, 4, true);
     EXPECT_EQ("bar.", name_prereq2);
     // The remaining two bytes hold the pointer to 'example.com'.
-    EXPECT_EQ(0xC00C, buf.readUint16());
+    EXPECT_EQ(0xC00CU, buf.readUint16());
     // TYPE is ANY
     EXPECT_EQ(RRType::ANY().getCode(), buf.readUint16());
     // CLASS is ANY
     EXPECT_EQ(RRClass::ANY().getCode(), buf.readUint16());
     // TTL is a 32-but value, expecting 0
-    EXPECT_EQ(0, buf.readUint32());
+    EXPECT_EQ(0U, buf.readUint32());
     // There is no RDATA, so RDLENGTH is 0
-    EXPECT_EQ(0, buf.readUint16());
+    EXPECT_EQ(0U, buf.readUint16());
 
     // Start checking Update section. This section contains RRset with
     // one A RR.
@@ -530,19 +530,19 @@ TEST_F(D2UpdateMessageTest, toWire) {
     // The name of the RR is 'foo.example.com'. It is encoded in the
     // compressed format - as a pointer to the name of prerequisite 1.
     // This name is in offset 0x1D in this message.
-    EXPECT_EQ(0xC01D, buf.readUint16());
+    EXPECT_EQ(0xC01DU, buf.readUint16());
     // TYPE is A
     EXPECT_EQ(RRType::A().getCode(), buf.readUint16());
     // CLASS is IN (same as zone class)
     EXPECT_EQ(RRClass::IN().getCode(), buf.readUint16());
     // TTL is a 32-but value, set here to 10.
-    EXPECT_EQ(10, buf.readUint32());
+    EXPECT_EQ(10U, buf.readUint32());
     // For A records, the RDATA comprises the 4-byte Internet address.
     // So, RDLENGTH is 4.
-    EXPECT_EQ(4, buf.readUint16());
+    EXPECT_EQ(4U, buf.readUint16());
     // We have stored the following address in RDATA field: 10.10.1.1
     // (which is 0A 0A 01 01) in hexadecimal format.
-    EXPECT_EQ(0x0A0A0101, buf.readUint32());
+    EXPECT_EQ(0x0A0A0101U, buf.readUint32());
 
     // @todo: consider extending this test to verify Additional Data
     // section.

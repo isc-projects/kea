@@ -56,13 +56,13 @@ protected:
 
 TEST_F(MessageDictionaryTest, Add) {
     MessageDictionary dictionary;
-    EXPECT_EQ(0, dictionary.size());
+    EXPECT_EQ(0U, dictionary.size());
 
     // Add a few messages and check that we can look them up and that there is
     // nothing in the overflow vector.
     EXPECT_TRUE(dictionary.add(alpha_id, alpha_text));
     EXPECT_TRUE(dictionary.add(beta_id, beta_text));
-    EXPECT_EQ(2, dictionary.size());
+    EXPECT_EQ(2U, dictionary.size());
 
     EXPECT_EQ(alpha_text, dictionary.getText(alpha_id));
     EXPECT_EQ(beta_text, dictionary.getText(beta_id));
@@ -71,33 +71,33 @@ TEST_F(MessageDictionaryTest, Add) {
     // Try adding a duplicate with different text.  It should not replace the
     // current text and the ID should be in the overflow section.
     EXPECT_FALSE(dictionary.add(alpha_id, gamma_text));
-    EXPECT_EQ(2, dictionary.size());
+    EXPECT_EQ(2U, dictionary.size());
 }
 
 // Check that replacing messages works.
 
 TEST_F(MessageDictionaryTest, Replace) {
     MessageDictionary dictionary;
-    EXPECT_EQ(0, dictionary.size());
+    EXPECT_EQ(0U, dictionary.size());
 
     // Try to replace a non-existent message
     EXPECT_FALSE(dictionary.replace(alpha_id, alpha_text));
-    EXPECT_EQ(0, dictionary.size());
+    EXPECT_EQ(0U, dictionary.size());
 
     // Add a couple of messages.
     EXPECT_TRUE(dictionary.add(alpha_id, alpha_text));
     EXPECT_TRUE(dictionary.add(beta_id, beta_text));
-    EXPECT_EQ(2, dictionary.size());
+    EXPECT_EQ(2U, dictionary.size());
 
     // Replace an existing message
     EXPECT_TRUE(dictionary.replace(alpha_id, gamma_text));
-    EXPECT_EQ(2, dictionary.size());
+    EXPECT_EQ(2U, dictionary.size());
     EXPECT_EQ(gamma_text, dictionary.getText(alpha_id));
 
     // ... and replace non-existent message (but now the dictionary has some
     // items in it).
     EXPECT_FALSE(dictionary.replace(gamma_id, alpha_text));
-    EXPECT_EQ(2, dictionary.size());
+    EXPECT_EQ(2U, dictionary.size());
     EXPECT_EQ(string(""), dictionary.getText(gamma_id));
 }
 
@@ -106,13 +106,13 @@ TEST_F(MessageDictionaryTest, Replace) {
 TEST_F(MessageDictionaryTest, erase) {
     MessageDictionary dictionary;
     ASSERT_NO_THROW(dictionary.erase(alpha_id, alpha_text));
-    ASSERT_EQ(0, dictionary.size());
+    ASSERT_EQ(0U, dictionary.size());
 
     // Add a couple of messages.
     EXPECT_TRUE(dictionary.add(alpha_id, alpha_text));
     EXPECT_TRUE(dictionary.add(beta_id, beta_text));
     // There is no sense to continue if messages haven't been added.
-    ASSERT_EQ(2, dictionary.size());
+    ASSERT_EQ(2U, dictionary.size());
 
     // Remove one with the existing ID, but non-matching text. It
     // should not remove any message.
@@ -120,13 +120,13 @@ TEST_F(MessageDictionaryTest, erase) {
 
     // Now, remove the message with matching ID and text.
     EXPECT_TRUE(dictionary.erase(beta_id, beta_text));
-    EXPECT_EQ(1, dictionary.size());
+    EXPECT_EQ(1U, dictionary.size());
     // The other entry should still exist.
     EXPECT_EQ(alpha_text, dictionary.getText(alpha_id));
 
     // And remove the other message.
     EXPECT_TRUE(dictionary.erase(alpha_id, alpha_text));
-    EXPECT_EQ(0, dictionary.size());
+    EXPECT_EQ(0U, dictionary.size());
 }
 
 // Load test
@@ -146,31 +146,31 @@ TEST_F(MessageDictionaryTest, LoadTest) {
     };
 
     MessageDictionary dictionary1;
-    EXPECT_EQ(0, dictionary1.size());
+    EXPECT_EQ(0U, dictionary1.size());
 
     // Load a dictionary1.
     vector<string> duplicates = dictionary1.load(data1);
-    EXPECT_EQ(3, dictionary1.size());
+    EXPECT_EQ(3U, dictionary1.size());
     EXPECT_EQ(string(data1[1]), dictionary1.getText(data1[0]));
     EXPECT_EQ(string(data1[3]), dictionary1.getText(data1[2]));
     EXPECT_EQ(string(data1[5]), dictionary1.getText(data1[4]));
-    EXPECT_EQ(0, duplicates.size());
+    EXPECT_EQ(0U, duplicates.size());
 
     // Attempt an overwrite
     duplicates = dictionary1.load(data1);
-    EXPECT_EQ(3, dictionary1.size());
-    EXPECT_EQ(3, duplicates.size());
+    EXPECT_EQ(3U, dictionary1.size());
+    EXPECT_EQ(3U, duplicates.size());
 
     // Try a new dictionary but with an incorrect number of elements
     MessageDictionary dictionary2;
-    EXPECT_EQ(0, dictionary2.size());
+    EXPECT_EQ(0U, dictionary2.size());
 
     duplicates = dictionary2.load(data2);
-    EXPECT_EQ(2, dictionary2.size());
+    EXPECT_EQ(2U, dictionary2.size());
     EXPECT_EQ(string(data2[1]), dictionary2.getText(data2[0]));
     EXPECT_EQ(string(data2[3]), dictionary2.getText(data2[2]));
     EXPECT_EQ(string(""), dictionary2.getText(data2[4]));
-    EXPECT_EQ(0, duplicates.size());
+    EXPECT_EQ(0U, duplicates.size());
 }
 
 // Check for some non-existent items
@@ -185,8 +185,8 @@ TEST_F(MessageDictionaryTest, Lookups) {
 
     MessageDictionary dictionary;
     vector<string> duplicates = dictionary.load(data);
-    EXPECT_EQ(3, dictionary.size());
-    EXPECT_EQ(0, duplicates.size());
+    EXPECT_EQ(3U, dictionary.size());
+    EXPECT_EQ(0U, duplicates.size());
 
     // Valid lookups
     EXPECT_EQ(string("This is alpha"), dictionary.getText("ALPHA"));
@@ -212,7 +212,7 @@ TEST_F(MessageDictionaryTest, GlobalTest) {
 
 TEST_F(MessageDictionaryTest, GlobalLoadTest) {
     // There were duplicates but the vector should be cleared in init() now
-    ASSERT_EQ(0, MessageInitializer::getDuplicates().size());
+    ASSERT_EQ(0U, MessageInitializer::getDuplicates().size());
 
     string text = MessageDictionary::globalDictionary()->getText("NEWSYM");
     EXPECT_EQ(string("new symbol added"), text);

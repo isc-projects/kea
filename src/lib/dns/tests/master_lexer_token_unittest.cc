@@ -79,16 +79,16 @@ TEST_F(MasterLexerTokenTest, strings) {
 }
 
 TEST_F(MasterLexerTokenTest, numbers) {
-    EXPECT_EQ(42, token_num.getNumber());
+    EXPECT_EQ(42U, token_num.getNumber());
     EXPECT_EQ(MasterToken::NUMBER, token_num.getType());
 
     // It's copyable and assignable.
     MasterToken token(token_num);
-    EXPECT_EQ(42, token.getNumber());
+    EXPECT_EQ(42U, token.getNumber());
     EXPECT_EQ(MasterToken::NUMBER, token.getType());
 
     token = token_num;
-    EXPECT_EQ(42, token.getNumber());
+    EXPECT_EQ(42U, token.getNumber());
     EXPECT_EQ(MasterToken::NUMBER, token.getType());
 
     // it's okay to replace it with a different type of token

@@ -1274,7 +1274,7 @@ TEST_F(HooksParserTest, validatePathEnforcePathFalse) {
     oss  << "HOOKS_LIBPATH_SECURITY_WARNING Library path specified is NOT SECURE:"
          << " invalid path specified: '/var/lib/bs', supported path is '"
          << def_path << "'";
-    EXPECT_EQ(1, countFile(oss.str()));
+    EXPECT_EQ(1U, countFile(oss.str()));
 }
 
 // Verifies output of HooksConfig::toElement().

@@ -103,9 +103,9 @@ TEST_F(MasterLexerStateTest, parentheses) {
     EXPECT_EQ(s_null, State::start(lexer, common_options)); // handle \n
 
     // Now handle '('.  It skips \n and recognize 'a' as string
-    EXPECT_EQ(0, s_crlf.getParenCount(lexer)); // check pre condition
+    EXPECT_EQ(0U, s_crlf.getParenCount(lexer)); // check pre condition
     EXPECT_EQ(&s_string, State::start(lexer, common_options));
-    EXPECT_EQ(1, s_crlf.getParenCount(lexer)); // check post condition
+    EXPECT_EQ(1U, s_crlf.getParenCount(lexer)); // check post condition
     EXPECT_FALSE(s_crlf.wasLastEOL(lexer));
 
     // skip 'a'
@@ -115,7 +115,7 @@ TEST_F(MasterLexerStateTest, parentheses) {
     // it's canceled due to the '('.  Likewise, the space after the '\n'
     // shouldn't be recognized but should be just ignored.
     EXPECT_EQ(s_null, State::start(lexer, common_options));
-    EXPECT_EQ(0, s_crlf.getParenCount(lexer));
+    EXPECT_EQ(0U, s_crlf.getParenCount(lexer));
 
     // Now, temporarily disabled options are restored: Both EOL and the
     // initial WS are recognized
@@ -133,14 +133,14 @@ TEST_F(MasterLexerStateTest, nestedParentheses) {
     s_string.handle(lexer);                      // consume 'a'
     EXPECT_EQ(&s_string, State::start(lexer, common_options)); // consume '('
     s_string.handle(lexer);                     // consume 'b'
-    EXPECT_EQ(2, s_crlf.getParenCount(lexer)); // now the count is 2
+    EXPECT_EQ(2U, s_crlf.getParenCount(lexer)); // now the count is 2
 
     // Close the inner most parentheses.  count will be decreased, but option
     // shouldn't be restored yet, so the intermediate EOL or initial WS won't
     // be recognized.
     EXPECT_EQ(&s_string, State::start(lexer, common_options)); // consume ')'
     s_string.handle(lexer);                      // consume 'c'
-    EXPECT_EQ(1, s_crlf.getParenCount(lexer));
+    EXPECT_EQ(1U, s_crlf.getParenCount(lexer));
 
     // Close the outermost parentheses.  count will be reset to 0, and original
     // options are restored.
@@ -165,9 +165,9 @@ TEST_F(MasterLexerStateTest, unbalancedParentheses) {
 
     // Now checking ')'.  The result should be error, count shouldn't be
     // changed.  "last EOL" should be canceled.
-    EXPECT_EQ(0, s_crlf.getParenCount(lexer));
+    EXPECT_EQ(0U, s_crlf.getParenCount(lexer));
     EXPECT_EQ(s_null, State::start(lexer, common_options));
-    EXPECT_EQ(0, s_crlf.getParenCount(lexer));
+    EXPECT_EQ(0U, s_crlf.getParenCount(lexer));
     ASSERT_EQ(Token::ERROR, s_crlf.getToken(lexer).getType());
     EXPECT_EQ(Token::UNBALANCED_PAREN, s_crlf.getToken(lexer).getErrorCode());
     EXPECT_FALSE(s_crlf.wasLastEOL(lexer));
@@ -175,11 +175,11 @@ TEST_F(MasterLexerStateTest, unbalancedParentheses) {
     // Reach EOF with a dangling open parenthesis.
     EXPECT_EQ(&s_string, State::start(lexer, common_options)); // consume '('
     s_string.handle(lexer);                      // consume 'a'
-    EXPECT_EQ(1, s_crlf.getParenCount(lexer));
+    EXPECT_EQ(1U, s_crlf.getParenCount(lexer));
     EXPECT_EQ(s_null, State::start(lexer, common_options));    // reach EOF
     ASSERT_EQ(Token::ERROR, s_crlf.getToken(lexer).getType());
     EXPECT_EQ(Token::UNBALANCED_PAREN, s_crlf.getToken(lexer).getErrorCode());
-    EXPECT_EQ(0, s_crlf.getParenCount(lexer)); // should be reset to 0
+    EXPECT_EQ(0U, s_crlf.getParenCount(lexer)); // should be reset to 0
 }
 
 TEST_F(MasterLexerStateTest, startToComment) {
@@ -481,15 +481,15 @@ TEST_F(MasterLexerStateTest, basicNumbers) {
 
     EXPECT_EQ(&s_number, State::start(lexer, options));
     s_number.handle(lexer);
-    EXPECT_EQ(0, s_number.getToken(lexer).getNumber());
+    EXPECT_EQ(0U, s_number.getToken(lexer).getNumber());
 
     EXPECT_EQ(&s_number, State::start(lexer, options));
     s_number.handle(lexer);
-    EXPECT_EQ(1, s_number.getToken(lexer).getNumber());
+    EXPECT_EQ(1U, s_number.getToken(lexer).getNumber());
 
     EXPECT_EQ(&s_number, State::start(lexer, options));
     s_number.handle(lexer);
-    EXPECT_EQ(12345, s_number.getToken(lexer).getNumber());
+    EXPECT_EQ(12345U, s_number.getToken(lexer).getNumber());
 
     EXPECT_EQ(&s_number, State::start(lexer, options));
     s_number.handle(lexer);
@@ -507,11 +507,11 @@ TEST_F(MasterLexerStateTest, basicNumbers) {
 
     EXPECT_EQ(&s_number, State::start(lexer, options));
     s_number.handle(lexer);
-    EXPECT_EQ(5, s_number.getToken(lexer).getNumber());
+    EXPECT_EQ(5U, s_number.getToken(lexer).getNumber());
 
     EXPECT_EQ(&s_number, State::start(lexer, options));
     s_number.handle(lexer);
-    EXPECT_EQ(42, s_number.getToken(lexer).getNumber());
+    EXPECT_EQ(42U, s_number.getToken(lexer).getNumber());
 
     EXPECT_EQ(s_null, State::start(lexer, options));
     EXPECT_TRUE(s_crlf.wasLastEOL(lexer));
@@ -519,7 +519,7 @@ TEST_F(MasterLexerStateTest, basicNumbers) {
 
     EXPECT_EQ(&s_number, State::start(lexer, options));
     s_number.handle(lexer);
-    EXPECT_EQ(37, s_number.getToken(lexer).getNumber());
+    EXPECT_EQ(37U, s_number.getToken(lexer).getNumber());
 
     // If we continue we'll simply see the EOF
     EXPECT_EQ(s_null, State::start(lexer, options));

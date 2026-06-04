@@ -184,7 +184,7 @@ public:
         ASSERT_TRUE(response);
         const std::vector<uint8_t> expected = {
             0x00, 0x06, 0x6c, 0x61, 0x72, 0x67, 0x65, 0x21 };
-        ASSERT_EQ(8, response->size());
+        ASSERT_EQ(8U, response->size());
         EXPECT_EQ(expected, *response);
     }
 
@@ -220,7 +220,7 @@ public:
 
         // Make sure that the response was received.
         ASSERT_TRUE(response);
-        EXPECT_EQ(0xffff + 2, response->size());
+        EXPECT_EQ(0xffff + 2U, response->size());
     }
 
     /// @brief Test that two consecutive requests can be sent over the same

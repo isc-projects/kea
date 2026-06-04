@@ -88,7 +88,7 @@ class LoggingTest : public dhcp::test::LogContentTest {
     static const char* TEST_LOG_NAME;
 
     /// @brief Maximum log size
-    static const int TEST_MAX_SIZE;
+    static const size_t TEST_MAX_SIZE;
 
     /// @brief Maximum rotated log versions
     static const int TEST_MAX_VERS;
@@ -96,7 +96,7 @@ class LoggingTest : public dhcp::test::LogContentTest {
 };
 
 const char* LoggingTest::TEST_LOG_NAME = "kea.test.log";
-const int LoggingTest::TEST_MAX_SIZE = 204800;  // Smallest without disabling rotation
+const size_t LoggingTest::TEST_MAX_SIZE = 204800;  // Smallest without disabling rotation
 const int LoggingTest::TEST_MAX_VERS = 2;       // More than the default of 1
 
 // Checks that the constructor is able to process specified storage properly.
@@ -142,13 +142,13 @@ TEST_F(LoggingTest, parsingConsoleOutput) {
 
     EXPECT_NO_THROW(parser.parseConfiguration(config));
 
-    ASSERT_EQ(1, storage->getLoggingInfo().size());
+    ASSERT_EQ(1U, storage->getLoggingInfo().size());
 
     EXPECT_EQ("kea", storage->getLoggingInfo()[0].name_);
     EXPECT_EQ(99, storage->getLoggingInfo()[0].debuglevel_);
     EXPECT_EQ(isc::log::DEBUG, storage->getLoggingInfo()[0].severity_);
 
-    ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
+    ASSERT_EQ(1U, storage->getLoggingInfo()[0].destinations_.size());
     EXPECT_EQ("stdout" , storage->getLoggingInfo()[0].destinations_[0].output_);
     EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[0].flush_);
 }
@@ -181,19 +181,19 @@ TEST_F(LoggingTest, parsingDeprecatedOutputOptions) {
     ConstElementPtr config = Element::fromJSON(config_txt);
     config = config->get("loggers");
 
-    ASSERT_EQ(1, config->size());
+    ASSERT_EQ(1U, config->size());
     ASSERT_TRUE(config->get(0)->get("output_options"));
     ASSERT_FALSE(config->get(0)->get("output-options"));
 
     EXPECT_NO_THROW(parser.parseConfiguration(config));
 
-    ASSERT_EQ(1, storage->getLoggingInfo().size());
+    ASSERT_EQ(1U, storage->getLoggingInfo().size());
 
     EXPECT_EQ("kea", storage->getLoggingInfo()[0].name_);
     EXPECT_EQ(99, storage->getLoggingInfo()[0].debuglevel_);
     EXPECT_EQ(isc::log::DEBUG, storage->getLoggingInfo()[0].severity_);
 
-    ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
+    ASSERT_EQ(1U, storage->getLoggingInfo()[0].destinations_.size());
     EXPECT_EQ("stdout" , storage->getLoggingInfo()[0].destinations_[0].output_);
     EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[0].flush_);
 
@@ -236,14 +236,14 @@ TEST_F(LoggingTest, parsingErrorOutputOptions) {
     ConstElementPtr config = Element::fromJSON(config_txt);
     config = config->get("loggers");
 
-    ASSERT_EQ(1, config->size());
+    ASSERT_EQ(1U, config->size());
     ASSERT_TRUE(config->get(0)->get("output_options"));
     ASSERT_TRUE(config->get(0)->get("output-options"));
 
     ASSERT_THROW_MSG(parser.parseConfiguration(config), BadValue, "Only one of "
                      "'output-options' and 'output_options' may be specified.");
 
-    ASSERT_EQ(0, storage->getLoggingInfo().size());
+    ASSERT_EQ(0U, storage->getLoggingInfo().size());
 }
 
 // Check that LogConfigParser can parse configuration that
@@ -278,11 +278,11 @@ TEST_F(LoggingTest, parsingNoSeverity) {
     EXPECT_NO_THROW_LOG(parser.parseConfiguration(config));
 
     // Entries should be the ones set.
-    ASSERT_EQ(1, storage->getLoggingInfo().size());
+    ASSERT_EQ(1U, storage->getLoggingInfo().size());
     LoggingInfo const& logging_info(storage->getLoggingInfo()[0]);
     EXPECT_EQ("kea", logging_info.name_);
     EXPECT_EQ(99, logging_info.debuglevel_);
-    ASSERT_EQ(1, logging_info.destinations_.size());
+    ASSERT_EQ(1U, logging_info.destinations_.size());
     EXPECT_EQ("stdout" , logging_info.destinations_[0].output_);
     EXPECT_TRUE(logging_info.destinations_[0].flush_);
 
@@ -323,13 +323,13 @@ TEST_F(LoggingTest, parsingFile) {
 
     EXPECT_NO_THROW(parser.parseConfiguration(config));
 
-    ASSERT_EQ(1, storage->getLoggingInfo().size());
+    ASSERT_EQ(1U, storage->getLoggingInfo().size());
 
     EXPECT_EQ("kea", storage->getLoggingInfo()[0].name_);
     EXPECT_EQ(0, storage->getLoggingInfo()[0].debuglevel_);
     EXPECT_EQ(isc::log::INFO, storage->getLoggingInfo()[0].severity_);
 
-    ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
+    ASSERT_EQ(1U, storage->getLoggingInfo()[0].destinations_.size());
     EXPECT_EQ(LogConfigParser::validatePath("logfile.txt"),
               storage->getLoggingInfo()[0].destinations_[0].output_);
     // Default for immediate flush is true
@@ -381,19 +381,19 @@ TEST_F(LoggingTest, multipleLoggers) {
 
     EXPECT_NO_THROW(parser.parseConfiguration(config));
 
-    ASSERT_EQ(2, storage->getLoggingInfo().size());
+    ASSERT_EQ(2U, storage->getLoggingInfo().size());
 
     EXPECT_EQ("kea", storage->getLoggingInfo()[0].name_);
     EXPECT_EQ(0, storage->getLoggingInfo()[0].debuglevel_);
     EXPECT_EQ(isc::log::INFO, storage->getLoggingInfo()[0].severity_);
-    ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
+    ASSERT_EQ(1U, storage->getLoggingInfo()[0].destinations_.size());
     EXPECT_EQ(LogConfigParser::validatePath("logfile.txt"),
               storage->getLoggingInfo()[0].destinations_[0].output_);
     EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[0].flush_);
     EXPECT_EQ("wombat", storage->getLoggingInfo()[1].name_);
     EXPECT_EQ(99, storage->getLoggingInfo()[1].debuglevel_);
     EXPECT_EQ(isc::log::DEBUG, storage->getLoggingInfo()[1].severity_);
-    ASSERT_EQ(1, storage->getLoggingInfo()[1].destinations_.size());
+    ASSERT_EQ(1U, storage->getLoggingInfo()[1].destinations_.size());
     EXPECT_EQ(LogConfigParser::validatePath("logfile2.txt"),
               storage->getLoggingInfo()[1].destinations_[0].output_);
     EXPECT_FALSE(storage->getLoggingInfo()[1].destinations_[0].flush_);
@@ -432,12 +432,12 @@ TEST_F(LoggingTest, multipleLoggingDestinations) {
 
     EXPECT_NO_THROW(parser.parseConfiguration(config));
 
-    ASSERT_EQ(1, storage->getLoggingInfo().size());
+    ASSERT_EQ(1U, storage->getLoggingInfo().size());
 
     EXPECT_EQ("kea", storage->getLoggingInfo()[0].name_);
     EXPECT_EQ(0, storage->getLoggingInfo()[0].debuglevel_);
     EXPECT_EQ(isc::log::INFO, storage->getLoggingInfo()[0].severity_);
-    ASSERT_EQ(2, storage->getLoggingInfo()[0].destinations_.size());
+    ASSERT_EQ(2U, storage->getLoggingInfo()[0].destinations_.size());
     EXPECT_EQ(LogConfigParser::validatePath("logfile.txt"),
               storage->getLoggingInfo()[0].destinations_[0].output_);
     EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[0].flush_);
@@ -539,12 +539,12 @@ TEST_F(LoggingTest, validPattern) {
 
     EXPECT_NO_THROW(parser.parseConfiguration(config));
 
-    ASSERT_EQ(1, storage->getLoggingInfo().size());
+    ASSERT_EQ(1U, storage->getLoggingInfo().size());
 
     EXPECT_EQ("kea", storage->getLoggingInfo()[0].name_);
     EXPECT_EQ(isc::log::INFO, storage->getLoggingInfo()[0].severity_);
 
-    ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
+    ASSERT_EQ(1U, storage->getLoggingInfo()[0].destinations_.size());
     EXPECT_EQ("stdout" , storage->getLoggingInfo()[0].destinations_[0].output_);
     EXPECT_EQ(storage->getLoggingInfo()[0].destinations_[0].pattern_,
               std::string("mylog %m\n"));
@@ -578,12 +578,12 @@ TEST_F(LoggingTest, emptyPattern) {
 
     EXPECT_NO_THROW(parser.parseConfiguration(config));
 
-    ASSERT_EQ(1, storage->getLoggingInfo().size());
+    ASSERT_EQ(1U, storage->getLoggingInfo().size());
 
     EXPECT_EQ("kea", storage->getLoggingInfo()[0].name_);
     EXPECT_EQ(isc::log::INFO, storage->getLoggingInfo()[0].severity_);
 
-    ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
+    ASSERT_EQ(1U, storage->getLoggingInfo()[0].destinations_.size());
     EXPECT_EQ("stdout" , storage->getLoggingInfo()[0].destinations_[0].output_);
     EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[0].pattern_.empty());
 }
@@ -665,12 +665,12 @@ TEST_F(LoggingTest, syslogDestination) {
 
     EXPECT_NO_THROW(parser.parseConfiguration(config));
 
-    ASSERT_EQ(1, storage->getLoggingInfo().size());
+    ASSERT_EQ(1U, storage->getLoggingInfo().size());
 
     EXPECT_EQ("kea", storage->getLoggingInfo()[0].name_);
     EXPECT_EQ(isc::log::INFO, storage->getLoggingInfo()[0].severity_);
 
-    ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
+    ASSERT_EQ(1U, storage->getLoggingInfo()[0].destinations_.size());
     // The destination output should NOT include the validated path.
     EXPECT_EQ("syslog" , storage->getLoggingInfo()[0].destinations_[0].output_);
 }
@@ -703,12 +703,12 @@ TEST_F(LoggingTest, syslogPlusFacility) {
 
     EXPECT_NO_THROW(parser.parseConfiguration(config));
 
-    ASSERT_EQ(1, storage->getLoggingInfo().size());
+    ASSERT_EQ(1U, storage->getLoggingInfo().size());
 
     EXPECT_EQ("kea", storage->getLoggingInfo()[0].name_);
     EXPECT_EQ(isc::log::INFO, storage->getLoggingInfo()[0].severity_);
 
-    ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
+    ASSERT_EQ(1U, storage->getLoggingInfo()[0].destinations_.size());
     // The destination output should NOT include the validated path.
     EXPECT_EQ("syslog:daemon" , storage->getLoggingInfo()[0].destinations_[0].output_);
 }
@@ -777,12 +777,12 @@ TEST_F(LoggingTest, enforceSecurityFalse) {
 
     ASSERT_NO_THROW_LOG(parser.parseConfiguration(config));
 
-    ASSERT_EQ(1, storage->getLoggingInfo().size());
+    ASSERT_EQ(1U, storage->getLoggingInfo().size());
 
     EXPECT_EQ("kea", storage->getLoggingInfo()[0].name_);
     EXPECT_EQ(isc::log::INFO, storage->getLoggingInfo()[0].severity_);
 
-    ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
+    ASSERT_EQ(1U, storage->getLoggingInfo()[0].destinations_.size());
     EXPECT_EQ("/tmp/myfile.log" , storage->getLoggingInfo()[0].destinations_[0].output_);
 
     std::ostringstream oss;
@@ -790,7 +790,7 @@ TEST_F(LoggingTest, enforceSecurityFalse) {
         << " invalid path specified: '/tmp', supported path is '"
         << LogConfigParser::getLogPath() <<  "'";
 
-    EXPECT_EQ(1, countFile(oss.str()));
+    EXPECT_EQ(1U, countFile(oss.str()));
 }
 
 /// @todo Add tests for malformed logging configuration

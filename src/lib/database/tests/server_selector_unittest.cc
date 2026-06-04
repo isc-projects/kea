@@ -31,8 +31,8 @@ TEST(ServerSelectorTest, all) {
 
     EXPECT_FALSE(selector.hasNoTags());
     auto tags = selector.getTags();
-    EXPECT_EQ(1, tags.size());
-    EXPECT_EQ(1, tags.count(ServerTag("all")));
+    EXPECT_EQ(1U, tags.size());
+    EXPECT_EQ(1U, tags.count(ServerTag("all")));
     EXPECT_TRUE(selector.amAll());
     EXPECT_FALSE(selector.hasMultipleTags());
 }
@@ -45,8 +45,8 @@ TEST(ServerSelectorTest, one) {
 
     EXPECT_FALSE(selector.hasNoTags());
     auto tags = selector.getTags();
-    ASSERT_EQ(1, tags.size());
-    EXPECT_EQ(1, tags.count(ServerTag("some-tag")));
+    ASSERT_EQ(1U, tags.size());
+    EXPECT_EQ(1U, tags.count(ServerTag("some-tag")));
     EXPECT_FALSE(selector.hasMultipleTags());
 }
 
@@ -58,10 +58,10 @@ TEST(ServerSelectorTest, multiple) {
 
     EXPECT_FALSE(selector.hasNoTags());
     auto tags = selector.getTags();
-    ASSERT_EQ(3, tags.size());
-    EXPECT_EQ(1, tags.count(ServerTag("tag1")));
-    EXPECT_EQ(1, tags.count(ServerTag("tag2")));
-    EXPECT_EQ(1, tags.count(ServerTag("tag3")));
+    ASSERT_EQ(3U, tags.size());
+    EXPECT_EQ(1U, tags.count(ServerTag("tag1")));
+    EXPECT_EQ(1U, tags.count(ServerTag("tag2")));
+    EXPECT_EQ(1U, tags.count(ServerTag("tag3")));
     EXPECT_TRUE(selector.hasMultipleTags());
 }
 

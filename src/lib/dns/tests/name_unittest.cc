@@ -451,7 +451,7 @@ TEST_F(NameTest, fromWire) {
     // converting upper-case letters to down-case
     EXPECT_EQ("vix.com.",
               nameFactoryFromWire("name_fromWire1", 25, true).toText());
-    EXPECT_EQ(3, nameFactoryFromWire("name_fromWire1", 25).getLabelCount());
+    EXPECT_EQ(3U, nameFactoryFromWire("name_fromWire1", 25).getLabelCount());
 }
 
 TEST_F(NameTest, copyConstruct) {

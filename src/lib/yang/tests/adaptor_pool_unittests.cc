@@ -145,7 +145,7 @@ TEST(AdaptorPoolTest, fromSubnet) {
     EXPECT_FALSE(copied->equals(*json));
     pools = json->get("pools");
     ASSERT_TRUE(pools);
-    ASSERT_EQ(2, pools->size());
+    ASSERT_EQ(2U, pools->size());
     ConstElementPtr pool = pools->get(0);
     ASSERT_TRUE(pool);
     string expected = "{"
@@ -235,7 +235,7 @@ TEST(AdaptorPoolTest, toSubnet) {
     // Timers must be removed as they are not allowed here in Kea.
     pools = json->get("pools");
     ASSERT_TRUE(pools);
-    ASSERT_EQ(2, pools->size());
+    ASSERT_EQ(2U, pools->size());
     ConstElementPtr pool = pools->get(0);
     ASSERT_TRUE(pool);
     EXPECT_EQ("{ \"pool\": \"2001:db8:1::/80\" }", pool->str());

@@ -53,7 +53,7 @@ TEST_F(MessageReaderTest, GetSetDictionary) {
 TEST_F(MessageReaderTest, BlanksAndComments) {
 
     // Ensure that the dictionary is empty.
-    EXPECT_EQ(0, dictionary_->size());
+    EXPECT_EQ(0U, dictionary_->size());
 
     // Add a number of blank lines and comments and check that (a) they are
     // parsed successfully ...
@@ -67,9 +67,9 @@ TEST_F(MessageReaderTest, BlanksAndComments) {
     EXPECT_NO_THROW(reader_.processLine("  +# A description line"));
 
     // ... and (b) nothing gets added to either the map or the not-added section.
-    EXPECT_EQ(0, dictionary_->size());
+    EXPECT_EQ(0U, dictionary_->size());
     vector<string> not_added = reader_.getNotAdded();
-    EXPECT_EQ(0, not_added.size());
+    EXPECT_EQ(0U, not_added.size());
 }
 
 
@@ -186,11 +186,11 @@ TEST_F(MessageReaderTest, ValidMessageAddDefault) {
         dictionary_->getText("GLOBAL1"));
     EXPECT_EQ(string("this is message global two"),
         dictionary_->getText("GLOBAL2"));
-    EXPECT_EQ(2, dictionary_->size());
+    EXPECT_EQ(2U, dictionary_->size());
 
     // ... and ensure no messages were not added
     vector<string> not_added = reader_.getNotAdded();
-    EXPECT_EQ(0, not_added.size());
+    EXPECT_EQ(0U, not_added.size());
 }
 
 TEST_F(MessageReaderTest, ValidMessageAdd) {
@@ -206,11 +206,11 @@ TEST_F(MessageReaderTest, ValidMessageAdd) {
         dictionary_->getText("GLOBAL1"));
     EXPECT_EQ(string("this is message global two"),
         dictionary_->getText("GLOBAL2"));
-    EXPECT_EQ(2, dictionary_->size());
+    EXPECT_EQ(2U, dictionary_->size());
 
     // ... and ensure no messages were not added
     vector<string> not_added = reader_.getNotAdded();
-    EXPECT_EQ(0, not_added.size());
+    EXPECT_EQ(0U, not_added.size());
 }
 
 TEST_F(MessageReaderTest, ValidMessageReplace) {
@@ -229,11 +229,11 @@ TEST_F(MessageReaderTest, ValidMessageReplace) {
         dictionary_->getText("GLOBAL1"));
     EXPECT_EQ(string("this is message global two"),
         dictionary_->getText("GLOBAL2"));
-    EXPECT_EQ(2, dictionary_->size());
+    EXPECT_EQ(2U, dictionary_->size());
 
     // ... and ensure no messages were not added
     vector<string> not_added = reader_.getNotAdded();
-    EXPECT_EQ(0, not_added.size());
+    EXPECT_EQ(0U, not_added.size());
 }
 
 // Do checks on overflows, although this essentially duplicates the checks
@@ -257,11 +257,11 @@ TEST_F(MessageReaderTest, Overflows) {
         dictionary_->getText("GLOBAL1"));
     EXPECT_EQ(string("this is message global two"),
         dictionary_->getText("GLOBAL2"));
-    EXPECT_EQ(2, dictionary_->size());
+    EXPECT_EQ(2U, dictionary_->size());
 
     // ... and ensure no overflows
     vector<string> not_added = reader_.getNotAdded();
-    ASSERT_EQ(2, not_added.size());
+    ASSERT_EQ(2U, not_added.size());
 
     sort(not_added.begin(), not_added.end());
     EXPECT_EQ(string("GLOBAL1"), not_added[0]);

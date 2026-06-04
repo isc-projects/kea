@@ -235,22 +235,22 @@ TEST_F(MessageRendererTest, writeNameLabelSequence3) {
 TEST_F(MessageRendererTest, setBuffer) {
     OutputBuffer new_buffer(0);
     renderer.setBuffer(&new_buffer);
-    EXPECT_EQ(0, new_buffer.getLength()); // the buffer should be still empty
+    EXPECT_EQ(0U, new_buffer.getLength()); // the buffer should be still empty
     renderer.writeUint32(42);
     EXPECT_EQ(sizeof(uint32_t), new_buffer.getLength());
     EXPECT_EQ(sizeof(uint32_t), renderer.getLength());
 
     // Change some other internal state for the reset test below.
-    EXPECT_EQ(512, renderer.getLengthLimit());
+    EXPECT_EQ(512U, renderer.getLengthLimit());
     renderer.setLengthLimit(4096);
-    EXPECT_EQ(4096, renderer.getLengthLimit());
+    EXPECT_EQ(4096U, renderer.getLengthLimit());
 
     // Reset the buffer to the default again.  Other internal states and
     // resources should be cleared.  The used buffer should be intact.
     renderer.setBuffer(0);
     EXPECT_EQ(sizeof(uint32_t), new_buffer.getLength());
-    EXPECT_EQ(0, renderer.getLength());
-    EXPECT_EQ(512, renderer.getLengthLimit());
+    EXPECT_EQ(0U, renderer.getLength());
+    EXPECT_EQ(512U, renderer.getLengthLimit());
 }
 
 TEST_F(MessageRendererTest, setBufferErrors) {

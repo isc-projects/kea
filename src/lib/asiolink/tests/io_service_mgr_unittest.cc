@@ -24,22 +24,22 @@ TEST(IOServiceMgr, singleton) {
 
 // Test exceptional cases.
 TEST(IOServiceMgr, noError) {
-    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 0);
+    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 0U);
     // Regiter null IOService.
     ASSERT_NO_THROW(IOServiceMgr::instance().registerIOService(IOServicePtr()));
-    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 0);
+    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 0U);
     // Unregister null IOService.
     ASSERT_NO_THROW(IOServiceMgr::instance().unregisterIOService(IOServicePtr()));
-    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 0);
+    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 0U);
     // Unregister not registered IOService.
     ASSERT_NO_THROW(IOServiceMgr::instance().unregisterIOService(IOServicePtr(new IOService())));
-    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 0);
+    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 0U);
 }
 
 // Create two IOService objects in a local scope and check that all events
 // already registered are handled after local scope ends.
 TEST(IOServiceMgr, testIOServiceMgrLocalIOServies) {
-    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 0);
+    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 0U);
     int one_io_callback_count = 0;
     auto one_f = [&one_io_callback_count] () {
         one_io_callback_count++;
@@ -61,10 +61,10 @@ TEST(IOServiceMgr, testIOServiceMgrLocalIOServies) {
         EXPECT_EQ(two_io_callback_count, 0);
 
         IOServiceMgr::instance().registerIOService(one_io_service);
-        EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 1);
+        EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 1U);
 
         IOServiceMgr::instance().registerIOService(two_io_service);
-        EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 2);
+        EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 2U);
 
         IOServiceMgr::instance().pollIOServices();
         EXPECT_EQ(one_io_callback_count, 1);
@@ -72,18 +72,18 @@ TEST(IOServiceMgr, testIOServiceMgrLocalIOServies) {
         one_io_service->post(one_f);
         two_io_service->post(two_f);
     }
-    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 2);
+    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 2U);
     IOServiceMgr::instance().pollIOServices();
     EXPECT_EQ(one_io_callback_count, 2);
     EXPECT_EQ(two_io_callback_count, 2);
 
     IOServiceMgr::instance().clearIOServices();
-    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 0);
+    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 0U);
 }
 
 // Create two IOService objects and test register, unregister and poll.
 TEST(IOServiceMgr, testIOServiceMgrRegisterAndUnregister) {
-    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 0);
+    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 0U);
     int one_io_callback_count = 0;
     auto one_f = [&one_io_callback_count] () {
         one_io_callback_count++;
@@ -104,7 +104,7 @@ TEST(IOServiceMgr, testIOServiceMgrRegisterAndUnregister) {
     EXPECT_EQ(two_io_callback_count, 0);
 
     IOServiceMgr::instance().registerIOService(one_io_service);
-    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 1);
+    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 1U);
 
     IOServiceMgr::instance().pollIOServices();
     EXPECT_EQ(one_io_callback_count, 1);
@@ -113,7 +113,7 @@ TEST(IOServiceMgr, testIOServiceMgrRegisterAndUnregister) {
     two_io_service->post(two_f);
 
     IOServiceMgr::instance().registerIOService(two_io_service);
-    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 2);
+    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 2U);
 
     IOServiceMgr::instance().pollIOServices();
     EXPECT_EQ(one_io_callback_count, 2);
@@ -122,10 +122,10 @@ TEST(IOServiceMgr, testIOServiceMgrRegisterAndUnregister) {
     two_io_service->post(two_f);
 
     ASSERT_NO_THROW(IOServiceMgr::instance().registerIOService(one_io_service));
-    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 2);
+    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 2U);
 
     IOServiceMgr::instance().unregisterIOService(one_io_service);
-    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 1);
+    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 1U);
 
     IOServiceMgr::instance().pollIOServices();
     EXPECT_EQ(one_io_callback_count, 2);
@@ -134,7 +134,7 @@ TEST(IOServiceMgr, testIOServiceMgrRegisterAndUnregister) {
     two_io_service->post(two_f);
 
     IOServiceMgr::instance().unregisterIOService(two_io_service);
-    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 0);
+    EXPECT_EQ(IOServiceMgr::instance().getIOServiceCount(), 0U);
 
     IOServiceMgr::instance().pollIOServices();
     EXPECT_EQ(one_io_callback_count, 2);

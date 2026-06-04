@@ -329,13 +329,13 @@ TEST_F(DaemonTest, parsingConsoleOutput) {
 
     // The parsed configuration should be processed by the daemon and
     // stored in configuration storage.
-    ASSERT_EQ(1, storage->getLoggingInfo().size());
+    ASSERT_EQ(1U, storage->getLoggingInfo().size());
 
     EXPECT_EQ("kea", storage->getLoggingInfo()[0].name_);
     EXPECT_EQ(99, storage->getLoggingInfo()[0].debuglevel_);
     EXPECT_EQ(isc::log::DEBUG, storage->getLoggingInfo()[0].severity_);
 
-    ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
+    ASSERT_EQ(1U, storage->getLoggingInfo()[0].destinations_.size());
     EXPECT_EQ("stdout" , storage->getLoggingInfo()[0].destinations_[0].output_);
 }
 

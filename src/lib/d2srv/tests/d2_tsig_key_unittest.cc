@@ -26,9 +26,9 @@ namespace {
 
 /// @brief Check statistics names.
 TEST(D2StatsTest, names) {
-    ASSERT_EQ(4, D2Stats::ncr.size());
-    ASSERT_EQ(6, D2Stats::update.size());
-    ASSERT_EQ(4, D2Stats::key.size());
+    ASSERT_EQ(4U, D2Stats::ncr.size());
+    ASSERT_EQ(6U, D2Stats::update.size());
+    ASSERT_EQ(4U, D2Stats::key.size());
 }
 
 /// @brief Fixture class for TSIG key / DNS update statistics.
@@ -52,12 +52,12 @@ public:
 TEST_F(D2TsigKeyTest, key) {
     // Get the statistics manager.
     StatsMgr& stat_mgr = StatsMgr::instance();
-    ASSERT_EQ(0, stat_mgr.count());
+    ASSERT_EQ(0U, stat_mgr.count());
 
     // Create a key.
     const string& key_spec = "foo.bar.::test";
     D2TsigKeyPtr key(new D2TsigKey(key_spec));
-    EXPECT_EQ(4, stat_mgr.count());
+    EXPECT_EQ(4U, stat_mgr.count());
 
     // Create a context.
     TSIGContextPtr ctx;
@@ -67,7 +67,7 @@ TEST_F(D2TsigKeyTest, key) {
 
     // Get the 'sent' statistics.
     const string& stat_name = "key[foo.bar.].update-sent";
-    EXPECT_EQ(1, stat_mgr.getSize(stat_name));
+    EXPECT_EQ(1U, stat_mgr.getSize(stat_name));
     ObservationPtr stat = stat_mgr.getObservation(stat_name);
     ASSERT_TRUE(stat);
     IntegerSample sample;
@@ -90,7 +90,7 @@ TEST_F(D2TsigKeyTest, key) {
 
     // Destroy the key: its stats are removed.
     key.reset();
-    EXPECT_EQ(0, stat_mgr.count());
+    EXPECT_EQ(0U, stat_mgr.count());
     stat = stat_mgr.getObservation(stat_name);
     EXPECT_FALSE(stat);
 }

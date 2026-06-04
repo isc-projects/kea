@@ -150,7 +150,7 @@ public:
 
                 ASSERT_TRUE(response_);
                 EXPECT_EQ(D2UpdateMessage::RESPONSE, response_->getQRFlag());
-                ASSERT_EQ(1,
+                ASSERT_EQ(1U,
                           response_->getRRCount(D2UpdateMessage::SECTION_ZONE));
                 D2ZonePtr zone = response_->getZone();
                 ASSERT_TRUE(zone);
@@ -518,7 +518,8 @@ TEST_F(DNSClientTest, constructor) {
 // This test verifies that the maximal allowed timeout value is maximal int
 // value.
 TEST_F(DNSClientTest, getMaxTimeout) {
-    EXPECT_EQ(std::numeric_limits<int>::max(), DNSClient::getMaxTimeout());
+    EXPECT_EQ(static_cast<unsigned>(std::numeric_limits<int>::max()),
+              DNSClient::getMaxTimeout());
 }
 
 // Verify that timeout is reported when no response is received from DNS.

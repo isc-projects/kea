@@ -86,9 +86,9 @@ messageTest() {
     // (N.B. We do not check for a known value before the call, only that the
     // value is not zero.  This is because libraries against which the test
     // is linked may have registered their own message arrays.)
-    EXPECT_NE(0, MessageInitializer::getPendingCount());
+    EXPECT_NE(0U, MessageInitializer::getPendingCount());
     MessageInitializer::loadDictionary();
-    EXPECT_EQ(0, MessageInitializer::getPendingCount());
+    EXPECT_EQ(0U, MessageInitializer::getPendingCount());
 
     // ... and check the messages loaded.
     EXPECT_EQ(string("global message one"), global->getText("GLOBAL1"));
@@ -112,16 +112,16 @@ TEST(MessageInitializerTest1, dynamicLoadUnload) {
 
     // Dynamically create the first initializer.
     MessageInitializerPtr init1(new MessageInitializer(values3));
-    EXPECT_EQ(1, MessageInitializer::getPendingCount());
+    EXPECT_EQ(1U, MessageInitializer::getPendingCount());
 
     // Dynamically create the second initializer.
     MessageInitializerPtr init2(new MessageInitializer(values4));
-    EXPECT_EQ(2, MessageInitializer::getPendingCount());
+    EXPECT_EQ(2U, MessageInitializer::getPendingCount());
 
     // Load messages from both initializers to the global dictionary.
     MessageInitializer::loadDictionary();
     // There should be no pending messages.
-    EXPECT_EQ(0, MessageInitializer::getPendingCount());
+    EXPECT_EQ(0U, MessageInitializer::getPendingCount());
 
     // Make sure that the messages have been loaded.
     EXPECT_EQ("global message seven", global->getText("GLOBAL7"));
@@ -155,35 +155,35 @@ TEST(MessageInitializerTest1, dynamicUnloadPending) {
 
     // Dynamically create the first initializer.
     MessageInitializerPtr init1(new MessageInitializer(values3));
-    ASSERT_EQ(1, MessageInitializer::getPendingCount());
+    ASSERT_EQ(1U, MessageInitializer::getPendingCount());
 
     // Create second initializer without committing the first set
     // of messages to the dictionary.
     MessageInitializerPtr init2(new MessageInitializer(values4));
-    ASSERT_EQ(2, MessageInitializer::getPendingCount());
+    ASSERT_EQ(2U, MessageInitializer::getPendingCount());
 
     // Destroy the first initializer and make sure that the number of
     // pending message sets drops to 1.
     init1.reset();
-    ASSERT_EQ(1, MessageInitializer::getPendingCount());
+    ASSERT_EQ(1U, MessageInitializer::getPendingCount());
 
     // Now destroy the second initializer and make sure that there are
     // no pending messages.
     init2.reset();
-    ASSERT_EQ(0, MessageInitializer::getPendingCount());
+    ASSERT_EQ(0U, MessageInitializer::getPendingCount());
 
     init1.reset(new MessageInitializer(values3));
-    ASSERT_EQ(1, MessageInitializer::getPendingCount());
+    ASSERT_EQ(1U, MessageInitializer::getPendingCount());
 
     // Load the messages to the dictionary and make sure there are no pending
     // messages.
     MessageInitializer::loadDictionary();
-    EXPECT_EQ(0, MessageInitializer::getPendingCount());
+    EXPECT_EQ(0U, MessageInitializer::getPendingCount());
 
     // Create the second initializer. There should be one pending set of
     // messages.
     init2.reset(new MessageInitializer(values4));
-    ASSERT_EQ(1, MessageInitializer::getPendingCount());
+    ASSERT_EQ(1U, MessageInitializer::getPendingCount());
 
     // Make sure that the messages defined by the first initializer
     // are in the dictionary.
@@ -194,11 +194,11 @@ TEST(MessageInitializerTest1, dynamicUnloadPending) {
     // Destroy the second initializer. There should be no pending messages
     // now.
     init2.reset();
-    ASSERT_EQ(0, MessageInitializer::getPendingCount());
+    ASSERT_EQ(0U, MessageInitializer::getPendingCount());
 
     // Loading the messages should be no-op.
     MessageInitializer::loadDictionary();
-    ASSERT_EQ(0, MessageInitializer::getPendingCount());
+    ASSERT_EQ(0U, MessageInitializer::getPendingCount());
 
     // Make sure that the messages loaded from the first initializer
     // are not affected.
@@ -218,7 +218,7 @@ TEST(MessageInitializerTest1, duplicates) {
     messageTest();
 
     // Original set should not have dupes
-    ASSERT_EQ(0, MessageInitializer::getDuplicates().size());
+    ASSERT_EQ(0U, MessageInitializer::getDuplicates().size());
 
     // This just defines 1, but we'll add it a number of times
     const char* dupe[] = {
@@ -237,22 +237,22 @@ TEST(MessageInitializerTest1, duplicates) {
 
     MessageInitializer::loadDictionary();
     // Should be a dupe now
-    ASSERT_EQ(1, MessageInitializer::getDuplicates().size());
+    ASSERT_EQ(1U, MessageInitializer::getDuplicates().size());
 
     // clear them
     MessageInitializer::clearDuplicates();
-    ASSERT_EQ(0, MessageInitializer::getDuplicates().size());
+    ASSERT_EQ(0U, MessageInitializer::getDuplicates().size());
 
     // Do it again to make sure, let's explicitly provide false now
     const MessageInitializer init_message_initializer_unittest_3(dupe);
     MessageInitializer::loadDictionary(false);
-    ASSERT_EQ(1, MessageInitializer::getDuplicates().size());
+    ASSERT_EQ(1U, MessageInitializer::getDuplicates().size());
 
     // Loading with ignore_duplicates=true should result in no (reported)
     // dupes
     MessageInitializer::clearDuplicates();
-    ASSERT_EQ(0, MessageInitializer::getDuplicates().size());
+    ASSERT_EQ(0U, MessageInitializer::getDuplicates().size());
     const MessageInitializer init_message_initializer_unittest_4(dupe);
     MessageInitializer::loadDictionary(true);
-    ASSERT_EQ(0, MessageInitializer::getDuplicates().size());
+    ASSERT_EQ(0U, MessageInitializer::getDuplicates().size());
 }

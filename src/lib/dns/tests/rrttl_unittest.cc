@@ -65,11 +65,11 @@ RRTTLTest::rrttlFactoryFromWire(const char* datafile) {
 }
 
 TEST_F(RRTTLTest, getValue) {
-    EXPECT_EQ(0, ttl_0.getValue());
-    EXPECT_EQ(3600, ttl_1h.getValue());
-    EXPECT_EQ(86400, ttl_1d.getValue());
-    EXPECT_EQ(0x12345678, ttl_32bit.getValue());
-    EXPECT_EQ(0xffffffff, ttl_max.getValue());
+    EXPECT_EQ(0U, ttl_0.getValue());
+    EXPECT_EQ(3600U, ttl_1h.getValue());
+    EXPECT_EQ(86400U, ttl_1d.getValue());
+    EXPECT_EQ(0x12345678U, ttl_32bit.getValue());
+    EXPECT_EQ(0xffffffffU, ttl_max.getValue());
 }
 
 TEST_F(RRTTLTest, copyConstruct) {
@@ -80,7 +80,7 @@ TEST_F(RRTTLTest, copyConstruct) {
 
 TEST_F(RRTTLTest, fromText) {
     // Border cases
-    EXPECT_EQ(0, RRTTL("0").getValue());
+    EXPECT_EQ(0U, RRTTL("0").getValue());
     EXPECT_EQ(4294967295U, RRTTL("4294967295").getValue());
 
     // Invalid cases
@@ -124,17 +124,17 @@ TEST_F(RRTTLTest, fromTextUnit) {
 
     // Some border cases (with units)
     EXPECT_EQ(4294967295U, RRTTL("4294967295S").getValue());
-    EXPECT_EQ(0, RRTTL("0W0D0H0M0S").getValue());
+    EXPECT_EQ(0U, RRTTL("0W0D0H0M0S").getValue());
     EXPECT_EQ(4294967295U, RRTTL("1193046H1695S").getValue());
     // Leading zeroes are accepted
     EXPECT_EQ(4294967295U, RRTTL("0000000000000004294967295S").getValue());
 
     // Now some compound ones. We allow any order (it would be much work to
     // check the order anyway).
-    EXPECT_EQ(60 * 60 + 3, RRTTL("1H3S").getValue());
+    EXPECT_EQ(60 * 60 + 3U, RRTTL("1H3S").getValue());
 
     // Awkward, but allowed case - the same unit used twice.
-    EXPECT_EQ(20 * 3600, RRTTL("12H8H").getValue());
+    EXPECT_EQ(20 * 3600U, RRTTL("12H8H").getValue());
 
     // Negative number in part of the expression, but the total is positive.
     // Rejected.
@@ -168,7 +168,7 @@ TEST_F(RRTTLTest, fromTextUnit) {
 }
 
 TEST_F(RRTTLTest, fromWire) {
-    EXPECT_EQ(0x12345678,
+    EXPECT_EQ(0x12345678U,
               rrttlFactoryFromWire("rrcode32_fromWire1").getValue());
     EXPECT_THROW(rrttlFactoryFromWire("rrcode32_fromWire2"),
                  IncompleteRRTTL);

@@ -410,11 +410,11 @@ checkRR(dns::RRsetPtr rrset, const std::string& exp_name,
     if ((!has_rdata) ||
        (exp_type == dns::RRType::ANY() || exp_class == dns::RRClass::ANY())) {
         // ANY types do not have RData
-        ASSERT_EQ(0, rrset->getRdataCount());
+        ASSERT_EQ(0U, rrset->getRdataCount());
         return;
     }
 
-    ASSERT_EQ(1, rrset->getRdataCount());
+    ASSERT_EQ(1U, rrset->getRdataCount());
     dns::RdataIteratorPtr rdata_it = rrset->getRdataIterator();
     ASSERT_TRUE(rdata_it);
 

@@ -854,7 +854,7 @@ TEST_F(OptionDataTypesTest, writePsid) {
     EXPECT_EQ(16U, static_cast<unsigned>(buf[0]));
     // Check PSID value.
     EXPECT_EQ(0U, static_cast<unsigned>(buf[1]));
-    EXPECT_EQ(0x05U, static_cast<unsigned>(buf[2]));
+    EXPECT_EQ(5U, static_cast<unsigned>(buf[2]));
 
     // PSID length of 17 exceeds the maximum allowed value of 16.
     EXPECT_THROW(OptionDataTypeUtil::writePsid(PSIDLen(17), PSID(1), buf),

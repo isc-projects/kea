@@ -38,14 +38,14 @@ public:
 // Create an inactive formatter and check it doesn't produce any output
 TEST_F(FormatterTest, inactive) {
     Formatter();
-    EXPECT_EQ(0, outputs.size());
+    EXPECT_EQ(0U, outputs.size());
 }
 
 // Create an active formatter and check it produces output. Does no arg
 // substitution yet
 TEST_F(FormatterTest, active) {
     Formatter(isc::log::INFO, s("Text of message"), this);
-    ASSERT_EQ(1, outputs.size());
+    ASSERT_EQ(1U, outputs.size());
     EXPECT_EQ(isc::log::INFO, outputs[0].first);
     EXPECT_EQ("Text of message", outputs[0].second);
 }
@@ -53,7 +53,7 @@ TEST_F(FormatterTest, active) {
 // No output even when we have an arg on the inactive formatter
 TEST_F(FormatterTest, inactiveArg) {
     Formatter().arg("Hello");
-    EXPECT_EQ(0, outputs.size());
+    EXPECT_EQ(0U, outputs.size());
 }
 
 // Create an active formatter and replace a placeholder with string
@@ -61,14 +61,14 @@ TEST_F(FormatterTest, stringArg) {
     {
         SCOPED_TRACE("C++ string");
         Formatter(isc::log::INFO, s("Hello %1"), this).arg(string("World"));
-        ASSERT_EQ(1, outputs.size());
+        ASSERT_EQ(1U, outputs.size());
         EXPECT_EQ(isc::log::INFO, outputs[0].first);
         EXPECT_EQ("Hello World", outputs[0].second);
     }
     {
         SCOPED_TRACE("C++ string");
         Formatter(isc::log::INFO, s("Hello %1"), this).arg(string("Internet"));
-        ASSERT_EQ(2, outputs.size());
+        ASSERT_EQ(2U, outputs.size());
         EXPECT_EQ(isc::log::INFO, outputs[1].first);
         EXPECT_EQ("Hello Internet", outputs[1].second);
     }
@@ -79,13 +79,13 @@ TEST_F(FormatterTest, deactivate) {
     Formatter(isc::log::INFO, s("Text of message"), this).deactivate();
     // If there was no .deactivate, it should have output it.
     // But not now.
-    ASSERT_EQ(0, outputs.size());
+    ASSERT_EQ(0U, outputs.size());
 }
 
 // Can convert to string
 TEST_F(FormatterTest, intArg) {
     Formatter(isc::log::INFO, s("The answer is %1"), this).arg(42);
-    ASSERT_EQ(1, outputs.size());
+    ASSERT_EQ(1U, outputs.size());
     EXPECT_EQ(isc::log::INFO, outputs[0].first);
     EXPECT_EQ("The answer is 42", outputs[0].second);
 }
@@ -94,7 +94,7 @@ TEST_F(FormatterTest, intArg) {
 TEST_F(FormatterTest, multiArg) {
     Formatter(isc::log::INFO, s("The %2 are %1"), this).arg("switched").
         arg("arguments");
-    ASSERT_EQ(1, outputs.size());
+    ASSERT_EQ(1U, outputs.size());
     EXPECT_EQ(isc::log::INFO, outputs[0].first);
     EXPECT_EQ("The arguments are switched", outputs[0].second);
 }
@@ -142,7 +142,7 @@ TEST_F(FormatterTest, mismatchedPlaceholders) {
     EXPECT_NO_THROW(Formatter(isc::log::INFO,
                               s("Too many arguments in %1 %2"), this).
                     arg("only one"));
-    ASSERT_EQ(2, outputs.size());
+    ASSERT_EQ(2U, outputs.size());
     EXPECT_EQ(isc::log::INFO, outputs[1].first);
     EXPECT_EQ("Too many arguments in only one %2 "
               "@@Excess logger placeholder '%2' still exists@@",
@@ -150,7 +150,7 @@ TEST_F(FormatterTest, mismatchedPlaceholders) {
 
     EXPECT_NO_THROW(Formatter(isc::log::INFO, s("Missing the first %2"), this).
                     arg("missing").arg("argument"));
-    ASSERT_EQ(3, outputs.size());
+    ASSERT_EQ(3U, outputs.size());
     EXPECT_EQ(isc::log::INFO, outputs[2].first);
     EXPECT_EQ("Missing the first argument "
               "@@Missing logger placeholder '%1' for value 'missing'@@",
@@ -163,7 +163,7 @@ TEST_F(FormatterTest, mismatchedPlaceholders) {
 TEST_F(FormatterTest, multiPlaceholder) {
     Formatter(isc::log::INFO, s("The %1 is the %1"), this).
         arg("first rule of tautology club");
-    ASSERT_EQ(1, outputs.size());
+    ASSERT_EQ(1U, outputs.size());
     EXPECT_EQ(isc::log::INFO, outputs[0].first);
     EXPECT_EQ("The first rule of tautology club is "
               "the first rule of tautology club", outputs[0].second);
@@ -173,7 +173,7 @@ TEST_F(FormatterTest, multiPlaceholder) {
 TEST_F(FormatterTest, noRecurse) {
     // If we recurse, this will probably eat all the memory and crash
     Formatter(isc::log::INFO, s("%1"), this).arg("%1 %1");
-    ASSERT_EQ(1, outputs.size());
+    ASSERT_EQ(1U, outputs.size());
     EXPECT_EQ(isc::log::INFO, outputs[0].first);
     EXPECT_EQ("%1 %1", outputs[0].second);
 }

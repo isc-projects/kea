@@ -41,7 +41,7 @@ TEST(CryptoLinkTest, RNG) {
     RNGPtr rng = CryptoLink::getCryptoLink().getRNG();
     vector<uint8_t> data;
     ASSERT_NO_THROW(data = rng->random(16));
-    ASSERT_EQ(16, data.size());
+    ASSERT_EQ(16U, data.size());
     vector<uint8_t> zero;
     zero.resize(16);
     EXPECT_NE(0, memcmp(&zero[0], &data[0], zero.size()));
@@ -49,7 +49,7 @@ TEST(CryptoLinkTest, RNG) {
     // Retry with the function (vs method)
     vector<uint8_t> dataf;
     ASSERT_NO_THROW(dataf = random(16));
-    ASSERT_EQ(16, dataf.size());
+    ASSERT_EQ(16U, dataf.size());
     EXPECT_NE(0, memcmp(&zero[0], &dataf[0], zero.size()));
     EXPECT_NE(0, memcmp(&data[0], &dataf[0], zero.size()));
 }

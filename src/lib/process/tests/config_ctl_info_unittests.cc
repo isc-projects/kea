@@ -108,14 +108,14 @@ TEST(ConfigControlInfo, basicOperation) {
 
     ConfigControlInfo ctl;
     // We should have no dbs in the list.
-    EXPECT_EQ(0, ctl.getConfigDatabases().size());
+    EXPECT_EQ(0U, ctl.getConfigDatabases().size());
     // The default fetch time is 30 and it is unspecified.
     EXPECT_TRUE(ctl.getConfigFetchWaitTime().unspecified());
-    EXPECT_EQ(30, ctl.getConfigFetchWaitTime().get());
+    EXPECT_EQ(30U, ctl.getConfigFetchWaitTime().get());
 
     // Override the default fetch time.
     ctl.setConfigFetchWaitTime(Optional<uint16_t>(123));
-    EXPECT_EQ(123, ctl.getConfigFetchWaitTime().get());
+    EXPECT_EQ(123U, ctl.getConfigFetchWaitTime().get());
 
     // We should be able to add two distinct, valid dbs
     std::string access_str1 = "type=mysql host=machine1.org";
@@ -129,7 +129,7 @@ TEST(ConfigControlInfo, basicOperation) {
 
     // We should have two dbs in the list.
     const ConfigDbInfoList& db_list = ctl.getConfigDatabases();
-    EXPECT_EQ(2, db_list.size());
+    EXPECT_EQ(2U, db_list.size());
 
     // Verify the dbs in the list are as we expect them to be.
     EXPECT_EQ (access_str1, db_list[0].getAccessString());
@@ -150,9 +150,9 @@ TEST(ConfigControlInfo, basicOperation) {
 
     // Verify we can clear the list of dbs and the fetch time.
     ctl.clear();
-    EXPECT_EQ(0, ctl.getConfigDatabases().size());
+    EXPECT_EQ(0U, ctl.getConfigDatabases().size());
     EXPECT_TRUE(ctl.getConfigFetchWaitTime().unspecified());
-    EXPECT_EQ(30, ctl.getConfigFetchWaitTime().get());
+    EXPECT_EQ(30U, ctl.getConfigFetchWaitTime().get());
 }
 
 // Verifies the copy ctor and equality functions ConfigControlInfo

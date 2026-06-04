@@ -119,9 +119,9 @@ TEST_F(QuestionTest, toWireTruncated) {
     renderer.setLengthLimit(example_name1.getLength());
 
     EXPECT_FALSE(renderer.isTruncated()); // check pre-render condition
-    EXPECT_EQ(0, test_question1.toWire(renderer));
+    EXPECT_EQ(0U, test_question1.toWire(renderer));
     EXPECT_TRUE(renderer.isTruncated());
-    EXPECT_EQ(0, renderer.getLength()); // renderer shouldn't have any data
+    EXPECT_EQ(0U, renderer.getLength()); // renderer shouldn't have any data
 }
 
 // test operator<<.  We simply confirm it appends the result of toText().

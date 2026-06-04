@@ -66,7 +66,7 @@ TEST(InterprocessSyncFileTest, TestLock) {
             }
 
             ssize_t bytes_written = write(fds[1], &locked, sizeof(locked));
-            EXPECT_EQ(sizeof(locked), bytes_written);
+            EXPECT_EQ(static_cast<int>(sizeof(locked)), bytes_written);
 
             close(fds[1]);
             exit(0);
@@ -78,7 +78,7 @@ TEST(InterprocessSyncFileTest, TestLock) {
 
             close(fds[0]);
 
-            EXPECT_EQ(1, locked);
+            EXPECT_EQ(1U, locked);
 
             waitpid(pid, &status, 0);
         }
@@ -134,7 +134,7 @@ TEST(InterprocessSyncFileTest, TestMultipleFilesForked) {
             }
 
             ssize_t bytes_written = write(fds[1], &locked, sizeof(locked));
-            EXPECT_EQ(sizeof(locked), bytes_written);
+            EXPECT_EQ(static_cast<int>(sizeof(locked)), bytes_written);
 
             close(fds[1]);
             exit(0);
@@ -146,7 +146,7 @@ TEST(InterprocessSyncFileTest, TestMultipleFilesForked) {
 
             close(fds[0]);
 
-            EXPECT_EQ(0, locked);
+            EXPECT_EQ(0U, locked);
         }
 
         EXPECT_EQ (0, remove(TEST_DATA_TOPBUILDDIR "/test2_lockfile"));

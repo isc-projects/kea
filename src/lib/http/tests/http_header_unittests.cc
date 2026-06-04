@@ -25,7 +25,7 @@ TEST(HttpHeader, create) {
 // an exception is thrown if the header value is not a valid number.
 TEST(HttpHeader, getUint64Value) {
     HttpHeader hdr64("Content-Length", "64");
-    EXPECT_EQ(64, hdr64.getUint64Value());
+    EXPECT_EQ(64U, hdr64.getUint64Value());
 
     HttpHeader hdr_foo("Content-Length", "foo");
     EXPECT_THROW(hdr_foo.getUint64Value(), isc::BadValue);

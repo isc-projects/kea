@@ -73,7 +73,7 @@ TEST_F(TranslatorDatabaseTestv4, get) {
     ConstElementPtr database;
     EXPECT_NO_THROW_LOG(database = translator_->getDatabaseFromAbsoluteXpath(xpath));
     ASSERT_TRUE(database);
-    EXPECT_EQ(2, database->size());
+    EXPECT_EQ(2U, database->size());
     ConstElementPtr type = database->get("type");
     ASSERT_TRUE(type);
     ASSERT_EQ(Element::string, type->getType());
@@ -99,7 +99,7 @@ TEST_F(TranslatorDatabaseTestv4, set) {
     EXPECT_NO_THROW_LOG(got = translator_->getDatabaseFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
     ASSERT_EQ(Element::map, got->getType());
-    EXPECT_EQ(2, got->size());
+    EXPECT_EQ(2U, got->size());
     ConstElementPtr type = got->get("type");
     ASSERT_TRUE(type);
     ASSERT_EQ(Element::string, type->getType());
@@ -193,10 +193,10 @@ TEST_F(TranslatorDatabasesTestv4, get) {
     ConstElementPtr databases;
     EXPECT_NO_THROW_LOG(databases = translator_->getDatabasesFromAbsoluteXpath(xpath));
     ASSERT_TRUE(databases);
-    ASSERT_EQ(1, databases->size());
+    ASSERT_EQ(1U, databases->size());
     ConstElementPtr database = databases->get(0);
     ASSERT_TRUE(database);
-    EXPECT_EQ(6, database->size());
+    EXPECT_EQ(6U, database->size());
     ConstElementPtr type = database->get("type");
     ASSERT_TRUE(type);
     ASSERT_EQ(Element::string, type->getType());
@@ -240,11 +240,11 @@ TEST_F(TranslatorDatabasesTestv6, set) {
     EXPECT_NO_THROW_LOG(gots = translator_->getDatabasesFromAbsoluteXpath(xpath));
     ASSERT_TRUE(gots);
     ASSERT_EQ(Element::list, gots->getType());
-    ASSERT_EQ(1, gots->size());
+    ASSERT_EQ(1U, gots->size());
     ConstElementPtr got = gots->get(0);
     ASSERT_TRUE(got);
     ASSERT_EQ(Element::map, got->getType());
-    EXPECT_EQ(2, got->size());
+    EXPECT_EQ(2U, got->size());
     ConstElementPtr type = got->get("type");
     ASSERT_TRUE(type);
     ASSERT_EQ(Element::string, type->getType());

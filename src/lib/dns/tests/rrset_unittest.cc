@@ -73,7 +73,7 @@ protected:
 };
 
 TEST_F(RRsetTest, getRdataCount) {
-    for (int i = 0; i < MAX_RDATA_COUNT; ++i) {
+    for (size_t i = 0; i < MAX_RDATA_COUNT; ++i) {
         EXPECT_EQ(i, rrset_a_empty.getRdataCount());
         rrset_a_empty.addRdata(in::A("192.0.2.1"));
     }
@@ -124,7 +124,7 @@ TEST_F(RRsetTest, isSameKind) {
 
 void
 addRdataTestCommon(const RRset& rrset) {
-    ASSERT_EQ(2, rrset.getRdataCount());
+    ASSERT_EQ(2U, rrset.getRdataCount());
 
     RdataIteratorPtr it = rrset.getRdataIterator(); // cursor is set to the 1st
     EXPECT_FALSE(it->isLast());
@@ -161,12 +161,12 @@ TEST_F(RRsetTest, addRdataPtrMismatched) {
     // Type mismatch
     rrset_a_empty.addRdata(createRdata(RRType::NS(), RRClass::IN(),
                                        "ns.example.com."));
-    EXPECT_EQ(1, rrset_a_empty.getRdataCount());
+    EXPECT_EQ(1U, rrset_a_empty.getRdataCount());
 
     // Class mismatch
     rrset_ch_txt.addRdata(createRdata(RRType::TXT(), RRClass::IN(),
                                       "Test String"));
-    EXPECT_EQ(1, rrset_ch_txt.getRdataCount());
+    EXPECT_EQ(1U, rrset_ch_txt.getRdataCount());
 }
 
 TEST_F(RRsetTest, addRdataString) {
@@ -229,17 +229,17 @@ TEST_F(RRsetTest, getLength) {
     // TTL field = 4 octets
     // RDLENGTH field = 2 octets
     // Total = 18 + 2 + 2 + 4 + 2 = 28 octets
-    EXPECT_EQ(28, rrset_any_a_empty.getLength());
-    EXPECT_EQ(28, rrset_none_a_empty.getLength());
+    EXPECT_EQ(28U, rrset_any_a_empty.getLength());
+    EXPECT_EQ(28U, rrset_none_a_empty.getLength());
 
     // RRset with single RDATA
     // 28 (above) + 4 octets (A RDATA) = 32 octets
     rrset_a_empty.addRdata(in::A("192.0.2.1"));
-    EXPECT_EQ(32, rrset_a_empty.getLength());
+    EXPECT_EQ(32U, rrset_a_empty.getLength());
 
     // 2 A RRs
     rrset_a_empty.addRdata(in::A("192.0.2.2"));
-    EXPECT_EQ(32 + 32, rrset_a_empty.getLength());
+    EXPECT_EQ(32 + 32U, rrset_a_empty.getLength());
 }
 
 TEST_F(RRsetTest, toWireBuffer) {
@@ -363,7 +363,7 @@ TEST_F(RRsetRRSIGTest, addRRsig) {
 
     sp = rrset_a->getRRsig();
     EXPECT_TRUE(sp);
-    EXPECT_EQ(2, sp->getRdataCount());
+    EXPECT_EQ(2U, sp->getRdataCount());
 
     // add to existing RRSIG
     rrset_rrsig = RRsetPtr(new RRset(test_name, RRClass::IN(),
@@ -373,12 +373,12 @@ TEST_F(RRsetRRSIGTest, addRRsig) {
                                          "20000101000000 20000201000000 "
                                          "12345 example.com. FAKEFAKEFAKE"));
     rrset_a->addRRsig(rrset_rrsig);
-    EXPECT_EQ(3, sp->getRdataCount());
+    EXPECT_EQ(3U, sp->getRdataCount());
 }
 
 TEST_F(RRsetRRSIGTest, getRRsigDataCount) {
-    EXPECT_EQ(1, rrset_aaaa->getRRsigDataCount());
-    EXPECT_EQ(0, rrset_a->getRRsigDataCount());
+    EXPECT_EQ(1U, rrset_aaaa->getRRsigDataCount());
+    EXPECT_EQ(0U, rrset_a->getRRsigDataCount());
 
     rrset_rrsig = RRsetPtr(new RRset(test_name, RRClass::IN(),
                                      RRType::RRSIG(), RRTTL(3600)));
@@ -391,10 +391,10 @@ TEST_F(RRsetRRSIGTest, getRRsigDataCount) {
                                          "20000101000000 20000201000000 "
                                          "12345 example.com. FAKEFAKEFAKE"));
     rrset_a->addRRsig(rrset_rrsig);
-    EXPECT_EQ(2, rrset_a->getRRsigDataCount());
+    EXPECT_EQ(2U, rrset_a->getRRsigDataCount());
 
     rrset_a->removeRRsig();
-    EXPECT_EQ(0, rrset_a->getRRsigDataCount());
+    EXPECT_EQ(0U, rrset_a->getRRsigDataCount());
 }
 
 TEST_F(RRsetRRSIGTest, toText) {
@@ -416,7 +416,7 @@ TEST_F(RRsetRRSIGTest, getLength) {
     // Total = 18 + 2 + 2 + 4 + 2 + 4 = 32 octets
 
     // 2 A RRs
-    EXPECT_EQ(32 + 32, rrset_a->getLength());
+    EXPECT_EQ(32 + 32U, rrset_a->getLength());
 
     // RRSIG
     // test.example.com = 1 + 4 + 1 + 7 + 1 + 3 + 1 = 18 octets
@@ -431,11 +431,11 @@ TEST_F(RRsetRRSIGTest, getLength) {
     my_rrsig->addRdata(generic::RRSIG("A 4 3 3600 "
                                       "20000101000000 20000201000000 "
                                       "12345 example.com. FAKEFAKEFAKE"));
-    EXPECT_EQ(68, my_rrsig->getLength());
+    EXPECT_EQ(68U, my_rrsig->getLength());
 
     // RRset with attached RRSIG
     rrset_a->addRRsig(my_rrsig);
 
-    EXPECT_EQ(32 + 32 + 68, rrset_a->getLength());
+    EXPECT_EQ(32 + 32 + 68U, rrset_a->getLength());
 }
 }

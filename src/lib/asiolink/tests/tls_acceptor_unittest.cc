@@ -381,8 +381,8 @@ TEST_F(TLSAcceptorTest, asyncAccept) {
     io_service_->run();
 
     // Make sure that all accepted connections have been recorded.
-    EXPECT_EQ(10, connections_num_);
-    EXPECT_EQ(10, connections_.size());
+    EXPECT_EQ(10U, connections_num_);
+    EXPECT_EQ(10U, connections_.size());
 }
 
 // Check that it is possible to set SO_REUSEADDR flag for the TLSAcceptor.
@@ -458,9 +458,9 @@ TEST_F(TLSAcceptorTest, close) {
     io_service_->run();
 
     // The connections should have been aborted.
-    EXPECT_EQ(1, connections_num_);
-    EXPECT_EQ(1, aborted_connections_num_);
-    EXPECT_EQ(1, connections_.size());
+    EXPECT_EQ(1U, connections_num_);
+    EXPECT_EQ(1U, aborted_connections_num_);
+    EXPECT_EQ(1U, connections_.size());
 }
 
 }

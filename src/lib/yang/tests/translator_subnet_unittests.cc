@@ -98,7 +98,7 @@ TEST_F(TranslatorSubnetsTestIetfV6, getIetf) {
     EXPECT_NO_THROW_LOG(subnets = translator_->getSubnetsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     ASSERT_TRUE(subnets->get(0));
     EXPECT_TRUE(subnet->equals(*subnets->get(0)));
 }
@@ -128,7 +128,7 @@ TEST_F(TranslatorSubnetsTestKeaV6, getKea) {
     EXPECT_NO_THROW_LOG(subnets = translator_->getSubnetsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     EXPECT_TRUE(subnet->equals(*subnets->get(0)));
 }
 
@@ -181,7 +181,7 @@ TEST_F(TranslatorSubnetsTestIetfV6, getPoolsIetf) {
     EXPECT_NO_THROW_LOG(subnets = translator_->getSubnetsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     EXPECT_TRUE(subnet->equals(*subnets->get(0)));
 }
 
@@ -233,7 +233,7 @@ TEST_F(TranslatorSubnetsTestKeaV6, getPoolsKea) {
     EXPECT_NO_THROW_LOG(subnets = translator_->getSubnetsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     EXPECT_TRUE(subnet->equals(*subnets->get(0)));
 }
 
@@ -284,7 +284,7 @@ TEST_F(TranslatorSubnetsTestIetfV6, setIetf) {
     EXPECT_NO_THROW_LOG(subnets = translator_->getSubnetsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     EXPECT_TRUE(subnet->equals(*subnets->get(0)));
 }
 
@@ -305,7 +305,7 @@ TEST_F(TranslatorSubnetsTestKeaV4, setKea) {
     EXPECT_NO_THROW_LOG(subnets = translator_->getSubnetsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     EXPECT_TRUE(subnet->equals(*subnets->get(0)));
 }
 
@@ -339,7 +339,7 @@ TEST_F(TranslatorSubnetsTestIetfV6, setTwoIetf) {
     EXPECT_NO_THROW_LOG(subnets = translator_->getSubnetsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     EXPECT_TRUE(subnet->equals(*subnets->get(0)));
 }
 
@@ -372,7 +372,7 @@ TEST_F(TranslatorSubnetsTestKeaV4, setTwoKea) {
     EXPECT_NO_THROW_LOG(subnets = translator_->getSubnetsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     EXPECT_TRUE(subnet->equals(*subnets->get(0)));
 }
 

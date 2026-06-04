@@ -29,15 +29,15 @@ public:
 //
 
 TEST_F(SerialTest, get_value) {
-    EXPECT_EQ(1, one.getValue());
-    EXPECT_NE(2, one.getValue());
-    EXPECT_EQ(2, two.getValue());
-    EXPECT_EQ(1980120100, date_zero.getValue());
-    EXPECT_EQ(1980120101, date_one.getValue());
-    EXPECT_EQ(0, min.getValue());
+    EXPECT_EQ(1U, one.getValue());
+    EXPECT_NE(2U, one.getValue());
+    EXPECT_EQ(2U, two.getValue());
+    EXPECT_EQ(1980120100U, date_zero.getValue());
+    EXPECT_EQ(1980120101U, date_one.getValue());
+    EXPECT_EQ(0U, min.getValue());
     EXPECT_EQ(4294967295u, max.getValue());
-    EXPECT_EQ(12345, number_low.getValue());
-    EXPECT_EQ(2000000000, number_medium.getValue());
+    EXPECT_EQ(12345U, number_low.getValue());
+    EXPECT_EQ(2000000000U, number_medium.getValue());
     EXPECT_EQ(4000000000u, number_high.getValue());
 }
 

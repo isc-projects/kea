@@ -21,7 +21,7 @@ TEST(StampedElementTest, create) {
     StampedElement element;
 
     // Default identifier is 0.
-    EXPECT_EQ(0, element.getId());
+    EXPECT_EQ(0U, element.getId());
 
     // By default there is no server tag.
     EXPECT_TRUE(element.getServerTags().empty());
@@ -38,7 +38,7 @@ TEST(StampedElementTest, create) {
 TEST(StampedElementTest, setId) {
     StampedElement element;
     element.setId(123);
-    EXPECT_EQ(123, element.getId());
+    EXPECT_EQ(123U, element.getId());
 }
 
 // Tests that the modification timestamp can be set to an arbitrary
@@ -74,11 +74,11 @@ TEST(StampedElementTest, update) {
 TEST(StampedElementTest, setServerTag) {
     StampedElement element;
     element.setServerTag("foo");
-    EXPECT_EQ(1, element.getServerTags().size());
+    EXPECT_EQ(1U, element.getServerTags().size());
     EXPECT_EQ("foo", element.getServerTags().begin()->get());
 
     element.setServerTag("bar");
-    EXPECT_EQ(2, element.getServerTags().size());
+    EXPECT_EQ(2U, element.getServerTags().size());
 
     EXPECT_TRUE(element.hasServerTag(ServerTag("foo")));
     EXPECT_TRUE(element.hasServerTag(ServerTag("bar")));
@@ -96,16 +96,16 @@ TEST(StampedElementTest, delServerTag) {
     element.setServerTag("foo");
     element.setServerTag("bar");
 
-    ASSERT_EQ(2, element.getServerTags().size());
+    ASSERT_EQ(2U, element.getServerTags().size());
     EXPECT_TRUE(element.hasServerTag(ServerTag("foo")));
     EXPECT_TRUE(element.hasServerTag(ServerTag("bar")));
 
     EXPECT_NO_THROW(element.delServerTag("foo"));
-    ASSERT_EQ(1, element.getServerTags().size());
+    ASSERT_EQ(1U, element.getServerTags().size());
     EXPECT_TRUE(element.hasServerTag(ServerTag("bar")));
 
     EXPECT_NO_THROW(element.delServerTag("bar"));
-    EXPECT_EQ(0, element.getServerTags().size());
+    EXPECT_EQ(0U, element.getServerTags().size());
     EXPECT_THROW(element.delServerTag("bar"), isc::NotFound);
 }
 
@@ -121,7 +121,7 @@ TEST(StampedElementTest, getMetadata) {
     auto server_tags_element = metadata->get("server-tags");
     ASSERT_TRUE(server_tags_element);
     EXPECT_EQ(Element::list, server_tags_element->getType());
-    EXPECT_EQ(1, server_tags_element->size());
+    EXPECT_EQ(1U, server_tags_element->size());
 
     auto server_tag_element = server_tags_element->get(0);
     ASSERT_TRUE(server_tag_element);

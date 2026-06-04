@@ -181,22 +181,22 @@ TEST_F(DatabaseConnectionCallbackTest, dbLostCallback) {
     ASSERT_TRUE(db_reconnect_ctl_);
     ASSERT_EQ("test", db_reconnect_ctl_->backendType());
     ASSERT_EQ("timer", db_reconnect_ctl_->timerName());
-    ASSERT_EQ(3, db_reconnect_ctl_->maxRetries());
-    ASSERT_EQ(3, db_reconnect_ctl_->retriesLeft());
-    EXPECT_EQ(60000, db_reconnect_ctl_->retryInterval());
+    ASSERT_EQ(3U, db_reconnect_ctl_->maxRetries());
+    ASSERT_EQ(3U, db_reconnect_ctl_->retriesLeft());
+    EXPECT_EQ(60000U, db_reconnect_ctl_->retryInterval());
 
     /// Verify that checkRetries() correctly decrements
     /// down to zero, and that retriesLeft() returns
     /// the correct value.
-    for (int i = 3; i > 1 ; --i) {
+    for (unsigned i = 3; i > 1 ; --i) {
         ASSERT_EQ(i, db_reconnect_ctl_->retriesLeft());
         ASSERT_TRUE(db_reconnect_ctl_->checkRetries());
     }
 
     /// Retries are exhausted, verify that's reflected.
     EXPECT_FALSE(db_reconnect_ctl_->checkRetries());
-    EXPECT_EQ(0, db_reconnect_ctl_->retriesLeft());
-    EXPECT_EQ(3, db_reconnect_ctl_->maxRetries());
+    EXPECT_EQ(0U, db_reconnect_ctl_->retriesLeft());
+    EXPECT_EQ(3U, db_reconnect_ctl_->maxRetries());
 }
 
 /// @brief dbRecoveredCallback
@@ -229,22 +229,22 @@ TEST_F(DatabaseConnectionCallbackTest, dbRecoveredCallback) {
     ASSERT_TRUE(db_reconnect_ctl_);
     ASSERT_EQ("test", db_reconnect_ctl_->backendType());
     ASSERT_EQ("timer", db_reconnect_ctl_->timerName());
-    ASSERT_EQ(3, db_reconnect_ctl_->maxRetries());
-    ASSERT_EQ(3, db_reconnect_ctl_->retriesLeft());
-    EXPECT_EQ(60000, db_reconnect_ctl_->retryInterval());
+    ASSERT_EQ(3U, db_reconnect_ctl_->maxRetries());
+    ASSERT_EQ(3U, db_reconnect_ctl_->retriesLeft());
+    EXPECT_EQ(60000U, db_reconnect_ctl_->retryInterval());
 
     /// Verify that checkRetries() correctly decrements
     /// down to zero, and that retriesLeft() returns
     /// the correct value.
-    for (int i = 3; i > 1 ; --i) {
+    for (unsigned i = 3; i > 1 ; --i) {
         ASSERT_EQ(i, db_reconnect_ctl_->retriesLeft());
         ASSERT_TRUE(db_reconnect_ctl_->checkRetries());
     }
 
     /// Retries are exhausted, verify that's reflected.
     EXPECT_FALSE(db_reconnect_ctl_->checkRetries());
-    EXPECT_EQ(0, db_reconnect_ctl_->retriesLeft());
-    EXPECT_EQ(3, db_reconnect_ctl_->maxRetries());
+    EXPECT_EQ(0U, db_reconnect_ctl_->retriesLeft());
+    EXPECT_EQ(3U, db_reconnect_ctl_->maxRetries());
 
     /// Reset the reconnect ctl object to verify that it is set again.
     db_reconnect_ctl_.reset();
@@ -256,11 +256,11 @@ TEST_F(DatabaseConnectionCallbackTest, dbRecoveredCallback) {
     ASSERT_TRUE(db_reconnect_ctl_);
     ASSERT_EQ("test", db_reconnect_ctl_->backendType());
     ASSERT_EQ("timer", db_reconnect_ctl_->timerName());
-    EXPECT_EQ(60000, db_reconnect_ctl_->retryInterval());
+    EXPECT_EQ(60000U, db_reconnect_ctl_->retryInterval());
 
     /// Retries are reset, verify that's reflected.
-    EXPECT_EQ(3, db_reconnect_ctl_->retriesLeft());
-    EXPECT_EQ(3, db_reconnect_ctl_->maxRetries());
+    EXPECT_EQ(3U, db_reconnect_ctl_->retriesLeft());
+    EXPECT_EQ(3U, db_reconnect_ctl_->maxRetries());
 }
 
 /// @brief dbFailedCallback
@@ -292,22 +292,22 @@ TEST_F(DatabaseConnectionCallbackTest, dbFailedCallback) {
     ASSERT_TRUE(db_reconnect_ctl_);
     ASSERT_EQ("test", db_reconnect_ctl_->backendType());
     ASSERT_EQ("timer", db_reconnect_ctl_->timerName());
-    ASSERT_EQ(3, db_reconnect_ctl_->maxRetries());
-    ASSERT_EQ(3, db_reconnect_ctl_->retriesLeft());
-    EXPECT_EQ(60000, db_reconnect_ctl_->retryInterval());
+    ASSERT_EQ(3U, db_reconnect_ctl_->maxRetries());
+    ASSERT_EQ(3U, db_reconnect_ctl_->retriesLeft());
+    EXPECT_EQ(60000U, db_reconnect_ctl_->retryInterval());
 
     /// Verify that checkRetries() correctly decrements
     /// down to zero, and that retriesLeft() returns
     /// the correct value.
-    for (int i = 3; i > 1 ; --i) {
+    for (unsigned i = 3; i > 1 ; --i) {
         ASSERT_EQ(i, db_reconnect_ctl_->retriesLeft());
         ASSERT_TRUE(db_reconnect_ctl_->checkRetries());
     }
 
     /// Retries are exhausted, verify that's reflected.
     EXPECT_FALSE(db_reconnect_ctl_->checkRetries());
-    EXPECT_EQ(0, db_reconnect_ctl_->retriesLeft());
-    EXPECT_EQ(3, db_reconnect_ctl_->maxRetries());
+    EXPECT_EQ(0U, db_reconnect_ctl_->retriesLeft());
+    EXPECT_EQ(3U, db_reconnect_ctl_->maxRetries());
 
     /// Reset the reconnect ctl object to verify that it is set again.
     db_reconnect_ctl_.reset();
@@ -319,11 +319,11 @@ TEST_F(DatabaseConnectionCallbackTest, dbFailedCallback) {
     ASSERT_TRUE(db_reconnect_ctl_);
     ASSERT_EQ("test", db_reconnect_ctl_->backendType());
     ASSERT_EQ("timer", db_reconnect_ctl_->timerName());
-    EXPECT_EQ(60000, db_reconnect_ctl_->retryInterval());
+    EXPECT_EQ(60000U, db_reconnect_ctl_->retryInterval());
 
     /// Retries are reset, verify that's reflected.
-    EXPECT_EQ(3, db_reconnect_ctl_->retriesLeft());
-    EXPECT_EQ(3, db_reconnect_ctl_->maxRetries());
+    EXPECT_EQ(3U, db_reconnect_ctl_->retriesLeft());
+    EXPECT_EQ(3U, db_reconnect_ctl_->maxRetries());
 }
 
 // This test checks that a database access string can be parsed correctly.
@@ -332,7 +332,7 @@ TEST(DatabaseConnectionTest, parse) {
     DatabaseConnection::ParameterMap parameters = DatabaseConnection::parse(
         "user=me password='forbidden' name=kea somethingelse= type=mysql");
 
-    EXPECT_EQ(5, parameters.size());
+    EXPECT_EQ(5U, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
     EXPECT_EQ("forbidden", parameters["password"]);
     EXPECT_EQ("kea", parameters["name"]);
@@ -348,7 +348,7 @@ TEST(DatabaseConnectionTest, parsePasswordWithWhitespace) {
     DatabaseConnection::ParameterMap parameters = DatabaseConnection::parse(
         "user=me password='forbidden with space' name=kea type=mysql");
 
-    EXPECT_EQ(4, parameters.size());
+    EXPECT_EQ(4U, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
     EXPECT_EQ("forbidden with space", parameters["password"]);
     EXPECT_EQ("kea", parameters["name"]);
@@ -357,7 +357,7 @@ TEST(DatabaseConnectionTest, parsePasswordWithWhitespace) {
     // Case 2: password at the end.
     parameters = DatabaseConnection::parse("user=me name=kea type=mysql password='forbidden with space'");
 
-    EXPECT_EQ(4, parameters.size());
+    EXPECT_EQ(4U, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
     EXPECT_EQ("forbidden with space", parameters["password"]);
     EXPECT_EQ("kea", parameters["name"]);
@@ -366,7 +366,7 @@ TEST(DatabaseConnectionTest, parsePasswordWithWhitespace) {
     // Case 3: Empty password at the end.
     parameters = DatabaseConnection::parse("user=me name=kea type=mysql password=''");
 
-    EXPECT_EQ(4, parameters.size());
+    EXPECT_EQ(4U, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
     EXPECT_EQ("", parameters["password"]);
     EXPECT_EQ("kea", parameters["name"]);
@@ -375,7 +375,7 @@ TEST(DatabaseConnectionTest, parsePasswordWithWhitespace) {
     // Case 4: password at the beginning.
     parameters = DatabaseConnection::parse("password='forbidden with space' user=me name=kea type=mysql");
 
-    EXPECT_EQ(4, parameters.size());
+    EXPECT_EQ(4U, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
     EXPECT_EQ("forbidden with space", parameters["password"]);
     EXPECT_EQ("kea", parameters["name"]);
@@ -384,7 +384,7 @@ TEST(DatabaseConnectionTest, parsePasswordWithWhitespace) {
     // Case 5: Empty password at the beginning.
     parameters = DatabaseConnection::parse("password='' user=me name=kea type=mysql");
 
-    EXPECT_EQ(4, parameters.size());
+    EXPECT_EQ(4U, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
     EXPECT_EQ("", parameters["password"]);
     EXPECT_EQ("kea", parameters["name"]);
@@ -394,7 +394,7 @@ TEST(DatabaseConnectionTest, parsePasswordWithWhitespace) {
     // Case 6: Password is a sole parameter.
     parameters = DatabaseConnection::parse("password='forbidden with spaces'");
 
-    EXPECT_EQ(1, parameters.size());
+    EXPECT_EQ(1U, parameters.size());
     EXPECT_EQ("forbidden with spaces", parameters["password"]);
 }
 
@@ -404,7 +404,7 @@ TEST(DatabaseConnectionTest, parseInvalid) {
     // No tokens in the string, so we expect no parameters
     std::string invalid = "";
     DatabaseConnection::ParameterMap parameters = DatabaseConnection::parse(invalid);
-    EXPECT_EQ(0, parameters.size());
+    EXPECT_EQ(0U, parameters.size());
 
     // With spaces, there are some tokens so we expect invalid parameter
     // as there are no equals signs.
@@ -422,7 +422,7 @@ TEST(DatabaseConnectionTest, parseInvalid) {
     // expected to be nothing.
     invalid = "=";
     parameters = DatabaseConnection::parse(invalid);
-    EXPECT_EQ(1, parameters.size());
+    EXPECT_EQ(1U, parameters.size());
     EXPECT_EQ("", parameters[""]);
 }
 
@@ -441,7 +441,7 @@ TEST(DatabaseConnectionTest, redactAccessString) {
 
     DatabaseConnection::ParameterMap parameters =
         DatabaseConnection::parse("user=me password=forbidden name=kea type=mysql");
-    EXPECT_EQ(4, parameters.size());
+    EXPECT_EQ(4U, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
     EXPECT_EQ("forbidden", parameters["password"]);
     EXPECT_EQ("kea", parameters["name"]);
@@ -452,7 +452,7 @@ TEST(DatabaseConnectionTest, redactAccessString) {
     std::string redacted = DatabaseConnection::redactedAccessString(parameters);
     parameters = DatabaseConnection::parse(redacted);
 
-    EXPECT_EQ(4, parameters.size());
+    EXPECT_EQ(4U, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
     EXPECT_EQ("*****", parameters["password"]);
     EXPECT_EQ("kea", parameters["name"]);
@@ -467,7 +467,7 @@ TEST(DatabaseConnectionTest, redactAccessStringEmptyPassword) {
 
     DatabaseConnection::ParameterMap parameters =
         DatabaseConnection::parse("user=me name=kea type=mysql password=");
-    EXPECT_EQ(4, parameters.size());
+    EXPECT_EQ(4U, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
     EXPECT_EQ("", parameters["password"]);
     EXPECT_EQ("kea", parameters["name"]);
@@ -478,7 +478,7 @@ TEST(DatabaseConnectionTest, redactAccessStringEmptyPassword) {
     std::string redacted = DatabaseConnection::redactedAccessString(parameters);
     parameters = DatabaseConnection::parse(redacted);
 
-    EXPECT_EQ(4, parameters.size());
+    EXPECT_EQ(4U, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
     EXPECT_EQ("*****", parameters["password"]);
     EXPECT_EQ("kea", parameters["name"]);
@@ -487,7 +487,7 @@ TEST(DatabaseConnectionTest, redactAccessStringEmptyPassword) {
     // ... and again to check that the position of the empty password in the
     // string does not matter.
     parameters = DatabaseConnection::parse("user=me password= name=kea type=mysql");
-    EXPECT_EQ(4, parameters.size());
+    EXPECT_EQ(4U, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
     EXPECT_EQ("", parameters["password"]);
     EXPECT_EQ("kea", parameters["name"]);
@@ -496,7 +496,7 @@ TEST(DatabaseConnectionTest, redactAccessStringEmptyPassword) {
     redacted = DatabaseConnection::redactedAccessString(parameters);
     parameters = DatabaseConnection::parse(redacted);
 
-    EXPECT_EQ(4, parameters.size());
+    EXPECT_EQ(4U, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
     EXPECT_EQ("*****", parameters["password"]);
     EXPECT_EQ("kea", parameters["name"]);
@@ -511,7 +511,7 @@ TEST(DatabaseConnectionTest, redactAccessStringNoPassword) {
 
     DatabaseConnection::ParameterMap parameters =
         DatabaseConnection::parse("user=me name=kea type=mysql");
-    EXPECT_EQ(3, parameters.size());
+    EXPECT_EQ(3U, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
     EXPECT_EQ("kea", parameters["name"]);
     EXPECT_EQ("mysql", parameters["type"]);
@@ -521,7 +521,7 @@ TEST(DatabaseConnectionTest, redactAccessStringNoPassword) {
     std::string redacted = DatabaseConnection::redactedAccessString(parameters);
     parameters = DatabaseConnection::parse(redacted);
 
-    EXPECT_EQ(3, parameters.size());
+    EXPECT_EQ(3U, parameters.size());
     EXPECT_EQ("me", parameters["user"]);
     EXPECT_EQ("kea", parameters["name"]);
     EXPECT_EQ("mysql", parameters["type"]);
@@ -648,7 +648,7 @@ TEST(DatabaseConnection, toElementDbAccessStringEmpty) {
     ConstElementPtr elements;
     ASSERT_NO_THROW(elements = DatabaseConnection::toElementDbAccessString(""));
     ASSERT_TRUE(elements);
-    ASSERT_EQ(0, elements->size());
+    ASSERT_EQ(0U, elements->size());
 }
 
 // Check that the test mode works as expected.

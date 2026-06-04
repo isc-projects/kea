@@ -26,8 +26,8 @@ TEST(OutputOptionTest, Initialization) {
     EXPECT_TRUE(option.flush);
     EXPECT_EQ(string("LOCAL0"), option.facility);
     EXPECT_EQ(string(""), option.filename);
-    EXPECT_EQ(0, option.maxsize);
-    EXPECT_EQ(0, option.maxver);
+    EXPECT_EQ(0U, option.maxsize);
+    EXPECT_EQ(0U, option.maxver);
 }
 
 TEST(OutputOption, getDestination) {

@@ -347,7 +347,7 @@ TEST_F(DStubControllerTest, ioSignals) {
 
     // Verify that we caught the signals as expected.
     std::vector<int>& signals = controller_->getProcessedSignals();
-    ASSERT_EQ(3, signals.size());
+    ASSERT_EQ(3U, signals.size());
     EXPECT_EQ(SIGHUP, signals[0]);
     EXPECT_EQ(SIGINT, signals[1]);
     EXPECT_EQ(SIGTERM, signals[2]);
@@ -373,7 +373,7 @@ TEST_F(DStubControllerTest, invalidConfigReload) {
 
     // Verify that we saw the signal.
     std::vector<int>& signals = controller_->getProcessedSignals();
-    ASSERT_EQ(1, signals.size());
+    ASSERT_EQ(1U, signals.size());
     EXPECT_EQ(SIGHUP, signals[0]);
 }
 
@@ -394,7 +394,7 @@ TEST_F(DStubControllerTest, alternateParsing) {
 
     // Verify that we saw the signal.
     std::vector<int>& signals = controller_->getProcessedSignals();
-    ASSERT_EQ(1, signals.size());
+    ASSERT_EQ(1U, signals.size());
     EXPECT_EQ(SIGHUP, signals[0]);
 }
 
@@ -415,7 +415,7 @@ TEST_F(DStubControllerTest, validConfigReload) {
 
     // Verify that we saw two occurrences of the signal.
     std::vector<int>& signals = controller_->getProcessedSignals();
-    ASSERT_EQ(2, signals.size());
+    ASSERT_EQ(2U, signals.size());
     EXPECT_EQ(SIGHUP, signals[0]);
     EXPECT_EQ(SIGHUP, signals[1]);
 }
@@ -431,7 +431,7 @@ TEST_F(DStubControllerTest, sigintShutdown) {
 
     // Verify that we saw the signal.
     std::vector<int>& signals = controller_->getProcessedSignals();
-    ASSERT_EQ(1, signals.size());
+    ASSERT_EQ(1U, signals.size());
     EXPECT_EQ(SIGINT, signals[0]);
 
     // Duration should be significantly less than our max run time.
@@ -459,7 +459,7 @@ TEST_F(DStubControllerTest, sigtermShutdown) {
 
     // Verify that we saw the signal.
     std::vector<int>& signals = controller_->getProcessedSignals();
-    ASSERT_EQ(1, signals.size());
+    ASSERT_EQ(1U, signals.size());
     EXPECT_EQ(SIGTERM, signals[0]);
 
     // Duration should be significantly less than our max run time.

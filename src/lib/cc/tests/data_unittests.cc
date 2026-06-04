@@ -785,7 +785,7 @@ TEST(Element, mapElement) {
                        "c123456789abcdefd123456789abcdefe123456789abcdef"
                        "f123456789abcde");
 
-    EXPECT_EQ(255, long_maptag.length()); // check prerequisite
+    EXPECT_EQ(255U, long_maptag.length()); // check prerequisite
     el = Element::fromJSON("{ \"" + long_maptag + "\": \"bar\"}");
     EXPECT_EQ("bar", el->find(long_maptag)->stringValue());
 
@@ -1326,72 +1326,72 @@ TEST(Element, getPosition) {
     // Element "a"
     ConstElementPtr level1_el = top->get("a");
     ASSERT_TRUE(level1_el);
-    EXPECT_EQ(2, level1_el->getPosition().line_);
-    EXPECT_EQ(11, level1_el->getPosition().pos_);
+    EXPECT_EQ(2U, level1_el->getPosition().line_);
+    EXPECT_EQ(11U, level1_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level1_el->getPosition().file_);
 
     // Element "b"
     level1_el = top->get("b");
     ASSERT_TRUE(level1_el);
-    EXPECT_EQ(3, level1_el->getPosition().line_);
-    EXPECT_EQ(9, level1_el->getPosition().pos_);
+    EXPECT_EQ(3U, level1_el->getPosition().line_);
+    EXPECT_EQ(9U, level1_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level1_el->getPosition().file_);
 
     // Element "cy"
     level1_el = top->get("cy");
     ASSERT_TRUE(level1_el);
-    EXPECT_EQ(4, level1_el->getPosition().line_);
-    EXPECT_EQ(11, level1_el->getPosition().pos_);
+    EXPECT_EQ(4U, level1_el->getPosition().line_);
+    EXPECT_EQ(11U, level1_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level1_el->getPosition().file_);
 
     // Element "dyz"
     level1_el = top->get("dyz");
     ASSERT_TRUE(level1_el);
-    EXPECT_EQ(5, level1_el->getPosition().line_);
-    EXPECT_EQ(13, level1_el->getPosition().pos_);
+    EXPECT_EQ(5U, level1_el->getPosition().line_);
+    EXPECT_EQ(13U, level1_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level1_el->getPosition().file_);
 
     // Element "e" is a sub element of "dyz".
     ConstElementPtr level2_el = level1_el->get("e");
     ASSERT_TRUE(level2_el);
-    EXPECT_EQ(7, level2_el->getPosition().line_);
-    EXPECT_EQ(12, level2_el->getPosition().pos_);
+    EXPECT_EQ(7U, level2_el->getPosition().line_);
+    EXPECT_EQ(12U, level2_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level2_el->getPosition().file_);
 
     // Element "f" is also a sub element of "dyz"
     level2_el = level1_el->get("f");
     ASSERT_TRUE(level2_el);
-    EXPECT_EQ(8, level2_el->getPosition().line_);
-    EXPECT_EQ(14, level2_el->getPosition().pos_);
+    EXPECT_EQ(8U, level2_el->getPosition().line_);
+    EXPECT_EQ(14U, level2_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level2_el->getPosition().file_);
 
     // Element "g" is a list.
     level1_el = top->get("g");
     ASSERT_TRUE(level1_el);
-    EXPECT_EQ(11, level1_el->getPosition().line_);
+    EXPECT_EQ(11U, level1_el->getPosition().line_);
     // Position indicates where the values start (excluding the "[" character)"
-    EXPECT_EQ(11, level1_el->getPosition().pos_);
+    EXPECT_EQ(11U, level1_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level1_el->getPosition().file_);
 
     // First element from the list.
     level2_el = level1_el->get(0);
     ASSERT_TRUE(level2_el);
-    EXPECT_EQ(11, level2_el->getPosition().line_);
-    EXPECT_EQ(12, level2_el->getPosition().pos_);
+    EXPECT_EQ(11U, level2_el->getPosition().line_);
+    EXPECT_EQ(12U, level2_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level2_el->getPosition().file_);
 
     // Second element from the list.
     level2_el = level1_el->get(1);
     ASSERT_TRUE(level2_el);
-    EXPECT_EQ(11, level2_el->getPosition().line_);
-    EXPECT_EQ(15, level2_el->getPosition().pos_);
+    EXPECT_EQ(11U, level2_el->getPosition().line_);
+    EXPECT_EQ(15U, level2_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level2_el->getPosition().file_);
 
     // Third element from the list.
     level2_el = level1_el->get(2);
     ASSERT_TRUE(level2_el);
-    EXPECT_EQ(12, level2_el->getPosition().line_);
-    EXPECT_EQ(14, level2_el->getPosition().pos_);
+    EXPECT_EQ(12U, level2_el->getPosition().line_);
+    EXPECT_EQ(14U, level2_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level2_el->getPosition().file_);
 
 }
@@ -1418,36 +1418,36 @@ TEST(Element, getPositionCommented) {
     // Element "a"
     ConstElementPtr level1_el = top->get("a");
     ASSERT_TRUE(level1_el);
-    EXPECT_EQ(2, level1_el->getPosition().line_);
-    EXPECT_EQ(11, level1_el->getPosition().pos_);
+    EXPECT_EQ(2U, level1_el->getPosition().line_);
+    EXPECT_EQ(11U, level1_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level1_el->getPosition().file_);
 
     // Element "cy"
     level1_el = top->get("cy");
     ASSERT_TRUE(level1_el);
-    EXPECT_EQ(4, level1_el->getPosition().line_);
-    EXPECT_EQ(11, level1_el->getPosition().pos_);
+    EXPECT_EQ(4U, level1_el->getPosition().line_);
+    EXPECT_EQ(11U, level1_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level1_el->getPosition().file_);
 
     // Element "dyz"
     level1_el = top->get("dyz");
     ASSERT_TRUE(level1_el);
-    EXPECT_EQ(5, level1_el->getPosition().line_);
-    EXPECT_EQ(13, level1_el->getPosition().pos_);
+    EXPECT_EQ(5U, level1_el->getPosition().line_);
+    EXPECT_EQ(13U, level1_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level1_el->getPosition().file_);
 
     // Element "e" is a sub element of "dyz".
     ConstElementPtr level2_el = level1_el->get("e");
     ASSERT_TRUE(level2_el);
-    EXPECT_EQ(7, level2_el->getPosition().line_);
-    EXPECT_EQ(12, level2_el->getPosition().pos_);
+    EXPECT_EQ(7U, level2_el->getPosition().line_);
+    EXPECT_EQ(12U, level2_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level2_el->getPosition().file_);
 
     // Element "f" is also a sub element of "dyz"
     level2_el = level1_el->get("f");
     ASSERT_TRUE(level2_el);
-    EXPECT_EQ(8, level2_el->getPosition().line_);
-    EXPECT_EQ(14, level2_el->getPosition().pos_);
+    EXPECT_EQ(8U, level2_el->getPosition().line_);
+    EXPECT_EQ(14U, level2_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level2_el->getPosition().file_);
 }
 
@@ -1508,7 +1508,7 @@ TEST(Element, sortMaps) {
     l->add(e1);
     l->add(e2);
     boost::dynamic_pointer_cast<ListElement>(l)->sort("id");
-    ASSERT_EQ(l->size(), 2);
+    ASSERT_EQ(l->size(), 2U);
     EXPECT_EQ(*l->get(0), *e1);
     EXPECT_EQ(*l->get(1), *e2);
 
@@ -1517,7 +1517,7 @@ TEST(Element, sortMaps) {
     l->add(e2);
     l->add(e1);
     boost::dynamic_pointer_cast<ListElement>(l)->sort("id");
-    ASSERT_EQ(l->size(), 2);
+    ASSERT_EQ(l->size(), 2U);
     EXPECT_EQ(*l->get(0), *e1);
     EXPECT_EQ(*l->get(1), *e2);
 
@@ -1526,7 +1526,7 @@ TEST(Element, sortMaps) {
     l->add(e1);
     l->add(e2);
     boost::dynamic_pointer_cast<ListElement>(l)->sort("subnet");
-    ASSERT_EQ(l->size(), 2);
+    ASSERT_EQ(l->size(), 2U);
     EXPECT_EQ(*l->get(0), *e2);
     EXPECT_EQ(*l->get(1), *e1);
 
@@ -1535,7 +1535,7 @@ TEST(Element, sortMaps) {
     l->add(e2);
     l->add(e1);
     boost::dynamic_pointer_cast<ListElement>(l)->sort("subnet");
-    ASSERT_EQ(l->size(), 2);
+    ASSERT_EQ(l->size(), 2U);
     EXPECT_EQ(*l->get(0), *e2);
     EXPECT_EQ(*l->get(1), *e1);
 }
@@ -3003,11 +3003,11 @@ TEST(Element, sharedTreeList) {
     ConstElementPtr t10 = mkSharedLists(10);
     for (unsigned i = 0; i < 20; ++i) {
         ConstElementPtr t = copy(t10, i);
-        EXPECT_EQ(1023, countTotal(t));
+        EXPECT_EQ(1023U, countTotal(t));
         if (i == 0) {
             EXPECT_EQ(10U, countShared(t));
         } else if (i >= 10) {
-            EXPECT_EQ(1023, countShared(t));
+            EXPECT_EQ(1023U, countShared(t));
         } else {
             EXPECT_EQ((1U << (i + 1)) + (9U - (i + 1)), countShared(t));
         }
@@ -3019,11 +3019,11 @@ TEST(Element, sharedTreeMap) {
     ConstElementPtr t10 = mkSharedMaps(10);
     for (unsigned i = 0; i < 20; ++i) {
         ConstElementPtr t = copy(t10, i);
-        EXPECT_EQ(1023, countTotal(t));
+        EXPECT_EQ(1023U, countTotal(t));
         if (i == 0) {
             EXPECT_EQ(10U, countShared(t));
         } else if (i >= 10) {
-            EXPECT_EQ(1023, countShared(t));
+            EXPECT_EQ(1023U, countShared(t));
         } else {
             EXPECT_EQ((1U << (i + 1)) + (9U - (i + 1)), countShared(t));
         }

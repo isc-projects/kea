@@ -158,7 +158,7 @@ TEST_F(SimpleParserTest, deriveParams) {
     size_t num;
     EXPECT_NO_THROW(num = SimpleParser::deriveParams(global, subnet,
                                                      SAMPLE_INHERITS));
-    EXPECT_EQ(3, num);
+    EXPECT_EQ(3U, num);
 
     // Check the values. 3 of them are inherited, while the fourth one
     // was already defined in the subnet, so should not be inherited.
@@ -177,7 +177,7 @@ TEST_F(SimpleParserTest, setDefaults) {
     EXPECT_NO_THROW(num = SimpleParser::setDefaults(empty, SAMPLE_DEFAULTS));
 
     // We expect at least 4 parameters to be inserted.
-    EXPECT_GE(num, 3);
+    EXPECT_GE(num, 3U);
 
     checkIntegerValue(empty, "valid-lifetime", 7200);
     checkIntegerValue(empty, "preferred-lifetime", 3600);
@@ -195,10 +195,10 @@ TEST_F(SimpleParserTest, setListDefaults) {
 
     // We expect at least 12 parameters to be inserted (3 entries, with
     // 4 parameters inserted in each)
-    EXPECT_EQ(12, num);
+    EXPECT_EQ(12U, num);
 
     ASSERT_EQ(Element::list, empty->getType());
-    ASSERT_EQ(3, empty->size());
+    ASSERT_EQ(3U, empty->size());
 
     ConstElementPtr first = empty->get(0);
     ConstElementPtr second = empty->get(1);
@@ -243,7 +243,7 @@ TEST_F(SimpleParserTest, getIntType) {
     ElementPtr hundred = Element::fromJSON("{ \"foo\": 100 }");
     uint8_t val = 0;
     EXPECT_NO_THROW(val = parser.getUint8(hundred, "foo"));
-    EXPECT_EQ(100, val);
+    EXPECT_EQ(100U, val);
 }
 
 // This test exercises the getInteger with range checking
@@ -255,7 +255,7 @@ TEST_F(SimpleParserTest, getInteger) {
 
     // Positive case: we expect value in range 0..200. All ok.
     EXPECT_NO_THROW(x = SimpleParser::getInteger(json, "bar", 0, 200));
-    EXPECT_EQ(100, x);
+    EXPECT_EQ(100U, x);
 
     // Border checks: 100 for 100..200 range is still ok.
     EXPECT_NO_THROW(x = SimpleParser::getInteger(json, "bar", 100, 200));

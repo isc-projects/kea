@@ -37,13 +37,13 @@ TEST(IOService, post) {
     service.runOne();
     service.runOne();
     // Both events were called in the right order
-    ASSERT_EQ(2, called.size());
+    ASSERT_EQ(2U, called.size());
     EXPECT_EQ(1, called[0]);
     EXPECT_EQ(2, called[1]);
 
     // Test that poll() executes the last handler.
     service.poll();
-    ASSERT_EQ(3, called.size());
+    ASSERT_EQ(3U, called.size());
     EXPECT_EQ(3, called[2]);
 }
 
@@ -72,10 +72,10 @@ TEST(IOService, runOneFor) {
     }
 
     // Should have had at least two time outs.
-    EXPECT_GE(time_outs, 2);
+    EXPECT_GE(time_outs, 2U);
 
     // Timer should have fired.
-    EXPECT_EQ(timer_fired, 1);
+    EXPECT_EQ(timer_fired, 1U);
 }
 
 // Verify that runOneFor() handles service stop correctly.
@@ -107,7 +107,7 @@ TEST(IOService, runOneForStopped) {
 
     // Handle count should be 0, we should not have timed out, and
     // the timer should not have fired.
-    EXPECT_EQ(0, cnt);
+    EXPECT_EQ(0U, cnt);
     EXPECT_FALSE(timed_out);
     EXPECT_FALSE(timer_fired);
 

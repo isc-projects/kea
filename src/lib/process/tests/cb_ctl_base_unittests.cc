@@ -440,7 +440,7 @@ TEST_F(CBControlBaseTest, reset) {
     cb_ctl_.setLastAuditRevisionTime(timestamps_["tomorrow"]);
     cb_ctl_.reset();
     EXPECT_EQ(cb_ctl_.getInitialAuditRevisionTime(), cb_ctl_.getLastAuditRevisionTime());
-    EXPECT_EQ(0, cb_ctl_.getLastAuditRevisionId());
+    EXPECT_EQ(0U, cb_ctl_.getLastAuditRevisionId());
 }
 
 // This test verifies that it is correctly determined what entries the
@@ -474,11 +474,11 @@ TEST_F(CBControlBaseTest, fetchConfigElement) {
                                      6789, "added audit entry"));
     audit_entries.insert(audit_entry);
     updated = cb_ctl_.fetchConfigElement(audit_entries, "my_object_type");
-    ASSERT_EQ(1, updated.size());
+    ASSERT_EQ(1U, updated.size());
     AuditEntryPtr updated_entry = (*updated.begin());
     ASSERT_TRUE(updated_entry);
     EXPECT_EQ("my_object_type", updated_entry->getObjectType());
-    EXPECT_EQ(5678, updated_entry->getObjectId());
+    EXPECT_EQ(5678U, updated_entry->getObjectId());
     EXPECT_EQ(AuditEntry::ModificationType::CREATE, updated_entry->getModificationType());
     EXPECT_TRUE(hasObjectId(audit_entries, 5678));
     EXPECT_TRUE(hasObjectId(updated, 5678));
@@ -490,12 +490,12 @@ TEST_F(CBControlBaseTest, fetchConfigElement) {
                                      6790, "added audit entry"));
     audit_entries.insert(audit_entry);
     updated = cb_ctl_.fetchConfigElement(audit_entries, "my_object_type");
-    EXPECT_EQ(2, updated.size());
+    EXPECT_EQ(2U, updated.size());
     bool saw_create = false;
     bool saw_update =  false;
     for (auto const& entry : updated) {
         EXPECT_EQ("my_object_type", entry->getObjectType());
-        EXPECT_EQ(5678, entry->getObjectId());
+        EXPECT_EQ(5678U, entry->getObjectId());
         if (AuditEntry::ModificationType::CREATE == entry->getModificationType()) {
             EXPECT_FALSE(saw_create);
             saw_create = true;
@@ -549,18 +549,18 @@ TEST_F(CBControlBaseTest, fetchAll) {
     ASSERT_NO_THROW(cb_ctl_.databaseConfigDisconnect());
 
     // Verify that various indicators are set to their initial values.
-    ASSERT_EQ(0, cb_ctl_.getMergesNum());
+    ASSERT_EQ(0U, cb_ctl_.getMergesNum());
     ASSERT_EQ(BackendSelector::Type::MYSQL, cb_ctl_.getBackendSelector().getBackendType());
     ASSERT_EQ(ServerSelector::Type::UNASSIGNED, cb_ctl_.getServerSelector().getType());
     ASSERT_EQ(-1, cb_ctl_.getAuditEntriesNum());
     EXPECT_EQ(cb_ctl_.getInitialAuditRevisionTime(), cb_ctl_.getLastAuditRevisionTime());
-    EXPECT_EQ(0, cb_ctl_.getLastAuditRevisionId());
+    EXPECT_EQ(0U, cb_ctl_.getLastAuditRevisionId());
 
     // Connect to the database and fetch the configuration.
     ASSERT_NO_THROW(cb_ctl_.databaseConfigFetch(config_base));
 
     // There should be one invocation of the databaseConfigApply.
-    ASSERT_EQ(1, cb_ctl_.getMergesNum());
+    ASSERT_EQ(1U, cb_ctl_.getMergesNum());
     // Since this is full reconfiguration the audit entry collection
     // passed to the databaseConfigApply should be empty.
     EXPECT_EQ(0, cb_ctl_.getAuditEntriesNum());
@@ -570,7 +570,7 @@ TEST_F(CBControlBaseTest, fetchAll) {
     // audit entry, so as the server will only later fetch config
     // updates after this timestamp.
     EXPECT_EQ(timestamps_["today"], cb_ctl_.getLastAuditRevisionTime());
-    EXPECT_EQ(4567, cb_ctl_.getLastAuditRevisionId());
+    EXPECT_EQ(4567U, cb_ctl_.getLastAuditRevisionId());
 }
 
 // This test verifies that the configuration can be fetched for a
@@ -581,16 +581,16 @@ TEST_F(CBControlBaseTest, fetchFromServer) {
     config_base->setServerTag("a-tag");
 
     // Verify that various indicators are set to their initial values.
-    ASSERT_EQ(0, cb_ctl_.getMergesNum());
+    ASSERT_EQ(0U, cb_ctl_.getMergesNum());
     ASSERT_EQ(BackendSelector::Type::MYSQL, cb_ctl_.getBackendSelector().getBackendType());
     ASSERT_EQ(ServerSelector::Type::UNASSIGNED, cb_ctl_.getServerSelector().getType());
     ASSERT_EQ(-1, cb_ctl_.getAuditEntriesNum());
     EXPECT_EQ(cb_ctl_.getInitialAuditRevisionTime(), cb_ctl_.getLastAuditRevisionTime());
-    EXPECT_EQ(0, cb_ctl_.getLastAuditRevisionId());
+    EXPECT_EQ(0U, cb_ctl_.getLastAuditRevisionId());
 
     ASSERT_NO_THROW(cb_ctl_.databaseConfigFetch(config_base));
 
-    ASSERT_EQ(1, cb_ctl_.getMergesNum());
+    ASSERT_EQ(1U, cb_ctl_.getMergesNum());
     EXPECT_EQ(0, cb_ctl_.getAuditEntriesNum());
     EXPECT_EQ(BackendSelector::Type::UNSPEC, cb_ctl_.getBackendSelector().getBackendType());
     // An explicit server selector should have been used this time.
@@ -600,7 +600,7 @@ TEST_F(CBControlBaseTest, fetchFromServer) {
     // Make sure that the server selector used in databaseConfigFetch is
     // correct.
     auto tags = cb_ctl_.getServerSelector().getTags();
-    ASSERT_EQ(1, tags.size());
+    ASSERT_EQ(1U, tags.size());
     EXPECT_EQ("a-tag", tags.begin()->get());
 }
 
@@ -621,25 +621,25 @@ TEST_F(CBControlBaseTest, fetchUpdates) {
                                               4567);
 
     // Verify that various indicators are set to their initial values.
-    ASSERT_EQ(0, cb_ctl_.getMergesNum());
+    ASSERT_EQ(0U, cb_ctl_.getMergesNum());
     ASSERT_EQ(BackendSelector::Type::MYSQL, cb_ctl_.getBackendSelector().getBackendType());
     ASSERT_EQ(ServerSelector::Type::UNASSIGNED, cb_ctl_.getServerSelector().getType());
     ASSERT_EQ(-1, cb_ctl_.getAuditEntriesNum());
     EXPECT_EQ(cb_ctl_.getInitialAuditRevisionTime(), cb_ctl_.getLastAuditRevisionTime());
-    EXPECT_EQ(0, cb_ctl_.getLastAuditRevisionId());
+    EXPECT_EQ(0U, cb_ctl_.getLastAuditRevisionId());
 
     ASSERT_NO_THROW(cb_ctl_.databaseConfigFetch(config_base,
                                                 CBControl::FetchMode::FETCH_UPDATE));
 
     // There should be one invocation to databaseConfigApply recorded.
-    ASSERT_EQ(1, cb_ctl_.getMergesNum());
+    ASSERT_EQ(1U, cb_ctl_.getMergesNum());
     // The number of audit entries passed to this function should be 1.
     EXPECT_EQ(1, cb_ctl_.getAuditEntriesNum());
     EXPECT_EQ(BackendSelector::Type::UNSPEC, cb_ctl_.getBackendSelector().getBackendType());
     EXPECT_EQ(ServerSelector::Type::ALL, cb_ctl_.getServerSelector().getType());
     // The last audit entry time should be set to the latest audit entry.
     EXPECT_EQ(timestamps_["today"], cb_ctl_.getLastAuditRevisionTime());
-    EXPECT_EQ(4567, cb_ctl_.getLastAuditRevisionId());
+    EXPECT_EQ(4567U, cb_ctl_.getLastAuditRevisionId());
 }
 
 // Check that the databaseConfigApply function is not called when there
@@ -662,14 +662,14 @@ TEST_F(CBControlBaseTest, fetchNoUpdates) {
                                               timestamps_["yesterday"],
                                               4567);
 
-    ASSERT_EQ(0, cb_ctl_.getMergesNum());
+    ASSERT_EQ(0U, cb_ctl_.getMergesNum());
 
     ASSERT_NO_THROW(cb_ctl_.databaseConfigFetch(config_base,
                                                 CBControl::FetchMode::FETCH_UPDATE));
 
     // The databaseConfigApply should not be called because there are
     // no new audit entires to process.
-    ASSERT_EQ(0, cb_ctl_.getMergesNum());
+    ASSERT_EQ(0U, cb_ctl_.getMergesNum());
 }
 
 // This test verifies that database config fetch failures are handled
@@ -693,18 +693,18 @@ TEST_F(CBControlBaseTest, fetchFailure) {
     cb_ctl_.enableThrow();
 
     // Verify that various indicators are set to their initial values.
-    ASSERT_EQ(0, cb_ctl_.getMergesNum());
+    ASSERT_EQ(0U, cb_ctl_.getMergesNum());
     ASSERT_EQ(BackendSelector::Type::MYSQL, cb_ctl_.getBackendSelector().getBackendType());
     ASSERT_EQ(ServerSelector::Type::UNASSIGNED, cb_ctl_.getServerSelector().getType());
     ASSERT_EQ(-1, cb_ctl_.getAuditEntriesNum());
     EXPECT_EQ(cb_ctl_.getInitialAuditRevisionTime(), cb_ctl_.getLastAuditRevisionTime());
-    EXPECT_EQ(0, cb_ctl_.getLastAuditRevisionId());
+    EXPECT_EQ(0U, cb_ctl_.getLastAuditRevisionId());
 
     ASSERT_THROW(cb_ctl_.databaseConfigFetch(config_base, CBControl::FetchMode::FETCH_UPDATE),
                  isc::Unexpected);
 
     // There should be one invocation to databaseConfigApply recorded.
-    ASSERT_EQ(1, cb_ctl_.getMergesNum());
+    ASSERT_EQ(1U, cb_ctl_.getMergesNum());
     // The number of audit entries passed to this function should be 1.
     EXPECT_EQ(1, cb_ctl_.getAuditEntriesNum());
     EXPECT_EQ(BackendSelector::Type::UNSPEC, cb_ctl_.getBackendSelector().getBackendType());
@@ -712,7 +712,7 @@ TEST_F(CBControlBaseTest, fetchFailure) {
     // The last audit entry time should not be modified because there was a merge
     // error.
     EXPECT_EQ(cb_ctl_.getInitialAuditRevisionTime(), cb_ctl_.getLastAuditRevisionTime());
-    EXPECT_EQ(0, cb_ctl_.getLastAuditRevisionId());
+    EXPECT_EQ(0U, cb_ctl_.getLastAuditRevisionId());
 }
 
 }

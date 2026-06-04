@@ -34,7 +34,7 @@ TEST(CfgHttpHeaderTest, copy) {
 
     // Verify.
     auto const& got = response.context()->headers_;
-    ASSERT_EQ(2, got.size());
+    ASSERT_EQ(2U, got.size());
     EXPECT_EQ("Strict-Transport-Security", got[0].name_);
     EXPECT_EQ("max-age=31536000", got[0].value_);
     EXPECT_EQ("Foo", got[1].name_);
@@ -64,7 +64,7 @@ TEST(CfgHttpHeaderTest, parse) {
     ASSERT_NO_THROW(json = Element::fromJSON(config));
     CfgHttpHeaders headers;
     ASSERT_NO_THROW(headers = parseCfgHttpHeaders(json));
-    ASSERT_EQ(2, headers.size());
+    ASSERT_EQ(2U, headers.size());
     EXPECT_EQ("Strict-Transport-Security", headers[0].name_);
     EXPECT_EQ("max-age=31536000", headers[0].value_);
     ConstElementPtr user_context = headers[0].getContext();

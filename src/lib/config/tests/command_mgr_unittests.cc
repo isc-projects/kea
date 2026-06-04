@@ -352,7 +352,7 @@ TEST_F(CommandMgrTest, delegateProcessCommand) {
 
     // Check that the appropriate arguments have been set. Include the
     // 'response' which should have been set by the callout.
-    ASSERT_EQ(2, callout_argument_names_.size());
+    ASSERT_EQ(2U, callout_argument_names_.size());
     EXPECT_EQ("command", callout_argument_names_[0]);
     EXPECT_EQ("response", callout_argument_names_[1]);
 }
@@ -389,7 +389,7 @@ TEST_F(CommandMgrTest, delegateListCommands) {
     // local Command Manager supports list-commands and my-command-bis. The
     // combined list should include 3 unique commands.
     const std::vector<ElementPtr>& commands_list = answer_arg->listValue();
-    ASSERT_EQ(3, commands_list.size());
+    ASSERT_EQ(3U, commands_list.size());
     std::vector<std::string> command_names_list;
     for (auto const& cmd : commands_list) {
         command_names_list.push_back(cmd->stringValue());

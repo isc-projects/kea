@@ -73,7 +73,7 @@ public:
     void testEvaluate(const TokenPtr& token, Pkt& pkt, ValueStack& values) {
         unsigned next(123);
         ASSERT_NO_THROW(next = token->evaluate(pkt, values));
-        EXPECT_EQ(0, next);
+        EXPECT_EQ(0U, next);
     }
 
     /// @brief Inserts RAI option with several suboptions
@@ -157,7 +157,7 @@ public:
         testEvaluate(t_, *pkt6_, values_);
 
         // We should have one value on the stack
-        ASSERT_EQ(1, values_.size());
+        ASSERT_EQ(1U, values_.size());
 
         // And it should match the expected result
         // Invalid nesting levels result in a 0 length string
@@ -177,7 +177,7 @@ public:
     /// @param result_addr The expected result of the address as a string
     void verifyRelay6Eval(const int8_t test_level,
                           const TokenRelay6Field::FieldType test_field,
-                          const int result_len,
+                          const size_t result_len,
                           const uint8_t result_addr[]) {
         // Create the token
         ASSERT_NO_THROW(t_.reset(new TokenRelay6Field(test_level, test_field)));
@@ -186,7 +186,7 @@ public:
         testEvaluate(t_, *pkt6_, values_);
 
         // We should have one value on the stack
-        ASSERT_EQ(1, values_.size());
+        ASSERT_EQ(1U, values_.size());
 
         // And it should match the expected result
         // Invalid nesting levels result in a 0 length string
@@ -258,12 +258,12 @@ public:
         // evaluate the token
         if (should_throw) {
             EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
-            ASSERT_EQ(0, values_.size());
+            ASSERT_EQ(0U, values_.size());
         } else {
             testEvaluate(t_, *pkt4_, values_);
 
             // verify results
-            ASSERT_EQ(1, values_.size());
+            ASSERT_EQ(1U, values_.size());
             EXPECT_EQ(result_string, values_.top());
 
             // remove result
@@ -297,12 +297,12 @@ public:
         // evaluate the token
         if (should_throw) {
             EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
-            ASSERT_EQ(0, values_.size());
+            ASSERT_EQ(0U, values_.size());
         } else {
             testEvaluate(t_, *pkt4_, values_);
 
             // verify results
-            ASSERT_EQ(1, values_.size());
+            ASSERT_EQ(1U, values_.size());
             EXPECT_EQ(result_string, values_.top());
 
             // remove result
@@ -395,7 +395,7 @@ public:
         default:
             ADD_FAILURE() << "Invalid universe specified.";
         }
-        ASSERT_EQ(1, values_.size());
+        ASSERT_EQ(1U, values_.size());
         EXPECT_EQ(expected_result, values_.top());
     }
 
@@ -604,13 +604,13 @@ TEST_F(TokenTest, string4) {
 
     // Store constant string "foo" in the TokenString object.
     ASSERT_NO_THROW(t_.reset(new TokenString("foo")));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     // Make sure that the token can be evaluated without exceptions.
     testEvaluate(t_, *pkt4_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("foo", values_.top());
 
     // Check that the debug output was correct.  Add the strings
@@ -633,7 +633,7 @@ TEST_F(TokenTest, string4Complex) {
     testEvaluate(t_, *pkt4_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ(data_str, values_.top());
 
     // Check that the debug output was correct.  Add the strings
@@ -658,7 +658,7 @@ TEST_F(TokenTest, string6) {
     testEvaluate(t_, *pkt6_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("foo", values_.top());
 
     // Check that the debug output was correct.  Add the strings
@@ -681,7 +681,7 @@ TEST_F(TokenTest, string6Complex) {
     testEvaluate(t_, *pkt6_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ(data_str, values_.top());
 
     // Check that the debug output was correct.  Add the strings
@@ -709,7 +709,7 @@ TEST_F(TokenTest, hexstring4) {
 
     // Store constant empty hexstring "" ("") in the TokenHexString object.
     ASSERT_NO_THROW(empty.reset(new TokenHexString("")));
-    EXPECT_EQ(0, empty->getLabel());
+    EXPECT_EQ(0U, empty->getLabel());
     // Store bad encoded hexstring "0abc" ("").
     ASSERT_NO_THROW(bad.reset(new TokenHexString("0abc")));
     // Store hexstring with no digits "0x" ("").
@@ -734,9 +734,9 @@ TEST_F(TokenTest, hexstring4) {
     testEvaluate(cookie, *pkt4_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(7, values_.size());
+    ASSERT_EQ(7U, values_.size());
     uint32_t expected = htonl(DHCP_OPTIONS_COOKIE);
-    EXPECT_EQ(4, values_.top().size());
+    EXPECT_EQ(4U, values_.top().size());
     EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
     values_.pop();
     EXPECT_EQ("foo", values_.top());
@@ -801,9 +801,9 @@ TEST_F(TokenTest, hexstring6) {
     testEvaluate(cookie, *pkt6_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(7, values_.size());
+    ASSERT_EQ(7U, values_.size());
     uint32_t expected = htonl(DHCP_OPTIONS_COOKIE);
-    EXPECT_EQ(4, values_.top().size());
+    EXPECT_EQ(4U, values_.top().size());
     EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
     values_.pop();
     EXPECT_EQ("foo", values_.top());
@@ -836,14 +836,14 @@ TEST_F(TokenTest, hexstring6) {
 // is not used)
 TEST_F(TokenTest, lcase) {
     ASSERT_NO_THROW(t_.reset(new TokenLowerCase()));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
     values_.push("LoWeR");
 
     // Make sure that the token can be evaluated without exceptions.
     testEvaluate(t_, *pkt6_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("lower", values_.top());
 
     // Check that the debug output was correct.  Add the strings
@@ -868,7 +868,7 @@ TEST_F(TokenTest, lcaseComplex) {
     testEvaluate(t_, *pkt6_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     char expected_data[] = "12345~!@#$%^&*()_+lower{}[];:<>/?\\67890\t \0\b\r\f";
     string expected_data_str(expected_data, sizeof(expected_data) - 1);
     EXPECT_EQ(expected_data_str, values_.top());
@@ -890,14 +890,14 @@ TEST_F(TokenTest, lcaseComplex) {
 // is not used)
 TEST_F(TokenTest, ucase) {
     ASSERT_NO_THROW(t_.reset(new TokenUpperCase()));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
     values_.push("uPpEr");
 
     // Make sure that the token can be evaluated without exceptions.
     testEvaluate(t_, *pkt6_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("UPPER", values_.top());
 
     // Check that the debug output was correct.  Add the strings
@@ -922,7 +922,7 @@ TEST_F(TokenTest, ucaseComplex) {
     testEvaluate(t_, *pkt6_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     char expected_data[] = "12345~!@#$%^&*()_+UPPER{}[];:<>/?\\67890\t \0\b\r\f";
     string expected_data_str(expected_data, sizeof(expected_data) - 1);
     EXPECT_EQ(expected_data_str, values_.top());
@@ -954,7 +954,7 @@ TEST_F(TokenTest, ipaddress) {
 
     // IP addresses
     ASSERT_NO_THROW(ip4.reset(new TokenIpAddress("10.0.0.1")));
-    EXPECT_EQ(0, ip4->getLabel());
+    EXPECT_EQ(0U, ip4->getLabel());
     ASSERT_NO_THROW(ip6.reset(new TokenIpAddress("2001:db8::1")));
 
     // Make sure that tokens can be evaluated without exceptions.
@@ -964,24 +964,24 @@ TEST_F(TokenTest, ipaddress) {
     testEvaluate(bad6, *pkt6_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(4, values_.size());
+    ASSERT_EQ(4U, values_.size());
 
     // Check bad addresses (they pushed '' on the value stack)
-    EXPECT_EQ(0, values_.top().size());
+    EXPECT_EQ(0U, values_.top().size());
     values_.pop();
-    EXPECT_EQ(0, values_.top().size());
+    EXPECT_EQ(0U, values_.top().size());
     values_.pop();
 
     // Check IPv6 address
     uint8_t expected6[] = { 0x20, 1, 0xd, 0xb8, 0, 0, 0, 0,
                             0, 0, 0, 0, 0, 0, 0, 1 };
-    EXPECT_EQ(16, values_.top().size());
+    EXPECT_EQ(16U, values_.top().size());
     EXPECT_EQ(0, memcmp(expected6, &values_.top()[0], 16));
     values_.pop();
 
     // Check IPv4 address
     uint8_t expected4[] = { 10, 0, 0, 1 };
-    EXPECT_EQ(4, values_.top().size());
+    EXPECT_EQ(4U, values_.top().size());
     EXPECT_EQ(0, memcmp(expected4, &values_.top()[0], 4));
 
     // Check that the debug output was correct.  Add the strings
@@ -1000,7 +1000,7 @@ TEST_F(TokenTest, ipaddress) {
 // (The actual packet is not used)
 TEST_F(TokenTest, addressToText) {
     TokenPtr address((new TokenIpAddressToText()));
-    EXPECT_EQ(0, address->getLabel());
+    EXPECT_EQ(0U, address->getLabel());
     std::vector<uint8_t> bytes;
 
     std::string value = "10.0.0.1";
@@ -1015,7 +1015,7 @@ TEST_F(TokenTest, addressToText) {
     testEvaluate(address, *pkt4_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
 
     value = "2001:db8::1";
     bytes = IOAddress(value).toBytes();
@@ -1024,26 +1024,26 @@ TEST_F(TokenTest, addressToText) {
     testEvaluate(address, *pkt4_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(2, values_.size());
+    ASSERT_EQ(2U, values_.size());
 
     values_.push(std::string());
     testEvaluate(address, *pkt4_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(3, values_.size());
+    ASSERT_EQ(3U, values_.size());
 
     // Check empty data
-    EXPECT_EQ(0, values_.top().size());
+    EXPECT_EQ(0U, values_.top().size());
     EXPECT_EQ("", values_.top());
     values_.pop();
 
     // Check IPv6 address
-    EXPECT_EQ(11, values_.top().size());
+    EXPECT_EQ(11U, values_.top().size());
     EXPECT_EQ("2001:db8::1", values_.top());
     values_.pop();
 
     // Check IPv4 address
-    EXPECT_EQ(8, values_.top().size());
+    EXPECT_EQ(8U, values_.top().size());
     EXPECT_EQ("10.0.0.1", values_.top());
     values_.pop();
 
@@ -1060,17 +1060,17 @@ TEST_F(TokenTest, addressToText) {
 // (The actual packet is not used)
 TEST_F(TokenTest, integerToText) {
     TokenPtr int8token((new TokenInt8ToText()));
-    EXPECT_EQ(0, int8token->getLabel());
+    EXPECT_EQ(0U, int8token->getLabel());
     TokenPtr int16token((new TokenInt16ToText()));
-    EXPECT_EQ(0, int16token->getLabel());
+    EXPECT_EQ(0U, int16token->getLabel());
     TokenPtr int32token((new TokenInt32ToText()));
-    EXPECT_EQ(0, int32token->getLabel());
+    EXPECT_EQ(0U, int32token->getLabel());
     TokenPtr uint8token((new TokenUInt8ToText()));
-    EXPECT_EQ(0, uint8token->getLabel());
+    EXPECT_EQ(0U, uint8token->getLabel());
     TokenPtr uint16token((new TokenUInt16ToText()));
-    EXPECT_EQ(0, uint16token->getLabel());
+    EXPECT_EQ(0U, uint16token->getLabel());
     TokenPtr uint32token((new TokenUInt32ToText()));
-    EXPECT_EQ(0, uint32token->getLabel());
+    EXPECT_EQ(0U, uint32token->getLabel());
 
     std::vector<uint8_t> bytes;
     std::string value = "0123456789";
@@ -1097,7 +1097,7 @@ TEST_F(TokenTest, integerToText) {
     testEvaluate(int8token, *pkt4_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
 
     int16_t i16 = 0;
     memcpy(&i16, &data, sizeof(int16_t));
@@ -1107,7 +1107,7 @@ TEST_F(TokenTest, integerToText) {
     testEvaluate(int16token, *pkt4_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(2, values_.size());
+    ASSERT_EQ(2U, values_.size());
 
     int32_t i32 = 0;
     memcpy(&i32, &data, sizeof(int32_t));
@@ -1117,7 +1117,7 @@ TEST_F(TokenTest, integerToText) {
     testEvaluate(int32token, *pkt4_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(3, values_.size());
+    ASSERT_EQ(3U, values_.size());
 
     values_.push(
         std::string(const_cast<const char*>(reinterpret_cast<char*>(&data)), sizeof(uint8_t)));
@@ -1125,7 +1125,7 @@ TEST_F(TokenTest, integerToText) {
     testEvaluate(uint8token, *pkt4_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(4, values_.size());
+    ASSERT_EQ(4U, values_.size());
 
     uint16_t ui16 = 0;
     memcpy(&ui16, &data, sizeof(uint16_t));
@@ -1135,7 +1135,7 @@ TEST_F(TokenTest, integerToText) {
     testEvaluate(uint16token, *pkt4_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(5, values_.size());
+    ASSERT_EQ(5U, values_.size());
 
     uint32_t ui32 = 0;
     memcpy(&ui32, &data, sizeof(uint32_t));
@@ -1145,7 +1145,7 @@ TEST_F(TokenTest, integerToText) {
     testEvaluate(uint32token, *pkt4_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(6, values_.size());
+    ASSERT_EQ(6U, values_.size());
 
     value = "";
 
@@ -1153,95 +1153,95 @@ TEST_F(TokenTest, integerToText) {
     testEvaluate(int8token, *pkt4_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(7, values_.size());
+    ASSERT_EQ(7U, values_.size());
 
     values_.push(value);
     testEvaluate(int16token, *pkt4_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(8, values_.size());
+    ASSERT_EQ(8U, values_.size());
 
     values_.push(value);
     testEvaluate(int32token, *pkt4_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(9, values_.size());
+    ASSERT_EQ(9U, values_.size());
 
     values_.push(value);
     testEvaluate(uint8token, *pkt4_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(10, values_.size());
+    ASSERT_EQ(10U, values_.size());
 
     values_.push(value);
     testEvaluate(uint16token, *pkt4_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(11, values_.size());
+    ASSERT_EQ(11U, values_.size());
 
     values_.push(value);
     testEvaluate(uint32token, *pkt4_, values_);
 
     // Check that the evaluation put its value on the values stack.
-    ASSERT_EQ(12, values_.size());
+    ASSERT_EQ(12U, values_.size());
 
     // Check empty data
-    EXPECT_EQ(0, values_.top().size());
+    EXPECT_EQ(0U, values_.top().size());
     EXPECT_EQ("", values_.top());
     values_.pop();
 
     // Check empty data
-    EXPECT_EQ(0, values_.top().size());
+    EXPECT_EQ(0U, values_.top().size());
     EXPECT_EQ("", values_.top());
     values_.pop();
 
     // Check empty data
-    EXPECT_EQ(0, values_.top().size());
+    EXPECT_EQ(0U, values_.top().size());
     EXPECT_EQ("", values_.top());
     values_.pop();
 
     // Check empty data
-    EXPECT_EQ(0, values_.top().size());
+    EXPECT_EQ(0U, values_.top().size());
     EXPECT_EQ("", values_.top());
     values_.pop();
 
     // Check empty data
-    EXPECT_EQ(0, values_.top().size());
+    EXPECT_EQ(0U, values_.top().size());
     EXPECT_EQ("", values_.top());
     values_.pop();
 
     // Check empty data
-    EXPECT_EQ(0, values_.top().size());
+    EXPECT_EQ(0U, values_.top().size());
     EXPECT_EQ("", values_.top());
     values_.pop();
 
     // Check uint32
-    EXPECT_EQ(10, values_.top().size());
+    EXPECT_EQ(10U, values_.top().size());
     EXPECT_EQ("4294967295", values_.top());
     values_.pop();
 
     // Check uint16
-    EXPECT_EQ(5, values_.top().size());
+    EXPECT_EQ(5U, values_.top().size());
     EXPECT_EQ("65535", values_.top());
     values_.pop();
 
     // Check uint8
-    EXPECT_EQ(3, values_.top().size());
+    EXPECT_EQ(3U, values_.top().size());
     EXPECT_EQ("255", values_.top());
     values_.pop();
 
     // Check int32
-    EXPECT_EQ(2, values_.top().size());
+    EXPECT_EQ(2U, values_.top().size());
     EXPECT_EQ("-1", values_.top());
     values_.pop();
 
     // Check int16
-    EXPECT_EQ(2, values_.top().size());
+    EXPECT_EQ(2U, values_.top().size());
     EXPECT_EQ("-1", values_.top());
     values_.pop();
 
     // Check int8
-    EXPECT_EQ(2, values_.top().size());
+    EXPECT_EQ(2U, values_.top().size());
     EXPECT_EQ("-1", values_.top());
     values_.pop();
 
@@ -1265,7 +1265,7 @@ TEST_F(TokenTest, optionString4) {
 
     // The packets we use have option 100 with a string in them.
     ASSERT_NO_THROW(found.reset(new TokenOption(100, TokenOption::TEXTUAL)));
-    EXPECT_EQ(0, found->getLabel());
+    EXPECT_EQ(0U, found->getLabel());
     ASSERT_NO_THROW(not_found.reset(new TokenOption(101, TokenOption::TEXTUAL)));
 
     // This should evaluate to the content of the option 100 (i.e. "hundred4")
@@ -1275,7 +1275,7 @@ TEST_F(TokenTest, optionString4) {
     testEvaluate(not_found, *pkt4_, values_);
 
     // There should be 2 values evaluated.
-    ASSERT_EQ(2, values_.size());
+    ASSERT_EQ(2U, values_.size());
 
     // This is a stack, so the pop order is inversed. We should get the empty
     // string first.
@@ -1311,7 +1311,7 @@ TEST_F(TokenTest, optionHexString4) {
     testEvaluate(not_found, *pkt4_, values_);
 
     // There should be 2 values evaluated.
-    ASSERT_EQ(2, values_.size());
+    ASSERT_EQ(2U, values_.size());
 
     // This is a stack, so the pop order is inversed. We should get the empty
     // string first.
@@ -1344,7 +1344,7 @@ TEST_F(TokenTest, optionExistsString4) {
     testEvaluate(not_found, *pkt4_, values_);
 
     // There should be 2 values evaluated.
-    ASSERT_EQ(2, values_.size());
+    ASSERT_EQ(2U, values_.size());
 
     // This is a stack, so the pop order is inversed.
     EXPECT_EQ("false", values_.top());
@@ -1376,7 +1376,7 @@ TEST_F(TokenTest, optionString6) {
     testEvaluate(not_found, *pkt6_, values_);
 
     // There should be 2 values evaluated.
-    ASSERT_EQ(2, values_.size());
+    ASSERT_EQ(2U, values_.size());
 
     // This is a stack, so the pop order is inversed. We should get the empty
     // string first.
@@ -1412,7 +1412,7 @@ TEST_F(TokenTest, optionHexString6) {
     testEvaluate(not_found, *pkt6_, values_);
 
     // There should be 2 values evaluated.
-    ASSERT_EQ(2, values_.size());
+    ASSERT_EQ(2U, values_.size());
 
     // This is a stack, so the pop order is inversed. We should get the empty
     // string first.
@@ -1445,7 +1445,7 @@ TEST_F(TokenTest, optionExistsString6) {
     testEvaluate(not_found, *pkt6_, values_);
 
     // There should be 2 values evaluated.
-    ASSERT_EQ(2, values_.size());
+    ASSERT_EQ(2U, values_.size());
 
     // This is a stack, so the pop order is inversed.
     EXPECT_EQ("false", values_.top());
@@ -1473,7 +1473,7 @@ TEST_F(TokenTest, relay4Option) {
     testEvaluate(t_, *pkt4_, values_);
 
     // we should have one value on the stack
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
 
     // The option should be found and relay4[13] should evaluate to the
     // content of that sub-option, i.e. "thirteen"
@@ -1495,13 +1495,13 @@ TEST_F(TokenTest, relay4OptionNoSuboption) {
 
     // Creating the token should be safe.
     ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(15, TokenOption::TEXTUAL)));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     // We should be able to evaluate it.
     testEvaluate(t_, *pkt4_, values_);
 
     // we should have one value on the stack
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
 
     // The option should NOT be found (there is no sub-option 15),
     // so the expression should evaluate to ""
@@ -1527,7 +1527,7 @@ TEST_F(TokenTest, relay4OptionNoRai) {
     testEvaluate(t_, *pkt4_, values_);
 
     // we should have one value on the stack
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
 
     // The option should NOT be found (there is no sub-option 13),
     // so the expression should evaluate to ""
@@ -1563,14 +1563,14 @@ TEST_F(TokenTest, relay4RAIOnly) {
     // Let's try to get option 13. It should get the one from RAI
     ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(13, TokenOption::TEXTUAL)));
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("thirteen", values_.top());
 
     // Try to get option 1. It should get the one from RAI
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(1, TokenOption::TEXTUAL)));
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("one", values_.top());
 
     // Try to get option 70. It should fail, as there's no such
@@ -1578,21 +1578,21 @@ TEST_F(TokenTest, relay4RAIOnly) {
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(70, TokenOption::TEXTUAL)));
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("", values_.top());
 
     // Try to check option 1. It should return "true"
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(1, TokenOption::EXISTS)));
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("true", values_.top());
 
     // Try to check option 70. It should return "false"
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(70, TokenOption::EXISTS)));
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("false", values_.top());
 
     // Check that the debug output was correct.  Add the strings
@@ -1695,7 +1695,7 @@ TEST_F(TokenTest, relay6Option) {
 TEST_F(TokenTest, relay6OptionError) {
     // Create a relay6 option token
     ASSERT_NO_THROW(t_.reset(new TokenRelay6Option(0, 13, TokenOption::TEXTUAL)));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     // A DHCPv6 packet is required
     EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
@@ -1709,16 +1709,16 @@ TEST_F(TokenTest, pkt4MetaData) {
 
     // Check interface (expect eth0)
     ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::IFACE)));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     ASSERT_EQ("eth0", values_.top());
 
     // Check source (expect 10.0.0.2)
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::SRC)));
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     vector<uint8_t> a2 = IOAddress("10.0.0.2").toBytes();
     ASSERT_EQ(a2.size(), values_.top().size());
     EXPECT_EQ(0, memcmp(&a2[0], &values_.top()[0], a2.size()));
@@ -1727,7 +1727,7 @@ TEST_F(TokenTest, pkt4MetaData) {
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::DST)));
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     vector<uint8_t> a1 = IOAddress("10.0.0.1").toBytes();
     ASSERT_EQ(a1.size(), values_.top().size());
     EXPECT_EQ(0, memcmp(&a1[0], &values_.top()[0], a1.size()));
@@ -1736,9 +1736,9 @@ TEST_F(TokenTest, pkt4MetaData) {
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::LEN)));
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     uint32_t length = htonl(static_cast<uint32_t>(pkt4_->len()));
-    ASSERT_EQ(4, values_.top().size());
+    ASSERT_EQ(4U, values_.top().size());
     EXPECT_EQ(0, memcmp(&length, &values_.top()[0], 4));
 
     // Unknown metadata type fails
@@ -1768,17 +1768,17 @@ TEST_F(TokenTest, pkt6MetaData) {
     // Check interface (expect eth0)
     ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::IFACE)));
     testEvaluate(t_, *pkt6_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     ASSERT_EQ("eth0", values_.top());
 
     // Check source (expect fe80::1234)
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::SRC)));
     testEvaluate(t_, *pkt6_, values_);
-    ASSERT_EQ(1, values_.size());
-    ASSERT_EQ(16, values_.top().size());
-    EXPECT_EQ(0xfe, static_cast<uint8_t>(values_.top()[0]));
-    EXPECT_EQ(0x80, static_cast<uint8_t>(values_.top()[1]));
+    ASSERT_EQ(1U, values_.size());
+    ASSERT_EQ(16U, values_.top().size());
+    EXPECT_EQ(0xfeU, static_cast<uint8_t>(values_.top()[0]));
+    EXPECT_EQ(0x80U, static_cast<uint8_t>(values_.top()[1]));
     for (unsigned i = 2; i < 14; ++i) {
         EXPECT_EQ(0, values_.top()[i]);
     }
@@ -1789,7 +1789,7 @@ TEST_F(TokenTest, pkt6MetaData) {
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::DST)));
     testEvaluate(t_, *pkt6_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     vector<uint8_t> ma = IOAddress("ff02::1:2").toBytes();
     ASSERT_EQ(ma.size(), values_.top().size());
     EXPECT_EQ(0, memcmp(&ma[0], &values_.top()[0], ma.size()));
@@ -1798,9 +1798,9 @@ TEST_F(TokenTest, pkt6MetaData) {
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenPkt(TokenPkt::LEN)));
     testEvaluate(t_, *pkt6_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     uint32_t length = htonl(static_cast<uint32_t>(pkt6_->len()));
-    ASSERT_EQ(4, values_.top().size());
+    ASSERT_EQ(4U, values_.top().size());
     EXPECT_EQ(0, memcmp(&length, &values_.top()[0], 4));
 
     // Unknown meta data type fails
@@ -1837,19 +1837,19 @@ TEST_F(TokenTest, pkt4Fields) {
 
     // Check hardware address field.
     ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::CHADDR)));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     uint8_t expected_hw[] = { 1, 2, 3, 4, 5, 6, 7 };
-    ASSERT_EQ(7, values_.top().size());
+    ASSERT_EQ(7U, values_.top().size());
     EXPECT_EQ(0, memcmp(expected_hw, &values_.top()[0], 7));
 
     // Check hlen value field.
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::HLEN)));
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
-    ASSERT_EQ(4, values_.top().size());
+    ASSERT_EQ(1U, values_.size());
+    ASSERT_EQ(4U, values_.top().size());
     uint32_t expected_hlen = htonl(7);
     EXPECT_EQ(0, memcmp(&expected_hlen, &values_.top()[0], 4));
 
@@ -1857,8 +1857,8 @@ TEST_F(TokenTest, pkt4Fields) {
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::HTYPE)));
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
-    ASSERT_EQ(4, values_.top().size());
+    ASSERT_EQ(1U, values_.size());
+    ASSERT_EQ(4U, values_.top().size());
     uint32_t expected_htype = htonl(123);
     EXPECT_EQ(0, memcmp(&expected_htype, &values_.top()[0], 4));
 
@@ -1866,44 +1866,44 @@ TEST_F(TokenTest, pkt4Fields) {
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::GIADDR)));
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     uint8_t expected_addr[] = { 192, 0, 2, 1 };
-    ASSERT_EQ(4, values_.top().size());
+    ASSERT_EQ(4U, values_.top().size());
     EXPECT_EQ(0, memcmp(expected_addr, &values_.top()[0], 4));
 
     // Check ciaddr value.
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::CIADDR)));
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     expected_addr[3] = 2;
-    ASSERT_EQ(4, values_.top().size());
+    ASSERT_EQ(4U, values_.top().size());
     EXPECT_EQ(0, memcmp(expected_addr, &values_.top()[0], 4));
 
     // Check yiaddr value.
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::YIADDR)));
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     expected_addr[3] = 3;
-    ASSERT_EQ(4, values_.top().size());
+    ASSERT_EQ(4U, values_.top().size());
     EXPECT_EQ(0, memcmp(expected_addr, &values_.top()[0], 4));
 
     // Check siaddr value.
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::SIADDR)));
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     expected_addr[3] = 4;
-    ASSERT_EQ(4, values_.top().size());
+    ASSERT_EQ(4U, values_.top().size());
     EXPECT_EQ(0, memcmp(expected_addr, &values_.top()[0], 4));
 
     // Check msgtype.
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::MSGTYPE)));
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
-    ASSERT_EQ(4, values_.top().size());
+    ASSERT_EQ(1U, values_.size());
+    ASSERT_EQ(4U, values_.top().size());
     string exp_msgtype = encode(DHCPDISCOVER);
     EXPECT_EQ(0, memcmp(&exp_msgtype[0], &values_.top()[0], 4));
 
@@ -1911,8 +1911,8 @@ TEST_F(TokenTest, pkt4Fields) {
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenPkt4(TokenPkt4::TRANSID)));
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
-    ASSERT_EQ(4, values_.top().size());
+    ASSERT_EQ(1U, values_.size());
+    ASSERT_EQ(4U, values_.top().size());
     string exp_transid = encode(12345);
     EXPECT_EQ(0, memcmp(&exp_transid[0], &values_.top()[0], 4));
 
@@ -1957,9 +1957,9 @@ TEST_F(TokenTest, pkt6Fields) {
 
     // Check the message type
     ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::MSGTYPE)));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
     testEvaluate(t_, *pkt6_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     uint32_t expected = htonl(1);
     EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
 
@@ -1967,7 +1967,7 @@ TEST_F(TokenTest, pkt6Fields) {
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenPkt6(TokenPkt6::TRANSID)));
     testEvaluate(t_, *pkt6_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     expected = htonl(12345);
     EXPECT_EQ(0, memcmp(&expected, &values_.top()[0], 4));
 
@@ -2041,7 +2041,7 @@ TEST_F(TokenTest, relay6Field) {
     TokenPtr taddr;
     TokenPtr tequal;
     ASSERT_NO_THROW(trelay.reset(new TokenRelay6Field(1, TokenRelay6Field::LINKADDR)));
-    EXPECT_EQ(0, trelay->getLabel());
+    EXPECT_EQ(0U, trelay->getLabel());
     ASSERT_NO_THROW(taddr.reset(new TokenIpAddress("1::1")));
     ASSERT_NO_THROW(tequal.reset(new TokenEqual()));
 
@@ -2050,7 +2050,7 @@ TEST_F(TokenTest, relay6Field) {
     testEvaluate(tequal, *pkt6_, values_);
 
     // We should have a single value on the stack and it should be "true"
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("true", values_.top());
 
     // be tidy
@@ -2115,7 +2115,7 @@ TEST_F(TokenTest, relay6Field) {
 TEST_F(TokenTest, relay6FieldError) {
     // Create a valid relay6 field token
     ASSERT_NO_THROW(t_.reset(new TokenRelay6Field(0, TokenRelay6Field::LINKADDR)));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     // a DHCPv6 packet is required
     ASSERT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
@@ -2128,7 +2128,7 @@ TEST_F(TokenTest, relay6FieldError) {
 TEST_F(TokenTest, optionEqualInvalid) {
 
     ASSERT_NO_THROW(t_.reset(new TokenEqual()));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     // CASE 1: There's not enough values on the stack. == is an operator that
     // takes two parameters. There are 0 on the stack.
@@ -2151,7 +2151,7 @@ TEST_F(TokenTest, optionEqualFalse) {
 
     // After evaluation there should be a single value that represents
     // result of "foo" == "bar" comparison.
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("false", values_.top());
 
     // Check that the debug output was correct.  Add the strings
@@ -2174,7 +2174,7 @@ TEST_F(TokenTest, optionEqualTrue) {
 
     // After evaluation there should be a single value that represents
     // result of "foo" == "foo" comparison.
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("true", values_.top());
 
     // Check that the debug output was correct.  Add the strings
@@ -2191,7 +2191,7 @@ TEST_F(TokenTest, optionEqualTrue) {
 // The actual packet is not used.
 TEST_F(TokenTest, substringNotEnoughValues) {
     ASSERT_NO_THROW(t_.reset(new TokenSubstring()));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     // Substring requires three values on the stack, try
     // with 0, 1 and 2 all should throw an exception
@@ -2209,7 +2209,7 @@ TEST_F(TokenTest, substringNotEnoughValues) {
 
     // As we had an empty string to start with we should have an empty
     // one after the evaluate
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("", values_.top());
 
     // Check that the debug output was correct.  Add the strings
@@ -2472,11 +2472,11 @@ TEST_F(TokenTest, substringEquals) {
     testEvaluate(t_, *pkt4_, values_);
 
     // we should have two values on the stack
-    ASSERT_EQ(2, values_.size());
+    ASSERT_EQ(2U, values_.size());
 
     // next the equals eval
     testEvaluate(tequal, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("true", values_.top());
 
     // get rid of the result
@@ -2493,11 +2493,11 @@ TEST_F(TokenTest, substringEquals) {
     testEvaluate(t_, *pkt4_, values_);
 
     // we should have two values on the stack
-    ASSERT_EQ(2, values_.size());
+    ASSERT_EQ(2U, values_.size());
 
     // next the equals eval
     testEvaluate(tequal, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("false", values_.top());
 
     // Check that the debug output was correct.  Add the strings
@@ -2521,7 +2521,7 @@ TEST_F(TokenTest, substringEquals) {
 // The actual packet is not used.
 TEST_F(TokenTest, concat) {
     ASSERT_NO_THROW(t_.reset(new TokenConcat()));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     // Concat requires two values on the stack, try
     // with 0 and 1 both should throw an exception
@@ -2535,7 +2535,7 @@ TEST_F(TokenTest, concat) {
     testEvaluate(t_, *pkt4_, values_);
 
     // Check the result
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("foobar", values_.top());
 
     // Check that the debug output was correct.  Add the strings
@@ -2551,7 +2551,7 @@ TEST_F(TokenTest, concat) {
 // The actual packet is not used.
 TEST_F(TokenTest, tohexstring) {
     ASSERT_NO_THROW(t_.reset(new TokenToHexString()));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     // Hexstring requires two values on the stack, try
     // with 0 and 1 both should throw an exception
@@ -2565,7 +2565,7 @@ TEST_F(TokenTest, tohexstring) {
     testEvaluate(t_, *pkt4_, values_);
 
     // Check the result
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("66-6f-6f", values_.top());
 
     // Check that the debug output was correct.  Add the strings
@@ -2581,7 +2581,7 @@ TEST_F(TokenTest, tohexstring) {
 // to select the branch following the condition.
 TEST_F(TokenTest, ifElse) {
     ASSERT_NO_THROW(t_.reset(new TokenIfElse()));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     // Ifelse requires three values on the stack, try
     // with 0, 1 and 2 all should throw an exception
@@ -2604,7 +2604,7 @@ TEST_F(TokenTest, ifElse) {
     values_.push("foo");
     values_.push("bar");
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("foo", values_.top());
 
     clearStack();
@@ -2613,7 +2613,7 @@ TEST_F(TokenTest, ifElse) {
     values_.push("foo");
     values_.push("bar");
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("bar", values_.top());
 }
 
@@ -2622,7 +2622,7 @@ TEST_F(TokenTest, ifElse) {
 TEST_F(TokenTest, operatorNotInvalid) {
 
     ASSERT_NO_THROW(t_.reset(new TokenNot()));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     // CASE 1: The stack is empty.
     EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
@@ -2642,12 +2642,12 @@ TEST_F(TokenTest, operatorNot) {
     testEvaluate(t_, *pkt4_, values_);
 
     // After evaluation there should be the negation of the value.
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("false", values_.top());
 
     // Double negation is identity.
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("true", values_.top());
 
     // Check that the debug output was correct.  Add the strings
@@ -2663,7 +2663,7 @@ TEST_F(TokenTest, operatorNot) {
 TEST_F(TokenTest, operatorAndInvalid) {
 
     ASSERT_NO_THROW(t_.reset(new TokenAnd()));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     // CASE 1: There's not enough values on the stack. and is an operator that
     // takes two parameters. There are 0 on the stack.
@@ -2694,19 +2694,19 @@ TEST_F(TokenTest, operatorAndFalse) {
     testEvaluate(t_, *pkt4_, values_);
 
     // After evaluation there should be a single "false" value
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("false", values_.top());
 
     // After true and false, check false and true
     values_.push("true");
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("false", values_.top());
 
     // And false and false
     values_.push("false");
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("false", values_.top());
 
     // Check that the debug output was correct.  Add the strings
@@ -2729,7 +2729,7 @@ TEST_F(TokenTest, operatorAndTrue) {
     testEvaluate(t_, *pkt4_, values_);
 
     // After evaluation there should be a single "true" value
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("true", values_.top());
 
     // Check that the debug output was correct.  Add the strings
@@ -2744,7 +2744,7 @@ TEST_F(TokenTest, operatorAndTrue) {
 TEST_F(TokenTest, operatorOrInvalid) {
 
     ASSERT_NO_THROW(t_.reset(new TokenOr()));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     // CASE 1: There's not enough values on the stack. or is an operator that
     // takes two parameters. There are 0 on the stack.
@@ -2775,7 +2775,7 @@ TEST_F(TokenTest, operatorOrFalse) {
     testEvaluate(t_, *pkt4_, values_);
 
     // After evaluation there should be a single "false" value
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("false", values_.top());
 
     // Check that the debug output was correct.  Add the strings
@@ -2796,19 +2796,19 @@ TEST_F(TokenTest, operatorOrTrue) {
     testEvaluate(t_, *pkt4_, values_);
 
     // After evaluation there should be a single "true" value
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("true", values_.top());
 
     // After false or true, checks true or false
     values_.push("false");
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("true", values_.top());
 
     // And true or true
     values_.push("true");
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("true", values_.top());
 
     // Check that the debug output was correct.  Add the strings
@@ -2824,12 +2824,12 @@ TEST_F(TokenTest, operatorOrTrue) {
 TEST_F(TokenTest, member) {
 
     ASSERT_NO_THROW(t_.reset(new TokenMember("foo")));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     testEvaluate(t_, *pkt4_, values_);
 
     // the packet has no classes so false was left on the stack
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("false", values_.top());
     values_.pop();
 
@@ -2838,7 +2838,7 @@ TEST_F(TokenTest, member) {
     testEvaluate(t_, *pkt4_, values_);
 
     // the packet has a class but it is not foo
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("false", values_.top());
     values_.pop();
 
@@ -2847,7 +2847,7 @@ TEST_F(TokenTest, member) {
     testEvaluate(t_, *pkt4_, values_);
 
     // Now the packet is in the foo class
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("true", values_.top());
 }
 
@@ -2855,7 +2855,7 @@ TEST_F(TokenTest, member) {
 TEST_F(TokenTest, vendor4SpecificVendorExists) {
     ASSERT_NO_THROW(t_.reset(new TokenVendor(Option::V4, 4491,
                                              TokenOption::EXISTS)));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     // Case 1: no option, should evaluate to false
     testVendorExists(Option::V4, 4491, 0, "false");
@@ -3122,7 +3122,7 @@ TEST_F(TokenTest, vendor6SuboptionHex) {
 TEST_F(TokenTest, vendorClass4SpecificVendorExists) {
     ASSERT_NO_THROW(t_.reset(new TokenVendorClass(Option::V4, 4491,
                                                   TokenVendor::ENTERPRISE_ID)));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     // Case 1: no option present, should fail
     testVendorClassExists(Option::V4, 4491, 0, "false");
@@ -3543,13 +3543,13 @@ TEST_F(TokenTest, subOption) {
 
     // Creating the token should be safe.
     ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS, 13, TokenOption::TEXTUAL)));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     // We should be able to evaluate it.
     testEvaluate(t_, *pkt4_, values_);
 
     // we should have one value on the stack
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
 
     // The option should be found and option[82].option[13] should evaluate
     // to thecontent of that sub-option, i.e. "thirteen"
@@ -3578,7 +3578,7 @@ TEST_F(TokenTest, subOptionNoSubOption) {
     testEvaluate(t_, *pkt4_, values_);
 
     // we should have one value on the stack
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
 
     // The option should NOT be found (there is no sub-option 15),
     // so the expression should evaluate to ""
@@ -3605,7 +3605,7 @@ TEST_F(TokenTest, subOptionNoOption) {
     testEvaluate(t_, *pkt4_, values_);
 
     // we should have one value on the stack
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
 
     // The option should NOT be found (there is no option 82),
     // so the expression should evaluate to ""
@@ -3644,14 +3644,14 @@ TEST_F(TokenTest, subOptionOptionOnly) {
     // Let's try to get option 13. It should get the one from RAI
     ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS, 13, TokenOption::TEXTUAL)));
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("thirteen", values_.top());
 
     // Try to get option 1. It should get the one from RAI
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS, 1, TokenOption::TEXTUAL)));
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("one", values_.top());
 
     // Try to get option 70. It should fail, as there's no such
@@ -3659,21 +3659,21 @@ TEST_F(TokenTest, subOptionOptionOnly) {
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS, 70, TokenOption::TEXTUAL)));
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("", values_.top());
 
     // Try to check option 1. It should return "true"
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS, 1, TokenOption::EXISTS)));
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("true", values_.top());
 
     // Try to check option 70. It should return "false"
     clearStack();
     ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS, 70, TokenOption::EXISTS)));
     testEvaluate(t_, *pkt4_, values_);
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("false", values_.top());
 
     // Check that the debug output was correct.  Add the strings
@@ -3695,7 +3695,7 @@ TEST_F(TokenTest, subOptionOptionOnly) {
 // Checks if various values can be represented as integer tokens
 TEST_F(TokenTest, integer) {
     ASSERT_NO_THROW(t_.reset(new TokenInteger(0)));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     testInteger(encode(0), 0);
     testInteger(encode(6), 6);
@@ -3708,7 +3708,7 @@ TEST_F(TokenTest, integer) {
 // Verify TokenSplit::eval, single delimiter.
 TEST_F(TokenTest, split) {
     ASSERT_NO_THROW(t_.reset(new TokenSplit()));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     // Get the whole string
     std::string input(".two.three..five.");
@@ -3859,7 +3859,7 @@ TEST_F(TokenTest, invalidRegEx) {
 // Verify TokenMatch works as expected.
 TEST_F(TokenTest, match) {
     ASSERT_NO_THROW(t_.reset(new TokenMatch("foo")));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     testMatch("foo", "foo", true);
     // Full match is required.
@@ -3897,7 +3897,7 @@ TEST_F(TokenTest, label) {
 
     // Evaluation does and uses nothing.
     ASSERT_NO_THROW(t_.reset(new TokenLabel(123)));
-    EXPECT_EQ(123, t_->getLabel());
+    EXPECT_EQ(123U, t_->getLabel());
     testEvaluate(t_, *pkt4_, values_);
     ASSERT_TRUE(values_.empty());
 }
@@ -3909,10 +3909,10 @@ TEST_F(TokenTest, branch) {
 
     // Evaluation does and uses nothing.
     ASSERT_NO_THROW(t_.reset(new TokenBranch(123)));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
     unsigned next(0);
     ASSERT_NO_THROW(next = t_->evaluate(*pkt4_, values_));
-    EXPECT_EQ(123, next);
+    EXPECT_EQ(123U, next);
     ASSERT_TRUE(values_.empty());
 }
 
@@ -3922,7 +3922,7 @@ TEST_F(TokenTest, popOrBranchTrue) {
     ASSERT_THROW(t_.reset(new TokenPopOrBranchTrue(0)), EvalParseError);
 
     ASSERT_NO_THROW(t_.reset(new TokenPopOrBranchTrue(123)));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     // CASE 1: The stack is empty.
     EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
@@ -3934,18 +3934,18 @@ TEST_F(TokenTest, popOrBranchTrue) {
     // CASE 3: The top value is true.
     clearStack(false);
     values_.push("true");
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     unsigned next(0);
     ASSERT_NO_THROW(next = t_->evaluate(*pkt4_, values_));
-    EXPECT_EQ(123, next);
-    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ(123U, next);
+    ASSERT_EQ(1U, values_.size());
     string result = values_.top();
     EXPECT_EQ("true", result);
 
     // CASE 4: The top value is false.
     clearStack(false);
     values_.push("false");
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     testEvaluate(t_, *pkt6_, values_);
     EXPECT_TRUE(values_.empty());
 }
@@ -3956,7 +3956,7 @@ TEST_F(TokenTest, popOrBranchFalse) {
     ASSERT_THROW(t_.reset(new TokenPopOrBranchFalse(0)), EvalParseError);
 
     ASSERT_NO_THROW(t_.reset(new TokenPopOrBranchFalse(123)));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     // CASE 1: The stack is empty.
     EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
@@ -3968,18 +3968,18 @@ TEST_F(TokenTest, popOrBranchFalse) {
     // CASE 3: The top value is true.
     clearStack(false);
     values_.push("true");
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     testEvaluate(t_, *pkt6_, values_);
     EXPECT_TRUE(values_.empty());
 
     // CASE 4: The top value is false.
     clearStack(false);
     values_.push("false");
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     unsigned next(0);
     ASSERT_NO_THROW(next = t_->evaluate(*pkt4_, values_));
-    EXPECT_EQ(123, next);
-    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ(123U, next);
+    ASSERT_EQ(1U, values_.size());
     string result = values_.top();
     EXPECT_EQ("false", result);
 }
@@ -3990,7 +3990,7 @@ TEST_F(TokenTest, popAndBranchFalse) {
     ASSERT_THROW(t_.reset(new TokenPopAndBranchFalse(0)), EvalParseError);
 
     ASSERT_NO_THROW(t_.reset(new TokenPopAndBranchFalse(123)));
-    EXPECT_EQ(0, t_->getLabel());
+    EXPECT_EQ(0U, t_->getLabel());
 
     // CASE 1: The stack is empty.
     EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
@@ -4002,17 +4002,17 @@ TEST_F(TokenTest, popAndBranchFalse) {
     // CASE 3: The top value is true.
     clearStack(false);
     values_.push("true");
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     testEvaluate(t_, *pkt6_, values_);
     EXPECT_TRUE(values_.empty());
 
     // CASE 4: The top value is false.
     clearStack(false);
     values_.push("false");
-    ASSERT_EQ(1, values_.size());
+    ASSERT_EQ(1U, values_.size());
     unsigned next(0);
     ASSERT_NO_THROW(next = t_->evaluate(*pkt4_, values_));
-    EXPECT_EQ(123, next);
+    EXPECT_EQ(123U, next);
     EXPECT_TRUE(values_.empty());
 }
 

@@ -226,7 +226,7 @@ TEST_F(IntervalTimerTest, cancel) {
     itimer_counter.setup(TimerCallBackCanceller(counter, itimer_counter), 100);
     itimer_watcher.setup(TimerCallBack(this), 200);
     io_service_->run();
-    EXPECT_EQ(1, counter);
+    EXPECT_EQ(1U, counter);
     EXPECT_EQ(0, itimer_counter.getInterval());
 
     // canceling an already canceled timer shouldn't cause any surprise.

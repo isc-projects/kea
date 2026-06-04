@@ -268,19 +268,19 @@ TEST(TLSSocket, processReceivedData) {
     bool complete = test.processReceivedData(inbuff, 1, cumulative, offset,
                                              expected, outbuff);
     EXPECT_FALSE(complete);
-    EXPECT_EQ(1, cumulative);
-    EXPECT_EQ(1, offset);
-    EXPECT_EQ(0, expected);
-    EXPECT_EQ(0, outbuff->getLength());
+    EXPECT_EQ(1U, cumulative);
+    EXPECT_EQ(1U, offset);
+    EXPECT_EQ(0U, expected);
+    EXPECT_EQ(0U, outbuff->getLength());
 
     // Now pretend that we've received one more byte.
     complete = test.processReceivedData(inbuff, 1, cumulative, offset, expected,
                                         outbuff);
     EXPECT_FALSE(complete);
-    EXPECT_EQ(2, cumulative);
-    EXPECT_EQ(0, offset);
+    EXPECT_EQ(2U, cumulative);
+    EXPECT_EQ(0U, offset);
     EXPECT_EQ(PACKET_SIZE, expected);
-    EXPECT_EQ(0, outbuff->getLength());
+    EXPECT_EQ(0U, outbuff->getLength());
 
     // Add another two bytes.  However, this time note that we have to offset
     // in the input buffer because it is expected that the next chunk of data
@@ -288,10 +288,10 @@ TEST(TLSSocket, processReceivedData) {
     complete = test.processReceivedData(inbuff + cumulative, 2, cumulative,
                                         offset, expected, outbuff);
     EXPECT_FALSE(complete);
-    EXPECT_EQ(4, cumulative);
-    EXPECT_EQ(0, offset);
+    EXPECT_EQ(4U, cumulative);
+    EXPECT_EQ(0U, offset);
     EXPECT_EQ(PACKET_SIZE, expected);
-    EXPECT_EQ(2, outbuff->getLength());
+    EXPECT_EQ(2U, outbuff->getLength());
 
     const uint8_t* dataptr = outbuff->getData();
     EXPECT_TRUE(equal(inbuff + 2, inbuff + cumulative, dataptr));
@@ -302,8 +302,8 @@ TEST(TLSSocket, processReceivedData) {
                                         PACKET_SIZE + 2 - cumulative,
                                         cumulative, offset, expected, outbuff);
     EXPECT_TRUE(complete);
-    EXPECT_EQ(PACKET_SIZE + 2, cumulative);
-    EXPECT_EQ(0, offset);
+    EXPECT_EQ(PACKET_SIZE + 2U, cumulative);
+    EXPECT_EQ(0U, offset);
     EXPECT_EQ(PACKET_SIZE, expected);
     EXPECT_EQ(PACKET_SIZE, outbuff->getLength());
     dataptr = outbuff->getData();

@@ -101,7 +101,7 @@ TEST_F(TranslatorOptionDataListTestv4, get) {
     EXPECT_NO_THROW_LOG(options = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(options);
     ASSERT_EQ(Element::list, options->getType());
-    EXPECT_EQ(1, options->size());
+    EXPECT_EQ(1U, options->size());
     expectEqWithDiff(option, options->get(0));
 }
 
@@ -139,7 +139,7 @@ TEST_F(TranslatorOptionDataListTestv6, get) {
     EXPECT_NO_THROW_LOG(options = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(options);
     ASSERT_EQ(Element::list, options->getType());
-    EXPECT_EQ(1, options->size());
+    EXPECT_EQ(1U, options->size());
     expectEqWithDiff(option, options->get(0));
 }
 
@@ -215,7 +215,7 @@ TEST_F(TranslatorOptionDataListTestv4, set) {
     ConstElementPtr got;
     EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
-    ASSERT_EQ(1, got->size());
+    ASSERT_EQ(1U, got->size());
     expectEqWithDiff(option, options->get(0));
 }
 
@@ -263,7 +263,7 @@ TEST_F(TranslatorOptionDataListTestv6, set) {
     ConstElementPtr got;
     EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
-    ASSERT_EQ(1, got->size());
+    ASSERT_EQ(1U, got->size());
     expectEqWithDiff(option, options->get(0));
 }
 
@@ -296,7 +296,7 @@ TEST_F(TranslatorOptionDataListTestv4, optionsSameCodeAndSpace) {
     ConstElementPtr got;
     EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
-    EXPECT_EQ(2, got->size());
+    EXPECT_EQ(2U, got->size());
     expectEqWithDiff(options, got);
 
     // Now with keys only.
@@ -316,7 +316,7 @@ TEST_F(TranslatorOptionDataListTestv4, optionsSameCodeAndSpace) {
     // Get it back.
     EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
-    EXPECT_EQ(4, got->size());
+    EXPECT_EQ(4U, got->size());
     expectEqWithDiff(options->get(0), got->get(2));
     expectEqWithDiff(options->get(1), got->get(3));
 }
@@ -350,7 +350,7 @@ TEST_F(TranslatorOptionDataListTestv6, optionsSameCodeAndSpace) {
     ConstElementPtr got;
     EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
-    EXPECT_EQ(2, got->size());
+    EXPECT_EQ(2U, got->size());
     expectEqWithDiff(options, got);
 
     // Now with keys only.
@@ -370,7 +370,7 @@ TEST_F(TranslatorOptionDataListTestv6, optionsSameCodeAndSpace) {
     // Get it back.
     EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
-    EXPECT_EQ(4, got->size());
+    EXPECT_EQ(4U, got->size());
     expectEqWithDiff(options->get(0), got->get(2));
     expectEqWithDiff(options->get(1), got->get(3));
 }
@@ -405,7 +405,7 @@ TEST_F(TranslatorOptionDataListTestv4, emptyData) {
     ConstElementPtr got;
     EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
-    EXPECT_EQ(2, got->size());
+    EXPECT_EQ(2U, got->size());
 
     // Expect no "data" whatsoever. This is the same as empty "data" to the Kea DHCP server.
     ElementPtr const expected(Element::fromJSON(R"([
@@ -451,7 +451,7 @@ TEST_F(TranslatorOptionDataListTestv4, emptyDataKeysOnly) {
     ConstElementPtr got;
     EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
-    EXPECT_EQ(2, got->size());
+    EXPECT_EQ(2U, got->size());
 
     // Expect no "data" whatsoever. This is the same as empty "data" to the Kea DHCP server.
     ElementPtr const expected(Element::fromJSON(R"([
@@ -497,7 +497,7 @@ TEST_F(TranslatorOptionDataListTestv6, emptyData) {
     ConstElementPtr got;
     EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
-    EXPECT_EQ(2, got->size());
+    EXPECT_EQ(2U, got->size());
 
     // Expect no "data" whatsoever. This is the same as empty "data" to the Kea DHCP server.
     ElementPtr const expected(Element::fromJSON(R"([
@@ -543,7 +543,7 @@ TEST_F(TranslatorOptionDataListTestv6, emptyDataKeysOnly) {
     ConstElementPtr got;
     EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
-    EXPECT_EQ(2, got->size());
+    EXPECT_EQ(2U, got->size());
 
     // Expect no "data" whatsoever. This is the same as empty "data" to the Kea DHCP server.
     ElementPtr const expected(Element::fromJSON(R"([

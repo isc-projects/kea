@@ -343,7 +343,7 @@ public:
         ASSERT_NO_THROW(name_change->sendUpdate());
 
         // Update attempt count should be 1, next event should be NOP_EVT.
-        ASSERT_EQ(1, name_change->getUpdateAttempts());
+        ASSERT_EQ(1U, name_change->getUpdateAttempts());
         ASSERT_EQ(NameChangeTransaction::NOP_EVT,
                   name_change->getNextEvent());
 
@@ -863,19 +863,19 @@ TEST_F(NameChangeTransactionTest, updateAttempts) {
     ASSERT_NO_THROW(name_change_ = makeCannedTransaction());
 
     // Post transaction construction, update attempts should be 0.
-    EXPECT_EQ(0, name_change_->getUpdateAttempts());
+    EXPECT_EQ(0U, name_change_->getUpdateAttempts());
 
     // Set it to a known value.
     name_change_->setUpdateAttempts(5);
 
     // Verify that the value is as expected.
-    EXPECT_EQ(5, name_change_->getUpdateAttempts());
+    EXPECT_EQ(5U, name_change_->getUpdateAttempts());
 
     // Clear it.
     name_change_->clearUpdateAttempts();
 
     // Verify that it was cleared as expected.
-    EXPECT_EQ(0, name_change_->getUpdateAttempts());
+    EXPECT_EQ(0U, name_change_->getUpdateAttempts());
 }
 
 /// @brief Tests retryTransition method
@@ -1212,7 +1212,7 @@ TEST_F(NameChangeTransactionTest, addLeaseAddressRData) {
     ASSERT_NO_THROW(name_change_->addLeaseAddressRdata(rrset));
 
     // Verify the Rdata was added and the value is correct.
-    ASSERT_EQ(1, rrset->getRdataCount());
+    ASSERT_EQ(1U, rrset->getRdataCount());
     dns::RdataIteratorPtr rdata_it = rrset->getRdataIterator();
     ASSERT_TRUE(rdata_it);
     EXPECT_EQ(ncr->getIpAddress(), rdata_it->getCurrent().toText());
@@ -1230,7 +1230,7 @@ TEST_F(NameChangeTransactionTest, addDhcidRdata) {
     ASSERT_NO_THROW(name_change_->addDhcidRdata(rrset));
 
     // Verify the Rdata was added and the value is correct.
-    ASSERT_EQ(1, rrset->getRdataCount());
+    ASSERT_EQ(1U, rrset->getRdataCount());
     dns::RdataIteratorPtr rdata_it = rrset->getRdataIterator();
     ASSERT_TRUE(rdata_it);
 
@@ -1251,7 +1251,7 @@ TEST_F(NameChangeTransactionTest, addPtrRdata) {
     ASSERT_NO_THROW(name_change_->addPtrRdata(rrset));
 
     // Verify the Rdata was added and the value is correct.
-    ASSERT_EQ(1, rrset->getRdataCount());
+    ASSERT_EQ(1U, rrset->getRdataCount());
     dns::RdataIteratorPtr rdata_it = rrset->getRdataIterator();
     ASSERT_TRUE(rdata_it);
 

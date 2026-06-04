@@ -68,8 +68,8 @@ TEST_F(DNSSECTimeTest, fromText) {
 
     // After that, timeFromText32() should start returning the second count
     // modulo 2^32.
-    EXPECT_EQ(0, timeFromText32("21060207062816"));
-    EXPECT_EQ(10, timeFromText32("21060207062826"));
+    EXPECT_EQ(0U, timeFromText32("21060207062816"));
+    EXPECT_EQ(10U, timeFromText32("21060207062826"));
 
     // On the other hand, the 64-bit version should return monotonically
     // increasing counters.
@@ -88,7 +88,7 @@ testGetTime() {
 
 // Seconds since epoch for the year 10K eve.  Commonly used in some tests
 // below.
-constexpr uint64_t YEAR10K_EVE = 253402300799LL;
+constexpr uint64_t YEAR10K_EVE = 253402300799LLU;
 
 TEST_F(DNSSECTimeTest, toText) {
     // Check a basic case with the default (normal) getTimeFunction

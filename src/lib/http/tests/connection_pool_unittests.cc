@@ -142,21 +142,21 @@ public:
 
         // Start first connection and check that it has been added to the pool.
         ASSERT_NO_THROW(pool.start(conn1));
-        ASSERT_EQ(1, pool.connections_.size());
-        ASSERT_EQ(1, pool.hasConnection(conn1));
+        ASSERT_EQ(1U, pool.connections_.size());
+        ASSERT_TRUE(pool.hasConnection(conn1));
 
         // Start second connection and check that it also has been added.
         ASSERT_NO_THROW(pool.start(conn2));
-        ASSERT_EQ(2, pool.connections_.size());
-        ASSERT_EQ(1, pool.hasConnection(conn2));
+        ASSERT_EQ(2U, pool.connections_.size());
+        ASSERT_TRUE( pool.hasConnection(conn2));
 
         // Stop first connection.
         ASSERT_NO_THROW(pool.stop(conn1));
-        ASSERT_EQ(1, pool.connections_.size());
-        // Check that it has been removed but the second connection is still
+        ASSERT_EQ(1U, pool.connections_.size());
+        // Check thaUt it has been removed but the second connection is still
         // there.
-        ASSERT_EQ(0, pool.hasConnection(conn1));
-        ASSERT_EQ(1, pool.hasConnection(conn2));
+        ASSERT_FALSE(pool.hasConnection(conn1));
+        ASSERT_TRUE(pool.hasConnection(conn2));
 
         // Remove second connection and verify.
         ASSERT_NO_THROW(pool.stop(conn2));
@@ -186,7 +186,7 @@ public:
         ASSERT_NO_THROW(pool.start(conn2));
 
         // There are two distinct connections in the pool.
-        ASSERT_EQ(2, pool.connections_.size());
+        ASSERT_EQ(2U, pool.connections_.size());
 
         // This should remove all connections.
         ASSERT_NO_THROW(pool.stopAll());
@@ -213,8 +213,8 @@ public:
         TestHttpConnectionPool pool;
         ASSERT_NO_THROW(pool.start(conn1));
         ASSERT_NO_THROW(pool.stop(conn2));
-        ASSERT_EQ(1, pool.connections_.size());
-        ASSERT_EQ(1, pool.hasConnection(conn1));
+        ASSERT_EQ(1U, pool.connections_.size());
+        ASSERT_TRUE(pool.hasConnection(conn1));
     }
 
     IOServicePtr io_service_;                   ///< IO service.

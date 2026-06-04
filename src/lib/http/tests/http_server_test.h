@@ -309,7 +309,7 @@ public:
         ASSERT_NO_THROW(listener.start());
         ASSERT_NO_THROW(startRequest(request));
         ASSERT_NO_THROW(runIOService());
-        ASSERT_EQ(1, clients_.size());
+        ASSERT_EQ(1U, clients_.size());
         auto client = *clients_.begin();
         ASSERT_TRUE(client);
 
@@ -368,7 +368,7 @@ public:
         // Injecting unexpected data should not result in an exception.
         ASSERT_NO_THROW(runIOService());
 
-        ASSERT_EQ(1, clients_.size());
+        ASSERT_EQ(1U, clients_.size());
         auto client = *clients_.begin();
         ASSERT_TRUE(client);
         EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
@@ -395,7 +395,7 @@ public:
         ASSERT_EQ(server_context_, listener.getTlsContext());
         ASSERT_NO_THROW(startRequest(request));
         ASSERT_NO_THROW(runIOService());
-        ASSERT_EQ(1, clients_.size());
+        ASSERT_EQ(1U, clients_.size());
         auto client = *clients_.begin();
         ASSERT_TRUE(client);
         EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
@@ -429,7 +429,7 @@ public:
         // Send the request with the keep-alive header.
         ASSERT_NO_THROW(startRequest(request));
         ASSERT_NO_THROW(runIOService());
-        ASSERT_EQ(1, clients_.size());
+        ASSERT_EQ(1U, clients_.size());
         auto client = *clients_.begin();
         ASSERT_TRUE(client);
         EXPECT_EQ(httpOk(HttpVersion::HTTP_10()), client->getResponse());
@@ -480,7 +480,7 @@ public:
         // Send the first request.
         ASSERT_NO_THROW(startRequest(request));
         ASSERT_NO_THROW(runIOService());
-        ASSERT_EQ(1, clients_.size());
+        ASSERT_EQ(1U, clients_.size());
         auto client = *clients_.begin();
         ASSERT_TRUE(client);
         EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
@@ -536,7 +536,7 @@ public:
         // Send the request with the keep-alive header.
         ASSERT_NO_THROW(startRequest(request));
         ASSERT_NO_THROW(runIOService());
-        ASSERT_EQ(1, clients_.size());
+        ASSERT_EQ(1U, clients_.size());
         auto client = *clients_.begin();
         ASSERT_TRUE(client);
         EXPECT_EQ(httpOk(HttpVersion::HTTP_10()), client->getResponse());
@@ -561,7 +561,7 @@ public:
 
         ASSERT_NO_THROW(startRequest(request));
         ASSERT_NO_THROW(runIOService());
-        ASSERT_EQ(1, clients_.size());
+        ASSERT_EQ(1U, clients_.size());
         client = *clients_.begin();
         ASSERT_TRUE(client);
         EXPECT_EQ(httpOk(HttpVersion::HTTP_10()), client->getResponse());
@@ -595,7 +595,7 @@ public:
         // Send the request.
         ASSERT_NO_THROW(startRequest(request));
         ASSERT_NO_THROW(runIOService());
-        ASSERT_EQ(1, clients_.size());
+        ASSERT_EQ(1U, clients_.size());
         auto client = *clients_.begin();
         ASSERT_TRUE(client);
         EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
@@ -620,7 +620,7 @@ public:
 
         ASSERT_NO_THROW(startRequest(request));
         ASSERT_NO_THROW(runIOService());
-        ASSERT_EQ(1, clients_.size());
+        ASSERT_EQ(1U, clients_.size());
         client = *clients_.begin();
         ASSERT_TRUE(client);
         EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
@@ -653,7 +653,7 @@ public:
         // Send the request.
         ASSERT_NO_THROW(startRequest(request));
         ASSERT_NO_THROW(runIOService());
-        ASSERT_EQ(1, clients_.size());
+        ASSERT_EQ(1U, clients_.size());
         auto client = *clients_.begin();
         ASSERT_TRUE(client);
         EXPECT_EQ("HTTP/1.1 400 Bad Request\r\n"
@@ -705,7 +705,7 @@ public:
         ASSERT_NO_THROW(listener.start());
         ASSERT_NO_THROW(startRequest(request));
         ASSERT_NO_THROW(runIOService());
-        ASSERT_EQ(1, clients_.size());
+        ASSERT_EQ(1U, clients_.size());
         auto client = *clients_.begin();
         ASSERT_TRUE(client);
         EXPECT_EQ("HTTP/1.1 400 Bad Request\r\n"

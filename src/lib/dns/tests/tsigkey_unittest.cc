@@ -101,10 +101,10 @@ TEST_F(TSIGKeyTest, construct) {
                       secret.size()).getKeyName().toText());
 
     // Check digestbits
-    EXPECT_EQ(key.getDigestbits(), 0);
+    EXPECT_EQ(key.getDigestbits(), 0U);
     TSIGKey key_trunc(key_name, TSIGKey::HMACMD5_NAME(),
                       secret.c_str(), secret.size(), 120);
-    EXPECT_EQ(key_trunc.getDigestbits(), 120);
+    EXPECT_EQ(key_trunc.getDigestbits(), 120U);
 
     // Invalid combinations of secret and secret_len:
     EXPECT_THROW(TSIGKey(key_name, TSIGKey::HMACSHA1_NAME(), secret.c_str(), 0),
@@ -114,7 +114,7 @@ TEST_F(TSIGKeyTest, construct) {
 
     // Empty secret
     TSIGKey keye = TSIGKey(key_name, TSIGKey::HMACSHA256_NAME(), 0, 0);
-    EXPECT_EQ(keye.getSecretLength(), 0);
+    EXPECT_EQ(keye.getSecretLength(), 0U);
     EXPECT_EQ(keye.getSecret(), (const void*)0);
 }
 
@@ -182,14 +182,14 @@ protected:
 };
 
 TEST_F(TSIGKeyRingTest, init) {
-    EXPECT_EQ(0, keyring.size());
+    EXPECT_EQ(0U, keyring.size());
 }
 
 TEST_F(TSIGKeyRingTest, add) {
     EXPECT_EQ(TSIGKeyRing::SUCCESS, keyring.add(
                   TSIGKey(key_name, TSIGKey::HMACSHA256_NAME(),
                           secret, secret_len)));
-    EXPECT_EQ(1, keyring.size());
+    EXPECT_EQ(1U, keyring.size());
     EXPECT_EQ(TSIGKeyRing::EXIST, keyring.add(
                   TSIGKey(key_name, TSIGKey::HMACSHA256_NAME(),
                           secret, secret_len)));
@@ -202,7 +202,7 @@ TEST_F(TSIGKeyRingTest, add) {
     EXPECT_EQ(TSIGKeyRing::EXIST, keyring.add(
                   TSIGKey(Name("EXAMPLE.COM"), TSIGKey::HMACSHA1_NAME(),
                           secret, secret_len)));
-    EXPECT_EQ(1, keyring.size());
+    EXPECT_EQ(1U, keyring.size());
 }
 
 TEST_F(TSIGKeyRingTest, addMore) {
@@ -216,7 +216,7 @@ TEST_F(TSIGKeyRingTest, addMore) {
     EXPECT_EQ(TSIGKeyRing::SUCCESS, keyring.add(
                   TSIGKey(Name("more.example"), TSIGKey::HMACSHA1_NAME(),
                           secret, secret_len)));
-    EXPECT_EQ(3, keyring.size());
+    EXPECT_EQ(3U, keyring.size());
 }
 
 TEST_F(TSIGKeyRingTest, remove) {
@@ -242,7 +242,7 @@ TEST_F(TSIGKeyRingTest, removeFromSome) {
 
     EXPECT_EQ(TSIGKeyRing::SUCCESS, keyring.remove(Name("another.example")));
     EXPECT_EQ(TSIGKeyRing::NOTFOUND, keyring.remove(Name("noexist.example")));
-    EXPECT_EQ(2, keyring.size());
+    EXPECT_EQ(2U, keyring.size());
 }
 
 TEST_F(TSIGKeyRingTest, find) {
@@ -323,7 +323,7 @@ TEST(TSIGStringTest, TSIGKeyFromToString) {
               k3.toText());
     EXPECT_EQ("test.example.:MSG6Ng==:hmac-md5.sig-alg.reg.int.:120",
               k4.toText());
-    EXPECT_EQ(120, k4.getDigestbits());
+    EXPECT_EQ(120U, k4.getDigestbits());
     EXPECT_EQ("test.example.::hmac-sha1.", k5.toText());
     EXPECT_EQ(Name("test.example."), k6.getKeyName());
     EXPECT_EQ(Name("unknown"), k6.getAlgorithmName());

@@ -70,28 +70,28 @@ protected:
 // Test that log events are indeed stored, and that they are
 // flushed to the new appenders of their logger
 TEST_F(BufferAppenderTest, flush) {
-    ASSERT_EQ(0, buffer_appender1->getBufferSize());
-    ASSERT_EQ(0, buffer_appender2->getBufferSize());
+    ASSERT_EQ(0U, buffer_appender1->getBufferSize());
+    ASSERT_EQ(0U, buffer_appender2->getBufferSize());
 
     // Create a Logger, log a few messages with the first appender
     logger.addAppender(appender1);
     LOG4CPLUS_INFO(logger, "Foo");
-    ASSERT_EQ(1, buffer_appender1->getBufferSize());
+    ASSERT_EQ(1U, buffer_appender1->getBufferSize());
     LOG4CPLUS_INFO(logger, "Foo");
-    ASSERT_EQ(2, buffer_appender1->getBufferSize());
+    ASSERT_EQ(2U, buffer_appender1->getBufferSize());
     LOG4CPLUS_INFO(logger, "Foo");
-    ASSERT_EQ(3, buffer_appender1->getBufferSize());
+    ASSERT_EQ(3U, buffer_appender1->getBufferSize());
 
     // Second buffer should still be empty
-    ASSERT_EQ(0, buffer_appender2->getBufferSize());
+    ASSERT_EQ(0U, buffer_appender2->getBufferSize());
 
     // Replace the appender by the second one, and call flush;
     // this should cause all events to be moved to the second buffer
     logger.removeAllAppenders();
     logger.addAppender(appender2);
     buffer_appender1->flush();
-    ASSERT_EQ(0, buffer_appender1->getBufferSize());
-    ASSERT_EQ(3, buffer_appender2->getBufferSize());
+    ASSERT_EQ(0U, buffer_appender1->getBufferSize());
+    ASSERT_EQ(3U, buffer_appender2->getBufferSize());
 }
 
 // Once flushed, logging new messages with the same buffer should fail
@@ -100,13 +100,13 @@ TEST_F(BufferAppenderTest, addAfterFlush) {
     buffer_appender1->flush();
     EXPECT_THROW(LOG4CPLUS_INFO(logger, "Foo"), LogBufferAddAfterFlush);
     // It should not have been added
-    ASSERT_EQ(0, buffer_appender1->getBufferSize());
+    ASSERT_EQ(0U, buffer_appender1->getBufferSize());
 
     // But logging should work again as long as a different buffer is used
     logger.removeAllAppenders();
     logger.addAppender(appender2);
     LOG4CPLUS_INFO(logger, "Foo");
-    ASSERT_EQ(1, buffer_appender2->getBufferSize());
+    ASSERT_EQ(1U, buffer_appender2->getBufferSize());
 }
 
 TEST_F(BufferAppenderTest, addDirectly) {
@@ -115,7 +115,7 @@ TEST_F(BufferAppenderTest, addDirectly) {
                                                log4cplus::INFO_LOG_LEVEL,
                                                "Bar", "file", 123);
     buffer_appender1->addEvent(event);
-    ASSERT_EQ(1, buffer_appender1->getBufferSize());
+    ASSERT_EQ(1U, buffer_appender1->getBufferSize());
 
     // Do one from a smaller scope to make sure destruction doesn't harm
     {
@@ -124,14 +124,14 @@ TEST_F(BufferAppenderTest, addDirectly) {
                                                     "Bar", "file", 123);
         buffer_appender1->addEvent(event2);
     }
-    ASSERT_EQ(2, buffer_appender1->getBufferSize());
+    ASSERT_EQ(2U, buffer_appender1->getBufferSize());
 
     // And flush them to the next
     logger.removeAllAppenders();
     logger.addAppender(appender2);
     buffer_appender1->flush();
-    ASSERT_EQ(0, buffer_appender1->getBufferSize());
-    ASSERT_EQ(2, buffer_appender2->getBufferSize());
+    ASSERT_EQ(0U, buffer_appender1->getBufferSize());
+    ASSERT_EQ(2U, buffer_appender2->getBufferSize());
 }
 
 }

@@ -43,8 +43,8 @@ protected:
 void
 checkEmptySource(const MasterLexer& lexer) {
     EXPECT_TRUE(lexer.getSourceName().empty());
-    EXPECT_EQ(0, lexer.getSourceLine());
-    EXPECT_EQ(0, lexer.getPosition());
+    EXPECT_EQ(0U, lexer.getSourceLine());
+    EXPECT_EQ(0U, lexer.getPosition());
 }
 
 TEST_F(MasterLexerTest, preOpen) {
@@ -53,23 +53,23 @@ TEST_F(MasterLexerTest, preOpen) {
 }
 
 TEST_F(MasterLexerTest, pushStream) {
-    EXPECT_EQ(0, lexer.getSourceCount());
+    EXPECT_EQ(0U, lexer.getSourceCount());
     ss << "test";
     lexer.pushSource(ss);
     EXPECT_EQ(expected_stream_name, lexer.getSourceName());
-    EXPECT_EQ(1, lexer.getSourceCount());
-    EXPECT_EQ(4, lexer.getTotalSourceSize()); // 4 = len("test")
+    EXPECT_EQ(1U, lexer.getSourceCount());
+    EXPECT_EQ(4U, lexer.getTotalSourceSize()); // 4 = len("test")
 
     // From the point of view of this test, we only have to check (though
     // indirectly) getSourceLine calls InputSource::getCurrentLine.  It should
     // return 1 initially.
-    EXPECT_EQ(1, lexer.getSourceLine());
+    EXPECT_EQ(1U, lexer.getSourceLine());
 
     // By popping it the stack will be empty again.
     lexer.popSource();
-    EXPECT_EQ(0, lexer.getSourceCount());
+    EXPECT_EQ(0U, lexer.getSourceCount());
     checkEmptySource(lexer);
-    EXPECT_EQ(4, lexer.getTotalSourceSize()); // this shouldn't change
+    EXPECT_EQ(4U, lexer.getTotalSourceSize()); // this shouldn't change
 }
 
 TEST_F(MasterLexerTest, pushStreamFail) {
@@ -84,20 +84,20 @@ TEST_F(MasterLexerTest, pushStreamFail) {
 TEST_F(MasterLexerTest, pushFile) {
     // We use zone file (-like) data, but in this test that actually doesn't
     // matter.
-    EXPECT_EQ(0, lexer.getSourceCount());
+    EXPECT_EQ(0U, lexer.getSourceCount());
     EXPECT_TRUE(lexer.pushSource(TEST_DATA_SRCDIR "/masterload.txt"));
-    EXPECT_EQ(1, lexer.getSourceCount());
+    EXPECT_EQ(1U, lexer.getSourceCount());
     EXPECT_EQ(TEST_DATA_SRCDIR "/masterload.txt", lexer.getSourceName());
-    EXPECT_EQ(1, lexer.getSourceLine());
+    EXPECT_EQ(1U, lexer.getSourceLine());
 
     // 143 = size of the test zone file.  hardcode it assuming it won't change
     // too often.
-    EXPECT_EQ(143, lexer.getTotalSourceSize());
+    EXPECT_EQ(143U, lexer.getTotalSourceSize());
 
     lexer.popSource();
     checkEmptySource(lexer);
-    EXPECT_EQ(0, lexer.getSourceCount());
-    EXPECT_EQ(143, lexer.getTotalSourceSize()); // this shouldn't change
+    EXPECT_EQ(0U, lexer.getSourceCount());
+    EXPECT_EQ(143U, lexer.getTotalSourceSize()); // this shouldn't change
 
     // If we give a non null string pointer, its content will be intact
     // if pushSource succeeds.
@@ -131,7 +131,7 @@ TEST_F(MasterLexerTest, nestedPush) {
     lexer.pushSource(ss);
 
     EXPECT_EQ(test_txt.size(), lexer.getTotalSourceSize());
-    EXPECT_EQ(0, lexer.getPosition());
+    EXPECT_EQ(0U, lexer.getPosition());
 
     EXPECT_EQ(expected_stream_name, lexer.getSourceName());
 
@@ -171,7 +171,7 @@ TEST_F(MasterLexerTest, unknownSourceSize) {
     // will be considered "unknown" (by emulating an error).
     ss << "test";
     lexer.pushSource(ss);
-    EXPECT_EQ(4, lexer.getTotalSourceSize());
+    EXPECT_EQ(4U, lexer.getTotalSourceSize());
 
     stringstream ss2;
     ss2.setstate(std::ios_base::failbit); // this will make the size unknown
@@ -201,24 +201,24 @@ TEST_F(MasterLexerTest, getNextToken) {
 
     // First, the newline should get out.
     EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
-    EXPECT_EQ(1, lexer.getPosition());
+    EXPECT_EQ(1U, lexer.getPosition());
     // Then the whitespace, if we specify the option.
     EXPECT_EQ(MasterToken::INITIAL_WS,
               lexer.getNextToken(MasterLexer::INITIAL_WS).getType());
-    EXPECT_EQ(2, lexer.getPosition());
+    EXPECT_EQ(2U, lexer.getPosition());
     // The newline
     EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
-    EXPECT_EQ(5, lexer.getPosition()); // 1st \n + 3 spaces, then 2nd \n
+    EXPECT_EQ(5U, lexer.getPosition()); // 1st \n + 3 spaces, then 2nd \n
     // The (quoted) string
     EXPECT_EQ(MasterToken::QSTRING,
               lexer.getNextToken(MasterLexer::QSTRING).getType());
-    EXPECT_EQ(5 + 8, lexer.getPosition()); // 8 = len("STRING') + quotes
+    EXPECT_EQ(5 + 8U, lexer.getPosition()); // 8 = len("STRING') + quotes
 
     // And the end of line and file
     EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
-    EXPECT_EQ(5 + 8 + 1, lexer.getPosition()); // previous + 3rd \n
+    EXPECT_EQ(5 + 8 + 1U, lexer.getPosition()); // previous + 3rd \n
     EXPECT_EQ(MasterToken::END_OF_FILE, lexer.getNextToken().getType());
-    EXPECT_EQ(5 + 8 + 1, lexer.getPosition()); // position doesn't change
+    EXPECT_EQ(5 + 8 + 1U, lexer.getPosition()); // position doesn't change
 }
 
 // Test we correctly find end of file.
@@ -270,18 +270,18 @@ TEST_F(MasterLexerTest, ungetToken) {
 
     // Try getting the newline
     EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
-    EXPECT_EQ(1, lexer.getPosition());
+    EXPECT_EQ(1U, lexer.getPosition());
     // Return it and get again
     lexer.ungetToken();
-    EXPECT_EQ(0, lexer.getPosition());
+    EXPECT_EQ(0U, lexer.getPosition());
     EXPECT_EQ(MasterToken::END_OF_LINE, lexer.getNextToken().getType());
-    EXPECT_EQ(1, lexer.getPosition());
+    EXPECT_EQ(1U, lexer.getPosition());
     // Get the string and return it back
     EXPECT_EQ(MasterToken::QSTRING,
               lexer.getNextToken(MasterLexer::QSTRING).getType());
     EXPECT_EQ(string("\n (\"string\"").size(), lexer.getPosition());
     lexer.ungetToken();
-    EXPECT_EQ(1, lexer.getPosition()); // back to just after 1st \n
+    EXPECT_EQ(1U, lexer.getPosition()); // back to just after 1st \n
     // But if we change the options, it honors them
     EXPECT_EQ(MasterToken::INITIAL_WS,
               lexer.getNextToken(MasterLexer::QSTRING |
@@ -328,11 +328,11 @@ TEST_F(MasterLexerTest, includeAndInitialWS) {
 
     EXPECT_EQ(MasterToken::INITIAL_WS,
               lexer.getNextToken(MasterLexer::INITIAL_WS).getType());
-    EXPECT_EQ(1, lexer.getPosition());
+    EXPECT_EQ(1U, lexer.getPosition());
     lexer.pushSource(ss2);
     EXPECT_EQ(MasterToken::INITIAL_WS,
               lexer.getNextToken(MasterLexer::INITIAL_WS).getType());
-    EXPECT_EQ(2, lexer.getPosition()); // should be sum of pushed positions.
+    EXPECT_EQ(2U, lexer.getPosition()); // should be sum of pushed positions.
 }
 
 // Test only one token can be ungotten
@@ -465,7 +465,7 @@ TEST_F(MasterLexerTest, getNextTokenNumber) {
     lexer.pushSource(ss);
 
     // Expecting a number string and get one.
-    EXPECT_EQ(3600,
+    EXPECT_EQ(3600U,
               lexer.getNextToken(MasterToken::NUMBER).getNumber());
     eolCheck(lexer, MasterToken::NUMBER);
 

@@ -94,7 +94,7 @@ TEST_F(TranslatorHostsTestv6, get) {
     EXPECT_NO_THROW_LOG(hosts = translator_->getHostsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
-    ASSERT_EQ(1, hosts->size());
+    ASSERT_EQ(1U, hosts->size());
     EXPECT_TRUE(host->equals(*hosts->get(0)));
 }
 
@@ -144,7 +144,7 @@ TEST_F(TranslatorHostsTestv4, set) {
     EXPECT_NO_THROW_LOG(hosts = translator_->getHostsFromAbsoluteXpath(xpath));
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
-    ASSERT_EQ(1, hosts->size());
+    ASSERT_EQ(1U, hosts->size());
     EXPECT_TRUE(host->equals(*hosts->get(0)));
 }
 

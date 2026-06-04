@@ -33,7 +33,7 @@ TEST(ContextTest, basic) {
     StatContext ctx;
 
     // By default the context does not hold any statistics.
-    EXPECT_EQ(0, ctx.size());
+    EXPECT_EQ(0U, ctx.size());
 
     // It should be possible to add 'a' statistic
     EXPECT_NO_THROW(ctx.add(a));
@@ -46,7 +46,7 @@ TEST(ContextTest, basic) {
     EXPECT_NO_THROW(ctx.add(c));
 
     // By now we should have 3 statistics recorded
-    EXPECT_EQ(3, ctx.size());
+    EXPECT_EQ(3U, ctx.size());
 
     // Let's try to retrieve them
     ObservationPtr from_ctx;
@@ -102,11 +102,11 @@ TEST(ContextTest, basic) {
 
     EXPECT_NO_THROW(from_ctx = ctx.get("alpha"));
     ASSERT_TRUE(from_ctx);
-    EXPECT_EQ(from_ctx->getMaxSampleCount().second, 50);
+    EXPECT_EQ(from_ctx->getMaxSampleCount().second, 50U);
 
     EXPECT_NO_THROW(from_ctx = ctx.get("gamma"));
     ASSERT_TRUE(from_ctx);
-    EXPECT_EQ(from_ctx->getMaxSampleCount().second, 50);
+    EXPECT_EQ(from_ctx->getMaxSampleCount().second, 50U);
 
     // Set sample age for all statistics
     const StatsDuration& dur(minutes(4) + seconds(5) + milliseconds(3));
@@ -122,5 +122,5 @@ TEST(ContextTest, basic) {
 
     // Clear all statistics.
     EXPECT_NO_THROW(ctx.clear());
-    EXPECT_EQ(0, ctx.size());
+    EXPECT_EQ(0U, ctx.size());
 }

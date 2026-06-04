@@ -79,7 +79,7 @@ TEST_F(TranslatorControlSocketTestv6, get) {
     EXPECT_NO_THROW_LOG(sock = translator_->getControlSocketFromAbsoluteXpath(xpath));
     ASSERT_TRUE(sock);
     ASSERT_EQ(Element::map, sock->getType());
-    EXPECT_EQ(3, sock->size());
+    EXPECT_EQ(3U, sock->size());
     ConstElementPtr type = sock->get("socket-type");
     ASSERT_TRUE(type);
     ASSERT_EQ(Element::string, type->getType());

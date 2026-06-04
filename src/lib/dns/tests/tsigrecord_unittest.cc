@@ -69,7 +69,7 @@ TEST_F(TSIGRecordTest, getLength) {
     // len(hmac-md5.sig-alg.reg.int) = 26
     // len(MAC) = 16
     // the rest are fixed length fields (26 in total)
-    EXPECT_EQ(85, test_record.getLength());
+    EXPECT_EQ(85U, test_record.getLength());
 }
 
 TEST_F(TSIGRecordTest, fromParams) {
@@ -80,7 +80,7 @@ TEST_F(TSIGRecordTest, fromParams) {
                             TSIGRecord::getTTL(), test_rdata, 85);
     // Perform straight sanity checks
     EXPECT_EQ(test_name, record.getName());
-    EXPECT_EQ(85, record.getLength());
+    EXPECT_EQ(85U, record.getLength());
     EXPECT_EQ(0, test_rdata.compare(record.getRdata()));
 
     // The constructor doesn't check the length...
@@ -109,13 +109,13 @@ TEST_F(TSIGRecordTest, fromParams) {
 
 TEST_F(TSIGRecordTest, recordToWire) {
     UnitTestUtil::readWireData("tsigrecord_toWire1.wire", data);
-    EXPECT_EQ(1, test_record.toWire(renderer));
+    EXPECT_EQ(1U, test_record.toWire(renderer));
     matchWireData(&data[0], data.size(),
                   renderer.getData(), renderer.getLength());
 
     // Same test for a dumb buffer
     buffer.clear();
-    EXPECT_EQ(1, test_record.toWire(buffer));
+    EXPECT_EQ(1U, test_record.toWire(buffer));
     matchWireData(&data[0], data.size(),
                   buffer.getData(), buffer.getLength());
 }
@@ -125,7 +125,7 @@ TEST_F(TSIGRecordTest, recordToOLongToWire) {
     // renderer will be marked as "truncated".
     renderer.setLengthLimit(test_record.getLength() - 1);
     EXPECT_FALSE(renderer.isTruncated()); // not marked before render attempt
-    EXPECT_EQ(0, test_record.toWire(renderer));
+    EXPECT_EQ(0U, test_record.toWire(renderer));
     EXPECT_TRUE(renderer.isTruncated());
 }
 
@@ -138,7 +138,7 @@ TEST_F(TSIGRecordTest, recordToWireAfterNames) {
     UnitTestUtil::readWireData("tsigrecord_toWire2.wire", data);
     renderer.writeName(TSIGKey::HMACMD5_NAME());
     renderer.writeName(Name("foo.example.com"));
-    EXPECT_EQ(1, test_record.toWire(renderer));
+    EXPECT_EQ(1U, test_record.toWire(renderer));
     matchWireData(&data[0], data.size(),
                   renderer.getData(), renderer.getLength());
 }

@@ -24,7 +24,7 @@ TEST(LoggerSpecificationTest, DefaultInitialization) {
     EXPECT_EQ(isc::log::INFO, spec.getSeverity());
     EXPECT_EQ(0, spec.getDbglevel());
     EXPECT_FALSE(spec.getAdditive());
-    EXPECT_EQ(0, spec.optionCount());
+    EXPECT_EQ(0U, spec.optionCount());
 }
 
 // Non-default initialization
@@ -35,7 +35,7 @@ TEST(LoggerSpecificationTest, Initialization) {
     EXPECT_EQ(isc::log::ERROR, spec.getSeverity());
     EXPECT_EQ(42, spec.getDbglevel());
     EXPECT_TRUE(spec.getAdditive());
-    EXPECT_EQ(0, spec.optionCount());
+    EXPECT_EQ(0U, spec.optionCount());
 }
 
 // Get/Set tests
@@ -55,7 +55,7 @@ TEST(LoggerSpecificationTest, SetGet) {
     EXPECT_TRUE(spec.getAdditive());
 
     // Should not affect option count
-    EXPECT_EQ(0, spec.optionCount());
+    EXPECT_EQ(0U, spec.optionCount());
 }
 
 // Check option setting
@@ -72,14 +72,14 @@ TEST(LoggerSpecificationTest, AddOption) {
     LoggerSpecification spec;
     spec.addOutputOption(option1);
     spec.addOutputOption(option2);
-    EXPECT_EQ(2, spec.optionCount());
+    EXPECT_EQ(2U, spec.optionCount());
 
     // Iterate through them
     LoggerSpecification::const_iterator i = spec.begin();
 
     EXPECT_EQ(OutputOption::DEST_FILE, i->destination);
     EXPECT_EQ(string("/tmp/example.log"), i->filename);
-    EXPECT_EQ(123456, i->maxsize);
+    EXPECT_EQ(123456U, i->maxsize);
 
     ++i;
     EXPECT_EQ(OutputOption::DEST_SYSLOG, i->destination);

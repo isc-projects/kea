@@ -37,9 +37,9 @@ TEST(ParkingLotsTest, createGetParkingLot) {
     ASSERT_TRUE(parking_lot1);
     ASSERT_TRUE(parking_lot2);
 
-    EXPECT_EQ(0, parking_lot0->size());
-    EXPECT_EQ(0, parking_lot1->size());
-    EXPECT_EQ(0, parking_lot2->size());
+    EXPECT_EQ(0U, parking_lot0->size());
+    EXPECT_EQ(0U, parking_lot1->size());
+    EXPECT_EQ(0U, parking_lot2->size());
 
     EXPECT_FALSE(parking_lot0 == parking_lot1);
     EXPECT_TRUE(parking_lot0 == parking_lot2);
@@ -62,7 +62,7 @@ TEST(ParkingLotsTest, park) {
     // Verify that we can park an object that has not been parked.
     ASSERT_NO_THROW(parking_lot.park(parked_object, [] {}));
 
-    EXPECT_EQ(1, parking_lot.size());
+    EXPECT_EQ(1U, parking_lot.size());
 
     // Verify that we cannot park an object that has been parked
     EXPECT_THROW(parking_lot.park(parked_object, [] {}),
@@ -85,7 +85,7 @@ TEST(ParkingLotsTest, reference) {
     // Park the object.
     ASSERT_NO_THROW(parking_lot->park(parked_object, [] {}));
 
-    EXPECT_EQ(1, parking_lot->size());
+    EXPECT_EQ(1U, parking_lot->size());
 
     // Reference the object. Reference count should one.
     int ref_count = 0;
@@ -96,7 +96,7 @@ TEST(ParkingLotsTest, reference) {
     ASSERT_NO_THROW(ref_count = parking_lot_handle->reference(parked_object));
     ASSERT_EQ(2, ref_count);
 
-    EXPECT_EQ(1, parking_lot->size());
+    EXPECT_EQ(1U, parking_lot->size());
 }
 
 // Test that object can be parked and then unparked.
@@ -110,7 +110,7 @@ TEST(ParkingLotsTest, unpark) {
     // Unparking should return false if the object isn't parked.
     EXPECT_FALSE(parking_lot->unpark(parked_object));
 
-    EXPECT_EQ(0, parking_lot->size());
+    EXPECT_EQ(0U, parking_lot->size());
 
     // This flag will indicate if the callback has been called.
     bool unparked = false;
@@ -119,34 +119,34 @@ TEST(ParkingLotsTest, unpark) {
         unparked = true;
     }));
 
-    EXPECT_EQ(1, parking_lot->size());
+    EXPECT_EQ(1U, parking_lot->size());
 
     // Reference the parked object twice because we're going to test that
     // reference counting works fine.
     ASSERT_NO_THROW(parking_lot_handle->reference(parked_object));
     ASSERT_NO_THROW(parking_lot_handle->reference(parked_object));
 
-    EXPECT_EQ(1, parking_lot->size());
+    EXPECT_EQ(1U, parking_lot->size());
 
     // Try to unpark the object. It should decrease the reference count, but not
     // unpark the packet yet.
     EXPECT_TRUE(parking_lot_handle->unpark(parked_object));
     EXPECT_FALSE(unparked);
 
-    EXPECT_EQ(1, parking_lot->size());
+    EXPECT_EQ(1U, parking_lot->size());
 
     // Try to unpark the object. This time it should be successful, because the
     // reference count goes to 0.
     EXPECT_TRUE(parking_lot_handle->unpark(parked_object));
     EXPECT_TRUE(unparked);
 
-    EXPECT_EQ(0, parking_lot->size());
+    EXPECT_EQ(0U, parking_lot->size());
 
     // Calling unpark again should return false to indicate that the object is
     // not parked.
     EXPECT_FALSE(parking_lot_handle->unpark(parked_object));
 
-    EXPECT_EQ(0, parking_lot->size());
+    EXPECT_EQ(0U, parking_lot->size());
 }
 
 // Test that parked object can be dropped.
@@ -163,7 +163,7 @@ TEST(ParkingLotsTest, drop) {
         unparked = true;
     }));
 
-    EXPECT_EQ(1, parking_lot->size());
+    EXPECT_EQ(1U, parking_lot->size());
 
     // Reference object twice to test that dropping the packet ignores
     // reference counting.
@@ -174,7 +174,7 @@ TEST(ParkingLotsTest, drop) {
     EXPECT_TRUE(parking_lot_handle->drop(parked_object));
     EXPECT_FALSE(unparked);
 
-    EXPECT_EQ(0, parking_lot->size());
+    EXPECT_EQ(0U, parking_lot->size());
 
     // Expect that an attempt to unpark return false, as the object
     // has been dropped.
@@ -243,7 +243,7 @@ TEST(ParkingLotsTest, dereference) {
         unparked = true;
     }));
 
-    EXPECT_EQ(1, parking_lot->size());
+    EXPECT_EQ(1U, parking_lot->size());
 
     // Reference the parked object twice.
     int ref_count = 0;
@@ -252,7 +252,7 @@ TEST(ParkingLotsTest, dereference) {
     ASSERT_NO_THROW(ref_count = parking_lot_handle->reference(parked_object));
     ASSERT_EQ(2, ref_count);
 
-    EXPECT_EQ(1, parking_lot->size());
+    EXPECT_EQ(1U, parking_lot->size());
 
     // Try to dereference the object. It should decrease the reference count,
     // but not unpark the packet or invoke the callback.
@@ -260,7 +260,7 @@ TEST(ParkingLotsTest, dereference) {
     ASSERT_EQ(1, ref_count);
     EXPECT_FALSE(unparked);
 
-    EXPECT_EQ(1, parking_lot->size());
+    EXPECT_EQ(1U, parking_lot->size());
 
     // Try to dereference the object. It should decrease the reference count,
     // but not unpark the packet or invoke the callback.
@@ -268,7 +268,7 @@ TEST(ParkingLotsTest, dereference) {
     ASSERT_EQ(0, ref_count);
     EXPECT_FALSE(unparked);
 
-    EXPECT_EQ(1, parking_lot->size());
+    EXPECT_EQ(1U, parking_lot->size());
 
     // Try to dereference the object. It should decrement to -1
     // but not unpark the packet or invoke the callback.
@@ -276,13 +276,13 @@ TEST(ParkingLotsTest, dereference) {
     EXPECT_EQ(-1, ref_count);
     EXPECT_FALSE(unparked);
 
-    EXPECT_EQ(1, parking_lot->size());
+    EXPECT_EQ(1U, parking_lot->size());
 
     // Calling unpark should invoke the callback.
     ASSERT_TRUE(parking_lot_handle->unpark(parked_object));
     EXPECT_TRUE(unparked);
 
-    EXPECT_EQ(0, parking_lot->size());
+    EXPECT_EQ(0U, parking_lot->size());
 }
 
 // Verify that parked objects are correctly distinguished from
@@ -306,7 +306,7 @@ TEST(ParkingLotsTest, multipleObjects) {
         ++unparked_two;
     }));
 
-    EXPECT_EQ(2, parking_lot->size());
+    EXPECT_EQ(2U, parking_lot->size());
 
     // Create a third object but don't park it.
     StringPtr object_three(new std::string("three"));
@@ -317,7 +317,7 @@ TEST(ParkingLotsTest, multipleObjects) {
     EXPECT_EQ(unparked_one, 0);
     EXPECT_EQ(unparked_two, 0);
 
-    EXPECT_EQ(2, parking_lot->size());
+    EXPECT_EQ(2U, parking_lot->size());
 
     // Unpark object one.  It should succeed and its callback should
     // get invoked.
@@ -325,7 +325,7 @@ TEST(ParkingLotsTest, multipleObjects) {
     EXPECT_EQ(unparked_one, 1);
     EXPECT_EQ(unparked_two, 0);
 
-    EXPECT_EQ(1, parking_lot->size());
+    EXPECT_EQ(1U, parking_lot->size());
 
     // Unpark object two.  It should succeed and its callback should
     // get invoked.
@@ -333,7 +333,7 @@ TEST(ParkingLotsTest, multipleObjects) {
     EXPECT_EQ(unparked_one, 1);
     EXPECT_EQ(unparked_two, 1);
 
-    EXPECT_EQ(0, parking_lot->size());
+    EXPECT_EQ(0U, parking_lot->size());
 }
 
 }

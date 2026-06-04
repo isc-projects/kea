@@ -93,10 +93,10 @@ TEST_F(AuditEntryTest, create) {
                         ("dhcp4_subnet", 10, AuditEntry::ModificationType::DELETE,
                          fixedTime(), 123, "deleted subnet 10"));
         EXPECT_EQ("dhcp4_subnet", audit_entry->getObjectType());
-        EXPECT_EQ(10, audit_entry->getObjectId());
+        EXPECT_EQ(10U, audit_entry->getObjectId());
         EXPECT_EQ(AuditEntry::ModificationType::DELETE, audit_entry->getModificationType());
         EXPECT_EQ(fixedTime(), audit_entry->getModificationTime());
-        EXPECT_EQ(123, audit_entry->getRevisionId());
+        EXPECT_EQ(123U, audit_entry->getRevisionId());
         EXPECT_EQ("deleted subnet 10", audit_entry->getLogMessage());
     }
 
@@ -107,10 +107,10 @@ TEST_F(AuditEntryTest, create) {
                         ("dhcp4_option", 123, AuditEntry::ModificationType::CREATE,
                          234, ""));
         EXPECT_EQ("dhcp4_option", audit_entry->getObjectType());
-        EXPECT_EQ(123, audit_entry->getObjectId());
+        EXPECT_EQ(123U, audit_entry->getObjectId());
         EXPECT_EQ(AuditEntry::ModificationType::CREATE, audit_entry->getModificationType());
         EXPECT_TRUE(almostEqualTime(audit_entry->getModificationTime()));
-        EXPECT_EQ(234, audit_entry->getRevisionId());
+        EXPECT_EQ(234U, audit_entry->getRevisionId());
         EXPECT_TRUE(audit_entry->getLogMessage().empty());
     }
 }

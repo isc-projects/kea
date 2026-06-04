@@ -83,7 +83,7 @@ TEST_F(LoggingInfoTest, defaults) {
     EXPECT_EQ(isc::log::INFO, info_non_verbose.severity_);
     EXPECT_EQ(0, info_non_verbose.debuglevel_);
 
-    ASSERT_EQ(1, info_non_verbose.destinations_.size());
+    ASSERT_EQ(1U, info_non_verbose.destinations_.size());
     EXPECT_EQ("stdout", info_non_verbose.destinations_[0].output_);
 
     std::string header = "{\n";
@@ -116,10 +116,10 @@ TEST_F(LoggingInfoTest, defaults) {
     EXPECT_EQ(isc::log::DEBUG, info_verbose.severity_);
     EXPECT_EQ(99, info_verbose.debuglevel_);
 
-    ASSERT_EQ(1, info_verbose.destinations_.size());
+    ASSERT_EQ(1U, info_verbose.destinations_.size());
     EXPECT_EQ("stdout", info_verbose.destinations_[0].output_);
 
-    EXPECT_EQ(10240000, info_verbose.destinations_[0].maxsize_);
+    EXPECT_EQ(10240000U, info_verbose.destinations_[0].maxsize_);
     EXPECT_EQ(1, info_verbose.destinations_[0].maxver_);
 
     expected = header + begin + "DEBUG" + dbglvl + "99" + trailer;

@@ -74,8 +74,8 @@ TEST_F(HttpRequestTest, minimal) {
 
     EXPECT_EQ(HttpRequest::Method::HTTP_GET, request_->getMethod());
     EXPECT_EQ("/isc/org", request_->getUri());
-    EXPECT_EQ(1, request_->getHttpVersion().major_);
-    EXPECT_EQ(1, request_->getHttpVersion().minor_);
+    EXPECT_EQ(1U, request_->getHttpVersion().major_);
+    EXPECT_EQ(1U, request_->getHttpVersion().minor_);
     EXPECT_TRUE(request_->getRemote().empty());
     request_->setRemote("127.0.0.1");
     EXPECT_EQ("127.0.0.1", request_->getRemote());
@@ -95,8 +95,8 @@ TEST_F(HttpRequestTest, hostHeaderDefault) {
 
     EXPECT_EQ(HttpRequest::Method::HTTP_GET, request_->getMethod());
     EXPECT_EQ("/isc/org", request_->getUri());
-    EXPECT_EQ(1, request_->getHttpVersion().major_);
-    EXPECT_EQ(0, request_->getHttpVersion().minor_);
+    EXPECT_EQ(1U, request_->getHttpVersion().major_);
+    EXPECT_EQ(0U, request_->getHttpVersion().minor_);
 
     std::string host_hdr;
     ASSERT_NO_THROW(host_hdr = request_->getHeaderValue("Host"));
@@ -115,8 +115,8 @@ TEST_F(HttpRequestTest, hostHeaderCustom) {
 
     EXPECT_EQ(HttpRequest::Method::HTTP_GET, request_->getMethod());
     EXPECT_EQ("/isc/org", request_->getUri());
-    EXPECT_EQ(1, request_->getHttpVersion().major_);
-    EXPECT_EQ(1, request_->getHttpVersion().minor_);
+    EXPECT_EQ(1U, request_->getHttpVersion().major_);
+    EXPECT_EQ(1U, request_->getHttpVersion().minor_);
 
     std::string host_hdr;
     ASSERT_NO_THROW(host_hdr = request_->getHeaderValue("Host"));
@@ -132,8 +132,8 @@ TEST_F(HttpRequestTest, includeHeaders) {
 
     EXPECT_EQ(HttpRequest::Method::HTTP_POST, request_->getMethod());
     EXPECT_EQ("/isc/org", request_->getUri());
-    EXPECT_EQ(1, request_->getHttpVersion().major_);
-    EXPECT_EQ(0, request_->getHttpVersion().minor_);
+    EXPECT_EQ(1U, request_->getHttpVersion().major_);
+    EXPECT_EQ(0U, request_->getHttpVersion().minor_);
 
     std::string content_type;
     ASSERT_NO_THROW(content_type = request_->getHeaderValue("Content-Type"));
@@ -143,7 +143,7 @@ TEST_F(HttpRequestTest, includeHeaders) {
     ASSERT_NO_THROW(
         content_length = request_->getHeaderValueAsUint64("Content-Length")
     );
-    EXPECT_EQ(1024, content_length);
+    EXPECT_EQ(1024U, content_length);
 }
 
 // This test verifies that it is possible to specify required

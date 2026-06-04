@@ -44,13 +44,13 @@ protected:
 
 // Test the default return values set during InputSource construction.
 TEST_F(InputSourceTest, defaults) {
-    EXPECT_EQ(1, source_.getCurrentLine());
+    EXPECT_EQ(1U, source_.getCurrentLine());
     EXPECT_FALSE(source_.atEOF());
 }
 
 // getName() on file and stream sources
 TEST_F(InputSourceTest, getName) {
-    EXPECT_EQ(0, source_.getName().find("stream-"));
+    EXPECT_EQ(0U, source_.getName().find("stream-"));
 
     // Use some file; doesn't really matter what.
     InputSource source2(TEST_DATA_SRCDIR "/masterload.txt");
@@ -144,14 +144,14 @@ TEST_F(InputSourceTest, ungetAll) {
 
     // Now, we are at EOF.
     EXPECT_TRUE(source_.atEOF());
-    EXPECT_EQ(4, source_.getCurrentLine());
+    EXPECT_EQ(4U, source_.getCurrentLine());
 
     source_.ungetAll();
 
     // Now we are back to where we started.
-    EXPECT_EQ(1, source_.getCurrentLine());
+    EXPECT_EQ(1U, source_.getCurrentLine());
     EXPECT_FALSE(source_.atEOF());
-    EXPECT_EQ(0, source_.getPosition());
+    EXPECT_EQ(0U, source_.getPosition());
 }
 
 TEST_F(InputSourceTest, compact) {
@@ -174,14 +174,14 @@ TEST_F(InputSourceTest, compact) {
 
     // Now, EOF should be set.
     EXPECT_TRUE(source_.atEOF());
-    EXPECT_EQ(4, source_.getCurrentLine());
+    EXPECT_EQ(4U, source_.getCurrentLine());
 
     // Compact again
     source_.compact();
 
     // We are still at EOF.
     EXPECT_TRUE(source_.atEOF());
-    EXPECT_EQ(4, source_.getCurrentLine());
+    EXPECT_EQ(4U, source_.getCurrentLine());
 
     // compact shouldn't change the position count.
     EXPECT_EQ(source_.getSize(), source_.getPosition());
@@ -203,7 +203,7 @@ TEST_F(InputSourceTest, markDuring) {
         source_.getChar();
     }
     EXPECT_FALSE(source_.atEOF());
-    EXPECT_EQ(2, source_.getCurrentLine());
+    EXPECT_EQ(2U, source_.getCurrentLine());
 
     // Now, unget a couple of characters. This should cause the
     // buffer_pos_ to be not equal to the size of the buffer.
@@ -264,19 +264,19 @@ TEST_F(InputSourceTest, lines) {
 
     // Now, we are at EOF.
     EXPECT_TRUE(source_.atEOF());
-    EXPECT_EQ(4, source_.getCurrentLine());
+    EXPECT_EQ(4U, source_.getCurrentLine());
 
     // Go backwards 2 characters, skipping the last EOF and '\n'.
     source_.ungetChar();
     source_.ungetChar();
 
     EXPECT_FALSE(source_.atEOF());
-    EXPECT_EQ(3, source_.getCurrentLine());
+    EXPECT_EQ(3U, source_.getCurrentLine());
 
     source_.ungetAll();
 
     // Now we are back to where we started.
-    EXPECT_EQ(1, source_.getCurrentLine());
+    EXPECT_EQ(1U, source_.getCurrentLine());
     EXPECT_FALSE(source_.atEOF());
 
     // Now check that line numbers are decremented properly (as much as
@@ -288,7 +288,7 @@ TEST_F(InputSourceTest, lines) {
 
     // Now, we are at EOF.
     EXPECT_TRUE(source_.atEOF());
-    EXPECT_EQ(4, line);
+    EXPECT_EQ(4U, line);
 
     EXPECT_THROW({
         while (true) {
@@ -300,7 +300,7 @@ TEST_F(InputSourceTest, lines) {
     }, InputSource::UngetBeforeBeginning);
 
     // Now we are back to where we started.
-    EXPECT_EQ(1, source_.getCurrentLine());
+    EXPECT_EQ(1U, source_.getCurrentLine());
 }
 
 // ungetAll() after saveLine() should skip back to the last-saved place.
@@ -311,7 +311,7 @@ TEST_F(InputSourceTest, saveLine) {
         source_.getChar();
     }
     EXPECT_FALSE(source_.atEOF());
-    EXPECT_EQ(2, source_.getCurrentLine());
+    EXPECT_EQ(2U, source_.getCurrentLine());
 
     // Now, save the line.
     source_.saveLine();
@@ -323,13 +323,13 @@ TEST_F(InputSourceTest, saveLine) {
 
     // Now, we are at EOF.
     EXPECT_TRUE(source_.atEOF());
-    EXPECT_EQ(4, source_.getCurrentLine());
+    EXPECT_EQ(4U, source_.getCurrentLine());
 
     // Now, ungetAll() and check where it goes back.
     source_.ungetAll();
 
     // Now we are back to where we last-saved.
-    EXPECT_EQ(2, source_.getCurrentLine());
+    EXPECT_EQ(2U, source_.getCurrentLine());
     EXPECT_FALSE(source_.atEOF());
 }
 
@@ -339,7 +339,7 @@ TEST_F(InputSourceTest, getSize) {
 
     // Check it works with an empty input
     istringstream iss("");
-    EXPECT_EQ(0, InputSource(iss).getSize());
+    EXPECT_EQ(0U, InputSource(iss).getSize());
 
     // Pretend there's an error in seeking in the stream.  It will be
     // considered a seek specific error, and getSize() returns "unknown".
@@ -355,14 +355,14 @@ TEST_F(InputSourceTest, getSize) {
 
     // Check with input source from file name.  We hardcode the file size
     // for simplicity.  It won't change too often.
-    EXPECT_EQ(143, InputSource(TEST_DATA_SRCDIR "/masterload.txt").getSize());
+    EXPECT_EQ(143U, InputSource(TEST_DATA_SRCDIR "/masterload.txt").getSize());
 }
 
 TEST_F(InputSourceTest, getPosition) {
     // Initially the position is set to 0.  Other cases are tested in tests
     // for get and unget.
-    EXPECT_EQ(0, source_.getPosition());
-    EXPECT_EQ(0, InputSource(TEST_DATA_SRCDIR "/masterload.txt").getPosition());
+    EXPECT_EQ(0U, source_.getPosition());
+    EXPECT_EQ(0U, InputSource(TEST_DATA_SRCDIR "/masterload.txt").getPosition());
 }
 
 } // end namespace

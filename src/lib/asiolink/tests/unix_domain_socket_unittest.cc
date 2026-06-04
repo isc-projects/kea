@@ -209,7 +209,7 @@ TEST_F(UnixDomainSocketTest, asyncSendReceive) {
 
     // There is no guarantee that all data have been sent so we only check that
     // some data have been sent.
-    ASSERT_GT(sent_size, 0);
+    ASSERT_GT(sent_size, 0U);
 
     std::string expected_response = "received foo";
     doReceive(socket, expected_response);

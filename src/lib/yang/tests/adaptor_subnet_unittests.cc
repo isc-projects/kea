@@ -31,7 +31,7 @@ TEST(AdaptorSubnetTest, collectNoId) {
     bool ret = true;
     ASSERT_NO_THROW_LOG(ret = AdaptorSubnet::collectID(json, set));
     EXPECT_FALSE(ret);
-    EXPECT_EQ(0, set.size());
+    EXPECT_EQ(0U, set.size());
 }
 
 // Verifies how collectID handles a subnet entry with an ID.
@@ -46,8 +46,8 @@ TEST(AdaptorSubnetTest, collectId) {
     bool ret = false;
     ASSERT_NO_THROW_LOG(ret = AdaptorSubnet::collectID(json, set));
     EXPECT_TRUE(ret);
-    EXPECT_EQ(1, set.size());
-    EXPECT_EQ(1, set.count(123));
+    EXPECT_EQ(1U, set.size());
+    EXPECT_EQ(1U, set.count(123));
 }
 
 // Verifies how collectID handles a subnet entry with an ID which is
@@ -63,8 +63,8 @@ TEST(AdaptorSubnetTest, collectKnownId) {
     bool ret = false;
     ASSERT_NO_THROW_LOG(ret = AdaptorSubnet::collectID(json, set));
     EXPECT_TRUE(ret);
-    EXPECT_EQ(1, set.size());
-    EXPECT_EQ(1, set.count(123));
+    EXPECT_EQ(1U, set.size());
+    EXPECT_EQ(1U, set.count(123));
 }
 
 // Verifies how assignID handles a subnet entry without ID: the next ID
@@ -80,9 +80,9 @@ TEST(AdaptorSubnetTest, assignNoId) {
     SubnetID next_id = 123;
     ASSERT_NO_THROW_LOG(AdaptorSubnet::assignID(json, set, next_id));
     EXPECT_FALSE(copied->equals(*json));
-    EXPECT_EQ(1, set.size());
-    EXPECT_EQ(1, set.count(123));
-    EXPECT_EQ(124, next_id);
+    EXPECT_EQ(1U, set.size());
+    EXPECT_EQ(1U, set.count(123));
+    EXPECT_EQ(124U, next_id);
     ConstElementPtr id = json->get("id");
     ASSERT_TRUE(id);
     ASSERT_EQ(Element::integer, id->getType());
@@ -102,10 +102,10 @@ TEST(AdaptorSubnetTest, assignNoIdUsed) {
     SubnetID next_id = 123;
     ASSERT_NO_THROW_LOG(AdaptorSubnet::assignID(json, set, next_id));
     EXPECT_FALSE(copied->equals(*json));
-    EXPECT_EQ(2, set.size());
-    EXPECT_EQ(1, set.count(123));
-    EXPECT_EQ(1, set.count(124));
-    EXPECT_EQ(125, next_id);
+    EXPECT_EQ(2U, set.size());
+    EXPECT_EQ(1U, set.count(123));
+    EXPECT_EQ(1U, set.count(124));
+    EXPECT_EQ(125U, next_id);
     ConstElementPtr id = json->get("id");
     ASSERT_TRUE(id);
     ASSERT_EQ(Element::integer, id->getType());
@@ -125,8 +125,8 @@ TEST(AdaptorSubnetTest, assignId) {
     SubnetID next_id = 123; // ignored.
     ASSERT_NO_THROW_LOG(AdaptorSubnet::assignID(json, set, next_id));
     EXPECT_TRUE(copied->equals(*json));
-    EXPECT_EQ(0, set.size());
-    EXPECT_EQ(123, next_id);
+    EXPECT_EQ(0U, set.size());
+    EXPECT_EQ(123U, next_id);
 }
 
 // Verifies how updateRelay handles a subnet entry without relay: no change.

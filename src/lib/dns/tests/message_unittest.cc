@@ -207,15 +207,15 @@ TEST_F(MessageTest, fromWireWithTSIG) {
     const TSIGRecord* tsig_rr = message_parse.getTSIGRecord();
     ASSERT_TRUE(tsig_rr);
     EXPECT_EQ(Name("www.example.com"), tsig_rr->getName());
-    EXPECT_EQ(85, tsig_rr->getLength()); // see TSIGRecordTest.getLength
+    EXPECT_EQ(85U, tsig_rr->getLength()); // see TSIGRecordTest.getLength
     EXPECT_EQ(TSIGKey::HMACMD5_NAME(), tsig_rr->getRdata().getAlgorithm());
-    EXPECT_EQ(0x4da8877a, tsig_rr->getRdata().getTimeSigned());
+    EXPECT_EQ(0x4da8877aU, tsig_rr->getRdata().getTimeSigned());
     EXPECT_EQ(TSIGContext::DEFAULT_FUDGE, tsig_rr->getRdata().getFudge());
     matchWireData(expected_mac, sizeof(expected_mac),
                   tsig_rr->getRdata().getMAC(),
                   tsig_rr->getRdata().getMACSize());
-    EXPECT_EQ(0, tsig_rr->getRdata().getError());
-    EXPECT_EQ(0, tsig_rr->getRdata().getOtherLen());
+    EXPECT_EQ(0U, tsig_rr->getRdata().getError());
+    EXPECT_EQ(0U, tsig_rr->getRdata().getOtherLen());
     EXPECT_FALSE(tsig_rr->getRdata().getOtherData());
 
     // If we clear the message for reuse, the recorded TSIG will be cleared.
@@ -231,7 +231,7 @@ TEST_F(MessageTest, fromWireWithTSIGCompressed) {
     EXPECT_EQ(Name("www.example.com"), tsig_rr->getName());
     // len(www.example.com) = 17, but when fully compressed, the length is
     // 2 bytes.  So the length of the record should be 15 bytes shorter.
-    EXPECT_EQ(70, tsig_rr->getLength());
+    EXPECT_EQ(70U, tsig_rr->getLength());
 }
 
 TEST_F(MessageTest, fromWireWithBadTSIG) {
@@ -257,25 +257,25 @@ TEST_F(MessageTest, fromWireWithBadTSIG) {
 
 TEST_F(MessageTest, getRRCount) {
     // by default all counters should be 0
-    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_QUESTION));
-    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ANSWER));
-    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_AUTHORITY));
-    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ADDITIONAL));
+    EXPECT_EQ(0U, message_render.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(0U, message_render.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0U, message_render.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(0U, message_render.getRRCount(Message::SECTION_ADDITIONAL));
 
     message_render.addQuestion(Question(Name("test.example.com"),
                                         RRClass::IN(), RRType::A()));
-    EXPECT_EQ(1, message_render.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(1U, message_render.getRRCount(Message::SECTION_QUESTION));
 
     // rrset_a contains two RRs
     message_render.addRRset(Message::SECTION_ANSWER, rrset_a);
-    EXPECT_EQ(2, message_render.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(2U, message_render.getRRCount(Message::SECTION_ANSWER));
 
     // parse a message containing a Question and EDNS OPT RR.
     // OPT shouldn't be counted as normal RR, so result of getRRCount
     // shouldn't change.
     factoryFromFile(message_parse, "message_fromWire11.wire");
-    EXPECT_EQ(1, message_render.getRRCount(Message::SECTION_QUESTION));
-    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ADDITIONAL));
+    EXPECT_EQ(1U, message_render.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(0U, message_render.getRRCount(Message::SECTION_ADDITIONAL));
 
     // out-of-band section ID
     EXPECT_THROW(message_parse.getRRCount(bogus_section), isc::OutOfRange);
@@ -283,13 +283,13 @@ TEST_F(MessageTest, getRRCount) {
 
 TEST_F(MessageTest, addRRset) {
     // initially, we have 0
-    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0U, message_render.getRRCount(Message::SECTION_ANSWER));
 
     // add two A RRs (unsigned)
     message_render.addRRset(Message::SECTION_ANSWER, rrset_a);
     EXPECT_EQ(rrset_a,
               *message_render.beginSection(Message::SECTION_ANSWER));
-    EXPECT_EQ(2, message_render.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(2U, message_render.getRRCount(Message::SECTION_ANSWER));
 
     message_render.clear(Message::RENDER);
 
@@ -297,7 +297,7 @@ TEST_F(MessageTest, addRRset) {
     message_render.addRRset(Message::SECTION_ANSWER, rrset_aaaa);
     EXPECT_EQ(rrset_aaaa,
               *message_render.beginSection(Message::SECTION_ANSWER));
-    EXPECT_EQ(2, message_render.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(2U, message_render.getRRCount(Message::SECTION_ANSWER));
 }
 
 TEST_F(MessageTest, badAddRRset) {
@@ -364,7 +364,7 @@ TEST_F(MessageTest, removeRRset) {
                                         RRClass::IN(), RRType::A()));
     EXPECT_TRUE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
                                         RRClass::IN(), RRType::AAAA()));
-    EXPECT_EQ(4, message_render.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(4U, message_render.getRRCount(Message::SECTION_ANSWER));
 
     // Locate the AAAA RRset and remove it and any associated RRSIGs
     RRsetIterator i = message_render.beginSection(Message::SECTION_ANSWER);
@@ -378,17 +378,17 @@ TEST_F(MessageTest, removeRRset) {
                                         RRClass::IN(), RRType::A()));
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
                                          RRClass::IN(), RRType::AAAA()));
-    EXPECT_EQ(2, message_render.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(2U, message_render.getRRCount(Message::SECTION_ANSWER));
 }
 
 TEST_F(MessageTest, clearQuestionSection) {
     QuestionPtr q(new Question(Name("www.example.com"), RRClass::IN(),
                                RRType::A()));
     message_render.addQuestion(q);
-    ASSERT_EQ(1, message_render.getRRCount(Message::SECTION_QUESTION));
+    ASSERT_EQ(1U, message_render.getRRCount(Message::SECTION_QUESTION));
 
     message_render.clearSection(Message::SECTION_QUESTION);
-    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(0U, message_render.getRRCount(Message::SECTION_QUESTION));
     EXPECT_TRUE(message_render.beginQuestion() ==
                 message_render.endQuestion());
 }
@@ -403,14 +403,14 @@ TEST_F(MessageTest, clearAnswerSection) {
                                         RRClass::IN(), RRType::A()));
     ASSERT_TRUE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
                                         RRClass::IN(), RRType::AAAA()));
-    ASSERT_EQ(4, message_render.getRRCount(Message::SECTION_ANSWER));
+    ASSERT_EQ(4U, message_render.getRRCount(Message::SECTION_ANSWER));
 
     message_render.clearSection(Message::SECTION_ANSWER);
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
                                          RRClass::IN(), RRType::A()));
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
                                          RRClass::IN(), RRType::AAAA()));
-    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0U, message_render.getRRCount(Message::SECTION_ANSWER));
 }
 
 TEST_F(MessageTest, clearAuthoritySection) {
@@ -422,14 +422,14 @@ TEST_F(MessageTest, clearAuthoritySection) {
                                         RRClass::IN(), RRType::A()));
     ASSERT_TRUE(message_render.hasRRset(Message::SECTION_AUTHORITY, test_name,
                                         RRClass::IN(), RRType::AAAA()));
-    ASSERT_EQ(4, message_render.getRRCount(Message::SECTION_AUTHORITY));
+    ASSERT_EQ(4U, message_render.getRRCount(Message::SECTION_AUTHORITY));
 
     message_render.clearSection(Message::SECTION_AUTHORITY);
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_AUTHORITY, test_name,
                                          RRClass::IN(), RRType::A()));
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_AUTHORITY, test_name,
                                          RRClass::IN(), RRType::AAAA()));
-    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(0U, message_render.getRRCount(Message::SECTION_AUTHORITY));
 }
 
 TEST_F(MessageTest, clearAdditionalSection) {
@@ -441,14 +441,14 @@ TEST_F(MessageTest, clearAdditionalSection) {
                                         RRClass::IN(), RRType::A()));
     ASSERT_TRUE(message_render.hasRRset(Message::SECTION_ADDITIONAL, test_name,
                                         RRClass::IN(), RRType::AAAA()));
-    ASSERT_EQ(4, message_render.getRRCount(Message::SECTION_ADDITIONAL));
+    ASSERT_EQ(4U, message_render.getRRCount(Message::SECTION_ADDITIONAL));
 
     message_render.clearSection(Message::SECTION_ADDITIONAL);
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ADDITIONAL, test_name,
                                          RRClass::IN(), RRType::A()));
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ADDITIONAL, test_name,
                                          RRClass::IN(), RRType::AAAA()));
-    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ADDITIONAL));
+    EXPECT_EQ(0U, message_render.getRRCount(Message::SECTION_ADDITIONAL));
 }
 
 TEST_F(MessageTest, badClearSection) {
@@ -482,13 +482,13 @@ TEST_F(MessageTest, appendSection) {
 
     // Make sure nothing is copied if there is nothing to copy
     target.appendSection(Message::SECTION_QUESTION, message_render);
-    EXPECT_EQ(0, target.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(0U, target.getRRCount(Message::SECTION_QUESTION));
     target.appendSection(Message::SECTION_ANSWER, message_render);
-    EXPECT_EQ(0, target.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0U, target.getRRCount(Message::SECTION_ANSWER));
     target.appendSection(Message::SECTION_AUTHORITY, message_render);
-    EXPECT_EQ(0, target.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(0U, target.getRRCount(Message::SECTION_AUTHORITY));
     target.appendSection(Message::SECTION_ADDITIONAL, message_render);
-    EXPECT_EQ(0, target.getRRCount(Message::SECTION_ADDITIONAL));
+    EXPECT_EQ(0U, target.getRRCount(Message::SECTION_ADDITIONAL));
 
     // Now add some data, copy again, and see if it got added
     message_render.addQuestion(Question(Name("test.example.com"),
@@ -499,20 +499,20 @@ TEST_F(MessageTest, appendSection) {
     message_render.addRRset(Message::SECTION_ADDITIONAL, rrset_aaaa);
 
     target.appendSection(Message::SECTION_QUESTION, message_render);
-    EXPECT_EQ(1, target.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(1U, target.getRRCount(Message::SECTION_QUESTION));
 
     target.appendSection(Message::SECTION_ANSWER, message_render);
-    EXPECT_EQ(2, target.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(2U, target.getRRCount(Message::SECTION_ANSWER));
     EXPECT_TRUE(target.hasRRset(Message::SECTION_ANSWER, test_name,
                                 RRClass::IN(), RRType::A()));
 
     target.appendSection(Message::SECTION_AUTHORITY, message_render);
-    EXPECT_EQ(2, target.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(2U, target.getRRCount(Message::SECTION_AUTHORITY));
     EXPECT_TRUE(target.hasRRset(Message::SECTION_AUTHORITY, test_name,
                                 RRClass::IN(), RRType::A()));
 
     target.appendSection(Message::SECTION_ADDITIONAL, message_render);
-    EXPECT_EQ(4, target.getRRCount(Message::SECTION_ADDITIONAL));
+    EXPECT_EQ(4U, target.getRRCount(Message::SECTION_ADDITIONAL));
     EXPECT_TRUE(target.hasRRset(Message::SECTION_ADDITIONAL, test_name,
                                 RRClass::IN(), RRType::A()));
     EXPECT_TRUE(target.hasRRset(Message::SECTION_ADDITIONAL, test_name,
@@ -522,7 +522,7 @@ TEST_F(MessageTest, appendSection) {
     Message source2(Message::RENDER);
     source2.addRRset(Message::SECTION_ANSWER, rrset_aaaa);
     target.appendSection(Message::SECTION_ANSWER, source2);
-    EXPECT_EQ(4, target.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(4U, target.getRRCount(Message::SECTION_ANSWER));
     EXPECT_TRUE(target.hasRRset(Message::SECTION_ANSWER, test_name,
                                 RRClass::IN(), RRType::A()));
     EXPECT_TRUE(target.hasRRset(Message::SECTION_ANSWER, test_name,
@@ -538,7 +538,7 @@ TEST_F(MessageTest, parseHeader) {
     EXPECT_THROW(message_render.parseHeader(buffer), InvalidMessageOperation);
 
     message_parse.parseHeader(buffer);
-    EXPECT_EQ(0x1035, message_parse.getQid());
+    EXPECT_EQ(0x1035U, message_parse.getQid());
     EXPECT_EQ(Opcode::QUERY(), message_parse.getOpcode());
     EXPECT_EQ(Rcode::NOERROR(), message_parse.getRcode());
     EXPECT_TRUE(message_parse.getHeaderFlag(Message::HEADERFLAG_QR));
@@ -548,13 +548,13 @@ TEST_F(MessageTest, parseHeader) {
     EXPECT_FALSE(message_parse.getHeaderFlag(Message::HEADERFLAG_RA));
     EXPECT_FALSE(message_parse.getHeaderFlag(Message::HEADERFLAG_AD));
     EXPECT_FALSE(message_parse.getHeaderFlag(Message::HEADERFLAG_CD));
-    EXPECT_EQ(1, message_parse.getRRCount(Message::SECTION_QUESTION));
-    EXPECT_EQ(2, message_parse.getRRCount(Message::SECTION_ANSWER));
-    EXPECT_EQ(0, message_parse.getRRCount(Message::SECTION_AUTHORITY));
-    EXPECT_EQ(0, message_parse.getRRCount(Message::SECTION_ADDITIONAL));
+    EXPECT_EQ(1U, message_parse.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(2U, message_parse.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0U, message_parse.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(0U, message_parse.getRRCount(Message::SECTION_ADDITIONAL));
 
     // Only the header part should have been examined.
-    EXPECT_EQ(12, buffer.getPosition()); // 12 = size of the header section
+    EXPECT_EQ(12U, buffer.getPosition()); // 12 = size of the header section
     EXPECT_TRUE(message_parse.beginQuestion() == message_parse.endQuestion());
     EXPECT_TRUE(message_parse.beginSection(Message::SECTION_ANSWER) ==
                 message_parse.endSection(Message::SECTION_ANSWER));
@@ -568,7 +568,7 @@ void
 checkMessageFromWire(const Message& message_parse,
                      const Name& test_name)
 {
-    EXPECT_EQ(0x1035, message_parse.getQid());
+    EXPECT_EQ(0x1035U, message_parse.getQid());
     EXPECT_EQ(Opcode::QUERY(), message_parse.getOpcode());
     EXPECT_EQ(Rcode::NOERROR(), message_parse.getRcode());
     EXPECT_TRUE(message_parse.getHeaderFlag(Message::HEADERFLAG_QR));
@@ -579,10 +579,10 @@ checkMessageFromWire(const Message& message_parse,
     EXPECT_EQ(test_name, q->getName());
     EXPECT_EQ(RRType::A(), q->getType());
     EXPECT_EQ(RRClass::IN(), q->getClass());
-    EXPECT_EQ(1, message_parse.getRRCount(Message::SECTION_QUESTION));
-    EXPECT_EQ(2, message_parse.getRRCount(Message::SECTION_ANSWER));
-    EXPECT_EQ(0, message_parse.getRRCount(Message::SECTION_AUTHORITY));
-    EXPECT_EQ(0, message_parse.getRRCount(Message::SECTION_ADDITIONAL));
+    EXPECT_EQ(1U, message_parse.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(2U, message_parse.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0U, message_parse.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(0U, message_parse.getRRCount(Message::SECTION_ADDITIONAL));
 
     RRsetPtr rrset = *message_parse.beginSection(Message::SECTION_ANSWER);
     EXPECT_EQ(test_name, rrset->getName());
@@ -647,12 +647,12 @@ TEST_F(MessageTest, fromWireCombineRRs) {
     RRsetIterator it_end = message_parse.endSection(Message::SECTION_ANSWER);
     ASSERT_TRUE(it != it_end);
     EXPECT_EQ(RRType::A(), (*it)->getType());
-    EXPECT_EQ(2, (*it)->getRdataCount());
+    EXPECT_EQ(2U, (*it)->getRdataCount());
 
     ++it;
     ASSERT_TRUE(it != it_end);
     EXPECT_EQ(RRType::AAAA(), (*it)->getType());
-    EXPECT_EQ(1, (*it)->getRdataCount());
+    EXPECT_EQ(1U, (*it)->getRdataCount());
 }
 
 // A helper function for a test pattern commonly used in several tests below.
@@ -662,19 +662,19 @@ preserveRRCheck(const Message& message, Message::Section section) {
     RRsetIterator it_end = message.endSection(section);
     ASSERT_TRUE(it != it_end);
     EXPECT_EQ(RRType::A(), (*it)->getType());
-    EXPECT_EQ(1, (*it)->getRdataCount());
+    EXPECT_EQ(1U, (*it)->getRdataCount());
     EXPECT_EQ("192.0.2.1", (*it)->getRdataIterator()->getCurrent().toText());
 
     ++it;
     ASSERT_TRUE(it != it_end);
     EXPECT_EQ(RRType::AAAA(), (*it)->getType());
-    EXPECT_EQ(1, (*it)->getRdataCount());
+    EXPECT_EQ(1U, (*it)->getRdataCount());
     EXPECT_EQ("2001:db8::1", (*it)->getRdataIterator()->getCurrent().toText());
 
     ++it;
     ASSERT_TRUE(it != it_end);
     EXPECT_EQ(RRType::A(), (*it)->getType());
-    EXPECT_EQ(1, (*it)->getRdataCount());
+    EXPECT_EQ(1U, (*it)->getRdataCount());
     EXPECT_EQ("192.0.2.2", (*it)->getRdataIterator()->getCurrent().toText());
 }
 
@@ -742,10 +742,10 @@ TEST_F(MessageTest, toWire) {
                                         RRType::A()));
     message_render.addRRset(Message::SECTION_ANSWER, rrset_a);
 
-    EXPECT_EQ(1, message_render.getRRCount(Message::SECTION_QUESTION));
-    EXPECT_EQ(2, message_render.getRRCount(Message::SECTION_ANSWER));
-    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_AUTHORITY));
-    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ADDITIONAL));
+    EXPECT_EQ(1U, message_render.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(2U, message_render.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0U, message_render.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(0U, message_render.getRRCount(Message::SECTION_ADDITIONAL));
 
     message_render.toWire(renderer);
     vector<unsigned char> data;
@@ -775,14 +775,14 @@ TEST_F(MessageTest, toWireSigned) {
                                          "20000101000000 20000201000000 "
                                          "12345 example.com. FAKEFAKEFAKE"));
     rrset_a->addRRsig(rrset_rrsig);
-    EXPECT_EQ(2, rrset_a->getRRsigDataCount());
+    EXPECT_EQ(2U, rrset_a->getRRsigDataCount());
 
     message_render.addRRset(Message::SECTION_ANSWER, rrset_a);
 
-    EXPECT_EQ(1, message_render.getRRCount(Message::SECTION_QUESTION));
-    EXPECT_EQ(4, message_render.getRRCount(Message::SECTION_ANSWER));
-    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_AUTHORITY));
-    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ADDITIONAL));
+    EXPECT_EQ(1U, message_render.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(4U, message_render.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0U, message_render.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(0U, message_render.getRRCount(Message::SECTION_ADDITIONAL));
 
     message_render.toWire(renderer);
     vector<unsigned char> data;
@@ -819,14 +819,14 @@ TEST_F(MessageTest, toWireSignedAndTruncated) {
                                          "20000101000000 20000201000000 "
                                          "12345 example.com. FAKEFAKEFAKE"));
     rrset_txt->addRRsig(rrset_rrsig);
-    EXPECT_EQ(1, rrset_txt->getRRsigDataCount());
+    EXPECT_EQ(1U, rrset_txt->getRRsigDataCount());
 
     message_render.addRRset(Message::SECTION_ANSWER, rrset_txt);
 
-    EXPECT_EQ(1, message_render.getRRCount(Message::SECTION_QUESTION));
-    EXPECT_EQ(9, message_render.getRRCount(Message::SECTION_ANSWER));
-    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_AUTHORITY));
-    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ADDITIONAL));
+    EXPECT_EQ(1U, message_render.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(9U, message_render.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0U, message_render.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(0U, message_render.getRRCount(Message::SECTION_ADDITIONAL));
 
     message_render.toWire(renderer);
     vector<unsigned char> data;
@@ -1024,7 +1024,7 @@ TEST_F(MessageTest, toWireTSIGTruncation3) {
     message_parse.fromWire(buffer);
     EXPECT_TRUE(message_parse.getHeaderFlag(Message::HEADERFLAG_TC));
     // Note that the number of questions are 66, not 67 as we tried to add.
-    EXPECT_EQ(66, message_parse.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(66U, message_parse.getRRCount(Message::SECTION_QUESTION));
     EXPECT_TRUE(message_parse.getTSIGRecord());
 }
 

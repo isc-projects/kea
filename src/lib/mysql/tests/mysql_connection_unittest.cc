@@ -189,7 +189,7 @@ public:
     /// be inserted into the database and then retrieved.
     void testInsertSelect(const MySqlBindingCollection& in_bindings) {
         // Expecting 6 bindings because we have 6 columns in our table.
-        ASSERT_EQ(6, in_bindings.size());
+        ASSERT_EQ(6U, in_bindings.size());
         // We are going to select by int_value so this value must not be null.
         ASSERT_FALSE(in_bindings[1]->amNull());
 
@@ -559,8 +559,8 @@ TEST_F(MySqlConnectionTest, transactions) {
     conn_.commit();
     EXPECT_FALSE(conn_.isTransactionStarted());
     auto result = rawStatement("SELECT COUNT(*) FROM mysql_connection_test");
-    ASSERT_EQ(1, result.size());
-    ASSERT_EQ(1, result[0].size());
+    ASSERT_EQ(1U, result.size());
+    ASSERT_EQ(1U, result[0].size());
     EXPECT_EQ("2", result[0][0]);
 
     // Add third row but roll back the transaction. We should still have
@@ -570,8 +570,8 @@ TEST_F(MySqlConnectionTest, transactions) {
     runQuery("INSERT INTO mysql_connection_test (tinyint_value) VALUES (5)");
     conn_.rollback();
     EXPECT_FALSE(conn_.isTransactionStarted());
-    ASSERT_EQ(1, result.size());
-    ASSERT_EQ(1, result[0].size());
+    ASSERT_EQ(1U, result.size());
+    ASSERT_EQ(1U, result[0].size());
     EXPECT_EQ("2", result[0][0]);
 
     // Nested transaction. The inner transaction should be ignored and the outer
@@ -587,8 +587,8 @@ TEST_F(MySqlConnectionTest, transactions) {
     conn_.rollback();
     EXPECT_FALSE(conn_.isTransactionStarted());
     result = rawStatement("SELECT COUNT(*) FROM mysql_connection_test");
-    ASSERT_EQ(1, result.size());
-    ASSERT_EQ(1, result[0].size());
+    ASSERT_EQ(1U, result.size());
+    ASSERT_EQ(1U, result[0].size());
     EXPECT_EQ("2", result[0][0]);
 
     // Nested transaction. The inner transaction is rolled back but this should
@@ -605,8 +605,8 @@ TEST_F(MySqlConnectionTest, transactions) {
     conn_.commit();
     EXPECT_FALSE(conn_.isTransactionStarted());
     result = rawStatement("SELECT COUNT(*) FROM mysql_connection_test");
-    ASSERT_EQ(1, result.size());
-    ASSERT_EQ(1, result[0].size());
+    ASSERT_EQ(1U, result.size());
+    ASSERT_EQ(1U, result[0].size());
     EXPECT_EQ("4", result[0][0]);
 
     // Committing or rolling back a not started transaction is a coding error.
@@ -690,7 +690,7 @@ TEST_F(MySqlConnectionTest, connectionTimeout) {
     ASSERT_TRUE(mysql);
     unsigned int timeout = 123;
     EXPECT_EQ(0, mysql_get_option(mysql, MYSQL_OPT_CONNECT_TIMEOUT, &timeout));
-    EXPECT_EQ(10, timeout);
+    EXPECT_EQ(10U, timeout);
 }
 
 // Tests that a valid read timeout is accepted.
@@ -705,7 +705,7 @@ TEST_F(MySqlConnectionTest, readTimeout) {
     ASSERT_TRUE(mysql);
     unsigned int timeout = 123;
     EXPECT_EQ(0, mysql_get_option(mysql, MYSQL_OPT_READ_TIMEOUT, &timeout));
-    EXPECT_EQ(11, timeout);
+    EXPECT_EQ(11U, timeout);
 }
 
 // Tests that a zero read timeout is accepted.
@@ -720,7 +720,7 @@ TEST_F(MySqlConnectionTest, readTimeoutZero) {
     ASSERT_TRUE(mysql);
     unsigned int timeout = 123;
     EXPECT_EQ(0, mysql_get_option(mysql, MYSQL_OPT_READ_TIMEOUT, &timeout));
-    EXPECT_EQ(0, timeout);
+    EXPECT_EQ(0U, timeout);
 }
 
 // Tests that a valid write timeout is accepted.
@@ -735,7 +735,7 @@ TEST_F(MySqlConnectionTest, writeTimeout) {
     ASSERT_TRUE(mysql);
     unsigned int timeout = 123;
     EXPECT_EQ(0, mysql_get_option(mysql, MYSQL_OPT_WRITE_TIMEOUT, &timeout));
-    EXPECT_EQ(12, timeout);
+    EXPECT_EQ(12U, timeout);
 }
 
 // Tests that a zero write timeout is accepted.
@@ -750,7 +750,7 @@ TEST_F(MySqlConnectionTest, writeTimeoutZero) {
     ASSERT_TRUE(mysql);
     unsigned int timeout = 123;
     EXPECT_EQ(0, mysql_get_option(mysql, MYSQL_OPT_WRITE_TIMEOUT, &timeout));
-    EXPECT_EQ(0, timeout);
+    EXPECT_EQ(0U, timeout);
 }
 
 #endif  // HAVE_MYSQL_GET_OPTION

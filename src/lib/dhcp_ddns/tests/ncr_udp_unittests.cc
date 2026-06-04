@@ -249,8 +249,8 @@ TEST_F(NameChangeUDPListenerTest, basicReceiveTests) {
 
     // Iterate over a series of requests, sending and receiving one
     /// at time.
-    int num_msgs = sizeof(valid_msgs)/sizeof(char*);
-    for (int i = 0; i < num_msgs; i++) {
+    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    for (size_t i = 0; i < num_msgs; ++i) {
         // We are not verifying ability to send, so if we can't test is over.
         ASSERT_NO_THROW(sendNcr(valid_msgs[i]));
 
@@ -341,7 +341,7 @@ TEST_F(NameChangeUDPSenderBasicTest, constructionTests) {
                     new NameChangeUDPSender(ip_address, port, ip_address, port,
                                             FMT_JSON, ncr_handler, 100)));
 
-    EXPECT_EQ(100, sender->getQueueMaxSize());
+    EXPECT_EQ(100U, sender->getQueueMaxSize());
 }
 
 /// @brief Tests the NameChangeUDPSender constructors.
@@ -377,7 +377,7 @@ TEST_F(NameChangeUDPSenderBasicTest, constructionTestsMultiThreading) {
                     new NameChangeUDPSender(ip_address, port, ip_address, port,
                                             FMT_JSON, ncr_handler, 100)));
 
-    EXPECT_EQ(100, sender->getQueueMaxSize());
+    EXPECT_EQ(100U, sender->getQueueMaxSize());
 }
 
 /// @brief Tests NameChangeUDPSender basic send functionality
@@ -387,7 +387,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTests) {
     SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
-    int num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
 
     // Create the sender, setting the queue max equal to the number of
     // messages we will have in the list.
@@ -429,11 +429,11 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTests) {
     // in the queue.
     NameChangeRequestPtr ncr;
     NameChangeRequestPtr ncr2;
-    for (int i = 0; i < num_msgs; i++) {
+    for (size_t i = 0; i < num_msgs; ++i) {
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         EXPECT_NO_THROW(sender.sendRequest(ncr));
         // Verify that the queue count increments in step with each send.
-        EXPECT_EQ(i+1, sender.getQueueSize());
+        EXPECT_EQ(i + 1, sender.getQueueSize());
 
         // Verify that peekAt(i) returns the NCR we just added.
         ASSERT_NO_THROW(ncr2 = sender.peekAt(i));
@@ -442,7 +442,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTests) {
     }
 
     // Verify that attempting to peek beyond the end of the queue, throws.
-    ASSERT_THROW(sender.peekAt(sender.getQueueSize()+1), NcrSenderError);
+    ASSERT_THROW(sender.peekAt(sender.getQueueSize() + 1), NcrSenderError);
 
     // Verify that attempting to send an additional message results in a
     // queue full exception.
@@ -452,7 +452,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTests) {
     // on NCR in the queue, select-fd indicate ready to read. Invoke
     // IOService::runOne. This should complete the send of exactly one
     // message and the queue count should decrement accordingly.
-    for (int i = num_msgs; i > 0; i--) {
+    for (size_t i = num_msgs; i > 0; --i) {
         // Make sure select_fd does evaluates to ready via select and
         // that ioReady() method agrees.
         ASSERT_TRUE(selectCheck(select_fd) > 0);
@@ -462,7 +462,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTests) {
         ASSERT_NO_THROW(sender.runReadyIO());
 
         // Verify that the queue count decrements in step with each run.
-        EXPECT_EQ(i-1, sender.getQueueSize());
+        EXPECT_EQ(i - 1, sender.getQueueSize());
     }
 
     // Make sure select_fd does evaluates to not ready via select and
@@ -471,21 +471,21 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTests) {
     ASSERT_FALSE(sender.ioReady());
 
     // Verify that the queue is empty.
-    EXPECT_EQ(0, sender.getQueueSize());
+    EXPECT_EQ(0U, sender.getQueueSize());
 
     // Verify that we can add back to the queue
     EXPECT_NO_THROW(sender.sendRequest(ncr));
-    EXPECT_EQ(1, sender.getQueueSize());
+    EXPECT_EQ(1U, sender.getQueueSize());
 
     // Verify that we can remove the current entry at the front of the queue.
     EXPECT_NO_THROW(sender.skipNext());
-    EXPECT_EQ(0, sender.getQueueSize());
+    EXPECT_EQ(0U, sender.getQueueSize());
 
     // Verify that flushing the queue is not allowed in sending state.
     EXPECT_THROW(sender.clearSendQueue(), NcrSenderError);
 
     // Put num_msgs messages on the queue.
-    for (int i = 0; i < num_msgs; i++) {
+    for (size_t i = 0; i < num_msgs; ++i) {
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         EXPECT_NO_THROW(sender.sendRequest(ncr));
     }
@@ -502,7 +502,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTests) {
 
     // Verify that flushing the queue works when not sending.
     EXPECT_NO_THROW(sender.clearSendQueue());
-    EXPECT_EQ(0, sender.getQueueSize());
+    EXPECT_EQ(0U, sender.getQueueSize());
 }
 
 /// @brief Tests NameChangeUDPSender basic send functionality
@@ -515,7 +515,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTestsMultiThreading) {
     SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
-    int num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
 
     // Create the sender, setting the queue max equal to the number of
     // messages we will have in the list.
@@ -557,11 +557,11 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTestsMultiThreading) {
     // in the queue.
     NameChangeRequestPtr ncr;
     NameChangeRequestPtr ncr2;
-    for (int i = 0; i < num_msgs; i++) {
+    for (size_t i = 0; i < num_msgs; ++i) {
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         EXPECT_NO_THROW(sender.sendRequest(ncr));
         // Verify that the queue count increments in step with each send.
-        EXPECT_EQ(i+1, sender.getQueueSize());
+        EXPECT_EQ(i + 1, sender.getQueueSize());
 
         // Verify that peekAt(i) returns the NCR we just added.
         ASSERT_NO_THROW(ncr2 = sender.peekAt(i));
@@ -580,7 +580,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTestsMultiThreading) {
     // on NCR in the queue, select-fd indicate ready to read. Invoke
     // IOService::runOne. This should complete the send of exactly one
     // message and the queue count should decrement accordingly.
-    for (int i = num_msgs; i > 0; i--) {
+    for (size_t i = num_msgs; i > 0; --i) {
         // Make sure select_fd does evaluates to ready via select and
         // that ioReady() method agrees.
         ASSERT_TRUE(selectCheck(select_fd) > 0);
@@ -590,7 +590,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTestsMultiThreading) {
         ASSERT_NO_THROW(sender.runReadyIO());
 
         // Verify that the queue count decrements in step with each run.
-        EXPECT_EQ(i-1, sender.getQueueSize());
+        EXPECT_EQ(i - 1, sender.getQueueSize());
     }
 
     // Make sure select_fd does evaluates to not ready via select and
@@ -599,21 +599,21 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTestsMultiThreading) {
     ASSERT_FALSE(sender.ioReady());
 
     // Verify that the queue is empty.
-    EXPECT_EQ(0, sender.getQueueSize());
+    EXPECT_EQ(0U, sender.getQueueSize());
 
     // Verify that we can add back to the queue
     EXPECT_NO_THROW(sender.sendRequest(ncr));
-    EXPECT_EQ(1, sender.getQueueSize());
+    EXPECT_EQ(1U, sender.getQueueSize());
 
     // Verify that we can remove the current entry at the front of the queue.
     EXPECT_NO_THROW(sender.skipNext());
-    EXPECT_EQ(0, sender.getQueueSize());
+    EXPECT_EQ(0U, sender.getQueueSize());
 
     // Verify that flushing the queue is not allowed in sending state.
     EXPECT_THROW(sender.clearSendQueue(), NcrSenderError);
 
     // Put num_msgs messages on the queue.
-    for (int i = 0; i < num_msgs; i++) {
+    for (size_t i = 0; i < num_msgs; ++i) {
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         EXPECT_NO_THROW(sender.sendRequest(ncr));
     }
@@ -630,7 +630,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTestsMultiThreading) {
 
     // Verify that flushing the queue works when not sending.
     EXPECT_NO_THROW(sender.clearSendQueue());
-    EXPECT_EQ(0, sender.getQueueSize());
+    EXPECT_EQ(0U, sender.getQueueSize());
 }
 
 /// @brief Tests that sending gets kick-started if the queue isn't empty
@@ -641,7 +641,7 @@ TEST_F(NameChangeUDPSenderBasicTest, autoStart) {
     SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
-    int num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
 
     // Create the sender, setting the queue max equal to the number of
     // messages we will have in the list.
@@ -655,7 +655,7 @@ TEST_F(NameChangeUDPSenderBasicTest, autoStart) {
 
     // Queue up messages.
     NameChangeRequestPtr ncr;
-    for (int i = 0; i < num_msgs; i++) {
+    for (size_t i = 0; i < num_msgs; ++i) {
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         EXPECT_NO_THROW(sender.sendRequest(ncr));
     }
@@ -673,7 +673,7 @@ TEST_F(NameChangeUDPSenderBasicTest, autoStart) {
     EXPECT_NO_THROW(sender.startSending(io_service));
 
     // We should be able to loop through remaining messages and send them.
-    for (int i = num_msgs; i > 0; i--) {
+    for (size_t i = num_msgs; i > 0; --i) {
         // ioReady() should evaluate to true.
         ASSERT_TRUE(sender.ioReady());
 
@@ -682,7 +682,7 @@ TEST_F(NameChangeUDPSenderBasicTest, autoStart) {
     }
 
     // Verify that the queue is empty.
-    EXPECT_EQ(0, sender.getQueueSize());
+    EXPECT_EQ(0U, sender.getQueueSize());
 }
 
 /// @brief Tests that sending gets kick-started if the queue isn't empty
@@ -696,7 +696,7 @@ TEST_F(NameChangeUDPSenderBasicTest, autoStartMultiThreading) {
     SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
-    int num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
 
     // Create the sender, setting the queue max equal to the number of
     // messages we will have in the list.
@@ -710,7 +710,7 @@ TEST_F(NameChangeUDPSenderBasicTest, autoStartMultiThreading) {
 
     // Queue up messages.
     NameChangeRequestPtr ncr;
-    for (int i = 0; i < num_msgs; i++) {
+    for (size_t i = 0; i < num_msgs; ++i) {
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         EXPECT_NO_THROW(sender.sendRequest(ncr));
     }
@@ -728,7 +728,7 @@ TEST_F(NameChangeUDPSenderBasicTest, autoStartMultiThreading) {
     EXPECT_NO_THROW(sender.startSending(io_service));
 
     // We should be able to loop through remaining messages and send them.
-    for (int i = num_msgs; i > 0; i--) {
+    for (size_t i = num_msgs; i > 0; --i) {
         // ioReady() should evaluate to true.
         ASSERT_TRUE(sender.ioReady());
 
@@ -737,7 +737,7 @@ TEST_F(NameChangeUDPSenderBasicTest, autoStartMultiThreading) {
     }
 
     // Verify that the queue is empty.
-    EXPECT_EQ(0, sender.getQueueSize());
+    EXPECT_EQ(0U, sender.getQueueSize());
 }
 
 /// @brief Tests NameChangeUDPSender basic send  with INADDR_ANY and port 0.
@@ -748,7 +748,7 @@ TEST_F(NameChangeUDPSenderBasicTest, anyAddressSend) {
     SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
-    int num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
 
     // Create the sender, setting the queue max equal to the number of
     // messages we will have in the list.
@@ -763,7 +763,7 @@ TEST_F(NameChangeUDPSenderBasicTest, anyAddressSend) {
     NameChangeRequestPtr ncr;
     ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[0]));
     EXPECT_NO_THROW(sender.sendRequest(ncr));
-    EXPECT_EQ(1, sender.getQueueSize());
+    EXPECT_EQ(1U, sender.getQueueSize());
 
     // Verify we have a ready IO, then execute at one ready handler.
     ASSERT_TRUE(sender.ioReady());
@@ -772,7 +772,7 @@ TEST_F(NameChangeUDPSenderBasicTest, anyAddressSend) {
     // Verify that sender shows no IO ready.
     // and that the queue is empty.
     ASSERT_FALSE(sender.ioReady());
-    EXPECT_EQ(0, sender.getQueueSize());
+    EXPECT_EQ(0U, sender.getQueueSize());
 }
 
 /// @brief Tests NameChangeUDPSender basic send  with INADDR_ANY and port 0.
@@ -786,7 +786,7 @@ TEST_F(NameChangeUDPSenderBasicTest, anyAddressSendMultiThreading) {
     SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
-    int num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
 
     // Create the sender, setting the queue max equal to the number of
     // messages we will have in the list.
@@ -801,7 +801,7 @@ TEST_F(NameChangeUDPSenderBasicTest, anyAddressSendMultiThreading) {
     NameChangeRequestPtr ncr;
     ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[0]));
     EXPECT_NO_THROW(sender.sendRequest(ncr));
-    EXPECT_EQ(1, sender.getQueueSize());
+    EXPECT_EQ(1U, sender.getQueueSize());
 
     // Verify we have a ready IO, then execute at one ready handler.
     ASSERT_TRUE(sender.ioReady());
@@ -810,7 +810,7 @@ TEST_F(NameChangeUDPSenderBasicTest, anyAddressSendMultiThreading) {
     // Verify that sender shows no IO ready.
     // and that the queue is empty.
     ASSERT_FALSE(sender.ioReady());
-    EXPECT_EQ(0, sender.getQueueSize());
+    EXPECT_EQ(0U, sender.getQueueSize());
 }
 
 /// @brief Test the NameChangeSender::assumeQueue method.
@@ -822,7 +822,7 @@ TEST_F(NameChangeUDPSenderBasicTest, assumeQueue) {
     NameChangeRequestPtr ncr;
 
     // Tests are based on a list of messages, get the count now.
-    int num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
 
     // Create two senders with queue max equal to the number of
     // messages we will have in the list.
@@ -834,7 +834,7 @@ TEST_F(NameChangeUDPSenderBasicTest, assumeQueue) {
 
     // Place sender1 into send mode and queue up messages.
     ASSERT_NO_THROW(sender1.startSending(io_service));
-    for (int i = 0; i < num_msgs; i++) {
+    for (size_t i = 0; i < num_msgs; ++i) {
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         ASSERT_NO_THROW(sender1.sendRequest(ncr));
     }
@@ -860,7 +860,7 @@ TEST_F(NameChangeUDPSenderBasicTest, assumeQueue) {
     // Transfer should succeed. Verify sender1 has none,
     // and sender2 has num_msgs queued.
     EXPECT_NO_THROW(sender2.assumeQueue(sender1));
-    EXPECT_EQ(0, sender1.getQueueSize());
+    EXPECT_EQ(0U, sender1.getQueueSize());
     EXPECT_EQ(num_msgs, sender2.getQueueSize());
 
     // Reduce sender1's max queue size.
@@ -894,7 +894,7 @@ TEST_F(NameChangeUDPSenderBasicTest, assumeQueueMultiThreading) {
     NameChangeRequestPtr ncr;
 
     // Tests are based on a list of messages, get the count now.
-    int num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
 
     // Create two senders with queue max equal to the number of
     // messages we will have in the list.
@@ -906,7 +906,7 @@ TEST_F(NameChangeUDPSenderBasicTest, assumeQueueMultiThreading) {
 
     // Place sender1 into send mode and queue up messages.
     ASSERT_NO_THROW(sender1.startSending(io_service));
-    for (int i = 0; i < num_msgs; i++) {
+    for (size_t i = 0; i < num_msgs; ++i) {
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         ASSERT_NO_THROW(sender1.sendRequest(ncr));
     }
@@ -932,7 +932,7 @@ TEST_F(NameChangeUDPSenderBasicTest, assumeQueueMultiThreading) {
     // Transfer should succeed. Verify sender1 has none,
     // and sender2 has num_msgs queued.
     EXPECT_NO_THROW(sender2.assumeQueue(sender1));
-    EXPECT_EQ(0, sender1.getQueueSize());
+    EXPECT_EQ(0U, sender1.getQueueSize());
     EXPECT_EQ(num_msgs, sender2.getQueueSize());
 
     // Reduce sender1's max queue size.
@@ -1065,7 +1065,7 @@ public:
         // Verify that what we sent matches what we received.
         // WRONG ASSUMPTION HERE: UDP does not guarantee ordered delivery.
         bool ok = true;
-        for (size_t i = 0; i < num_msgs; i++) {
+        for (size_t i = 0; i < num_msgs; ++i) {
             if (!checkSendVsReceived(sent[i], rcvd[i])) {
                 // Ok, the data was not received in order.
                 ok = false;
@@ -1077,9 +1077,9 @@ public:
                       << std::endl;
             // We need to double iterate through the messages to check every one
             // against one another.
-            for (size_t i = 0; i < num_msgs; i++) {
+            for (size_t i = 0; i < num_msgs; ++i) {
                 ok = false;
-                for (size_t j = 0; j < num_msgs; j++) {
+                for (size_t j = 0; j < num_msgs; ++j) {
                     if (checkSendVsReceived(sent[i], rcvd[j])) {
                         std::cout << "Found UDP packet " << i << ", received as " << j << "th"
                                   << std::endl;
@@ -1110,11 +1110,11 @@ TEST_F(NameChangeUDPTest, roundTripTest) {
     ASSERT_NO_THROW(sender_->startSending(io_service_));
     EXPECT_TRUE(sender_->amSending());
 
-    for (size_t i = 0; i < num_msgs; i++) {
+    for (size_t i = 0; i < num_msgs; ++i) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         sender_->sendRequest(ncr);
-        EXPECT_EQ(i+1, sender_->getQueueSize());
+        EXPECT_EQ(i + 1, sender_->getQueueSize());
     }
 
     // Execute callbacks until we have sent and received all of messages.
@@ -1123,7 +1123,7 @@ TEST_F(NameChangeUDPTest, roundTripTest) {
     }
 
     // Send queue should be empty.
-    EXPECT_EQ(0, sender_->getQueueSize());
+    EXPECT_EQ(0U, sender_->getQueueSize());
 
     // We should have the same number of sends and receives as we do messages.
     ASSERT_EQ(num_msgs, s_handle_->sent_ncrs_.size());
@@ -1164,20 +1164,20 @@ TEST_F(NameChangeUDPTest, roundTripTestMultiThreading) {
     ASSERT_NO_THROW(sender_->startSending(io_service_));
     EXPECT_TRUE(sender_->amSending());
 
-    for (size_t i = 0; i < num_msgs; i++) {
+    for (size_t i = 0; i < num_msgs; ++i) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         sender_->sendRequest(ncr);
-        EXPECT_EQ(i+1, sender_->getQueueSize());
+        EXPECT_EQ(i + 1, sender_->getQueueSize());
     }
 
     // Execute callbacks until we have sent and received all of messages.
-    while (sender_->getQueueSize() > 0 || (r_handle_->received_ncrs_.size() < num_msgs)) {
+    while (sender_->getQueueSize() > 0U || (r_handle_->received_ncrs_.size() < num_msgs)) {
         EXPECT_NO_THROW(io_service_->runOne());
     }
 
     // Send queue should be empty.
-    EXPECT_EQ(0, sender_->getQueueSize());
+    EXPECT_EQ(0U, sender_->getQueueSize());
 
     // We should have the same number of sends and receives as we do messages.
     ASSERT_EQ(num_msgs, s_handle_->sent_ncrs_.size());
@@ -1229,7 +1229,7 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequest) {
 
     // Request remains in the queue. Technically it was sent but its
     // completion handler won't get called.
-    EXPECT_EQ(1, sender.getQueueSize());
+    EXPECT_EQ(1U, sender.getQueueSize());
 }
 
 // Tests error handling of a failure to mark the watch socket ready, when
@@ -1264,7 +1264,7 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequestMultiThreading)
 
     // Request remains in the queue. Technically it was sent but its
     // completion handler won't get called.
-    EXPECT_EQ(1, sender.getQueueSize());
+    EXPECT_EQ(1U, sender.getQueueSize());
 }
 
 // Tests error handling of a failure to mark the watch socket ready, when
@@ -1281,11 +1281,11 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequest) {
     ASSERT_TRUE(sender.amSending());
 
     // Build and queue up 2 messages.  No handlers will get called yet.
-    for (int i = 0; i < 2; i++) {
+    for (size_t i = 0; i < 2; ++i) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         sender.sendRequest(ncr);
-        EXPECT_EQ(i+1, sender.getQueueSize());
+        EXPECT_EQ(i + 1, sender.getQueueSize());
     }
 
     // Tamper with the watch socket by closing the select-fd.
@@ -1303,7 +1303,7 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequest) {
     EXPECT_EQ(1, ncr_handler->error_count_);
 
     // The second request should still be in the queue.
-    EXPECT_EQ(1, sender.getQueueSize());
+    EXPECT_EQ(1U, sender.getQueueSize());
 }
 
 // Tests error handling of a failure to mark the watch socket ready, when
@@ -1323,11 +1323,11 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequestMultiThreading) 
     ASSERT_TRUE(sender.amSending());
 
     // Build and queue up 2 messages.  No handlers will get called yet.
-    for (int i = 0; i < 2; i++) {
+    for (size_t i = 0; i < 2; ++i) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         sender.sendRequest(ncr);
-        EXPECT_EQ(i+1, sender.getQueueSize());
+        EXPECT_EQ(i + 1, sender.getQueueSize());
     }
 
     // Tamper with the watch socket by closing the select-fd.
@@ -1345,7 +1345,7 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequestMultiThreading) 
     EXPECT_EQ(1, ncr_handler->error_count_);
 
     // The second request should still be in the queue.
-    EXPECT_EQ(1, sender.getQueueSize());
+    EXPECT_EQ(1U, sender.getQueueSize());
 }
 
 // Tests error handling of a failure to clear the watch socket during
@@ -1362,11 +1362,11 @@ TEST_F(NameChangeUDPSenderBasicTest, watchSocketBadRead) {
     ASSERT_TRUE(sender.amSending());
 
     // Build and queue up 2 messages.  No handlers will get called yet.
-    for (int i = 0; i < 2; i++) {
+    for (size_t i = 0; i < 2; ++i) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         sender.sendRequest(ncr);
-        EXPECT_EQ(i+1, sender.getQueueSize());
+        EXPECT_EQ(i + 1, sender.getQueueSize());
     }
 
     // Fetch the sender's select-fd.
@@ -1393,7 +1393,7 @@ TEST_F(NameChangeUDPSenderBasicTest, watchSocketBadRead) {
     EXPECT_EQ(1, ncr_handler->error_count_);
 
     // The second request should still be in the queue.
-    EXPECT_EQ(1, sender.getQueueSize());
+    EXPECT_EQ(1U, sender.getQueueSize());
 }
 
 // Tests error handling of a failure to clear the watch socket during
@@ -1413,11 +1413,11 @@ TEST_F(NameChangeUDPSenderBasicTest, watchSocketBadReadMultiThreading) {
     ASSERT_TRUE(sender.amSending());
 
     // Build and queue up 2 messages.  No handlers will get called yet.
-    for (int i = 0; i < 2; i++) {
+    for (size_t i = 0; i < 2; ++i) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         sender.sendRequest(ncr);
-        EXPECT_EQ(i+1, sender.getQueueSize());
+        EXPECT_EQ(i + 1, sender.getQueueSize());
     }
 
     // Fetch the sender's select-fd.
@@ -1444,7 +1444,7 @@ TEST_F(NameChangeUDPSenderBasicTest, watchSocketBadReadMultiThreading) {
     EXPECT_EQ(1, ncr_handler->error_count_);
 
     // The second request should still be in the queue.
-    EXPECT_EQ(1, sender.getQueueSize());
+    EXPECT_EQ(1U, sender.getQueueSize());
 }
 
 } // end of anonymous namespace

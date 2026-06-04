@@ -84,8 +84,8 @@ TEST_F(HttpCommandConfigTest, default) {
     )";
     runToElementTest(expected, *http_config_);
 
-    ASSERT_EQ(1, countFile("COMMAND_HTTP_SOCKET_SECURITY_WARNING command socket"
-                           " configuration is NOT SECURE: {  }"));
+    ASSERT_EQ(1U, countFile("COMMAND_HTTP_SOCKET_SECURITY_WARNING command socket"
+                            " configuration is NOT SECURE: {  }"));
 
     // Change class defaults.
     HttpCommandConfig::DEFAULT_SOCKET_ADDRESS = IOAddress("::1");
@@ -94,8 +94,8 @@ TEST_F(HttpCommandConfigTest, default) {
     EXPECT_EQ("::1", http_config_->getSocketAddress().toText());
     EXPECT_EQ(8080, http_config_->getSocketPort());
 
-    ASSERT_EQ(2, countFile("COMMAND_HTTP_SOCKET_SECURITY_WARNING command socket"
-                           " configuration is NOT SECURE: {  }"));
+    ASSERT_EQ(2U, countFile("COMMAND_HTTP_SOCKET_SECURITY_WARNING command socket"
+                            " configuration is NOT SECURE: {  }"));
 }
 
 // This test verifies direct error cases.
@@ -263,7 +263,7 @@ TEST_F(HttpCommandConfigTest, headers) {
 
     // Verify HTTP headers.
     auto headers = http_config_->getHttpHeaders();
-    ASSERT_EQ(2, headers.size());
+    ASSERT_EQ(2U, headers.size());
     EXPECT_EQ("Strict-Transport-Security", headers[0].name_);
     EXPECT_EQ("max-age=31536000", headers[0].value_);
     EXPECT_EQ("Foo", headers[1].name_);
@@ -289,11 +289,12 @@ TEST_F(HttpCommandConfigTest, headers) {
     runToElementTest(expected, *http_config_);
 
     // Should have security WARNING log.
-    ASSERT_EQ(1, countFile("COMMAND_HTTP_SOCKET_SECURITY_WARNING command socket"
-                           " configuration is NOT SECURE: { \"http-headers\": "
-                           "[ { \"name\": \"Strict-Transport-Security\", \"value\":"
-                           " \"max-age=31536000\" }, { \"name\": \"Foo\", \"value\": \"bar\""
-                           " } ] }"));
+    ASSERT_EQ(1U,
+              countFile("COMMAND_HTTP_SOCKET_SECURITY_WARNING command socket"
+                        " configuration is NOT SECURE: { \"http-headers\": "
+                        "[ { \"name\": \"Strict-Transport-Security\", \"value\":"
+                        " \"max-age=31536000\" }, { \"name\": \"Foo\", \"value\": \"bar\""
+                        " } ] }"));
 }
 
 // This test verifies a HTTP control socket configuration with authentication
@@ -366,7 +367,7 @@ TEST_F(HttpCommandConfigTest, authentication) {
     runToElementTest(expected, *http_config_);
 
     // Should be no security warnings.
-    ASSERT_EQ(0, countFile("COMMAND_HTTP_SOCKET_SECURITY_WARNING"));
+    ASSERT_EQ(0U, countFile("COMMAND_HTTP_SOCKET_SECURITY_WARNING"));
 }
 
 // This test verifies a HTTP control socket configuration with TLS can

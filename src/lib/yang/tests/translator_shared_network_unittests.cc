@@ -82,7 +82,7 @@ TEST_F(TranslatorSharedNetworksTestKeaV6, get) {
     EXPECT_NO_THROW_LOG(networks = translator_->getSharedNetworksFromAbsoluteXpath(xpath));
     ASSERT_TRUE(networks);
     ASSERT_EQ(Element::list, networks->getType());
-    ASSERT_EQ(1, networks->size());
+    ASSERT_EQ(1U, networks->size());
     EXPECT_TRUE(network->equals(*networks->get(0)));
 }
 
@@ -122,7 +122,7 @@ TEST_F(TranslatorSharedNetworksTestKeaV6, set) {
     EXPECT_NO_THROW_LOG(networks = translator_->getSharedNetworksFromAbsoluteXpath(xpath));
     ASSERT_TRUE(networks);
     ASSERT_EQ(Element::list, networks->getType());
-    ASSERT_EQ(1, networks->size());
+    ASSERT_EQ(1U, networks->size());
     EXPECT_TRUE(share->equals(*networks->get(0)));
 }
 

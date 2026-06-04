@@ -40,7 +40,7 @@ public:
 
         EXPECT_NO_THROW(token->evaluate(*pkt4, values));
 
-        ASSERT_EQ(1, values.size());
+        ASSERT_EQ(1U, values.size());
 
         EXPECT_EQ(expected, values.top());
     }
@@ -60,7 +60,7 @@ public:
 
         EXPECT_NO_THROW(token->evaluate(*pkt4, values));
 
-        ASSERT_EQ(1, values.size());
+        ASSERT_EQ(1U, values.size());
 
         EXPECT_EQ(expected, values.top());
     }
@@ -80,7 +80,7 @@ public:
 
         EXPECT_NO_THROW(token->evaluate(*pkt4, values));
 
-        ASSERT_EQ(1, values.size());
+        ASSERT_EQ(1U, values.size());
 
         EXPECT_EQ(expected, values.top());
     }
@@ -98,7 +98,7 @@ public:
 
         EXPECT_NO_THROW(token->evaluate(*pkt4, values));
 
-        ASSERT_EQ(1, values.size());
+        ASSERT_EQ(1U, values.size());
 
         EXPECT_EQ(expected, values.top());
     }
@@ -116,7 +116,7 @@ public:
 
         EXPECT_NO_THROW(token->evaluate(*pkt4, values));
 
-        ASSERT_EQ(1, values.size());
+        ASSERT_EQ(1U, values.size());
         string value = values.top();
 
         boost::scoped_ptr<IOAddress> exp_ip;
@@ -215,7 +215,7 @@ public:
                          int8_t exp_level,
                          uint16_t exp_code,
                          TokenOption::RepresentationType exp_repr,
-                         int exp_tokens) {
+                         size_t exp_tokens) {
         EvalContext eval(Option::V6);
 
         // parse the expression
@@ -261,7 +261,7 @@ public:
     /// @param exp_tokens expected number of tokens
     void testPktMetadata(const std::string& expr,
                          TokenPkt::MetadataType exp_type,
-                         int exp_tokens) {
+                         size_t exp_tokens) {
         EvalContext eval(Option::V6);
 
         // Parse the expression.
@@ -306,7 +306,7 @@ public:
     /// @param exp_tokens expected number of tokens
     void testPkt4Field(const std::string& expr,
                        TokenPkt4::FieldType exp_type,
-                       int exp_tokens) {
+                       size_t exp_tokens) {
         EvalContext eval(Option::V4);
 
         // Parse the expression.
@@ -354,7 +354,7 @@ public:
     /// @param exp_tokens expected number of tokens
     void testPkt6Field(const std::string& expr,
                        TokenPkt6::FieldType exp_type,
-                       int exp_tokens) {
+                       size_t exp_tokens) {
         EvalContext eval(Option::V6);
 
         // Parse the expression.
@@ -405,7 +405,7 @@ public:
     void testRelay6Field(const std::string& expr,
                          int8_t exp_level,
                          TokenRelay6Field::FieldType exp_type,
-                         int exp_tokens) {
+                         size_t exp_tokens) {
         EvalContext eval(Option::V6);
 
         // parse the expression
@@ -453,7 +453,7 @@ public:
     void testMember(const std::string& expr,
                     EvalContext::CheckDefined check_defined,
                     const std::string& exp_client_class,
-                    int exp_tokens) {
+                    size_t exp_tokens) {
         EvalContext eval(Option::V6, check_defined);
 
         // parse the expression
@@ -524,7 +524,7 @@ public:
 
         EXPECT_NO_THROW(token->evaluate(*pkt4, values));
 
-        ASSERT_EQ(1, values.size());
+        ASSERT_EQ(1U, values.size());
         string value = values.top();
 
         EXPECT_EQ(value, expected);
@@ -558,7 +558,7 @@ public:
 
         EXPECT_NO_THROW(token->evaluate(*pkt4, values));
 
-        ASSERT_EQ(1, values.size());
+        ASSERT_EQ(1U, values.size());
         string value = values.top();
 
         EXPECT_EQ(value, expected);
@@ -693,7 +693,7 @@ public:
         EXPECT_NO_THROW(parsed_ = eval.parseString(expr));
         EXPECT_TRUE(parsed_);
 
-        ASSERT_EQ(1, eval.expression_.size());
+        ASSERT_EQ(1U, eval.expression_.size());
         checkTokenVendorClass(eval.expression_.at(0), vendor_id, 0, TokenOption::EXISTS,
                               TokenVendor::EXISTS);
     }
@@ -932,7 +932,7 @@ TEST_F(EvalContextTest, string) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("'foo' == 'bar'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(3, eval.expression_.size());
+    ASSERT_EQ(3U, eval.expression_.size());
 
     TokenPtr tmp1  = eval.expression_.at(0);
     TokenPtr tmp2  = eval.expression_.at(1);
@@ -952,7 +952,7 @@ TEST_F(EvalContextTest, stringComplex) {
     EXPECT_NO_THROW(parsed_ = eval.parseString(string(data, sizeof(data) - 1)));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(3, eval.expression_.size());
+    ASSERT_EQ(3U, eval.expression_.size());
 
     TokenPtr tmp1  = eval.expression_.at(0);
     TokenPtr tmp2  = eval.expression_.at(1);
@@ -982,7 +982,7 @@ TEST_F(EvalContextTest, hexstring) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("0x666f6f == 'foo'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(3, eval.expression_.size());
+    ASSERT_EQ(3U, eval.expression_.size());
 
     TokenPtr tmp = eval.expression_.at(0);
 
@@ -997,7 +997,7 @@ TEST_F(EvalContextTest, oddHexstring) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("0X7 == 'foo'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(3, eval.expression_.size());
+    ASSERT_EQ(3U, eval.expression_.size());
 
     TokenPtr tmp = eval.expression_.at(0);
 
@@ -1011,7 +1011,7 @@ TEST_F(EvalContextTest, ipaddress4) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("10.0.0.1 == 'foo'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(3, eval.expression_.size());
+    ASSERT_EQ(3U, eval.expression_.size());
 
     TokenPtr tmp = eval.expression_.at(0);
 
@@ -1025,7 +1025,7 @@ TEST_F(EvalContextTest, ipaddress6) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("2001:db8::1 == 'foo'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(3, eval.expression_.size());
+    ASSERT_EQ(3U, eval.expression_.size());
 
     TokenPtr tmp = eval.expression_.at(0);
 
@@ -1039,7 +1039,7 @@ TEST_F(EvalContextTest, ipaddress46) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("::10.0.0.1 == 'foo'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(3, eval.expression_.size());
+    ASSERT_EQ(3U, eval.expression_.size());
 
     TokenPtr tmp = eval.expression_.at(0);
 
@@ -1053,7 +1053,7 @@ TEST_F(EvalContextTest, ipaddress6unspec) {
     EXPECT_NO_THROW(parsed_ = eval.parseString(":: == 'foo'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(3, eval.expression_.size());
+    ASSERT_EQ(3U, eval.expression_.size());
 
     TokenPtr tmp = eval.expression_.at(0);
 
@@ -1067,7 +1067,7 @@ TEST_F(EvalContextTest, ipaddress6prefix) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("2001:db8:: == 'foo'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(3, eval.expression_.size());
+    ASSERT_EQ(3U, eval.expression_.size());
 
     TokenPtr tmp = eval.expression_.at(0);
 
@@ -1081,7 +1081,7 @@ TEST_F(EvalContextTest, equal) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("'foo' == 'bar'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(3, eval.expression_.size());
+    ASSERT_EQ(3U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
     TokenPtr tmp2 = eval.expression_.at(1);
@@ -1098,7 +1098,7 @@ TEST_F(EvalContextTest, option) {
 
     EXPECT_NO_THROW(parsed_ = eval.parseString("option[123].text == 'foo'"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(3, eval.expression_.size());
+    ASSERT_EQ(3U, eval.expression_.size());
     checkTokenOption(eval.expression_.at(0), 123, TokenOption::TEXTUAL);
 }
 
@@ -1109,7 +1109,7 @@ TEST_F(EvalContextTest, optionWithName) {
     // Option 'host-name' is a standard DHCPv4 option defined in the libdhcp++.
     EXPECT_NO_THROW(parsed_ = eval.parseString("option[host-name].text == 'foo'"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(3, eval.expression_.size());
+    ASSERT_EQ(3U, eval.expression_.size());
     checkTokenOption(eval.expression_.at(0), 12, TokenOption::TEXTUAL);
 }
 
@@ -1119,7 +1119,7 @@ TEST_F(EvalContextTest, optionExists) {
 
     EXPECT_NO_THROW(parsed_ = eval.parseString("option[100].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(1, eval.expression_.size());
+    ASSERT_EQ(1U, eval.expression_.size());
     checkTokenOption(eval.expression_.at(0), 100, TokenOption::EXISTS);
 }
 
@@ -1130,7 +1130,7 @@ TEST_F(EvalContextTest, optionWithNameAndWhitespace) {
     // Option 'host-name' is a standard DHCPv4 option defined in the libdhcp++.
     EXPECT_NO_THROW(parsed_ = eval.parseString("option[  host-name  ].text == 'foo'"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(3, eval.expression_.size());
+    ASSERT_EQ(3U, eval.expression_.size());
     checkTokenOption(eval.expression_.at(0), 12, TokenOption::TEXTUAL);
 }
 
@@ -1142,7 +1142,7 @@ TEST_F(EvalContextTest, optionWithNameAndNewline) {
     EXPECT_NO_THROW(parsed_ =
         eval.parseString("option[\n host-name \n ].text == \n'foo'"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(3, eval.expression_.size());
+    ASSERT_EQ(3U, eval.expression_.size());
     checkTokenOption(eval.expression_.at(0), 12, TokenOption::TEXTUAL);
 }
 
@@ -1152,7 +1152,7 @@ TEST_F(EvalContextTest, optionHex) {
 
     EXPECT_NO_THROW(parsed_ = eval.parseString("option[123].hex == 0x666F6F"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(3, eval.expression_.size());
+    ASSERT_EQ(3U, eval.expression_.size());
     checkTokenOption(eval.expression_.at(0), 123, TokenOption::HEXADECIMAL);
 }
 
@@ -1163,7 +1163,7 @@ TEST_F(EvalContextTest, relay4Option) {
     EXPECT_NO_THROW(parsed_ =
         eval.parseString("relay4[13].hex == 'thirteen'"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(3, eval.expression_.size());
+    ASSERT_EQ(3U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
     TokenPtr tmp2 = eval.expression_.at(1);
@@ -1180,7 +1180,7 @@ TEST_F(EvalContextTest, relay4Exists) {
 
     EXPECT_NO_THROW(parsed_ = eval.parseString("relay4[13].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(1, eval.expression_.size());
+    ASSERT_EQ(1U, eval.expression_.size());
     checkTokenRelay4(eval.expression_.at(0), 13, TokenOption::EXISTS);
 }
 
@@ -1383,7 +1383,7 @@ TEST_F(EvalContextTest, logicalOps) {
     EvalContext eval0(Option::V4);
     EXPECT_NO_THROW(parsed_ = eval0.parseString("option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(1, eval0.expression_.size());
+    ASSERT_EQ(1U, eval0.expression_.size());
     TokenPtr token = eval0.expression_.at(0);
     ASSERT_TRUE(token);
     boost::shared_ptr<TokenOption> opt =
@@ -1394,7 +1394,7 @@ TEST_F(EvalContextTest, logicalOps) {
     EvalContext evaln(Option::V4);
     EXPECT_NO_THROW(parsed_ = evaln.parseString("not option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(2, evaln.expression_.size());
+    ASSERT_EQ(2U, evaln.expression_.size());
     token = evaln.expression_.at(1);
     ASSERT_TRUE(token);
     boost::shared_ptr<TokenNot> tnot =
@@ -1406,7 +1406,7 @@ TEST_F(EvalContextTest, logicalOps) {
     EXPECT_NO_THROW(parsed_ =
         evalsa.parseString("option[123].exists sand option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(3, evalsa.expression_.size());
+    ASSERT_EQ(3U, evalsa.expression_.size());
     token = evalsa.expression_.at(2);
     ASSERT_TRUE(token);
     boost::shared_ptr<TokenAnd> tand =
@@ -1418,7 +1418,7 @@ TEST_F(EvalContextTest, logicalOps) {
     EXPECT_NO_THROW(parsed_ =
         evalso.parseString("option[123].exists sor option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(3, evalso.expression_.size());
+    ASSERT_EQ(3U, evalso.expression_.size());
     token = evalso.expression_.at(2);
     ASSERT_TRUE(token);
     boost::shared_ptr<TokenOr> tor =
@@ -1430,7 +1430,7 @@ TEST_F(EvalContextTest, logicalOps) {
     EXPECT_NO_THROW(parsed_ =
         evala.parseString("option[123].exists and option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(4, evala.expression_.size());
+    ASSERT_EQ(4U, evala.expression_.size());
     token = evala.expression_.at(1);
     checkTokenPopOrBranchFalse(token, 1);
     token = evala.expression_.at(3);
@@ -1441,7 +1441,7 @@ TEST_F(EvalContextTest, logicalOps) {
     EXPECT_NO_THROW(parsed_ =
         evalo.parseString("option[123].exists or option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(4, evalo.expression_.size());
+    ASSERT_EQ(4U, evalo.expression_.size());
     token = evalo.expression_.at(1);
     checkTokenPopOrBranchTrue(token, 1);
     token = evala.expression_.at(3);
@@ -1455,7 +1455,7 @@ TEST_F(EvalContextTest, logicalPrecedence) {
     EXPECT_NO_THROW(parsed_ =
         evalnsa.parseString("not option[123].exists sand option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(4, evalnsa.expression_.size());
+    ASSERT_EQ(4U, evalnsa.expression_.size());
     TokenPtr token = evalnsa.expression_.at(3);
     ASSERT_TRUE(token);
     boost::shared_ptr<TokenAnd> tand =
@@ -1468,7 +1468,7 @@ TEST_F(EvalContextTest, logicalPrecedence) {
         evalsosa.parseString("option[123].exists sor option[123].exists "
                            "sand option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(5, evalsosa.expression_.size());
+    ASSERT_EQ(5U, evalsosa.expression_.size());
     token = evalsosa.expression_.at(4);
     ASSERT_TRUE(token);
     boost::shared_ptr<TokenOr> tor =
@@ -1480,7 +1480,7 @@ TEST_F(EvalContextTest, logicalPrecedence) {
     EXPECT_NO_THROW(parsed_ =
         evalna.parseString("not option[123].exists and option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(5, evalna.expression_.size());
+    ASSERT_EQ(5U, evalna.expression_.size());
     token = evalna.expression_.at(2);
     checkTokenPopOrBranchFalse(token, 1);
     token = evalna.expression_.at(4);
@@ -1492,7 +1492,7 @@ TEST_F(EvalContextTest, logicalPrecedence) {
         evaloa.parseString("option[123].exists or option[123].exists "
                            "and option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(7, evaloa.expression_.size());
+    ASSERT_EQ(7U, evaloa.expression_.size());
     token = evaloa.expression_.at(1);
     checkTokenPopOrBranchTrue(token, 1);
     token = evaloa.expression_.at(5);
@@ -1509,7 +1509,7 @@ TEST_F(EvalContextTest, logicalParentheses) {
     EXPECT_NO_THROW(parsed_ =
         evalnsa.parseString("not (option[123].exists sand option[123].exists)"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(4, evalnsa.expression_.size());
+    ASSERT_EQ(4U, evalnsa.expression_.size());
     TokenPtr token = evalnsa.expression_.at(3);
     ASSERT_TRUE(token);
     boost::shared_ptr<TokenNot> tnot =
@@ -1522,7 +1522,7 @@ TEST_F(EvalContextTest, logicalParentheses) {
         evalsosa.parseString("(option[123].exists sor option[123].exists) "
                            "sand option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(5, evalsosa.expression_.size());
+    ASSERT_EQ(5U, evalsosa.expression_.size());
     token = evalsosa.expression_.at(4);
     ASSERT_TRUE(token);
     boost::shared_ptr<TokenAnd> tand =
@@ -1534,7 +1534,7 @@ TEST_F(EvalContextTest, logicalParentheses) {
     EXPECT_NO_THROW(parsed_ =
         evalna.parseString("not (option[123].exists and option[123].exists)"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(5, evalna.expression_.size());
+    ASSERT_EQ(5U, evalna.expression_.size());
     token = evalna.expression_.at(1);
     checkTokenPopOrBranchFalse(token, 1);
     token = evalna.expression_.at(3);
@@ -1550,7 +1550,7 @@ TEST_F(EvalContextTest, logicalParentheses) {
         evaloa.parseString("(option[123].exists or option[123].exists) "
                            "and option[123].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(7, evaloa.expression_.size());
+    ASSERT_EQ(7U, evaloa.expression_.size());
     token = evaloa.expression_.at(1);
     checkTokenPopOrBranchTrue(token, 1);
     token = evaloa.expression_.at(3);
@@ -1569,7 +1569,7 @@ TEST_F(EvalContextTest, substring) {
         eval.parseString("substring('foobar',2,all) == 'obar'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(6, eval.expression_.size());
+    ASSERT_EQ(6U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
     TokenPtr tmp2 = eval.expression_.at(1);
@@ -1590,7 +1590,7 @@ TEST_F(EvalContextTest, concat) {
         eval.parseString("concat('foo','bar') == 'foobar'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(5, eval.expression_.size());
+    ASSERT_EQ(5U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
     TokenPtr tmp2 = eval.expression_.at(1);
@@ -1609,7 +1609,7 @@ TEST_F(EvalContextTest, plus) {
         eval.parseString("'foo' + 'bar' == 'foobar'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(5, eval.expression_.size());
+    ASSERT_EQ(5U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
     TokenPtr tmp2 = eval.expression_.at(1);
@@ -1628,7 +1628,7 @@ TEST_F(EvalContextTest, assocPlus) {
     EXPECT_NO_THROW(parsed_ =
         eval.parseString("'a' + 'b' + 'c' == 'abc'"));
 
-    ASSERT_EQ(7, eval.expression_.size());
+    ASSERT_EQ(7U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
     TokenPtr tmp2 = eval.expression_.at(1);
@@ -1650,7 +1650,7 @@ TEST_F(EvalContextTest, assocRightPlus) {
     EXPECT_NO_THROW(parsed_ =
         eval.parseString("'a' + ('b' + 'c') == 'abc'"));
 
-    ASSERT_EQ(7, eval.expression_.size());
+    ASSERT_EQ(7U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
     TokenPtr tmp2 = eval.expression_.at(1);
@@ -1672,7 +1672,7 @@ TEST_F(EvalContextTest, strictIfElse) {
     EXPECT_NO_THROW(parsed_ =
         eval.parseString("sifelse('foo' == 'bar', 'us', 'them') == 'you'"));
 
-    ASSERT_EQ(8, eval.expression_.size());
+    ASSERT_EQ(8U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(2);
     TokenPtr tmp2 = eval.expression_.at(3);
@@ -1692,7 +1692,7 @@ TEST_F(EvalContextTest, ifElse) {
     EXPECT_NO_THROW(parsed_ =
         eval.parseString("ifelse('foo' == 'bar', 'us', 'them') == 'you'"));
 
-    ASSERT_EQ(11, eval.expression_.size());
+    ASSERT_EQ(11U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
     TokenPtr tmp2 = eval.expression_.at(1);
@@ -1726,7 +1726,7 @@ TEST_F(EvalContextTest, plusStrictIfElse) {
     EXPECT_NO_THROW(parsed_ =
         eval.parseString("'foo' + sifelse('a' == 'a', 'bar', '') == 'foobar'"));
 
-    ASSERT_EQ(10, eval.expression_.size());
+    ASSERT_EQ(10U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
     TokenPtr tmp2 = eval.expression_.at(1);
@@ -1758,7 +1758,7 @@ TEST_F(EvalContextTest, plusIfElse) {
     EXPECT_NO_THROW(parsed_ =
         eval.parseString("'foo' + ifelse('a' == 'a', 'bar', '') == 'foobar'"));
 
-    ASSERT_EQ(13, eval.expression_.size());
+    ASSERT_EQ(13U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
     TokenPtr tmp2 = eval.expression_.at(1);
@@ -1797,7 +1797,7 @@ TEST_F(EvalContextTest, toHexString) {
         eval.parseString("hexstring(0x666f,'-') == '66-6f'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(5, eval.expression_.size());
+    ASSERT_EQ(5U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
     TokenPtr tmp2 = eval.expression_.at(1);
@@ -1815,7 +1815,7 @@ TEST_F(EvalContextTest, lcase) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("lcase('LoWeR') == 'lower'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(4, eval.expression_.size());
+    ASSERT_EQ(4U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
     TokenPtr tmp2 = eval.expression_.at(1);
@@ -1837,7 +1837,7 @@ TEST_F(EvalContextTest, lcaseComplex) {
     EXPECT_NO_THROW(parsed_ = eval.parseString(string(data, sizeof(data) - 1)));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(4, eval.expression_.size());
+    ASSERT_EQ(4U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
     TokenPtr tmp2 = eval.expression_.at(1);
@@ -1859,7 +1859,7 @@ TEST_F(EvalContextTest, ucase) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("ucase('uPpEr') == 'UPPER'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(4, eval.expression_.size());
+    ASSERT_EQ(4U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
     TokenPtr tmp2 = eval.expression_.at(1);
@@ -1881,7 +1881,7 @@ TEST_F(EvalContextTest, ucaseComplex) {
     EXPECT_NO_THROW(parsed_ = eval.parseString(string(data, sizeof(data) - 1)));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(4, eval.expression_.size());
+    ASSERT_EQ(4U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
     TokenPtr tmp2 = eval.expression_.at(1);
@@ -1904,7 +1904,7 @@ TEST_F(EvalContextTest, addressToText) {
         EXPECT_NO_THROW(parsed_ = eval.parseString("addrtotext(10.0.0.1) == '10.0.0.1'"));
         EXPECT_TRUE(parsed_);
 
-        ASSERT_EQ(4, eval.expression_.size());
+        ASSERT_EQ(4U, eval.expression_.size());
 
         TokenPtr tmp1 = eval.expression_.at(0);
         TokenPtr tmp2 = eval.expression_.at(1);
@@ -1923,7 +1923,7 @@ TEST_F(EvalContextTest, addressToText) {
         EXPECT_NO_THROW(parsed_ = eval.parseString("addrtotext(2001:db8::1) == '2001:db8::1'"));
         EXPECT_TRUE(parsed_);
 
-        ASSERT_EQ(4, eval.expression_.size());
+        ASSERT_EQ(4U, eval.expression_.size());
 
         TokenPtr tmp1 = eval.expression_.at(0);
         TokenPtr tmp2 = eval.expression_.at(1);
@@ -1944,7 +1944,7 @@ TEST_F(EvalContextTest, int8ToText) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("int8totext(255) == '-1'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(4, eval.expression_.size());
+    ASSERT_EQ(4U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
     TokenPtr tmp2 = eval.expression_.at(1);
@@ -1964,7 +1964,7 @@ TEST_F(EvalContextTest, int16ToText) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("int16totext(65535) == '-1'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(4, eval.expression_.size());
+    ASSERT_EQ(4U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
     TokenPtr tmp2 = eval.expression_.at(1);
@@ -1984,7 +1984,7 @@ TEST_F(EvalContextTest, int32ToText) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("int32totext(4294967295) == '-1'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(4, eval.expression_.size());
+    ASSERT_EQ(4U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
     TokenPtr tmp2 = eval.expression_.at(1);
@@ -2004,7 +2004,7 @@ TEST_F(EvalContextTest, uint8ToText) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("uint8totext(255) == '255'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(4, eval.expression_.size());
+    ASSERT_EQ(4U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
     TokenPtr tmp2 = eval.expression_.at(1);
@@ -2024,7 +2024,7 @@ TEST_F(EvalContextTest, uint16ToText) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("uint16totext(65535) == '65535'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(4, eval.expression_.size());
+    ASSERT_EQ(4U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
     TokenPtr tmp2 = eval.expression_.at(1);
@@ -2044,7 +2044,7 @@ TEST_F(EvalContextTest, uint32ToText) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("uint32totext(4294967295) == '4294967295'"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(4, eval.expression_.size());
+    ASSERT_EQ(4U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
     TokenPtr tmp2 = eval.expression_.at(1);
@@ -2450,7 +2450,7 @@ TEST_F(EvalContextTest, subOptionWithCode) {
 
     EXPECT_NO_THROW(parsed_ = eval.parseString("option[123].option[234].text == 'foo'"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(3, eval.expression_.size());
+    ASSERT_EQ(3U, eval.expression_.size());
     checkTokenSubOption(eval.expression_.at(0), 123, 234, TokenOption::TEXTUAL);
 }
 
@@ -2460,7 +2460,7 @@ TEST_F(EvalContextTest, subOptionWithName) {
 
     EXPECT_NO_THROW(parsed_ = eval.parseString("option[host-name].option[123].text == 'foo'"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(3, eval.expression_.size());
+    ASSERT_EQ(3U, eval.expression_.size());
     checkTokenSubOption(eval.expression_.at(0), 12, 123, TokenOption::TEXTUAL);
 }
 
@@ -2470,7 +2470,7 @@ TEST_F(EvalContextTest, subOptionExists) {
 
     EXPECT_NO_THROW(parsed_ = eval.parseString("option[100].option[200].exists"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(1, eval.expression_.size());
+    ASSERT_EQ(1U, eval.expression_.size());
     checkTokenSubOption(eval.expression_.at(0), 100, 200, TokenOption::EXISTS);
 }
 
@@ -2480,7 +2480,7 @@ TEST_F(EvalContextTest, subOptionHex) {
 
     EXPECT_NO_THROW(parsed_ = eval.parseString("option[123].option[234].hex == 0x666F6F"));
     EXPECT_TRUE(parsed_);
-    ASSERT_EQ(3, eval.expression_.size());
+    ASSERT_EQ(3U, eval.expression_.size());
     checkTokenSubOption(eval.expression_.at(0), 123, 234, TokenOption::HEXADECIMAL);
 }
 
@@ -2492,7 +2492,7 @@ TEST_F(EvalContextTest, integer1) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("1 == 2"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(3, eval.expression_.size());
+    ASSERT_EQ(3U, eval.expression_.size());
 
     TokenPtr tmp = eval.expression_.at(0);
     ASSERT_TRUE(tmp);
@@ -2510,7 +2510,7 @@ TEST_F(EvalContextTest, match) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("match('foo.*', 'foobar')"));
     EXPECT_TRUE(parsed_);
 
-    ASSERT_EQ(2, eval.expression_.size());
+    ASSERT_EQ(2U, eval.expression_.size());
 
     TokenPtr tmp = eval.expression_.at(0);
     ASSERT_TRUE(tmp);
@@ -2525,7 +2525,7 @@ TEST_F(EvalContextTest, match) {
 
     EXPECT_NO_THROW(tmp->evaluate(*pkt4, values));
 
-    ASSERT_EQ(1, values.size());
+    ASSERT_EQ(1U, values.size());
     EXPECT_EQ("true", values.top());
 
     // Invalid regular expressions are syntax errors.

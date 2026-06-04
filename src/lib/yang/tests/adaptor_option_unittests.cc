@@ -101,8 +101,8 @@ TEST(AdaptorOptionTest, collect) {
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     OptionCodes codes;
     ASSERT_NO_THROW_LOG(AdaptorOption::collect(json, codes));
-    EXPECT_EQ(1, codes.size());
-    EXPECT_EQ(123, codes["bar@foo"]);
+    EXPECT_EQ(1U, codes.size());
+    EXPECT_EQ(123U, codes["bar@foo"]);
     EXPECT_FALSE(codes.contains("foo@bar"));
 }
 
@@ -117,8 +117,8 @@ TEST(AdaptorOptionTest, collectKnown) {
     ASSERT_NO_THROW_LOG(json = Element::fromJSON(config));
     OptionCodes codes = { { "bar@foo", 111 } };
     ASSERT_NO_THROW_LOG(AdaptorOption::collect(json, codes));
-    EXPECT_EQ(1, codes.size());
-    EXPECT_EQ(111, codes["bar@foo"]);
+    EXPECT_EQ(1U, codes.size());
+    EXPECT_EQ(111U, codes["bar@foo"]);
 }
 
 // Verifies that setCode adds a code to an option without this entry
@@ -201,7 +201,7 @@ TEST(AdaptorOptionTest, initCodesInternal) {
                                                          DHCP4_OPTION_SPACE,
                                                          DEFS,
                                                          DEFS_SIZE));
-    ASSERT_EQ(2, codes.size());
+    ASSERT_EQ(2U, codes.size());
     EXPECT_EQ(DHO_SUBNET_MASK, codes["dhcp4@subnet-mask"]);
     EXPECT_EQ(DHO_TIME_OFFSET, codes["dhcp4@time-offset"]);
 }
@@ -219,7 +219,7 @@ TEST(AdaptorOptionTest, initCodes4) {
               codes["dhcp4@vendor-encapsulated-options"]);
 
     // and DOCSIS3.
-    EXPECT_EQ(2, codes["vendor-4491@tftp-servers"]);
+    EXPECT_EQ(2U, codes["vendor-4491@tftp-servers"]);
 }
 
 // Verifies that initCodes works as expected with DHCPv6.
@@ -231,7 +231,7 @@ TEST(AdaptorOptionTest, initCodes6) {
     EXPECT_FALSE(codes.contains("dhcp4@subnet-mask"));
 
     // initCodes loads DOCSIS3 too.
-    EXPECT_EQ(32, codes["vendor-4491@tftp-servers"]);
+    EXPECT_EQ(32U, codes["vendor-4491@tftp-servers"]);
 
     // Various MAP suboptions.
     EXPECT_EQ(D6O_S46_BR, codes["s46-cont-mape-options@s46-br"]);

@@ -94,7 +94,7 @@ TEST_F(TranslatorOptionDefListTestKeaV6, get) {
     EXPECT_NO_THROW_LOG(defs = translator_->getOptionDefListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(defs);
     ASSERT_EQ(Element::list, defs->getType());
-    EXPECT_EQ(1, defs->size());
+    EXPECT_EQ(1U, defs->size());
     EXPECT_TRUE(def->equals(*defs->get(0)));
 }
 
@@ -131,7 +131,7 @@ TEST_F(TranslatorOptionDefListTestKeaV6, set) {
     ConstElementPtr got;
     EXPECT_NO_THROW_LOG(got = translator_->getOptionDefListFromAbsoluteXpath(xpath));
     ASSERT_TRUE(got);
-    ASSERT_EQ(1, got->size());
+    ASSERT_EQ(1U, got->size());
     EXPECT_TRUE(def->equals(*got->get(0)));
 }
 

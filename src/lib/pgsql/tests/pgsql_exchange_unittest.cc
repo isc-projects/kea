@@ -149,7 +149,7 @@ TEST(PsqlBindArray, addTriplet) {
     }
 
     // We've left bind scope, everything should be intact.
-    EXPECT_EQ(6, b.size());
+    EXPECT_EQ(6U, b.size());
 
     // Verify contents are correct.
     std::string expected =
@@ -181,7 +181,7 @@ TEST(PsqlBindArray, addOptionalString) {
     }
 
     // We've left bind scope, everything should be intact.
-    EXPECT_EQ(2, b.size());
+    EXPECT_EQ(2U, b.size());
 
     // Verify contents are correct.
     std::string expected =
@@ -211,7 +211,7 @@ TEST(PsqlBindArray, addOptionalBool) {
     }
 
     // We've left bind scope, everything should be intact.
-    EXPECT_EQ(3, b.size());
+    EXPECT_EQ(3U, b.size());
 
     // Verify contents are correct.
     std::string expected =
@@ -241,7 +241,7 @@ TEST(PsqlBindArray, addOptionalInteger) {
     }
 
     // We've left bind scope, everything should be intact.
-    EXPECT_EQ(2, b.size());
+    EXPECT_EQ(2U, b.size());
 
     // Verify contents are correct.
     std::string expected =
@@ -275,7 +275,7 @@ TEST(PsqlBindArray, addOptionalInet4) {
     }
 
     // We've left bind scope, everything should be intact.
-    EXPECT_EQ(2, b.size());
+    EXPECT_EQ(2U, b.size());
 
     // Verify contents are correct.
     std::string expected =
@@ -309,7 +309,7 @@ TEST(PsqlBindArray, addOptionalInet6) {
     }
 
     // We've left bind scope, everything should be intact.
-    EXPECT_EQ(2, b.size());
+    EXPECT_EQ(2U, b.size());
 
     // Verify contents are correct.
     std::string expected =
@@ -533,7 +533,7 @@ TEST_F(PgSqlBasicsTest, byteaTest) {
                                                     fetched_bytes,
                                                     sizeof(fetched_bytes),
                                                     byte_count));
-    EXPECT_EQ(byte_count, 0);
+    EXPECT_EQ(byte_count, 0U);
 }
 
 /// @brief Verify that we can read and write BIGINT columns
@@ -744,7 +744,7 @@ TEST_F(PgSqlBasicsTest, get) {
     EXPECT_TRUE(bind_array.amNull(1)); // second column is null
     EXPECT_FALSE(bind_array.amNull(2)); // third column is not null
 
-    EXPECT_EQ(123, bind_array.getInteger<uint32_t>(0)); // first column is 123
+    EXPECT_EQ(123U, bind_array.getInteger<uint32_t>(0)); // first column is 123
     EXPECT_THROW(bind_array.getInteger<uint32_t>(1), BadValue);
     EXPECT_THROW(bind_array.getInteger<uint32_t>(2), boost::bad_lexical_cast);
 
@@ -1042,7 +1042,7 @@ TEST(PsqlBindArray, insertString) {
     }
 
     // We've left bind scope, everything should be intact.
-    EXPECT_EQ(5, b.size());
+    EXPECT_EQ(5U, b.size());
 
     // Verify contents are correct.
     std::string expected =
@@ -1070,19 +1070,19 @@ TEST(PsqlBindArray, popBackTest) {
     }
 
     // Verify size.
-    EXPECT_EQ(b.size(), 5);
+    EXPECT_EQ(b.size(), 5U);
 
     // Pop one off.
     ASSERT_NO_THROW_LOG(b.popBack());
 
     // Verify size.
-    EXPECT_EQ(b.size(), 4);
+    EXPECT_EQ(b.size(), 4U);
 
     // Pop another one off.
     ASSERT_NO_THROW_LOG(b.popBack());
 
     // Verify size.
-    EXPECT_EQ(b.size(), 3);
+    EXPECT_EQ(b.size(), 3U);
 
     // This is what we should have left.
     std::string expected =
@@ -1143,7 +1143,7 @@ TEST_F(PgSqlBasicsTest, inetTest4) {
     bind_array.reset(new PsqlBindArray());
     bind_array->addInet4(inets[1]);
     RUN_PREP(r, statement[1], bind_array, PGRES_TUPLES_OK);
-    ASSERT_EQ(r->getRows(),1);
+    ASSERT_EQ(r->getRows(), 1);
     ASSERT_NO_THROW(fetched_inet = PgSqlExchange::getInetValue4(*r, 0, INET4_COL));
     EXPECT_EQ(fetched_inet, inets[1]);
 
@@ -1211,7 +1211,7 @@ TEST_F(PgSqlBasicsTest, inetTest6) {
     bind_array.reset(new PsqlBindArray());
     bind_array->addInet6(inets[1]);
     RUN_PREP(r, statement[1], bind_array, PGRES_TUPLES_OK);
-    ASSERT_EQ(r->getRows(),1);
+    ASSERT_EQ(r->getRows(), 1);
     ASSERT_NO_THROW(fetched_inet = PgSqlExchange::getInetValue6(*r, 0, INET6_COL));
     EXPECT_EQ(fetched_inet, inets[1]);
 

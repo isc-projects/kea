@@ -109,11 +109,11 @@ TEST(MySqlBindingTest, blobTypeMismatch) {
 TEST(MySqlBindingTest, defaultInteger) {
     auto binding = MySqlBinding::createNull();
     ASSERT_TRUE(binding->amNull());
-    EXPECT_EQ(123, binding->getIntegerOrDefault<uint32_t>(123));
+    EXPECT_EQ(123U, binding->getIntegerOrDefault<uint32_t>(123));
 
     binding = MySqlBinding::createInteger<uint32_t>(1024);
     ASSERT_FALSE(binding->amNull());
-    EXPECT_EQ(1024, binding->getIntegerOrDefault<uint32_t>(123));
+    EXPECT_EQ(1024U, binding->getIntegerOrDefault<uint32_t>(123));
 }
 
 // This test verifies that null binding is created for unspecified number
@@ -124,7 +124,7 @@ TEST(MySqlBindingTest, conditionalInteger) {
 
     binding = MySqlBinding::condCreateInteger<uint16_t>(1);
     ASSERT_FALSE(binding->amNull());
-    EXPECT_EQ(1, binding->getInteger<uint16_t>());
+    EXPECT_EQ(1U, binding->getInteger<uint16_t>());
 }
 
 // This test verifies that an error is thrown upon an attempt to use
@@ -207,7 +207,7 @@ TEST(MySqlBindingTest, conditionalIPv4Address) {
 
     binding = MySqlBinding::condCreateIPv4Address(IOAddress("192.0.2.1"));
     ASSERT_FALSE(binding->amNull());
-    EXPECT_EQ(0xC0000201, binding->getInteger<uint32_t>());
+    EXPECT_EQ(0xC0000201U, binding->getInteger<uint32_t>());
 
     EXPECT_THROW(MySqlBinding::condCreateIPv4Address(IOAddress("2001:db8:1::1")),
                  isc::BadValue);

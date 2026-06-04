@@ -137,14 +137,14 @@ TEST_F(BasicHttpAuthConfigTest, basic) {
     EXPECT_FALSE(config.empty());
 
     // Check the client.
-    ASSERT_EQ(1, config.getClientList().size());
+    ASSERT_EQ(1U, config.getClientList().size());
     const BasicHttpAuthClient& client = config.getClientList().front();
     EXPECT_EQ("foo", client.getUser());
     EXPECT_EQ("bar", client.getPassword());
     EXPECT_TRUE(ctx->equals(*client.getContext()));
 
     // Check the credential.
-    ASSERT_NE(0, config.getCredentialMap().count("Zm9vOmJhcg=="));
+    ASSERT_NE(0U, config.getCredentialMap().count("Zm9vOmJhcg=="));
     string user;
     EXPECT_NO_THROW(user = config.getCredentialMap().at("Zm9vOmJhcg=="));
     EXPECT_EQ("foo", user);
@@ -166,10 +166,10 @@ TEST_F(BasicHttpAuthConfigTest, basic) {
 
     // Add a second client and test it.
     EXPECT_NO_THROW(config.add("test", "", "123\xa3", ""));
-    ASSERT_EQ(2, config.getClientList().size());
+    ASSERT_EQ(2U, config.getClientList().size());
     EXPECT_EQ("foo", config.getClientList().front().getUser());
     EXPECT_EQ("test", config.getClientList().back().getUser());
-    ASSERT_NE(0, config.getCredentialMap().count("dGVzdDoxMjPCow=="));
+    ASSERT_NE(0U, config.getCredentialMap().count("dGVzdDoxMjPCow=="));
 
     // Check clear.
     config.clear();
@@ -215,7 +215,7 @@ TEST_F(BasicHttpAuthConfigTest, basicFiles) {
     EXPECT_FALSE(config.empty());
 
     // Check the client.
-    ASSERT_EQ(1, config.getClientList().size());
+    ASSERT_EQ(1U, config.getClientList().size());
     const BasicHttpAuthClient& client = config.getClientList().front();
     EXPECT_EQ("foo", client.getUser());
     EXPECT_EQ("", client.getUserFile());
@@ -241,7 +241,7 @@ TEST_F(BasicHttpAuthConfigTest, basicFiles) {
 
     // Add a second client and test it.
     EXPECT_NO_THROW(config.add("", "hiddenu", "", "hiddenp"));
-    ASSERT_EQ(2, config.getClientList().size());
+    ASSERT_EQ(2U, config.getClientList().size());
     EXPECT_EQ("foo", config.getClientList().front().getUser());
     EXPECT_EQ("hiddenu", config.getClientList().back().getUserFile());
 
@@ -434,7 +434,7 @@ TEST_F(BasicHttpAuthConfigTest, parse) {
     clients_cfg->add(client_cfg);
     cfg->set("clients", clients_cfg);
     EXPECT_NO_THROW(config.parse(cfg));
-    ASSERT_EQ(1, config.getClientList().size());
+    ASSERT_EQ(1U, config.getClientList().size());
     EXPECT_EQ("", config.getClientList().front().getPassword());
     config.clear();
 
@@ -457,7 +457,7 @@ TEST_F(BasicHttpAuthConfigTest, parse) {
     clients_cfg->add(client_cfg);
     cfg->set("clients", clients_cfg);
     EXPECT_NO_THROW(config.parse(cfg));
-    ASSERT_EQ(1, config.getClientList().size());
+    ASSERT_EQ(1U, config.getClientList().size());
     EXPECT_EQ("", config.getClientList().front().getPassword());
     config.clear();
 
@@ -505,7 +505,7 @@ TEST_F(BasicHttpAuthConfigTest, parse) {
     clients_cfg->add(client_cfg);
     cfg->set("clients", clients_cfg);
     EXPECT_NO_THROW(config.parse(cfg));
-    ASSERT_EQ(1, config.getClientList().size());
+    ASSERT_EQ(1U, config.getClientList().size());
     EXPECT_EQ("", config.getClientList().front().getPassword());
     config.clear();
 
@@ -517,7 +517,7 @@ TEST_F(BasicHttpAuthConfigTest, parse) {
     clients_cfg->add(client_cfg);
     cfg->set("clients", clients_cfg);
     EXPECT_NO_THROW(config.parse(cfg));
-    ASSERT_EQ(1, config.getClientList().size());
+    ASSERT_EQ(1U, config.getClientList().size());
     EXPECT_EQ("test", config.getClientList().front().getPassword());
     config.clear();
 
@@ -569,8 +569,8 @@ TEST_F(BasicHttpAuthConfigTest, parse) {
     EXPECT_NO_THROW(config.parse(cfg));
     runToElementTest<BasicHttpAuthConfig>(cfg, config);
 
-    EXPECT_EQ(4, countFile("HTTP_CLIENT_PASSWORD_SECURITY_WARNING"
-                           " use of clear text 'password' is NOT SECURE: :0:0"));
+    EXPECT_EQ(4U, countFile("HTTP_CLIENT_PASSWORD_SECURITY_WARNING"
+                            " use of clear text 'password' is NOT SECURE: :0:0"));
 }
 
 // Test that basic auth configuration catches use of 'user'
@@ -596,8 +596,8 @@ TEST_F(BasicHttpAuthConfigTest, clearUser) {
     // Disable security.
     file::PathChecker::enableEnforcement(false);
     ASSERT_NO_THROW_LOG(auth.parse(config));
-    EXPECT_EQ(1, countFile("HTTP_CLIENT_USER_SECURITY_WARNING "
-                           "use of clear text 'user' is NOT SECURE: <string>:6:21"));
+    EXPECT_EQ(1U, countFile("HTTP_CLIENT_USER_SECURITY_WARNING "
+                            "use of clear text 'user' is NOT SECURE: <string>:6:21"));
 }
 
 // Test that basic auth configuration catches use of 'password'
@@ -624,10 +624,10 @@ TEST_F(BasicHttpAuthConfigTest, clearPassword) {
     // Disable security.
     file::PathChecker::enableEnforcement(false);
     ASSERT_NO_THROW_LOG(auth.parse(config));
-    EXPECT_EQ(1, countFile("HTTP_CLIENT_PASSWORD_SECURITY_WARNING "
-                           "use of clear text 'password' is NOT SECURE: <string>:7:25"));
-    EXPECT_EQ(1, countFile("HTTP_CLIENT_USER_SECURITY_WARNING "
-                           "use of clear text 'user' is NOT SECURE: <string>:6:21"));
+    EXPECT_EQ(1U, countFile("HTTP_CLIENT_PASSWORD_SECURITY_WARNING "
+                            "use of clear text 'password' is NOT SECURE: <string>:7:25"));
+    EXPECT_EQ(1U, countFile("HTTP_CLIENT_USER_SECURITY_WARNING "
+                            "use of clear text 'user' is NOT SECURE: <string>:6:21"));
 }
 
 } // end of anonymous namespace

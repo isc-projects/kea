@@ -576,7 +576,7 @@ TEST_F(ExpressionsTest, label) {
     e_.push_back(bar);
     ValueStack values;
     ASSERT_NO_THROW(evaluateRaw(e_, *pkt4_, values));
-    EXPECT_EQ(2, values.size());
+    EXPECT_EQ(2U, values.size());
 }
 
 // Tests the pop or branch when true / left or.

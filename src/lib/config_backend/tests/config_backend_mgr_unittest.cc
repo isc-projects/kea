@@ -484,18 +484,18 @@ TEST_F(ConfigBackendMgrTest, getMultipleProperties) {
     PropertiesList mysql_list =
         config_mgr_.getPool()->getProperties("dogs",
                                              BackendSelector(BackendSelector::Type::MYSQL));
-    ASSERT_EQ(1, mysql_list.size());
+    ASSERT_EQ(1U, mysql_list.size());
 
     // There is also one wolves entry in mysql.
     mysql_list = config_mgr_.getPool()->getProperties("wolves",
                                                       BackendSelector(BackendSelector::Type::MYSQL));
-    ASSERT_EQ(1, mysql_list.size());
+    ASSERT_EQ(1U, mysql_list.size());
 
     // There are two cats entries in postgresql.
     PropertiesList postgresql_list =
         config_mgr_.getPool()->getProperties("cats",
                                              BackendSelector(BackendSelector::Type::POSTGRESQL));
-    ASSERT_EQ(2, postgresql_list.size());
+    ASSERT_EQ(2U, postgresql_list.size());
 
     // Try to use the backend that is not present.
     EXPECT_THROW(config_mgr_.getPool()->getProperties("cats",
@@ -513,12 +513,12 @@ TEST_F(ConfigBackendMgrTest, getAllProperties) {
     // The mysql backend holds two entries.
     PropertiesList mysql_list =
         config_mgr_.getPool()->getAllProperties(BackendSelector(BackendSelector::Type::MYSQL));
-    ASSERT_EQ(2, mysql_list.size());
+    ASSERT_EQ(2U, mysql_list.size());
 
     // The postgresql backends also holds two entries.
     PropertiesList postgresql_list =
         config_mgr_.getPool()->getAllProperties(BackendSelector(BackendSelector::Type::POSTGRESQL));
-    ASSERT_EQ(2, postgresql_list.size());
+    ASSERT_EQ(2U, postgresql_list.size());
 
     // Try to use the backend that is not present.
     EXPECT_THROW(config_mgr_.getPool()->getProperties("cats",

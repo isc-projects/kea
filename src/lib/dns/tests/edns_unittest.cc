@@ -152,8 +152,8 @@ TEST_F(EDNSTest, toText) {
 TEST_F(EDNSTest, toWireRenderer) {
     // Typical case, (explicitly) disabling DNSSEC
     edns_base.setDNSSECAwareness(false);
-    EXPECT_EQ(1, edns_base.toWire(renderer,
-                                  Rcode::NOERROR().getExtendedCode()));
+    EXPECT_EQ(1U, edns_base.toWire(renderer,
+                                   Rcode::NOERROR().getExtendedCode()));
     UnitTestUtil::readWireData("edns_toWire1.wire", wiredata);
     matchWireData(&wiredata[0], wiredata.size(),
                   renderer.getData(), renderer.getLength());
@@ -162,8 +162,8 @@ TEST_F(EDNSTest, toWireRenderer) {
     renderer.clear();
     wiredata.clear();
     edns_base.setDNSSECAwareness(true);
-    EXPECT_EQ(1, edns_base.toWire(renderer,
-                                  Rcode::NOERROR().getExtendedCode()));
+    EXPECT_EQ(1U, edns_base.toWire(renderer,
+                                   Rcode::NOERROR().getExtendedCode()));
     UnitTestUtil::readWireData("edns_toWire2.wire", wiredata);
     matchWireData(&wiredata[0], wiredata.size(),
                   renderer.getData(), renderer.getLength());
@@ -172,8 +172,8 @@ TEST_F(EDNSTest, toWireRenderer) {
     renderer.clear();
     wiredata.clear();
     edns_base.setDNSSECAwareness(true);
-    EXPECT_EQ(1, edns_base.toWire(renderer,
-                                  Rcode::BADVERS().getExtendedCode()));
+    EXPECT_EQ(1U, edns_base.toWire(renderer,
+                                   Rcode::BADVERS().getExtendedCode()));
     UnitTestUtil::readWireData("edns_toWire3.wire", wiredata);
     matchWireData(&wiredata[0], wiredata.size(),
                   renderer.getData(), renderer.getLength());
@@ -183,8 +183,8 @@ TEST_F(EDNSTest, toWireRenderer) {
     wiredata.clear();
     edns_base.setDNSSECAwareness(true);
     edns_base.setUDPSize(511);
-    EXPECT_EQ(1, edns_base.toWire(renderer,
-                                  Rcode::NOERROR().getExtendedCode()));
+    EXPECT_EQ(1U, edns_base.toWire(renderer,
+                                   Rcode::NOERROR().getExtendedCode()));
     UnitTestUtil::readWireData("edns_toWire4.wire", wiredata);
     matchWireData(&wiredata[0], wiredata.size(),
                   renderer.getData(), renderer.getLength());
@@ -193,8 +193,8 @@ TEST_F(EDNSTest, toWireRenderer) {
     // should disappear.
     renderer.clear();
     wiredata.clear();
-    EXPECT_EQ(1, EDNS(Name::ROOT_NAME(), rrclass, rrtype, RRTTL(0x00008001),
-                      *opt_rdata).toWire(renderer,
+    EXPECT_EQ(1U, EDNS(Name::ROOT_NAME(), rrclass, rrtype, RRTTL(0x00008001),
+                       *opt_rdata).toWire(renderer,
                                          Rcode::NOERROR().getExtendedCode()));
     UnitTestUtil::readWireData("edns_toWire2.wire", wiredata);
     matchWireData(&wiredata[0], wiredata.size(),
@@ -206,17 +206,17 @@ TEST_F(EDNSTest, toWireRenderer) {
     renderer.setLengthLimit(10); // 10 = minimum length of OPT RR - 1
     edns_base.setDNSSECAwareness(true);
     edns_base.setUDPSize(4096);
-    EXPECT_EQ(0, edns_base.toWire(renderer,
-                                  Rcode::NOERROR().getExtendedCode()));
+    EXPECT_EQ(0U, edns_base.toWire(renderer,
+                                   Rcode::NOERROR().getExtendedCode()));
     // renderer should be intact
-    EXPECT_EQ(0, renderer.getLength());
+    EXPECT_EQ(0U, renderer.getLength());
 }
 
 TEST_F(EDNSTest, toWireBuffer) {
     // "to renderer" and "to buffer" should generally produce the same result.
     // for simplicity we only check one typical case to confirm that.
-    EXPECT_EQ(1, edns_base.toWire(obuffer,
-                                  Rcode::NOERROR().getExtendedCode()));
+    EXPECT_EQ(1U, edns_base.toWire(obuffer,
+                                   Rcode::NOERROR().getExtendedCode()));
     UnitTestUtil::readWireData("edns_toWire1.wire", wiredata);
     matchWireData(&wiredata[0], wiredata.size(),
                   obuffer.getData(), obuffer.getLength());

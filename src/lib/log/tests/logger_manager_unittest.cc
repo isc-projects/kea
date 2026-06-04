@@ -425,7 +425,7 @@ TEST_F(LoggerManagerTest, checkLayoutPattern) {
 // messages are removed.
 TEST_F(LoggerManagerTest, logDuplicatedMessages) {
     // Original set should not have duplicates.
-    ASSERT_EQ(0, MessageInitializer::getDuplicates().size());
+    ASSERT_EQ(0U, MessageInitializer::getDuplicates().size());
 
     // This just defines 1, but we'll add it a number of times.
     const char* dupe[] = {
@@ -437,12 +437,12 @@ TEST_F(LoggerManagerTest, logDuplicatedMessages) {
 
     MessageInitializer::loadDictionary();
     // Should have a duplicate now.
-    ASSERT_EQ(1, MessageInitializer::getDuplicates().size());
+    ASSERT_EQ(1U, MessageInitializer::getDuplicates().size());
 
     // The logDuplicatedMessages, besides logging, should also remove the
     // duplicates.
     LoggerManager::logDuplicatedMessages();
-    ASSERT_EQ(0, MessageInitializer::getDuplicates().size());
+    ASSERT_EQ(0U, MessageInitializer::getDuplicates().size());
 }
 
 // Check that output options can be inherited.
@@ -477,9 +477,9 @@ TEST_F(LoggerManagerTest, outputOptionsInheritance) {
     specs.push_back(bar_spec);
 
     // Check the number of output options for each specification.
-    EXPECT_EQ(root_spec.optionCount(), 1);
-    EXPECT_EQ(foo_spec.optionCount(), 0);
-    EXPECT_EQ(bar_spec.optionCount(), 1);
+    EXPECT_EQ(root_spec.optionCount(), 1U);
+    EXPECT_EQ(foo_spec.optionCount(), 0U);
+    EXPECT_EQ(bar_spec.optionCount(), 1U);
 
     // Process all the specifications.
     manager.process(specs.begin(), specs.end());

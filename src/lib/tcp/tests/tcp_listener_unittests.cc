@@ -207,7 +207,7 @@ TEST_F(TcpListenerTest, listen) {
     ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
     ASSERT_NO_THROW(startRequest(request));
     ASSERT_NO_THROW(runIOService());
-    ASSERT_EQ(1, clients_.size());
+    ASSERT_EQ(1U, clients_.size());
     TcpTestClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_TRUE(client->receiveDone());
@@ -215,7 +215,7 @@ TEST_F(TcpListenerTest, listen) {
 
     // Verify the audit trail for the connection.
     // Sanity check to make sure we don't have more entries than we expect.
-    ASSERT_EQ(listener.audit_trail_->entries_.size(), 2);
+    ASSERT_EQ(listener.audit_trail_->entries_.size(), 2U);
 
     // Create the list of expected entries.
     std::list<AuditEntry> expected_entries {
@@ -252,7 +252,7 @@ TEST_F(TcpListenerTest, splitReads) {
     ASSERT_NO_THROW(runIOService());
 
     // Fetch the client.
-    ASSERT_EQ(1, clients_.size());
+    ASSERT_EQ(1U, clients_.size());
     TcpTestClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_TRUE(client->receiveDone());
@@ -282,7 +282,7 @@ TEST_F(TcpListenerTest, idleTimeoutTest) {
     // Run until idle timer expires.
     ASSERT_NO_THROW(runIOService());
 
-    ASSERT_EQ(1, clients_.size());
+    ASSERT_EQ(1U, clients_.size());
     TcpTestClientPtr client = *clients_.begin();
     EXPECT_FALSE(client->receiveDone());
     EXPECT_TRUE(client->expectedEof());
@@ -436,7 +436,7 @@ TEST_F(TcpListenerTest, filterClientsTest) {
 
             // Verify connection recorded no audit entries.
             auto const& entries = listener.audit_trail_->getConnectionTrail(i+1);
-            ASSERT_EQ(entries.size(), 0);
+            ASSERT_EQ(entries.size(), 0U);
         }
 
         ++i;

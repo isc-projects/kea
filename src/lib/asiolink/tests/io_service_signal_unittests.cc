@@ -133,7 +133,7 @@ TEST_F(IOSignalTest, singleSignalTest) {
     io_service_->poll();
 
     // Verify that we processed the signal.
-    ASSERT_EQ(1, processed_signals_.size());
+    ASSERT_EQ(1U, processed_signals_.size());
 
     // Now check that signal value is correct.
     EXPECT_EQ(SIGINT, processed_signals_[0]);
@@ -158,7 +158,7 @@ TEST_F(IOSignalTest, singleSignalTest) {
     io_service_->poll();
 
     // Verify that we did not process the signal.
-    ASSERT_EQ(1, processed_signals_.size());
+    ASSERT_EQ(1U, processed_signals_.size());
 }
 
 // Test verifies that signals can be delivered rapid-fire without falling over.
@@ -184,7 +184,7 @@ TEST_F(IOSignalTest, hammer) {
     io_service_->run();
 
     // Verify we received the expected number of signals.
-    EXPECT_EQ(stop_at_count_, processed_signals_.size());
+    EXPECT_EQ(stop_at_count_, static_cast<int>(processed_signals_.size()));
 
     // Now check that each signal value is correct. This is sort of a silly
     // check but it does ensure things didn't go off the rails somewhere.
@@ -218,7 +218,7 @@ TEST_F(IOSignalTest, handlerThrow) {
     // we will have skipped the stop count check so number signals processed
     // is stop_at_count_ + 1.
     EXPECT_FALSE(handler_throw_error_);
-    EXPECT_EQ(stop_at_count_ + 1, processed_signals_.size());
+    EXPECT_EQ(stop_at_count_ + 1, static_cast<int>(processed_signals_.size()));
 }
 
 // Verifies that we can handle a mixed set of signals.
@@ -251,7 +251,7 @@ TEST_F(IOSignalTest, mixedSignals) {
     io_service_->run();
 
     // Verify we received the expected number of signals.
-    ASSERT_EQ(stop_at_count_, processed_signals_.size());
+    ASSERT_EQ(stop_at_count_, static_cast<int>(processed_signals_.size()));
 
     // There is no guarantee that the signals will always be delivered in the
     // order they are raised, but all of them should get delivered.  Loop

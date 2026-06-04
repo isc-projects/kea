@@ -495,14 +495,14 @@ TEST_F(HandlesTest, ContextDeletionCheck) {
     // ... and check what the names of the context items are after the callouts
     // for hook "beta".  We know they are in sorted order.
 
-    EXPECT_EQ(2, getItemNames(0).size());
+    EXPECT_EQ(2U, getItemNames(0).size());
     EXPECT_EQ(string("int"),    getItemNames(0)[0]);
     EXPECT_EQ(string("string"), getItemNames(0)[1]);
 
-    EXPECT_EQ(1, getItemNames(1).size());
+    EXPECT_EQ(1U, getItemNames(1).size());
     EXPECT_EQ(string("string"), getItemNames(1)[0]);
 
-    EXPECT_EQ(0, getItemNames(2).size());
+    EXPECT_EQ(0U, getItemNames(2).size());
 }
 
 // Tests that the CalloutHandle's constructor and destructor call the

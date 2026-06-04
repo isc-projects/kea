@@ -192,7 +192,7 @@ TEST(UDPSocket, processReceivedData) {
                                                   outbuff);
         EXPECT_TRUE(completed);
         EXPECT_EQ(sizeof(inbuff), cumulative);
-        EXPECT_EQ(0, offset);
+        EXPECT_EQ(0U, offset);
         EXPECT_EQ(sizeof(inbuff), expected);
 
         const uint8_t* dataptr = outbuff->getData();
@@ -306,7 +306,7 @@ TEST(UDPSocket, SequenceTest) {
                                            client_expected, client_buffer));
 
     EXPECT_EQ(client_cb.getLength(), client_cumulative);
-    EXPECT_EQ(0, client_offset);
+    EXPECT_EQ(0U, client_offset);
     EXPECT_EQ(client_cb.getLength(), client_expected);
     EXPECT_EQ(client_cb.getLength(), client_buffer->getLength());
 

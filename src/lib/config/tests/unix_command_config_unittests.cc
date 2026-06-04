@@ -224,7 +224,7 @@ TEST_F(UnixCommandConfigTest, securityEnforcmentFalse) {
         << " invalid path specified: '/tmp', supported path is '"
         << UnixCommandConfig::getSocketPath() <<  "'";
 
-    EXPECT_EQ(1, countFile(oss.str()));
+    EXPECT_EQ(1U, countFile(oss.str()));
 }
 
 // This test verifies security warning of invalid
@@ -244,8 +244,7 @@ TEST_F(UnixCommandConfigTest, securityEnforcmentFalsePermissions) {
         << " unix socket permissions are NOT SECURE: socket path:/tmp"
         << " does not exist or has more relaxed permissions than 0";
 
-    EXPECT_EQ(1, countFile(oss.str()));
+    EXPECT_EQ(1U, countFile(oss.str()));
 }
-
 
 } // end of anonymous namespace

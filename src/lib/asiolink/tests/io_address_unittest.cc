@@ -29,7 +29,7 @@ TEST(IOAddressHashTest, hashIPv4) {
     }
     // Make sure that the hashing function generated a unique hash for
     // each address.
-    EXPECT_EQ(10, results.size());
+    EXPECT_EQ(10U, results.size());
 }
 
 TEST(IOAddressHashTest, hashIPv6) {
@@ -44,7 +44,7 @@ TEST(IOAddressHashTest, hashIPv6) {
     }
     // Make sure that the hashing function generated a unique hash for
     // each address.
-    EXPECT_EQ(10, results.size());
+    EXPECT_EQ(10U, results.size());
 }
 
 TEST(IOAddressTest, fromText) {

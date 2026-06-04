@@ -573,35 +573,35 @@ namespace {
 }
 
 TEST(HashTest, HashLength) {
-    EXPECT_EQ(8, digestVectorLength(MD5, 8));
-    EXPECT_EQ(16, digestVectorLength(MD5, 16));
-    EXPECT_EQ(16, digestVectorLength(MD5, 40));
-    EXPECT_EQ(16, digestVectorLength(MD5, 2000));
+    EXPECT_EQ(8U, digestVectorLength(MD5, 8));
+    EXPECT_EQ(16U, digestVectorLength(MD5, 16));
+    EXPECT_EQ(16U, digestVectorLength(MD5, 40));
+    EXPECT_EQ(16U, digestVectorLength(MD5, 2000));
 
-    EXPECT_EQ(8, digestBufferLength(SHA1, 8));
-    EXPECT_EQ(20, digestBufferLength(SHA1, 20));
-    EXPECT_EQ(20, digestBufferLength(SHA1, 40));
-    EXPECT_EQ(20, digestBufferLength(SHA1, 2000));
+    EXPECT_EQ(8U, digestBufferLength(SHA1, 8));
+    EXPECT_EQ(20U, digestBufferLength(SHA1, 20));
+    EXPECT_EQ(20U, digestBufferLength(SHA1, 40));
+    EXPECT_EQ(20U, digestBufferLength(SHA1, 2000));
 
-    EXPECT_EQ(8, digestBufferLength(SHA256, 8));
-    EXPECT_EQ(32, digestBufferLength(SHA256, 32));
-    EXPECT_EQ(32, digestBufferLength(SHA256, 40));
-    EXPECT_EQ(32, digestBufferLength(SHA256, 3200));
+    EXPECT_EQ(8U, digestBufferLength(SHA256, 8));
+    EXPECT_EQ(32U, digestBufferLength(SHA256, 32));
+    EXPECT_EQ(32U, digestBufferLength(SHA256, 40));
+    EXPECT_EQ(32U, digestBufferLength(SHA256, 3200));
 
-    EXPECT_EQ(8, digestBufferLength(MD5, 8));
-    EXPECT_EQ(16, digestBufferLength(MD5, 16));
-    EXPECT_EQ(16, digestBufferLength(MD5, 40));
-    EXPECT_EQ(16, digestBufferLength(MD5, 2000));
+    EXPECT_EQ(8U, digestBufferLength(MD5, 8));
+    EXPECT_EQ(16U, digestBufferLength(MD5, 16));
+    EXPECT_EQ(16U, digestBufferLength(MD5, 40));
+    EXPECT_EQ(16U, digestBufferLength(MD5, 2000));
 
-    EXPECT_EQ(8, digestBufferLength(SHA1, 8));
-    EXPECT_EQ(20, digestBufferLength(SHA1, 20));
-    EXPECT_EQ(20, digestBufferLength(SHA1, 40));
-    EXPECT_EQ(20, digestBufferLength(SHA1, 2000));
+    EXPECT_EQ(8U, digestBufferLength(SHA1, 8));
+    EXPECT_EQ(20U, digestBufferLength(SHA1, 20));
+    EXPECT_EQ(20U, digestBufferLength(SHA1, 40));
+    EXPECT_EQ(20U, digestBufferLength(SHA1, 2000));
 
-    EXPECT_EQ(8, digestBufferLength(SHA256, 8));
-    EXPECT_EQ(32, digestBufferLength(SHA256, 32));
-    EXPECT_EQ(32, digestBufferLength(SHA256, 40));
-    EXPECT_EQ(32, digestBufferLength(SHA256, 3200));
+    EXPECT_EQ(8U, digestBufferLength(SHA256, 8));
+    EXPECT_EQ(32U, digestBufferLength(SHA256, 32));
+    EXPECT_EQ(32U, digestBufferLength(SHA256, 40));
+    EXPECT_EQ(32U, digestBufferLength(SHA256, 3200));
 }
 
 // @todo Error cases?

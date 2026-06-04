@@ -595,7 +595,8 @@ public:
 
         // Make sure that each client thread received the same number of responses.
         for (auto const& it : responses_per_thread) {
-            EXPECT_EQ(it.second, (num_batches_ * num_listeners_))
+            EXPECT_EQ(it.second,
+                      static_cast<long>(num_batches_ * num_listeners_))
                       << "thread-id: " << it.first
                       << ", responses: " << it.second << std::endl;
         }
@@ -605,7 +606,8 @@ public:
 
         // Make sure Each listener generated the same number of responses.
         for (auto const& it : responses_per_listener) {
-            EXPECT_EQ(it.second, (num_batches_ * effective_threads))
+            EXPECT_EQ(it.second,
+                      static_cast<long>(num_batches_ * effective_threads))
                       << "server-port: " << it.first
                       << ", responses: " << it.second << std::endl;
         }

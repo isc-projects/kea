@@ -109,28 +109,28 @@ protected:
 TEST_F(Rdata_TSIG_Test, fromText) {
     // normal case.  it also tests getter methods.
     EXPECT_EQ(Name("hmac-md5.sig-alg.reg.int"), rdata_tsig.getAlgorithm());
-    EXPECT_EQ(1286779327, rdata_tsig.getTimeSigned());
-    EXPECT_EQ(300, rdata_tsig.getFudge());
-    EXPECT_EQ(0, rdata_tsig.getMACSize());
+    EXPECT_EQ(1286779327U, rdata_tsig.getTimeSigned());
+    EXPECT_EQ(300U, rdata_tsig.getFudge());
+    EXPECT_EQ(0U, rdata_tsig.getMACSize());
     EXPECT_FALSE(rdata_tsig.getMAC());
-    EXPECT_EQ(16020, rdata_tsig.getOriginalID());
+    EXPECT_EQ(16020U, rdata_tsig.getOriginalID());
     EXPECT_EQ(TSIGError::BAD_KEY_CODE, rdata_tsig.getError());
-    EXPECT_EQ(0, rdata_tsig.getOtherLen());
+    EXPECT_EQ(0U, rdata_tsig.getOtherLen());
     EXPECT_FALSE(rdata_tsig.getOtherData());
 
     TSIG tsig2(valid_text2);
-    EXPECT_EQ(12, tsig2.getMACSize());
+    EXPECT_EQ(12U, tsig2.getMACSize());
     EXPECT_EQ(TSIGError::BAD_SIG_CODE, tsig2.getError());
 
     TSIG tsig3(valid_text3);
-    EXPECT_EQ(6, tsig3.getOtherLen());
+    EXPECT_EQ(6U, tsig3.getOtherLen());
 
     // The other data is unusual, but we don't reject it.
     EXPECT_NO_THROW(TSIG tsig4(valid_text4));
 
     // numeric representation of TSIG error
     TSIG tsig5(valid_text5);
-    EXPECT_EQ(2845, tsig5.getError());
+    EXPECT_EQ(2845U, tsig5.getError());
 
     // not fully qualified algorithm name
     TSIG tsig1("hmac-md5.sig-alg.reg.int 1286779327 300 0 16020 BADKEY 0");
@@ -196,16 +196,16 @@ TEST_F(Rdata_TSIG_Test, badText) {
 void
 fromWireCommonChecks(const TSIG& tsig) {
     EXPECT_EQ(Name("hmac-sha256"), tsig.getAlgorithm());
-    EXPECT_EQ(1286978795, tsig.getTimeSigned());
-    EXPECT_EQ(300, tsig.getFudge());
+    EXPECT_EQ(1286978795U, tsig.getTimeSigned());
+    EXPECT_EQ(300U, tsig.getFudge());
 
     vector<uint8_t> expect_mac(32, 'x');
     matchWireData(&expect_mac[0], expect_mac.size(),
                   tsig.getMAC(), tsig.getMACSize());
 
-    EXPECT_EQ(2845, tsig.getOriginalID());
+    EXPECT_EQ(2845U, tsig.getOriginalID());
 
-    EXPECT_EQ(0, tsig.getOtherLen());
+    EXPECT_EQ(0U, tsig.getOtherLen());
     EXPECT_FALSE(tsig.getOtherData());
 }
 
@@ -220,7 +220,7 @@ TEST_F(Rdata_TSIG_Test, createFromWireWithOtherData) {
                                         "rdata_tsig_fromWire2.wire"));
     const TSIG& tsig(dynamic_cast<TSIG&>(*rdata));
 
-    EXPECT_EQ(18, tsig.getError());
+    EXPECT_EQ(18U, tsig.getError());
     const uint64_t otherdata = 1286978795 + 300 + 1; // time-signed + fudge + 1
     expect_data.resize(6);
     expect_data[0] = (otherdata >> 40);
@@ -237,8 +237,8 @@ TEST_F(Rdata_TSIG_Test, createFromWireWithoutMAC) {
     RdataPtr rdata(rdataFactoryFromFile(RRType::TSIG(), RRClass::ANY(),
                                         "rdata_tsig_fromWire3.wire"));
     const TSIG& tsig(dynamic_cast<TSIG&>(*rdata));
-    EXPECT_EQ(16, tsig.getError());
-    EXPECT_EQ(0, tsig.getMACSize());
+    EXPECT_EQ(16U, tsig.getError());
+    EXPECT_EQ(0U, tsig.getMACSize());
     EXPECT_FALSE(tsig.getMAC());
 }
 

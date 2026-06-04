@@ -130,7 +130,7 @@ TEST_F(ProcessSpawnTest, spawnWithArgs) {
     // Poll to be sure.
     io_service_->poll();
 
-    ASSERT_EQ(1, processed_signals_.size());
+    ASSERT_EQ(1U, processed_signals_.size());
     ASSERT_EQ(SIGCHLD, processed_signals_[0]);
 
     // Exit code 64 as requested.
@@ -164,7 +164,7 @@ TEST_F(ProcessSpawnTest, spawnWithArgsAndEnvVars) {
     // Poll to be sure.
     io_service_->poll();
 
-    ASSERT_EQ(1, processed_signals_.size());
+    ASSERT_EQ(1U, processed_signals_.size());
     ASSERT_EQ(SIGCHLD, processed_signals_[0]);
 
     // 56 means successful comparison of env vars.
@@ -196,7 +196,7 @@ TEST_F(ProcessSpawnTest, spawnTwoProcesses) {
     // Poll to be sure.
     io_service_->poll();
 
-    ASSERT_EQ(1, processed_signals_.size());
+    ASSERT_EQ(1U, processed_signals_.size());
     ASSERT_EQ(SIGCHLD, processed_signals_[0]);
 
     pid_t pid2 = 0;
@@ -215,7 +215,7 @@ TEST_F(ProcessSpawnTest, spawnTwoProcesses) {
     // Poll to be sure.
     io_service_->poll();
 
-    ASSERT_EQ(2, processed_signals_.size());
+    ASSERT_EQ(2U, processed_signals_.size());
     ASSERT_EQ(SIGCHLD, processed_signals_[0]);
     ASSERT_EQ(SIGCHLD, processed_signals_[1]);
 
@@ -252,7 +252,7 @@ TEST_F(ProcessSpawnTest, spawnNoArgs) {
     // Poll to be sure.
     io_service_->poll();
 
-    ASSERT_EQ(1, processed_signals_.size());
+    ASSERT_EQ(1U, processed_signals_.size());
     ASSERT_EQ(SIGCHLD, processed_signals_[0]);
 
     // 32 means no args.
@@ -273,7 +273,7 @@ TEST_F(ProcessSpawnTest, spawnNoArgs) {
     // Poll to be sure.
     io_service_->poll();
 
-    ASSERT_EQ(2, processed_signals_.size());
+    ASSERT_EQ(2U, processed_signals_.size());
     ASSERT_EQ(SIGCHLD, processed_signals_[0]);
     ASSERT_EQ(SIGCHLD, processed_signals_[1]);
 
@@ -349,7 +349,7 @@ TEST_F(ProcessSpawnTest, isRunning) {
     // Poll to be sure.
     io_service_->poll();
 
-    ASSERT_EQ(1, processed_signals_.size());
+    ASSERT_EQ(1U, processed_signals_.size());
     ASSERT_EQ(SIGCHLD, processed_signals_[0]);
 }
 
@@ -379,7 +379,7 @@ TEST_F(ProcessSpawnTest, inheritEnv) {
     // Poll to be sure.
     io_service_->poll();
 
-    ASSERT_EQ(1, processed_signals_.size());
+    ASSERT_EQ(1U, processed_signals_.size());
     ASSERT_EQ(SIGCHLD, processed_signals_[0]);
 
     // 56 means successful comparison of env vars.
@@ -413,7 +413,7 @@ TEST_F(ProcessSpawnTest, inheritEnvWithParentVar) {
     // Poll to be sure.
     io_service_->poll();
 
-    ASSERT_EQ(1, processed_signals_.size());
+    ASSERT_EQ(1U, processed_signals_.size());
     ASSERT_EQ(SIGCHLD, processed_signals_[0]);
 
     // 34 means failed comparison of env vars.

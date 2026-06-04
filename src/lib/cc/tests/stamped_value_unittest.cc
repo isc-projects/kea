@@ -171,7 +171,7 @@ TEST(StampedValueTest, createFromMap) {
     EXPECT_EQ("bar", value->getName());
     ASSERT_THROW(value->getValue(), TypeError);
     EXPECT_EQ(value->getElementValue()->getType(), Element::map);
-    ASSERT_EQ(value->getElementValue()->mapValue().size(), 0);
+    ASSERT_EQ(value->getElementValue()->mapValue().size(), 0U);
 
     EXPECT_THROW(value->getIntegerValue(), TypeError);
     EXPECT_THROW(value->getBoolValue(), TypeError);
@@ -184,7 +184,7 @@ TEST(StampedValueTest, createFromMap) {
     EXPECT_EQ("bar", value->getName());
     ASSERT_THROW(value->getValue(), TypeError);
     EXPECT_EQ(value->getElementValue()->getType(), Element::map);
-    ASSERT_EQ(value->getElementValue()->mapValue().size(), 1);
+    ASSERT_EQ(value->getElementValue()->mapValue().size(), 1U);
     EXPECT_EQ(value->getElementValue()->mapValue().begin()->first, "foo");
     EXPECT_EQ(value->getElementValue()->mapValue().begin()->second->getType(), Element::string);
     EXPECT_EQ(value->getElementValue()->mapValue().begin()->second->stringValue(), "0");
@@ -196,7 +196,7 @@ TEST(StampedValueTest, createFromMap) {
     EXPECT_EQ("bar", value->getName());
     ASSERT_THROW(value->getValue(), TypeError);
     EXPECT_EQ(value->getElementValue()->getType(), Element::map);
-    ASSERT_EQ(value->getElementValue()->mapValue().size(), 1);
+    ASSERT_EQ(value->getElementValue()->mapValue().size(), 1U);
     EXPECT_EQ(value->getElementValue()->mapValue().begin()->first, "foo");
     EXPECT_EQ(value->getElementValue()->mapValue().begin()->second->getType(), Element::boolean);
     EXPECT_EQ(value->getElementValue()->mapValue().begin()->second->boolValue(), true);
@@ -208,7 +208,7 @@ TEST(StampedValueTest, createFromMap) {
     EXPECT_EQ("bar", value->getName());
     ASSERT_THROW(value->getValue(), TypeError);
     EXPECT_EQ(value->getElementValue()->getType(), Element::map);
-    ASSERT_EQ(value->getElementValue()->mapValue().size(), 1);
+    ASSERT_EQ(value->getElementValue()->mapValue().size(), 1U);
     EXPECT_EQ(value->getElementValue()->mapValue().begin()->first, "foo");
     EXPECT_EQ(value->getElementValue()->mapValue().begin()->second->getType(), Element::integer);
     EXPECT_EQ(value->getElementValue()->mapValue().begin()->second->intValue(), 0);
@@ -220,7 +220,7 @@ TEST(StampedValueTest, createFromMap) {
     EXPECT_EQ("bar", value->getName());
     ASSERT_THROW(value->getValue(), TypeError);
     EXPECT_EQ(value->getElementValue()->getType(), Element::map);
-    ASSERT_EQ(value->getElementValue()->mapValue().size(), 1);
+    ASSERT_EQ(value->getElementValue()->mapValue().size(), 1U);
     EXPECT_EQ(value->getElementValue()->mapValue().begin()->first, "foo");
     EXPECT_EQ(value->getElementValue()->mapValue().begin()->second->getType(), Element::real);
     EXPECT_EQ(value->getElementValue()->mapValue().begin()->second->doubleValue(), 0.0);

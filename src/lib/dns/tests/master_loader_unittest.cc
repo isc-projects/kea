@@ -115,7 +115,7 @@ public:
         EXPECT_EQ(type, current->getType());
         EXPECT_EQ(RRClass::IN(), current->getClass());
         EXPECT_EQ(rrttl, current->getTTL());
-        ASSERT_EQ(1, current->getRdataCount());
+        ASSERT_EQ(1U, current->getRdataCount());
         EXPECT_EQ(0, isc::dns::rdata::createRdata(type, RRClass::IN(), data)->
                   compare(current->getRdataIterator()->getCurrent()))
             << data << " vs. "
@@ -152,8 +152,8 @@ TEST_F(MasterLoaderTest, basicLoad) {
 
     // The following three should be set to 0 initially in case the loader
     // is constructed from a file name.
-    EXPECT_EQ(0, loader_->getSize());
-    EXPECT_EQ(0, loader_->getPosition());
+    EXPECT_EQ(0U, loader_->getSize());
+    EXPECT_EQ(0U, loader_->getPosition());
 
     loader_->load();
     EXPECT_TRUE(loader_->loadedSuccessfully());
@@ -163,8 +163,8 @@ TEST_F(MasterLoaderTest, basicLoad) {
 
     // Hardcode expected values taken from the test data file, assuming it
     // won't change too often.
-    EXPECT_EQ(550, loader_->getSize());
-    EXPECT_EQ(550, loader_->getPosition());
+    EXPECT_EQ(550U, loader_->getSize());
+    EXPECT_EQ(550U, loader_->getPosition());
 
     checkBasicRRs();
 }
@@ -215,7 +215,7 @@ TEST_F(MasterLoaderTest, includeAndIncremental) {
     // On construction, getSize() returns the size of the data (exclude the
     // the file to be included); position is set to 0.
     EXPECT_EQ(zone_data.size(), loader_->getSize());
-    EXPECT_EQ(0, loader_->getPosition());
+    EXPECT_EQ(0U, loader_->getPosition());
 
     // Read the first RR.  getSize() doesn't change; position should be
     // at the end of the first line.
@@ -248,9 +248,9 @@ void
 checkCallbackMessage(const string& actual_msg, const string& expected_msg,
                      size_t expected_line) {
     // The actual message should begin with the expected message.
-    EXPECT_EQ(0, actual_msg.find(expected_msg)) << "actual message: " <<
-                                                actual_msg << " expected: " <<
-                                                expected_msg;
+    EXPECT_EQ(0U, actual_msg.find(expected_msg)) << "actual message: " <<
+                                                 actual_msg << " expected: " <<
+                                                 expected_msg;
 
     // and it should end with "...:<line_num>]"
     const string line_desc = ":" + lexical_cast<string>(expected_line) + "]";
@@ -291,7 +291,7 @@ TEST_F(MasterLoaderTest, origin) {
         EXPECT_TRUE(loader_->loadedSuccessfully());
         EXPECT_TRUE(errors_.empty());
         // There's a relative origin in it, we warn about that.
-        EXPECT_EQ(1, warnings_.size());
+        EXPECT_EQ(1U, warnings_.size());
         checkCallbackMessage(warnings_.at(0),
                              "The new origin is relative, did you really mean "
                              "relative.sub.example.org.?", 4);
@@ -315,8 +315,8 @@ TEST_F(MasterLoaderTest, popAfterError) {
 
     loader_->load();
     EXPECT_FALSE(loader_->loadedSuccessfully());
-    EXPECT_EQ(1, errors_.size()); // For the broken RR
-    EXPECT_EQ(1, warnings_.size()); // For missing EOLN
+    EXPECT_EQ(1U, errors_.size()); // For the broken RR
+    EXPECT_EQ(1U, warnings_.size()); // For missing EOLN
 
     // The included file doesn't contain anything usable, but the
     // line after the include should be there.
@@ -336,7 +336,7 @@ TEST_F(MasterLoaderTest, streamConstructor) {
     // getSize() returns the data size in the stream immediately after the
     // construction.
     EXPECT_EQ(zone_data.size(), loader_->getSize());
-    EXPECT_EQ(0, loader_->getPosition());
+    EXPECT_EQ(0U, loader_->getPosition());
 
     loader_->load();
     EXPECT_TRUE(loader_->loadedSuccessfully());
@@ -398,8 +398,8 @@ TEST_F(MasterLoaderTest, invalidFile) {
 
     EXPECT_TRUE(warnings_.empty());
     EXPECT_TRUE(rrsets_.empty());
-    ASSERT_EQ(1, errors_.size());
-    EXPECT_EQ(0, errors_[0].find("Error opening the input source file: ")) <<
+    ASSERT_EQ(1U, errors_.size());
+    EXPECT_EQ(0U, errors_[0].find("Error opening the input source file: ")) <<
         "Different error: " << errors_[0];
 }
 
@@ -507,7 +507,7 @@ TEST_F(MasterLoaderTest, brokenZone) {
             EXPECT_FALSE(loader_->loadedSuccessfully());
             EXPECT_THROW(loader_->load(), MasterLoaderError);
             EXPECT_FALSE(loader_->loadedSuccessfully());
-            EXPECT_EQ(1, errors_.size());
+            EXPECT_EQ(1U, errors_.size());
             if (ec->reason) {
                 checkCallbackMessage(errors_.at(0), ec->reason, 2);
             }
@@ -529,7 +529,7 @@ TEST_F(MasterLoaderTest, brokenZone) {
             EXPECT_FALSE(loader_->loadedSuccessfully());
             EXPECT_NO_THROW(loader_->load());
             EXPECT_FALSE(loader_->loadedSuccessfully());
-            EXPECT_EQ(1, errors_.size());
+            EXPECT_EQ(1U, errors_.size());
             EXPECT_TRUE(warnings_.empty());
             checkRR("example.org", RRType::SOA(), "ns1.example.org. "
                     "admin.example.org. 1234 3600 1800 2419200 7200");
@@ -549,9 +549,9 @@ TEST_F(MasterLoaderTest, brokenZone) {
             EXPECT_FALSE(loader_->loadedSuccessfully());
             EXPECT_NO_THROW(loader_->load());
             EXPECT_FALSE(loader_->loadedSuccessfully());
-            EXPECT_EQ(1, errors_.size()) << errors_[0] << "\n" << errors_[1];
+            EXPECT_EQ(1U, errors_.size()) << errors_[0] << "\n" << errors_[1];
             // The unexpected EOF warning
-            EXPECT_EQ(1, warnings_.size());
+            EXPECT_EQ(1U, warnings_.size());
             checkRR("example.org", RRType::SOA(), "ns1.example.org. "
                     "admin.example.org. 1234 3600 1800 2419200 7200");
             EXPECT_TRUE(rrsets_.empty());
@@ -573,7 +573,7 @@ TEST_F(MasterLoaderTest, includeWithGarbage) {
 
     EXPECT_NO_THROW(loader_->load());
     EXPECT_FALSE(loader_->loadedSuccessfully());
-    ASSERT_EQ(1, errors_.size());
+    ASSERT_EQ(1U, errors_.size());
     checkCallbackMessage(errors_.at(0), "Extra tokens at the end of line", 1);
     // It says something about extra tokens at the end
     EXPECT_NE(string::npos, errors_[0].find("Extra"));
@@ -592,7 +592,7 @@ TEST_F(MasterLoaderTest, originWithGarbage) {
               MasterLoader::MANY_ERRORS);
     EXPECT_NO_THROW(loader_->load());
     EXPECT_FALSE(loader_->loadedSuccessfully());
-    ASSERT_EQ(1, errors_.size());
+    ASSERT_EQ(1U, errors_.size());
     checkCallbackMessage(errors_.at(0), "Extra tokens at the end of line", 1);
     EXPECT_TRUE(warnings_.empty());
     checkARR("www.example.org");
@@ -634,7 +634,7 @@ TEST_F(MasterLoaderTest, includeAndBadOrigin) {
               MasterLoader::MANY_ERRORS);
     loader_->load();
     EXPECT_FALSE(loader_->loadedSuccessfully());
-    EXPECT_EQ(1, errors_.size());
+    EXPECT_EQ(1U, errors_.size());
     checkCallbackMessage(errors_.at(0), "duplicate period in example..org.",
                          1);
     EXPECT_TRUE(warnings_.empty());
@@ -673,7 +673,7 @@ TEST_F(MasterLoaderTest, includeAndInitialWS) {
     loader_->load();
     EXPECT_TRUE(loader_->loadedSuccessfully());
     EXPECT_TRUE(errors_.empty());
-    EXPECT_EQ(1, warnings_.size());
+    EXPECT_EQ(1U, warnings_.size());
     checkCallbackMessage(warnings_.at(0),
                          "Owner name omitted around $INCLUDE, the result might "
                          "not be as expected", 3);
@@ -722,7 +722,7 @@ TEST_F(MasterLoaderTest, ttlFromSOA) {
     checkRR("a.example.org", RRType::A(), "192.0.2.1", RRTTL(1800));
 
     // The use of SOA minimum TTL should have caused a warning.
-    EXPECT_EQ(1, warnings_.size());
+    EXPECT_EQ(1U, warnings_.size());
     checkCallbackMessage(warnings_.at(0),
                          "no TTL specified; using SOA MINTTL instead", 1);
 }
@@ -741,7 +741,7 @@ TEST_F(MasterLoaderTest, ttlFromPrevious) {
     checkRR("b.example.org", RRType::A(), "192.0.2.2", RRTTL(1800));
     checkRR("c.example.org", RRType::A(), "192.0.2.3", RRTTL(1800));
 
-    EXPECT_EQ(1, warnings_.size());
+    EXPECT_EQ(1U, warnings_.size());
     checkCallbackMessage(warnings_.at(0), "using RFC1035 TTL semantics", 2);
 }
 
@@ -771,7 +771,7 @@ TEST_F(MasterLoaderTest, RRParamsOrdering) {
     checkRR("d.example.org", RRType::A(), "192.0.2.4", RRTTL(7200));
     checkRR("e.example.org", RRType::A(), "192.0.2.5", RRTTL(7200));
 
-    EXPECT_EQ(1, warnings_.size());
+    EXPECT_EQ(1U, warnings_.size());
     checkCallbackMessage(warnings_.at(0), "using RFC1035 TTL semantics", 2);
 }
 
@@ -789,7 +789,7 @@ TEST_F(MasterLoaderTest, ttlFromPreviousSOA) {
     checkRR("example.org", RRType::SOA(), ". . 0 0 0 0 1800", RRTTL(100));
     checkRR("a.example.org", RRType::A(), "192.0.2.1", RRTTL(100));
 
-    EXPECT_EQ(1, warnings_.size());
+    EXPECT_EQ(1U, warnings_.size());
     checkCallbackMessage(warnings_.at(0), "using RFC1035 TTL semantics", 2);
 }
 
@@ -811,7 +811,7 @@ TEST_F(MasterLoaderTest, ttlUnknownAndContinue) {
     checkRR("b.example.org", RRType::A(), "192.0.2.2", RRTTL(1800));
 
     EXPECT_TRUE(warnings_.empty());
-    EXPECT_EQ(1, errors_.size());
+    EXPECT_EQ(1U, errors_.size());
     checkCallbackMessage(errors_.at(0), "no TTL specified; load rejected", 1);
 }
 
@@ -825,7 +825,7 @@ TEST_F(MasterLoaderTest, ttlUnknownAndEOF) {
     EXPECT_FALSE(loader_->loadedSuccessfully());
     EXPECT_TRUE(rrsets_.empty());
 
-    EXPECT_EQ(1, errors_.size());
+    EXPECT_EQ(1U, errors_.size());
     checkCallbackMessage(errors_.at(0), "no TTL specified; load rejected", 1);
 
     // RDATA implementation can complain about it, too.  To be independent of
@@ -848,13 +848,13 @@ TEST_F(MasterLoaderTest, ttlOverflow) {
 
     loader_->load();
     EXPECT_TRUE(loader_->loadedSuccessfully());
-    EXPECT_EQ(3, rrsets_.size());
+    EXPECT_EQ(3U, rrsets_.size());
 
     checkRR("example.org", RRType::SOA(), ". . 0 0 0 0 2147483648", RRTTL(0));
     checkRR("a.example.org", RRType::A(), "192.0.2.1", RRTTL(0));
     checkRR("b.example.org", RRType::A(), "192.0.2.2", RRTTL(0));
 
-    EXPECT_EQ(4, warnings_.size());
+    EXPECT_EQ(4U, warnings_.size());
     checkCallbackMessage(warnings_.at(1),
                          "TTL 2147483648 > MAXTTL, setting to 0 per RFC2181",
                          1);
@@ -911,7 +911,7 @@ TEST_F(MasterLoaderTest, noEOLN) {
     EXPECT_TRUE(loader_->loadedSuccessfully());
     EXPECT_TRUE(errors_.empty());
     // There should be one warning about the EOLN
-    EXPECT_EQ(1, warnings_.size());
+    EXPECT_EQ(1U, warnings_.size());
     checkRR("example.org", RRType::SOA(), "ns1.example.org. "
             "admin.example.org. 1234 3600 1800 2419200 7200");
 }
@@ -925,7 +925,7 @@ TEST_F(MasterLoaderTest, noPreviousName) {
               MasterLoader::MANY_ERRORS);
     loader_->load();
     EXPECT_FALSE(loader_->loadedSuccessfully());
-    EXPECT_EQ(1, errors_.size());
+    EXPECT_EQ(1U, errors_.size());
     checkCallbackMessage(errors_.at(0), "No previous name to use in place of "
                          "initial whitespace", 1);
     EXPECT_TRUE(warnings_.empty());
@@ -942,7 +942,7 @@ TEST_F(MasterLoaderTest, previousInInclude) {
     EXPECT_TRUE(loader_->loadedSuccessfully());
     EXPECT_TRUE(errors_.empty());
     // There should be one warning about the EOLN
-    EXPECT_EQ(1, warnings_.size());
+    EXPECT_EQ(1U, warnings_.size());
     checkCallbackMessage(warnings_.at(0), "Owner name omitted around "
                          "$INCLUDE, the result might not be as expected", 1);
     checkARR("www.example.org");

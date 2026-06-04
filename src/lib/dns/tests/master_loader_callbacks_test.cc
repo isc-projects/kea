@@ -43,7 +43,7 @@ protected:
         issue_called_ = true;
         last_was_error_ = error;
         EXPECT_EQ("source", source);
-        EXPECT_EQ(1, line);
+        EXPECT_EQ(1U, line);
         EXPECT_EQ("reason", reason);
     }
     bool last_was_error_;
