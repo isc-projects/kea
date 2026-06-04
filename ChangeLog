@@ -1,3 +1,18 @@
+2483.	[bug]		razvan
+	Fixed a bug which was causing the dhcpv4 server to crash when
+	reusing expired reservations and hook libraries set the SKIP
+	flag to deny address allocation. Thank you to Qifan Zhang from
+	Palo Alto Networks for reporting the issue.
+	(Gitlab #4512)
+
+2482.	[bug]		razvan
+	Fixed a bug related to dhcpv6 Lease Query which was causing a
+	crash of the server if the retrieved lease is still present in
+	the lease storage but the associated subnet has been deleted.
+	Thank you to Qifan Zhang from Palo Alto Networks for reporting
+	the issue.
+	(Gitlab #4530)
+
 2481.	[bug]		razvan
 	Fixed an undefined behavior when processing empty options in
 	dhcp4over6 packets. Thank you to Qifan Zhang from Palo Alto
