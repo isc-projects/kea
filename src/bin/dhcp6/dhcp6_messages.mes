@@ -397,6 +397,11 @@ DHCP server failed.
 This is info message logged when the dynamic reconfiguration of the DHCP server
 succeeded.
 
+% DHCP6_FATAL_OPEN_SOCKETS_FAILED maximum number of open service sockets attempts: %1, has been exhausted without success
+This error indicates that the server failed to bind service sockets after making
+the maximum configured number of open attempts. This causes the server
+to shut down as specified in the configuration.
+
 % DHCP6_FLEX_ID %1: flexible identifier generated for incoming packet: %2
 Logged at debug log level 40.
 This debug message is printed when host reservation type is set to flexible identifier
@@ -658,8 +663,7 @@ server is about to open sockets on the specified port.
 
 % DHCP6_OPEN_SOCKETS_FAILED maximum number of open service sockets attempts: %1, has been exhausted without success
 This error indicates that the server failed to bind service sockets after making
-the maximum configured number of reconnect attempts. This might cause the server
-to shut down as specified in the configuration.
+the maximum configured number of open attempts.
 
 % DHCP6_OPEN_SOCKETS_NO_RECONNECT_CTL unexpected error in bind service sockets.
 This is an error message indicating a programmatic error that should not occur.

@@ -1717,11 +1717,13 @@ ControlledDhcpv6Srv::openSocketsFailedCallback(ReconnectCtlPtr reconnect_ctl) {
         return;
     }
 
-    LOG_INFO(dhcp6_logger, DHCP6_OPEN_SOCKETS_FAILED)
-            .arg(reconnect_ctl->maxRetries());
-
     if (reconnect_ctl->exitOnFailure()) {
+        LOG_FATAL(dhcp6_logger, DHCP6_FATAL_OPEN_SOCKETS_FAILED)
+            .arg(reconnect_ctl->maxRetries());
         shutdownServer(EXIT_FAILURE);
+    } else {
+        LOG_ERROR(dhcp6_logger, DHCP6_OPEN_SOCKETS_FAILED)
+            .arg(reconnect_ctl->maxRetries());
     }
 }
 

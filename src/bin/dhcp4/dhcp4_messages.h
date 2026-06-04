@@ -71,6 +71,7 @@ extern const isc::log::MessageID DHCP4_DYNAMIC_RECONFIGURATION;
 extern const isc::log::MessageID DHCP4_DYNAMIC_RECONFIGURATION_FAIL;
 extern const isc::log::MessageID DHCP4_DYNAMIC_RECONFIGURATION_SUCCESS;
 extern const isc::log::MessageID DHCP4_EMPTY_HOSTNAME;
+extern const isc::log::MessageID DHCP4_FATAL_OPEN_SOCKETS_FAILED;
 extern const isc::log::MessageID DHCP4_FLEX_ID;
 extern const isc::log::MessageID DHCP4_GENERATE_FQDN;
 extern const isc::log::MessageID DHCP4_HOOK_BUFFER_RCVD_DROP;

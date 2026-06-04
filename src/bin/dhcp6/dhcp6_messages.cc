@@ -68,6 +68,7 @@ extern const isc::log::MessageID DHCP6_DHCP4O6_SEND_FAIL = "DHCP6_DHCP4O6_SEND_F
 extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION = "DHCP6_DYNAMIC_RECONFIGURATION";
 extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION_FAIL = "DHCP6_DYNAMIC_RECONFIGURATION_FAIL";
 extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS = "DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS";
+extern const isc::log::MessageID DHCP6_FATAL_OPEN_SOCKETS_FAILED = "DHCP6_FATAL_OPEN_SOCKETS_FAILED";
 extern const isc::log::MessageID DHCP6_FLEX_ID = "DHCP6_FLEX_ID";
 extern const isc::log::MessageID DHCP6_HOOK_ADDR6_REGISTER_DROP = "DHCP6_HOOK_ADDR6_REGISTER_DROP";
 extern const isc::log::MessageID DHCP6_HOOK_ADDR6_REGISTER_SKIP = "DHCP6_HOOK_ADDR6_REGISTER_SKIP";
@@ -248,6 +249,7 @@ const char* values[] = {
     "DHCP6_DYNAMIC_RECONFIGURATION", "initiate server reconfiguration using file: %1, after receiving SIGHUP signal or config-reload command",
     "DHCP6_DYNAMIC_RECONFIGURATION_FAIL", "dynamic server reconfiguration failed with file: %1",
     "DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS", "dynamic server reconfiguration succeeded with file: %1",
+    "DHCP6_FATAL_OPEN_SOCKETS_FAILED", "maximum number of open service sockets attempts: %1, has been exhausted without success",
     "DHCP6_FLEX_ID", "%1: flexible identifier generated for incoming packet: %2",
     "DHCP6_HOOK_ADDR6_REGISTER_DROP", "%1: ADDR-REG-INFORM for %2 is dropped, because a callout set the next step to DROP",
     "DHCP6_HOOK_ADDR6_REGISTER_SKIP", "%1: lease %2 operation for %3 is skipped, because a callout set the next step to SKIP",

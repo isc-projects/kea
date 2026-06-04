@@ -1931,11 +1931,13 @@ ControlledDhcpv4Srv::openSocketsFailedCallback(ReconnectCtlPtr reconnect_ctl) {
         return;
     }
 
-    LOG_INFO(dhcp4_logger, DHCP4_OPEN_SOCKETS_FAILED)
-            .arg(reconnect_ctl->maxRetries());
-
     if (reconnect_ctl->exitOnFailure()) {
+        LOG_FATAL(dhcp4_logger, DHCP4_FATAL_OPEN_SOCKETS_FAILED)
+            .arg(reconnect_ctl->maxRetries());
         shutdownServer(EXIT_FAILURE);
+    } else {
+        LOG_ERROR(dhcp4_logger, DHCP4_OPEN_SOCKETS_FAILED)
+            .arg(reconnect_ctl->maxRetries());
     }
 }
 
