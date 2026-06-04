@@ -45,7 +45,6 @@ TEST(CSVRowTest, escapeUnescape) {
     auto escaped = CSVRow::escapeCharacters(org, ',');
 
     ASSERT_EQ(escaped, expected_escaped);
-    std::cout << "escaped: " << escaped << std::endl;
 
     // Unescape it and make sure we get the original back.
     auto unescaped = CSVRow::unescapeCharacters(escaped);

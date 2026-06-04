@@ -581,4 +581,13 @@ TEST_F(StringUtilTest, printOrDump) {
     }
 }
 
+// Verifies the byteToHex tool.
+TEST_F(StringUtilTest, byteToHex) {
+    for (unsigned i = 0; i < 256; i++) {
+        std::ostringstream ss;
+        ss << std::hex << std::setw(2) << std::setfill('0') << i;
+        EXPECT_EQ(ss.str(), byteToHex(i));
+    }
+}
+
 }  // namespace

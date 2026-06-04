@@ -446,42 +446,38 @@ CSVFile::validateHeader(const CSVRow& header) {
 
 const std::string CSVRow::escape_tag("&#x");
 
-// Macro used in check if a character should be escaped.
-// Safe chars are less than 127 and have any of two bits
-// in 0x60 set. This is faster than isprint().
-#define ESCAPE_IT(c,s,e) (c > 0x7e || !(c & 0x60) || c == s || c == e)
-
 std::string
 CSVRow::escapeCharacters(const std::string& orig_str, const char separator) {
-    auto org_cstr = orig_str.c_str();
-    const char* orgpos;
+    auto escape_it = [](char c, char s, char e) -> bool {
+        return ((c < 0x20) || (c > 0x7e) || c == s || c == e);
+    };
 
-    // Most of time we probably don't need escape to escape anything, so do
-    // a quick scan to see if anything needs escaping. For things like user-context
-    // we'll find a comma pretty quickly.
-    for ( orgpos = &org_cstr[0] ; *orgpos ; ++orgpos) {
-        if (ESCAPE_IT(*orgpos, separator, escape_tag[0])) {
-            break;
-        }
-    }
+    // Count the number of needed escapes.
+    size_t escapes = 0;
+    for (char c : orig_str) {
+        if (escape_it(c, separator, escape_tag[0])) {
+            ++escapes;
+         }
+     }
 
-    if (!*orgpos) {
-        // Nothing to escape, return the original.
-        return (orig_str);
-    }
+    if (escapes == 0) {
+         // Nothing to escape, return the original.
+         return (orig_str);
+     }
 
-    // Iterate over the original string, escaped chars that need it.
+    // Make the result large enough to avoid reallocations.
     std::string esc_str;
-    for ( orgpos = &org_cstr[0] ; *orgpos ; ++orgpos) {
-        if (ESCAPE_IT(*orgpos, separator, escape_tag[0])) {
-            esc_str.append(escape_tag);
-            esc_str.append(str::byteToHex(*orgpos));
-        } else {
-            esc_str.append(1, *orgpos);
-        }
-    }
+    esc_str.reserve(orig_str.size() + escapes * (escape_tag.size() + 1));
+    // Iterate over the original string, escaped chars that need it.
+    for (char c : orig_str) {
+        if (escape_it(c, separator, escape_tag[0])) {
+             esc_str.append(escape_tag);
+            esc_str.append(str::byteToHex(c));
+         } else {
+            esc_str.push_back(c);
+         }
+     }
 
-    // Return the escapd string.
     return (esc_str);
 }
 
