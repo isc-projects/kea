@@ -106,7 +106,7 @@ TEST(IfaceTest, readBuffer) {
     ASSERT_EQ(256U, iface.getReadBufferSize());
     // The returned pointer should now be non-NULL.
     uint8_t* buf_ptr = iface.getReadBuffer();
-    ASSERT_FALSE(buf_ptr == 0);
+    ASSERT_TRUE(buf_ptr);
 
     // Use the pointer to set some data.
     for (size_t i = 0; i < iface.getReadBufferSize(); ++i) {

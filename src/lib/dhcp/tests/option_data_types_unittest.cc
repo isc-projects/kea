@@ -830,7 +830,7 @@ TEST_F(OptionDataTypesTest, writePsid) {
     // encoded in the PSID field is: '1000000000000000b', which is
     // 0x8000. The next two EXPECT_EQ statements verify that.
     EXPECT_EQ(0x80U, static_cast<unsigned>(buf[2]));
-    EXPECT_EQ(0x00U, static_cast<unsigned>(buf[3]));
+    EXPECT_EQ(0U, static_cast<unsigned>(buf[3]));
 
     // Clear the buffer to make sure we don't append to the
     // existing data.
@@ -853,7 +853,7 @@ TEST_F(OptionDataTypesTest, writePsid) {
     // PSID length should be written with no change.
     EXPECT_EQ(16U, static_cast<unsigned>(buf[0]));
     // Check PSID value.
-    EXPECT_EQ(0x00U, static_cast<unsigned>(buf[1]));
+    EXPECT_EQ(0U, static_cast<unsigned>(buf[1]));
     EXPECT_EQ(0x05U, static_cast<unsigned>(buf[2]));
 
     // PSID length of 17 exceeds the maximum allowed value of 16.
