@@ -1,3 +1,9 @@
+2481.	[bug]		razvan
+	Fixed an undefined behavior when processing empty options in
+	dhcp4over6 packets. Thank you to Qifan Zhang from Palo Alto
+	Networks for reporting the issue.
+	(Gitlab #4576)
+
 2480.	[bug]		razvan
 	Fixed ARM documentation examples related to "hostname-char-set"
 	and "hostname-char-replacement".
