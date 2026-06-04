@@ -5,7 +5,7 @@
 
 2479.	[bug]		razvan
 	Fixed a crash on server exit when database and interface
-	reconnect mechanism is enabled and neither the database of
+	reconnect mechanism is enabled and neither the database nor the
 	interface can be recovered. Also added DHCP_IFACE_OPEN_SOCKET
 	debug message which logs the interface name, address and port
 	opened.
