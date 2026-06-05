@@ -336,6 +336,33 @@ TEST(ClassifyTest, ClientClassesHash) {
     EXPECT_NE(hash(cclasses4), hash(cclasses));
 }
 
+TEST(ClassifyTest, escapeVector) {
+    std::string valid_s = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    valid_s += "abcdefghijklmnopqrstuvwxyz";
+    valid_s += "0123456789";
+    valid_s += "!#$%&*+-./:?@^_|~";
+    for (int i = 0; i < 128; ++i) {
+        bool in_string = (valid_s.find_first_of(i) != std::string::npos);
+        bool in_ctype = false;
+        if ((i >= 'A') && (i <= 'Z')) {
+            in_ctype = true;
+        } else if ((i >= 'a') && (i <= 'z')) {
+            in_ctype = true;
+        } else if ((i >= '0') && (i <= '9')) {
+            in_ctype = true;
+        } else if ((i == '!') || (i == '#') || (i == '$') || (i == '%') ||
+                   (i == '&') || (i == '*') || (i == '+') || (i == '-') ||
+                   (i == '.') || (i == '/') || (i == ':') || (i == '?') ||
+                   (i == '@') || (i == '^') || (i == '_') || (i == '|') ||
+                   (i == '~')) {
+            in_ctype = true;
+        }
+        bool in_vector = ClientClasses::CLIENT_CLASS_VALID_CHARACTERS[i];
+        EXPECT_EQ(in_string, in_ctype);
+        EXPECT_EQ(in_ctype, in_vector);
+    }
+}
+
 TEST(ClassifyTest, escape) {
     struct Scenario {
         std::string input_;
