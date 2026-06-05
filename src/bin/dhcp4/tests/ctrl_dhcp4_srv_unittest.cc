@@ -116,6 +116,9 @@ public:
     /// @brief List of interfaces (defaults to "*").
     std::string interfaces_;
 
+    /// @brief Value of service-sockets-require-all flag (defaults to false)
+    bool service_sockets_require_all_;
+
     /// @brief Pointer to the tested server object
     boost::shared_ptr<NakedControlledDhcpv4Srv> server_;
 
@@ -128,7 +131,10 @@ public:
     /// @brief Default constructor
     ///
     /// Sets socket path to its default value.
-    CtrlChannelDhcpv4SrvTest() : interfaces_("\"*\""), skipped_(false) {
+    CtrlChannelDhcpv4SrvTest()
+        : interfaces_("\"*\""),
+          service_sockets_require_all_(false),
+          skipped_(false) {
         resetLogPath();
         setSocketTestPath();
         reset();
@@ -211,7 +217,11 @@ public:
             "    \"interfaces-config\": {"
             "        \"interfaces\": [";
 
-        std::string body = "]"
+        std::string flag =
+            "],"
+            "        \"service-sockets-require-all\": ";
+
+        std::string body =
             "    },"
             "    \"expired-leases-processing\": {"
             "         \"reclaim-timer-wait-time\": 60,"
@@ -239,7 +249,13 @@ public:
 
         // Fill in the socket-name value with socket_path_  to
         // make the actual configuration text.
-        std::string config_txt = header + interfaces_ + body + socket_path_  + footer;
+        std::string config_txt = header + interfaces_ + flag;
+        if (service_sockets_require_all_) {
+            config_txt += "true";
+        } else {
+            config_txt += "false";
+        }
+        config_txt += body + socket_path_  + footer;
         ASSERT_NO_THROW(server_.reset(new NakedControlledDhcpv4Srv()));
 
         ConstElementPtr config;
@@ -2605,14 +2621,18 @@ TEST_F(CtrlChannelDhcpv4SrvTest, interfaceAdd) {
 // Tests if interface-add can trigger a fatal failure.
 TEST_F(CtrlChannelDhcpv4SrvTest, interfaceAddFatal) {
     interfaces_ = "";
+    service_sockets_require_all_ = true;
     IfacePtr eth0 = IfaceMgrTestConfig::createIface("eth0", ETH0_INDEX,
                                                     "11:22:33:44:55:66");
     auto detectIfaces = [&](bool update_only) {
         if (!update_only) {
-            // No IPv4 address: will trigger an error.
+            eth0->addAddress(IOAddress("10.0.0.1"));
             eth0->addAddress(IOAddress("fe80::3a60:77ff:fed5:cdef"));
             eth0->addAddress(IOAddress("2001:db8:1::1"));
             IfaceMgr::instance().addInterface(eth0);
+        } else {
+            // Trigger an error on interface-add.
+            eth0->flag_running_ = false;
         }
         return (false);
     };
@@ -2624,11 +2644,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, interfaceAddFatal) {
     PktFilterPtr filter(new PktFilterTestStub());
     IfaceMgr::instance().setPacketFilter(filter);
     SKIP_IF(skipped_);
-    // Override the on fail callback to unconditionally make the error fatal.
-    CfgIface::open_sockets_failed_callback_ =
-        [](ReconnectCtlPtr) {
-            ControlledDhcpv4Srv::getInstance()->shutdownServer(EXIT_FAILURE);
-        };
     std::string response;
 
     std::string command = "{ \"command\": \"interface-add\", \"arguments\": { \"interfaces\": [ \"eth0\" ] } }";
