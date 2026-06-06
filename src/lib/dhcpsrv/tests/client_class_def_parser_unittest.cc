@@ -1946,7 +1946,7 @@ TEST_F(ClientClassDefListParserTest, builtinCheckError) {
     EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET6), DhcpConfigError);
 }
 
-// Verifies that the special DROP class can't be required.
+// Verifies that the special DROP class can't be marked as only-in-additional.
 TEST_F(ClientClassDefListParserTest, dropCheckError) {
     std::string cfg_text =
         "[ \n"
@@ -1980,7 +1980,7 @@ TEST_F(ClientClassDefListParserTest, dropCheckError) {
     EXPECT_NO_THROW(parseClientClassDefList(cfg_text, AF_INET6));
 }
 
-// Verifies that the special REJECT class can't be required.
+// Verifies that the special REJECT class can't be marked as only-in-additional.
 TEST_F(ClientClassDefListParserTest, rejectCheckError) {
     std::string cfg_text =
         "[ \n"
@@ -2002,7 +2002,7 @@ TEST_F(ClientClassDefListParserTest, rejectCheckError) {
 
     EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET), DhcpConfigError);
 
-    // This constraint was relaxed in #1815.
+    // Same as for the DROP class for allowed dependencies.
     cfg_text =
         "[ \n"
         "   { \n"

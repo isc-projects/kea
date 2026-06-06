@@ -641,7 +641,9 @@ protected:
 
     /// @brief Reject query.
     ///
-    /// Called when the query is in the REJECT class.
+    /// Called when the query is in the REJECT class: adds a NoAddrsAvail
+    /// or NoPrefixAvail status code to the response.
+    ///
     /// @param query client's message
     /// @param answer server's message
     void reject(const Pkt6Ptr& query, Pkt6Ptr& answer);

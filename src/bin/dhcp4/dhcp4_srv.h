@@ -702,7 +702,9 @@ protected:
 
     /// @brief Return a NAK.
     ///
-    /// Called when the query is in the REJECT class.
+    /// Called when the query is in the REJECT class: adds a DHCPNAK response
+    /// to the exchange.
+    ///
     /// @param ex The exchange.
     void reject(Dhcpv4Exchange& ex);
 

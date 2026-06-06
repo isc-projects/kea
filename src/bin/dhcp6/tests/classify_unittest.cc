@@ -1501,7 +1501,7 @@ TEST_F(ClassifyTest, clientClassifySubnet) {
 
     Pkt6Ptr sol = createSolicit("2001:db8:1::3");
 
-    // This discover does not belong to foo class, so it will not
+    // This Solicit does not belong to foo class, so it will not
     // be serviced
     bool drop = false;
     EXPECT_FALSE(srv_->selectSubnet(sol, drop));
@@ -1568,7 +1568,7 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     Pkt6Ptr query2 = createSolicit("2001:db8:1::3");
     Pkt6Ptr query3 = createSolicit("2001:db8:1::3");
 
-    // This discover does not belong to foo class, so it will not
+    // This Solicit does not belong to foo class, so it will not
     // be serviced
     srv_->classifyPacket(query1);
     AllocEngine::ClientContext6 ctx1;
@@ -3726,8 +3726,8 @@ TEST_F(ClassifyTest, templateDependOnKnown) {
     EXPECT_EQ(iaddr->getAddress(), IOAddress("2001:db8:1::"));
 }
 
-// This test checks the handling for the REJECT special class in a Discover.
-TEST_F(ClassifyTest, rejectClassDiscover) {
+// This test checks the handling for the REJECT special class in a Solicit.
+TEST_F(ClassifyTest, rejectClassSolicit) {
     Dhcp6Client client(srv_);
     client.setDUID("01:02:03:04");
     client.setInterface("eth1");

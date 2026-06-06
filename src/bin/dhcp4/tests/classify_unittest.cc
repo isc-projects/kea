@@ -2761,8 +2761,8 @@ TEST_F(ClassifyTest, templateDependOnKnown) {
     EXPECT_EQ(response->getYiaddr(), IOAddress("192.0.2.1"));
 }
 
-// This test checks the handling for the REJECT special class in a Solicit.
-TEST_F(ClassifyTest, rejectClassSolicit) {
+// This test checks the handling for the REJECT special class in a Discover.
+TEST_F(ClassifyTest, rejectClassDiscover) {
     Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
