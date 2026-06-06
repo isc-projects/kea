@@ -63,7 +63,7 @@ const char *valid_msgs[] =
      "}"
 };
 
-static const int VALID_MSG_CNT = sizeof(valid_msgs) / sizeof(char*);
+static const size_t VALID_MSG_CNT = sizeof(valid_msgs) / sizeof(char*);
 
 const char* TEST_ADDRESS = "127.0.0.1";
 const uint32_t LISTENER_PORT = 5301;
@@ -101,7 +101,7 @@ TEST(D2QueueMgrBasicTest, construction3) {
     D2QueueMgrPtr queue_mgr;
     ASSERT_NO_THROW(queue_mgr.reset(new D2QueueMgr(io_service, 100)));
     // Verify queue max is the custom value.
-    EXPECT_EQ(100, queue_mgr->getMaxQueueSize());
+    EXPECT_EQ(100U, queue_mgr->getMaxQueueSize());
 }
 
 /// @brief Tests  QueueMgr's basic queue functions
@@ -121,7 +121,7 @@ TEST(D2QueueMgrBasicTest, basicQueue) {
     ASSERT_EQ(VALID_MSG_CNT, queue_mgr->getMaxQueueSize());
 
     // Verify queue is empty after construction.
-    EXPECT_EQ(0, queue_mgr->getQueueSize());
+    EXPECT_EQ(0U, queue_mgr->getQueueSize());
 
     // Verify that peek and dequeue both throw when queue is empty.
     EXPECT_THROW(queue_mgr->peek(), D2QueueMgrQueueEmpty);
@@ -132,7 +132,7 @@ TEST(D2QueueMgrBasicTest, basicQueue) {
     NameChangeRequestPtr ncr;
 
     // Iterate over the list of requests and add each to the queue.
-    for (int i = 0; i < VALID_MSG_CNT; i++) {
+    for (size_t i = 0; i < VALID_MSG_CNT; i++) {
         // Create the ncr and add to our reference list.
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         ref_msgs.push_back(ncr);
@@ -140,12 +140,12 @@ TEST(D2QueueMgrBasicTest, basicQueue) {
         // Verify that the request can be added to the queue and queue
         // size increments accordingly.
         EXPECT_NO_THROW(queue_mgr->enqueue(ncr));
-        EXPECT_EQ(i+1, queue_mgr->getQueueSize());
+        EXPECT_EQ(i + 1, queue_mgr->getQueueSize());
     }
 
     // Loop through and verify that the queue contents match the
     // reference list.
-    for (int i = 0; i < VALID_MSG_CNT; i++) {
+    for (size_t i = 0; i < VALID_MSG_CNT; i++) {
         // Verify that peek on a non-empty queue returns first entry
         // without altering queue content.
         EXPECT_NO_THROW(ncr = queue_mgr->peek());
@@ -165,7 +165,7 @@ TEST(D2QueueMgrBasicTest, basicQueue) {
     }
 
     // Iterate over the list of requests and add each to the queue.
-    for (int i = 0; i < VALID_MSG_CNT; i++) {
+    for (size_t i = 0; i < VALID_MSG_CNT; i++) {
         // Create the ncr and add to our reference list.
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         ref_msgs.push_back(ncr);
@@ -375,7 +375,7 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
 
     // Iterate over the list of requests sending and receiving
     // each one.  Verify and dequeue as they arrive.
-    for (int i = 0; i < VALID_MSG_CNT; i++) {
+    for (size_t i = 0; i < VALID_MSG_CNT; i++) {
         // Create the ncr and add to our reference list.
         ASSERT_NO_THROW(send_ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         ASSERT_NO_THROW(sender_->sendRequest(send_ncr));
@@ -386,7 +386,7 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
 
         // Verify that the request can be added to the queue and queue
         // size increments accordingly.
-        EXPECT_EQ(1, queue_mgr_->getQueueSize());
+        EXPECT_EQ(1U, queue_mgr_->getQueueSize());
 
         // Verify that peek shows the NCR we just sent
         EXPECT_NO_THROW(received_ncr = queue_mgr_->peek());
@@ -394,7 +394,7 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
 
         // Verify that we and dequeue the request.
         EXPECT_NO_THROW(queue_mgr_->dequeue());
-        EXPECT_EQ(0, queue_mgr_->getQueueSize());
+        EXPECT_EQ(0U, queue_mgr_->getQueueSize());
     }
 
     StatMap stats_ncr = {
@@ -407,7 +407,7 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
 
     // Iterate over the list of requests, sending and receiving
     // each one. Allow them to accumulate in the queue.
-    for (int i = 0; i < VALID_MSG_CNT; i++) {
+    for (size_t i = 0; i < VALID_MSG_CNT; i++) {
         // Create the ncr and add to our reference list.
         ASSERT_NO_THROW(send_ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         ASSERT_NO_THROW(sender_->sendRequest(send_ncr));
@@ -415,7 +415,7 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
         // running two should do the send then the receive
         EXPECT_NO_THROW(io_service_->runOne());
         EXPECT_NO_THROW(io_service_->runOne());
-        EXPECT_EQ(i+1, queue_mgr_->getQueueSize());
+        EXPECT_EQ(i + 1, queue_mgr_->getQueueSize());
     }
 
     StatMap stats_ncr_new = {
@@ -463,7 +463,7 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
 
     // Verify that clearQueue works.
     EXPECT_NO_THROW(queue_mgr_->clearQueue());
-    EXPECT_EQ(0, queue_mgr_->getQueueSize());
+    EXPECT_EQ(0U, queue_mgr_->getQueueSize());
 
     // Verify that we can again receive requests.
     // Send should be fine.
@@ -472,7 +472,7 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
 
     // Receive should succeed.
     EXPECT_NO_THROW(io_service_->runOne());
-    EXPECT_EQ(1, queue_mgr_->getQueueSize());
+    EXPECT_EQ(1U, queue_mgr_->getQueueSize());
 }
 
 } // end of anonymous namespace

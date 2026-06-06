@@ -214,7 +214,7 @@ TEST_F(Dhcp6CBTest, mergeGlobals) {
 
     // decline-probation-period is an explicit member that should come
     // from the backend.
-    EXPECT_EQ(86400, staging_cfg->getDeclinePeriod());
+    EXPECT_EQ(86400U, staging_cfg->getDeclinePeriod());
 
     // Verify that the implicit globals from JSON are there.
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, "valid-lifetime",
@@ -230,7 +230,7 @@ TEST_F(Dhcp6CBTest, mergeGlobals) {
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, hr_identifiers, true));
 
     auto const& ex_hr_i = staging_cfg->getCfgHostOperations6()->getIdentifierTypes();
-    EXPECT_EQ(ex_hr_i.size(), 2);
+    EXPECT_EQ(ex_hr_i.size(), 2U);
     EXPECT_EQ(ex_hr_i.front(), Host::IDENT_HWADDR);
     EXPECT_EQ(ex_hr_i.back(), Host::IDENT_FLEX);
 }
@@ -290,18 +290,18 @@ TEST_F(Dhcp6CBTest, mergeOptionDefs) {
     // Definition "one" from first backend should be there.
     OptionDefinitionPtr found_def = option_defs->get("isc", "one");
     ASSERT_TRUE(found_def);
-    EXPECT_EQ(101, found_def->getCode());
+    EXPECT_EQ(101U, found_def->getCode());
     EXPECT_EQ(OptionDataType::OPT_UINT16_TYPE, found_def->getType());
 
     // Definition "two" from JSON config should be there.
     found_def = option_defs->get("isc", "two");
     ASSERT_TRUE(found_def);
-    EXPECT_EQ(2, found_def->getCode());
+    EXPECT_EQ(2U, found_def->getCode());
 
     // Definition "three" from first backend should be there.
     found_def = option_defs->get("isc", "three");
     ASSERT_TRUE(found_def);
-    EXPECT_EQ(3, found_def->getCode());
+    EXPECT_EQ(3U, found_def->getCode());
 
     // Definition "four" from first backend should not be there.
     found_def = option_defs->get("isc", "four");
@@ -370,7 +370,7 @@ TEST_F(Dhcp6CBTest, mergeOptions) {
     ASSERT_TRUE(found_opt.option_);
     OptionUint32Ptr opint = boost::dynamic_pointer_cast<OptionUint32>(found_opt.option_);
     ASSERT_TRUE(opint);
-    EXPECT_EQ(500, opint->getValue());
+    EXPECT_EQ(500U, opint->getValue());
 }
 
 // This test verifies that DHCP options fetched from the config backend

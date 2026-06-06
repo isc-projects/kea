@@ -3039,8 +3039,8 @@ DORATest::randomAllocation() {
         allocated_list.push_back(next_client.config_.lease_.addr_);
     }
     // Make sure that we have 30 distinct allocations.
-    ASSERT_EQ(30, allocated_set.size());
-    ASSERT_EQ(30, allocated_list.size());
+    ASSERT_EQ(30U, allocated_set.size());
+    ASSERT_EQ(30U, allocated_list.size());
 
     // Make sure that the addresses are not allocated iteratively.
     size_t consecutives = 0;
@@ -3055,7 +3055,7 @@ DORATest::randomAllocation() {
     }
     // Make sure we don't have too many allocations when previously
     // allocated address is the current address minus one.
-    EXPECT_LT(consecutives, 10);
+    EXPECT_LT(consecutives, 10U);
 }
 
 TEST_F(DORATest, randomAllocation) {
@@ -3084,7 +3084,7 @@ DORATest::leaseCaching() {
 
     ASSERT_NO_THROW(client.getServer()->startD2());
     auto& d2_mgr = CfgMgr::instance().getD2ClientMgr();
-    ASSERT_EQ(0, d2_mgr.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr.getQueueSize());
 
     // Obtain a lease from the server using the 4-way exchange.
     ASSERT_NO_THROW(client.doDORA());
@@ -3112,10 +3112,10 @@ DORATest::leaseCaching() {
     checkStat("subnet[2].v4-lease-reuses", 1, 0);
 
     // There should be a single NCR.
-    ASSERT_EQ(1, d2_mgr.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr.getQueueSize());
     // Clear the NCR queue.
     ASSERT_NO_THROW(d2_mgr.runReadyIO());
-    ASSERT_EQ(0, d2_mgr.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr.getQueueSize());
 
     // Assume the client enters init-reboot and does a request.
     client.setState(Dhcp4Client::INIT_REBOOT);
@@ -3144,7 +3144,7 @@ DORATest::leaseCaching() {
     checkStat("subnet[2].v4-lease-reuses", 1, 0);
 
     // There should be no NCRs queued.
-    ASSERT_EQ(0, d2_mgr.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr.getQueueSize());
 
     // Let's say the client suddenly decides to do a full DORA.
     ASSERT_NO_THROW(client.doDORA());
@@ -3172,7 +3172,7 @@ DORATest::leaseCaching() {
     checkStat("subnet[2].v4-lease-reuses", 1, 0);
 
     // There should be no NCRs queued.
-    ASSERT_EQ(0, d2_mgr.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr.getQueueSize());
 
     // Try to request a different address than the client has. The server
     // should respond with DHCPNAK.
@@ -3200,7 +3200,7 @@ DORATest::leaseCaching() {
     checkStat("subnet[2].v4-lease-reuses", 1, 0);
 
     // There should be no NCRs queued.
-    ASSERT_EQ(0, d2_mgr.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr.getQueueSize());
 }
 
 TEST_F(DORATest, leaseCaching) {

@@ -159,7 +159,7 @@ Dhcpv4SrvTest::acquireAndDecline(Dhcp4Client& client,
     // Let's get the subnet-id and generate statistics name out of it.
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     std::stringstream name;
     name << "subnet[" << (*subnets->begin())->getID() << "].declined-addresses";
 

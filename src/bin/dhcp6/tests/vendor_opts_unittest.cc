@@ -1435,7 +1435,7 @@ TEST_F(VendorOptsTest, vendorNeverSend) {
 
     // But the vendor option response is not empty.
     const OptionCollection& opts = vendor_resp->getOptions();
-    ASSERT_EQ(1, opts.size());
+    ASSERT_EQ(1U, opts.size());
     EXPECT_TRUE(vendor_resp->getOption(10));
 }
 
@@ -1589,7 +1589,7 @@ TEST_F(VendorOptsTest, vendorOpsInResponseOnly) {
     // Check that it includes vendor opts with vendor-id = 25167
     OptionVendorPtr rsp_vopts = boost::dynamic_pointer_cast<OptionVendor>(rsp);
     ASSERT_TRUE(rsp_vopts);
-    EXPECT_EQ(25167, rsp_vopts->getVendorId());
+    EXPECT_EQ(25167U, rsp_vopts->getVendorId());
 
     // Now check that it contains suboption 2 with appropriate content.
     OptionPtr subopt2 = rsp_vopts->getOption(2);
@@ -1694,7 +1694,7 @@ TEST_F(VendorOptsTest, twoVendors) {
     // Check whether there are vendor-class options.
     const OptionCollection& classes =
         client.getContext().response_->getOptions(D6O_VENDOR_CLASS);
-    ASSERT_EQ(2, classes.size());
+    ASSERT_EQ(2U, classes.size());
     OptionVendorClassPtr opt_class1234;
     OptionVendorClassPtr opt_class5678;
     for (auto const& opt : classes) {
@@ -1703,30 +1703,30 @@ TEST_F(VendorOptsTest, twoVendors) {
             boost::dynamic_pointer_cast<OptionVendorClass>(opt.second);
         ASSERT_TRUE(opt_class);
         uint32_t vendor_id = opt_class->getVendorId();
-        if (vendor_id == 1234) {
+        if (vendor_id == 1234U) {
             ASSERT_FALSE(opt_class1234);
             opt_class1234 = opt_class;
             continue;
         }
-        ASSERT_EQ(5678, vendor_id);
+        ASSERT_EQ(5678U, vendor_id);
         ASSERT_FALSE(opt_class5678);
         opt_class5678 = opt_class;
     }
 
     // Verify first vendor-class option.
     ASSERT_TRUE(opt_class1234);
-    ASSERT_EQ(1, opt_class1234->getTuplesNum());
+    ASSERT_EQ(1U, opt_class1234->getTuplesNum());
     EXPECT_EQ("foo", opt_class1234->getTuple(0).getText());
 
     // Verify second vendor-class option.
     ASSERT_TRUE(opt_class5678);
-    ASSERT_EQ(1, opt_class5678->getTuplesNum());
+    ASSERT_EQ(1U, opt_class5678->getTuplesNum());
     EXPECT_EQ("bar", opt_class5678->getTuple(0).getText());
 
     // Check whether there are vendor-opts options.
     const OptionCollection& options =
         client.getContext().response_->getOptions(D6O_VENDOR_OPTS);
-    ASSERT_EQ(2, options.size());
+    ASSERT_EQ(2U, options.size());
     OptionVendorPtr opt_opts1234;
     OptionVendorPtr opt_opts5678;
     for (auto const& opt : options) {
@@ -1735,12 +1735,12 @@ TEST_F(VendorOptsTest, twoVendors) {
             boost::dynamic_pointer_cast<OptionVendor>(opt.second);
         ASSERT_TRUE(opt_opts);
         uint32_t vendor_id = opt_opts->getVendorId();
-        if (vendor_id == 1234) {
+        if (vendor_id == 1234U) {
             ASSERT_FALSE(opt_opts1234);
             opt_opts1234 = opt_opts;
             continue;
         }
-        ASSERT_EQ(5678, vendor_id);
+        ASSERT_EQ(5678U, vendor_id);
         ASSERT_FALSE(opt_opts5678);
         opt_opts5678 = opt_opts;
     }
@@ -1748,10 +1748,10 @@ TEST_F(VendorOptsTest, twoVendors) {
     // Verify first vendor-opts option.
     ASSERT_TRUE(opt_opts1234);
     OptionCollection subs1234 = opt_opts1234->getOptions();
-    ASSERT_EQ(1, subs1234.size());
+    ASSERT_EQ(1U, subs1234.size());
     OptionPtr sub1234 = subs1234.begin()->second;
     ASSERT_TRUE(sub1234);
-    EXPECT_EQ(123, sub1234->getType());
+    EXPECT_EQ(123U, sub1234->getType());
     OptionStringPtr opt_foo =
         boost::dynamic_pointer_cast<OptionString>(sub1234);
     ASSERT_TRUE(opt_foo);
@@ -1760,10 +1760,10 @@ TEST_F(VendorOptsTest, twoVendors) {
     // Verify second vendor-opts option.
     ASSERT_TRUE(opt_opts5678);
     OptionCollection subs5678 = opt_opts5678->getOptions();
-    ASSERT_EQ(1, subs5678.size());
+    ASSERT_EQ(1U, subs5678.size());
     OptionPtr sub5678 = subs5678.begin()->second;
     ASSERT_TRUE(sub5678);
-    EXPECT_EQ(456, sub5678->getType());
+    EXPECT_EQ(456U, sub5678->getType());
     OptionStringPtr opt_bar =
         boost::dynamic_pointer_cast<OptionString>(sub5678);
     ASSERT_TRUE(opt_bar);
@@ -1862,7 +1862,7 @@ TEST_F(VendorOptsTest, threeVendors) {
     // Check whether there are vendor-opts options.
     const OptionCollection& options =
         client.getContext().response_->getOptions(D6O_VENDOR_OPTS);
-    ASSERT_EQ(3, options.size());
+    ASSERT_EQ(3U, options.size());
     OptionVendorPtr opt_opts1234;
     OptionVendorPtr opt_docsis;
     OptionVendorPtr opt_opts5678;
@@ -1872,7 +1872,7 @@ TEST_F(VendorOptsTest, threeVendors) {
             boost::dynamic_pointer_cast<OptionVendor>(opt.second);
         ASSERT_TRUE(opt_opts);
         uint32_t vendor_id = opt_opts->getVendorId();
-        if (vendor_id == 1234) {
+        if (vendor_id == 1234U) {
             ASSERT_FALSE(opt_opts1234);
             opt_opts1234 = opt_opts;
             continue;
@@ -1882,7 +1882,7 @@ TEST_F(VendorOptsTest, threeVendors) {
             opt_docsis = opt_opts;
             continue;
         }
-        ASSERT_EQ(5678, vendor_id);
+        ASSERT_EQ(5678U, vendor_id);
         ASSERT_FALSE(opt_opts5678);
         opt_opts5678 = opt_opts;
     }
@@ -1890,10 +1890,10 @@ TEST_F(VendorOptsTest, threeVendors) {
     // Verify first vendor-opts option.
     ASSERT_TRUE(opt_opts1234);
     OptionCollection subs1234 = opt_opts1234->getOptions();
-    ASSERT_EQ(1, subs1234.size());
+    ASSERT_EQ(1U, subs1234.size());
     OptionPtr sub1234 = subs1234.begin()->second;
     ASSERT_TRUE(sub1234);
-    EXPECT_EQ(123, sub1234->getType());
+    EXPECT_EQ(123U, sub1234->getType());
     OptionStringPtr opt_foo =
         boost::dynamic_pointer_cast<OptionString>(sub1234);
     ASSERT_TRUE(opt_foo);
@@ -1902,10 +1902,10 @@ TEST_F(VendorOptsTest, threeVendors) {
     // Verify DOCSIS vendor-opts option.
     ASSERT_TRUE(opt_docsis);
     OptionCollection subs_docsis = opt_docsis->getOptions();
-    ASSERT_EQ(1, subs_docsis.size());
+    ASSERT_EQ(1U, subs_docsis.size());
     OptionPtr cfile = subs_docsis.begin()->second;
     ASSERT_TRUE(cfile);
-    EXPECT_EQ(33, cfile->getType());
+    EXPECT_EQ(33U, cfile->getType());
     OptionStringPtr cfile_str = boost::dynamic_pointer_cast<OptionString>(cfile);
     ASSERT_TRUE(cfile_str);
     EXPECT_EQ("normal_erouter_v6.cm", cfile_str->getValue());
@@ -1913,10 +1913,10 @@ TEST_F(VendorOptsTest, threeVendors) {
     // Verify last vendor-opts option.
     ASSERT_TRUE(opt_opts5678);
     OptionCollection subs5678 = opt_opts5678->getOptions();
-    ASSERT_EQ(1, subs5678.size());
+    ASSERT_EQ(1U, subs5678.size());
     OptionPtr sub5678 = subs5678.begin()->second;
     ASSERT_TRUE(sub5678);
-    EXPECT_EQ(456, sub5678->getType());
+    EXPECT_EQ(456U, sub5678->getType());
     OptionStringPtr opt_bar =
         boost::dynamic_pointer_cast<OptionString>(sub5678);
     ASSERT_TRUE(opt_bar);

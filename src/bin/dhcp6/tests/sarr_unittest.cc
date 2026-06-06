@@ -507,22 +507,22 @@ SARRTest::directClientPrefixHint() {
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     // Append IAPREFIX option to the client's message.
     ASSERT_NO_THROW(client.requestPrefix(5678, 64, asiolink::IOAddress("2001:db8:3:33::33")));
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
     // Server should have assigned a prefix.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
     // The server should correctly deal with the least significant bytes
     // of the hint being set. It should set them to zero and use the
     // valid portion of the hint.
     EXPECT_EQ("2001:db8:3:33::", lease_client.addr_.toText());
     // Server ignores other parts of the IAPREFIX option.
-    EXPECT_EQ(64, lease_client.prefixlen_);
-    EXPECT_EQ(3000, lease_client.preferred_lft_);
-    EXPECT_EQ(4000, lease_client.valid_lft_);
+    EXPECT_EQ(64U, lease_client.prefixlen_);
+    EXPECT_EQ(3000U, lease_client.preferred_lft_);
+    EXPECT_EQ(4000U, lease_client.valid_lft_);
     Lease6Ptr lease_server = checkLease(lease_client);
     // Check that the server recorded the lease.
     ASSERT_TRUE(lease_server);
@@ -537,7 +537,7 @@ SARRTest::directClientPrefixHint() {
     ASSERT_NO_THROW(client.requestPrefix(5678, 64, IOAddress("2001:db8:3:33::34")));
     ASSERT_NO_THROW(client.doSARR());
     // Server should assign a lease.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     lease_client = client.getLease(0);
     // The hint collides with the existing lease, so the server should not
     // assign for the second client.
@@ -546,9 +546,9 @@ SARRTest::directClientPrefixHint() {
     // Check that the assigned prefix belongs to the pool.
     ASSERT_TRUE(!subnets->empty());
     (*subnets->begin())->inPool(Lease::TYPE_PD, lease_client.addr_);
-    EXPECT_EQ(64, lease_client.prefixlen_);
-    EXPECT_EQ(3000, lease_client.preferred_lft_);
-    EXPECT_EQ(4000, lease_client.valid_lft_);
+    EXPECT_EQ(64U, lease_client.prefixlen_);
+    EXPECT_EQ(3000U, lease_client.preferred_lft_);
+    EXPECT_EQ(4000U, lease_client.valid_lft_);
     lease_server = checkLease(lease_client);
     ASSERT_TRUE(lease_server);
 }
@@ -572,20 +572,20 @@ SARRTest::directClientPrefixLengthHintRenewal() {
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     // Append IAPREFIX option to the client's message.
     ASSERT_NO_THROW(client.requestPrefix(5678, 64, asiolink::IOAddress("2001:db8:3:36::")));
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
     // Server should have assigned a prefix.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
     // The server should respect the prefix hint.
     EXPECT_EQ("2001:db8:3:36::", lease_client.addr_.toText());
     // Server ignores other parts of the IAPREFIX option.
-    EXPECT_EQ(64, lease_client.prefixlen_);
-    EXPECT_EQ(3000, lease_client.preferred_lft_);
-    EXPECT_EQ(4000, lease_client.valid_lft_);
+    EXPECT_EQ(64U, lease_client.prefixlen_);
+    EXPECT_EQ(3000U, lease_client.preferred_lft_);
+    EXPECT_EQ(4000U, lease_client.valid_lft_);
     Lease6Ptr lease_server = checkLease(lease_client);
     // Check that the server recorded the lease.
     ASSERT_TRUE(lease_server);
@@ -595,20 +595,20 @@ SARRTest::directClientPrefixLengthHintRenewal() {
     client.clearRequestedIAs();
     ASSERT_NO_THROW(client.requestPrefix(5678, 80, IOAddress("2001:db8:3:36::")));
     ASSERT_NO_THROW(client.doSARR());
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8:3:36::", lease_client.addr_.toText());
-    EXPECT_EQ(64, lease_client.prefixlen_);
+    EXPECT_EQ(64U, lease_client.prefixlen_);
 
     // Try to request another prefix. The client should still get the existing
     // lease.
     client.clearRequestedIAs();
     ASSERT_NO_THROW(client.requestPrefix(5678, 64, IOAddress("2001:db8:3:37::")));
     ASSERT_NO_THROW(client.doSARR());
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8:3:36::", lease_client.addr_.toText());
-    EXPECT_EQ(64, lease_client.prefixlen_);
+    EXPECT_EQ(64U, lease_client.prefixlen_);
 }
 
 TEST_F(SARRTest, directClientPrefixLengthHintRenewal) {
@@ -637,7 +637,7 @@ SARRTest::optionsInheritance() {
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
 
@@ -703,15 +703,15 @@ SARRTest::directClientExcludedPrefixPool(bool request_pdx) {
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
     // Server should have assigned a prefix.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
-    EXPECT_EQ(64, lease_client.prefixlen_);
-    EXPECT_EQ(3000, lease_client.preferred_lft_);
-    EXPECT_EQ(4000, lease_client.valid_lft_);
+    EXPECT_EQ(64U, lease_client.prefixlen_);
+    EXPECT_EQ(3000U, lease_client.preferred_lft_);
+    EXPECT_EQ(4000U, lease_client.valid_lft_);
     Lease6Ptr lease_server = checkLease(lease_client);
     // Check that the server recorded the lease.
     ASSERT_TRUE(lease_server);
@@ -734,7 +734,7 @@ SARRTest::directClientExcludedPrefixPool(bool request_pdx) {
     ASSERT_TRUE(pd_exclude);
     EXPECT_EQ("2001:db8:3::1000", pd_exclude->getExcludedPrefix(IOAddress("2001:db8:3::"),
                                                                 64).toText());
-    EXPECT_EQ(120, static_cast<unsigned>(pd_exclude->getExcludedPrefixLength()));
+    EXPECT_EQ(120U, static_cast<unsigned>(pd_exclude->getExcludedPrefixLength()));
 }
 
 TEST_F(SARRTest, directClientExcludedPrefixPool) {
@@ -772,15 +772,15 @@ SARRTest::directClientExcludedPrefixHost(bool request_pdx) {
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
     // Server should have assigned a prefix.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
-    EXPECT_EQ(64, lease_client.prefixlen_);
-    EXPECT_EQ(3000, lease_client.preferred_lft_);
-    EXPECT_EQ(4000, lease_client.valid_lft_);
+    EXPECT_EQ(64U, lease_client.prefixlen_);
+    EXPECT_EQ(3000U, lease_client.preferred_lft_);
+    EXPECT_EQ(4000U, lease_client.valid_lft_);
     Lease6Ptr lease_server = checkLease(lease_client);
     // Check that the server recorded the lease.
     ASSERT_TRUE(lease_server);
@@ -803,7 +803,7 @@ SARRTest::directClientExcludedPrefixHost(bool request_pdx) {
     ASSERT_TRUE(pd_exclude);
     EXPECT_EQ("2001:db8:3::2000", pd_exclude->getExcludedPrefix(IOAddress("2001:db8:3::"),
                                                                 64).toText());
-    EXPECT_EQ(120, static_cast<unsigned>(pd_exclude->getExcludedPrefixLength()));
+    EXPECT_EQ(120U, static_cast<unsigned>(pd_exclude->getExcludedPrefixLength()));
 }
 
 TEST_F(SARRTest, directClientExcludedPrefixHost) {
@@ -836,7 +836,7 @@ SARRTest::rapidCommitEnable() {
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(2, subnets->size());
+    ASSERT_EQ(2U, subnets->size());
     // Perform 2-way exchange.
     client.useRapidCommit(true);
     // Include FQDN to trigger generation of name change requests.
@@ -846,7 +846,7 @@ SARRTest::rapidCommitEnable() {
 
     ASSERT_NO_THROW(client.doSolicit());
     // Server should have committed a lease.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
     // Make sure that the address belongs to the subnet configured.
     ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
@@ -860,7 +860,7 @@ SARRTest::rapidCommitEnable() {
     Lease6Ptr lease_server = checkLease(lease_client);
     EXPECT_TRUE(lease_server);
     // There should be one name change request generated.
-    EXPECT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    EXPECT_EQ(1U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 }
 
 TEST_F(SARRTest, rapidCommitEnable) {
@@ -883,7 +883,7 @@ SARRTest::rapidCommitNoOption() {
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(2, subnets->size());
+    ASSERT_EQ(2U, subnets->size());
     // Include FQDN to test that the server will not create name change
     // requests when it sends Advertise (Rapid Commit disabled).
     ASSERT_NO_THROW(client.useFQDN(Option6ClientFqdn::FLAG_S,
@@ -892,14 +892,14 @@ SARRTest::rapidCommitNoOption() {
     ASSERT_NO_THROW(client.doSolicit());
     // There should be no lease because the server should have responded
     // with Advertise.
-    ASSERT_EQ(0, client.getLeaseNum());
+    ASSERT_EQ(0U, client.getLeaseNum());
     // Make sure that the server responded.
     ASSERT_TRUE(client.getContext().response_);
     EXPECT_EQ(DHCPV6_ADVERTISE, client.getContext().response_->getType());
     // Make sure that the Rapid Commit option is not included.
     EXPECT_FALSE(client.getContext().response_->getOption(D6O_RAPID_COMMIT));
     // There should be no name change request generated.
-    EXPECT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    EXPECT_EQ(0U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 }
 
 TEST_F(SARRTest, rapidCommitNoOption) {
@@ -924,7 +924,7 @@ SARRTest::rapidCommitDisable() {
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(2, subnets->size());
+    ASSERT_EQ(2U, subnets->size());
     // Send Rapid Commit option to the server.
     client.useRapidCommit(true);
     // Include FQDN to test that the server will not create name change
@@ -935,14 +935,14 @@ SARRTest::rapidCommitDisable() {
     ASSERT_NO_THROW(client.doSolicit());
     // There should be no lease because the server should have responded
     // with Advertise.
-    ASSERT_EQ(0, client.getLeaseNum());
+    ASSERT_EQ(0U, client.getLeaseNum());
     // Make sure that the server responded.
     ASSERT_TRUE(client.getContext().response_);
     EXPECT_EQ(DHCPV6_ADVERTISE, client.getContext().response_->getType());
     // Make sure that the Rapid Commit option is not included.
     EXPECT_FALSE(client.getContext().response_->getOption(D6O_RAPID_COMMIT));
     // There should be no name change request generated.
-    EXPECT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    EXPECT_EQ(0U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 }
 
 TEST_F(SARRTest, rapidCommitDisable) {
@@ -974,7 +974,7 @@ SARRTest::sarrStats() {
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(2, subnets->size());
+    ASSERT_EQ(2U, subnets->size());
 
     // Check that the tested statistics is initially set to 0
     using namespace isc::stats;
@@ -1001,7 +1001,7 @@ SARRTest::sarrStats() {
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
     // Server should have assigned a prefix.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
 
     // All expected statistics must be present now.
     pkt6_rcvd = mgr.getObservation("pkt6-received");
@@ -1157,7 +1157,7 @@ SARRTest::reservationModeOutOfPool() {
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
     // Server should have assigned a prefix.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
 
     Lease6 lease = client.getLease(0);
     // Check that the server allocated the reserved address.
@@ -1172,7 +1172,7 @@ SARRTest::reservationModeOutOfPool() {
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
     // Server should have assigned a prefix.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
 
     lease = client.getLease(0);
     // Check that the requested address was assigned.
@@ -1202,7 +1202,7 @@ SARRTest::reservationIgnoredInOutOfPoolMode() {
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
     // Server should have assigned a prefix.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
 
     Lease6 lease = client.getLease(0);
     // Check that the server allocated the reserved address.
@@ -1240,9 +1240,9 @@ SARRTest::randomAddressAllocation() {
         ASSERT_NO_THROW(next_client.doSARR());
         // We should have one IA_NA and one IA_PD.
         auto leases_na = next_client.getLeasesByType(Lease::TYPE_NA);
-        ASSERT_EQ(1, leases_na.size());
+        ASSERT_EQ(1U, leases_na.size());
         auto leases_pd = next_client.getLeasesByType(Lease::TYPE_PD);
-        ASSERT_EQ(1, leases_pd.size());
+        ASSERT_EQ(1U, leases_pd.size());
         // Remember allocated address and delegated prefix uniqueness
         // and order.
         allocated_na_set.insert(leases_na[0].toText());
@@ -1251,10 +1251,10 @@ SARRTest::randomAddressAllocation() {
         allocated_pd_vector.push_back(leases_pd[0].addr_);
     }
     // Make sure that we have 30 distinct allocations for each lease type.
-    ASSERT_EQ(30, allocated_na_set.size());
-    ASSERT_EQ(30, allocated_na_vector.size());
-    ASSERT_EQ(30, allocated_pd_set.size());
-    ASSERT_EQ(30, allocated_pd_vector.size());
+    ASSERT_EQ(30U, allocated_na_set.size());
+    ASSERT_EQ(30U, allocated_na_vector.size());
+    ASSERT_EQ(30U, allocated_pd_set.size());
+    ASSERT_EQ(30U, allocated_pd_vector.size());
 
     // Make sure that the addresses are not allocated iteratively.
     size_t consecutives = 0;
@@ -1267,7 +1267,7 @@ SARRTest::randomAddressAllocation() {
             ++consecutives;
         }
     }
-    EXPECT_LT(consecutives, 10);
+    EXPECT_LT(consecutives, 10U);
 
     // Make sure that delegated prefixes have been allocated iteratively.
     consecutives = 0;
@@ -1276,7 +1276,7 @@ SARRTest::randomAddressAllocation() {
             ++consecutives;
         }
     }
-    EXPECT_EQ(29, consecutives);
+    EXPECT_EQ(29U, consecutives);
 }
 
 TEST_F(SARRTest, randomAddressAllocation) {
@@ -1310,9 +1310,9 @@ SARRTest::randomPrefixAllocation() {
         ASSERT_NO_THROW(next_client.doSARR());
         // We should have one IA_NA and one IA_PD.
         auto leases_na = next_client.getLeasesByType(Lease::TYPE_NA);
-        ASSERT_EQ(1, leases_na.size());
+        ASSERT_EQ(1U, leases_na.size());
         auto leases_pd = next_client.getLeasesByType(Lease::TYPE_PD);
-        ASSERT_EQ(1, leases_pd.size());
+        ASSERT_EQ(1U, leases_pd.size());
         // Remember allocated address and delegated prefix uniqueness
         // and order.
         allocated_na_set.insert(leases_na[0].toText());
@@ -1321,10 +1321,10 @@ SARRTest::randomPrefixAllocation() {
         allocated_pd_vector.push_back(leases_pd[0].addr_);
     }
     // Make sure that we have 30 distinct allocations for each lease type.
-    ASSERT_EQ(30, allocated_na_set.size());
-    ASSERT_EQ(30, allocated_na_vector.size());
-    ASSERT_EQ(30, allocated_pd_set.size());
-    ASSERT_EQ(30, allocated_pd_vector.size());
+    ASSERT_EQ(30U, allocated_na_set.size());
+    ASSERT_EQ(30U, allocated_na_vector.size());
+    ASSERT_EQ(30U, allocated_pd_set.size());
+    ASSERT_EQ(30U, allocated_pd_vector.size());
 
     // Make sure that the addresses have been allocated iteratively.
     size_t consecutives = 0;
@@ -1337,7 +1337,7 @@ SARRTest::randomPrefixAllocation() {
     }
 
     // Make sure that addresses have been allocated iteratively.
-    EXPECT_EQ(29, consecutives);
+    EXPECT_EQ(29U, consecutives);
 
     // Make sure that delegated prefixes have been allocated randomly.
     consecutives = 0;
@@ -1346,7 +1346,7 @@ SARRTest::randomPrefixAllocation() {
             ++consecutives;
         }
     }
-    EXPECT_LT(consecutives, 10);
+    EXPECT_LT(consecutives, 10U);
 }
 
 TEST_F(SARRTest, randomPrefixAllocation) {
@@ -1393,23 +1393,23 @@ SARRTest::leaseCaching() {
     // Start D2 client mgr and verify the NCR queue is empty.
     ASSERT_NO_THROW(client.getServer()->startD2());
     auto& d2_mgr = CfgMgr::instance().getD2ClientMgr();
-    ASSERT_EQ(0, d2_mgr.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr.getQueueSize());
 
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
 
     // Server should have assigned an address and a prefix.
-    ASSERT_EQ(2, client.getLeaseNum());
+    ASSERT_EQ(2U, client.getLeaseNum());
 
     // The server should respect the hints.
     Lease6 lease_client(client.getLease(0));
     EXPECT_EQ("2001:db8::10", lease_client.addr_.toText());
-    EXPECT_EQ(128, lease_client.prefixlen_);
+    EXPECT_EQ(128U, lease_client.prefixlen_);
     Lease6Ptr lease_server(checkLease(lease_client));
     EXPECT_TRUE(lease_server);
     lease_client = client.getLease(1);
     EXPECT_EQ("2001:db8:1::", lease_client.addr_.toText());
-    EXPECT_EQ(96, lease_client.prefixlen_);
+    EXPECT_EQ(96U, lease_client.prefixlen_);
     lease_server = checkLease(lease_client);
     EXPECT_TRUE(lease_server);
 
@@ -1422,10 +1422,10 @@ SARRTest::leaseCaching() {
     checkStat("subnet[2].v6-ia-pd-lease-reuses", 1, 0);
 
     // There should be a single NCR.
-    ASSERT_EQ(1, d2_mgr.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr.getQueueSize());
     // Clear the NCR queue.
     ASSERT_NO_THROW(d2_mgr.runReadyIO());
-    ASSERT_EQ(0, d2_mgr.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr.getQueueSize());
 
     // Request the same prefix with a different length. The server should
     // return an existing lease.
@@ -1433,13 +1433,13 @@ SARRTest::leaseCaching() {
     ASSERT_NO_THROW(client.requestAddress(1234, asiolink::IOAddress("2001:db8::10")));
     ASSERT_NO_THROW(client.requestPrefix(5678, 80, IOAddress("2001:db8:1::")));
     ASSERT_NO_THROW(client.doSARR());
-    ASSERT_EQ(2, client.getLeaseNum());
+    ASSERT_EQ(2U, client.getLeaseNum());
     lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8::10", lease_client.addr_.toText());
-    EXPECT_EQ(128, lease_client.prefixlen_);
+    EXPECT_EQ(128U, lease_client.prefixlen_);
     lease_client = client.getLease(1);
     EXPECT_EQ("2001:db8:1::", lease_client.addr_.toText());
-    EXPECT_EQ(96, lease_client.prefixlen_);
+    EXPECT_EQ(96U, lease_client.prefixlen_);
 
     // Check statistics.
     checkStat("v6-ia-na-lease-reuses", 2, 1);
@@ -1450,7 +1450,7 @@ SARRTest::leaseCaching() {
     checkStat("subnet[2].v6-ia-pd-lease-reuses", 1, 0);
 
     // There should be no NCRs queued.
-    ASSERT_EQ(0, d2_mgr.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr.getQueueSize());
 
     // Try to request another prefix. The client should still get the existing
     // lease.
@@ -1458,13 +1458,13 @@ SARRTest::leaseCaching() {
     ASSERT_NO_THROW(client.requestAddress(1234, asiolink::IOAddress("2001:db8::10")));
     ASSERT_NO_THROW(client.requestPrefix(5678, 64, IOAddress("2001:db8:2::")));
     ASSERT_NO_THROW(client.doRequest());
-    ASSERT_EQ(2, client.getLeaseNum());
+    ASSERT_EQ(2U, client.getLeaseNum());
     lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8::10", lease_client.addr_.toText());
-    EXPECT_EQ(128, lease_client.prefixlen_);
+    EXPECT_EQ(128U, lease_client.prefixlen_);
     lease_client = client.getLease(1);
     EXPECT_EQ("2001:db8:1::", lease_client.addr_.toText());
-    EXPECT_EQ(96, lease_client.prefixlen_);
+    EXPECT_EQ(96U, lease_client.prefixlen_);
 
     // Check statistics.
     checkStat("v6-ia-na-lease-reuses", 3, 2);
@@ -1475,7 +1475,7 @@ SARRTest::leaseCaching() {
     checkStat("subnet[2].v6-ia-pd-lease-reuses", 1, 0);
 
     // There should be no NCRs queued.
-    ASSERT_EQ(0, d2_mgr.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr.getQueueSize());
 }
 
 TEST_F(SARRTest, leaseCaching) {

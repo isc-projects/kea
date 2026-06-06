@@ -130,7 +130,7 @@ TEST_F(ConfirmTest, directClientSameIAID) {
     Lease6 lease_client2 = lease_client1;
     lease_client2.addr_ = bumpAddress(lease_client2.addr_);
     client.createLease(lease_client2);
-    ASSERT_EQ(2, client.getLeaseNum());
+    ASSERT_EQ(2U, client.getLeaseNum());
     // Send Confirm message to the server.
     ASSERT_NO_THROW(client.doConfirm());
     // Client should have received a status code option and this option should
@@ -138,7 +138,7 @@ TEST_F(ConfirmTest, directClientSameIAID) {
     ASSERT_TRUE(client.receivedStatusCode());
     ASSERT_EQ(STATUS_Success, client.getStatusCode());
 
-    ASSERT_EQ(2, client.getLeaseNum());
+    ASSERT_EQ(2U, client.getLeaseNum());
     lease_client2 = client.getLease(1);
     lease_client2.addr_ = bumpSubnet(lease_client2.addr_);
     client.createLease(lease_client2);
@@ -173,7 +173,7 @@ TEST_F(ConfirmTest, directClientDifferentIAID) {
     ++lease_client2.iaid_;
     lease_client2.addr_ = bumpAddress(lease_client2.addr_);
     client.createLease(lease_client2);
-    ASSERT_EQ(2, client.getLeaseNum());
+    ASSERT_EQ(2U, client.getLeaseNum());
     // Send Confirm message to the server.
     ASSERT_NO_THROW(client.doConfirm());
     // Client should have received a status code option and this option should
@@ -184,7 +184,7 @@ TEST_F(ConfirmTest, directClientDifferentIAID) {
     EXPECT_TRUE(client.getContext().response_->getOption(D6O_SERVERID));
     EXPECT_TRUE(client.getContext().response_->getOption(D6O_CLIENTID));
 
-    ASSERT_EQ(2, client.getLeaseNum());
+    ASSERT_EQ(2U, client.getLeaseNum());
     lease_client2 = client.getLease(1);
     lease_client2.addr_ = bumpSubnet(lease_client2.addr_);
     client.createLease(lease_client2);
@@ -251,7 +251,7 @@ TEST_F(ConfirmTest, relayedClientNoAddress) {
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
-    ASSERT_EQ(2, subnets->size());
+    ASSERT_EQ(2U, subnets->size());
     // Client to send relayed message.
     client.useRelay();
     // Send Confirm message to the server. This message will contain no
@@ -311,7 +311,7 @@ TEST_F(ConfirmTest, relayedUnicast) {
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(CONFIRM_CONFIGS[1], 2, client));
     // Make sure we have got the lease.
-    ASSERT_GT(client.getLeaseNum(), 0);
+    ASSERT_GT(client.getLeaseNum(), 0U);
     client.setDestAddress(IOAddress("2001:db8:1::1"));
     // Send Confirm message to the server.
     ASSERT_NO_THROW(client.doConfirm());
@@ -335,7 +335,7 @@ TEST_F(ConfirmTest, unicast) {
     // Make 4-way exchange to get the lease.
     ASSERT_NO_FATAL_FAILURE(requestLease(CONFIRM_CONFIGS[0], 2, client));
     // Make sure the client has got the lease.
-    ASSERT_GT(client.getLeaseNum(), 0);
+    ASSERT_GT(client.getLeaseNum(), 0U);
     // Send Confirm message to the server to the unicast address.
     client.setDestAddress(IOAddress("2001:db8:1::1"));
     ASSERT_NO_THROW(client.doConfirm());

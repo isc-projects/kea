@@ -169,19 +169,19 @@ protected:
 TEST_F(CommandOptionsTest, Defaults) {
     CommandOptions opt;
     EXPECT_NO_THROW(process(opt, "perfdhcp 192.168.0.1"));
-    EXPECT_EQ(4, opt.getIpVersion());
+    EXPECT_EQ(4U, opt.getIpVersion());
     EXPECT_EQ(CommandOptions::DORA_SARR, opt.getExchangeMode());
     EXPECT_TRUE(opt.getLeaseType().is(CommandOptions::LeaseType::ADDRESS));
     EXPECT_EQ(0, opt.getRate());
     EXPECT_EQ(0, opt.getRenewRate());
     EXPECT_EQ(0, opt.getReleaseRate());
     EXPECT_EQ(0, opt.getReportDelay());
-    EXPECT_EQ(0, opt.getClientsNum());
+    EXPECT_EQ(0U, opt.getClientsNum());
 
     // default mac
     const uint8_t mac[6] = { 0x00, 0x0C, 0x01, 0x02, 0x03, 0x04 };
     std::vector<uint8_t> v1 = opt.getMacTemplate();
-    ASSERT_EQ(6, v1.size());
+    ASSERT_EQ(6U, v1.size());
     EXPECT_TRUE(std::equal(v1.begin(), v1.end(), mac));
 
     // Check if DUID is initialized. The DUID-LLT is expected
@@ -192,7 +192,7 @@ TEST_F(CommandOptionsTest, Defaults) {
     // DUID_LLT value, two octets of hardware type, 4 octets
     // of time value and 6 octets of variable link layer (MAC)
     // address.
-    const int duid_llt_size = 14;
+    const size_t duid_llt_size = 14;
     // DUID is not given from the command line but it is supposed
     // to be initialized by the CommandOptions private method
     // generateDuidTemplate().
@@ -218,8 +218,8 @@ TEST_F(CommandOptionsTest, Defaults) {
         EXPECT_GE(duration_sec, duration_from_template);
     }
 
-    EXPECT_EQ(0, opt.getBase().size());
-    EXPECT_EQ(0, opt.getNumRequests().size());
+    EXPECT_EQ(0U, opt.getBase().size());
+    EXPECT_EQ(0U, opt.getNumRequests().size());
     EXPECT_EQ(0, opt.getPeriod());
     for (size_t i = 0; i < opt.getDropTime().size(); ++i) {
         EXPECT_DOUBLE_EQ(1, opt.getDropTime()[i]);
@@ -234,16 +234,16 @@ TEST_F(CommandOptionsTest, Defaults) {
     EXPECT_EQ(0, opt.getPreload());
     EXPECT_EQ(0, opt.getLocalPort());
     EXPECT_FALSE(opt.isSeeded());
-    EXPECT_EQ(0, opt.getSeed());
+    EXPECT_EQ(0U, opt.getSeed());
     EXPECT_FALSE(opt.isBroadcast());
     EXPECT_FALSE(opt.isRapidCommit());
     EXPECT_FALSE(opt.isUseFirst());
     EXPECT_FALSE(opt.getAddrUnique());
     EXPECT_EQ(-1, opt.getIncreaseElapsedTime());
     EXPECT_EQ(-1, opt.getWaitForElapsedTime());
-    EXPECT_EQ(0, opt.getTemplateFiles().size());
-    EXPECT_EQ(0, opt.getTransactionIdOffset().size());
-    EXPECT_EQ(0, opt.getRandomOffset().size());
+    EXPECT_EQ(0U, opt.getTemplateFiles().size());
+    EXPECT_EQ(0U, opt.getTransactionIdOffset().size());
+    EXPECT_EQ(0U, opt.getRandomOffset().size());
     EXPECT_GT(0, opt.getElapsedTimeOffset());
     EXPECT_GT(0, opt.getServerIdOffset());
     EXPECT_GT(0, opt.getRequestedIpOffset());
@@ -296,12 +296,12 @@ TEST_F(CommandOptionsTest, UseRelayV6) {
 TEST_F(CommandOptionsTest, IpVersion) {
     CommandOptions opt;
     EXPECT_NO_THROW(process(opt, "perfdhcp -6 -l ethx -c -i all"));
-    EXPECT_EQ(6, opt.getIpVersion());
+    EXPECT_EQ(6U, opt.getIpVersion());
     EXPECT_EQ("ethx", opt.getLocalName());
     EXPECT_TRUE(opt.isRapidCommit());
     EXPECT_FALSE(opt.isBroadcast());
     process(opt, "perfdhcp -4 -B -l ethx all");
-    EXPECT_EQ(4, opt.getIpVersion());
+    EXPECT_EQ(4U, opt.getIpVersion());
     EXPECT_TRUE(opt.isBroadcast());
     EXPECT_FALSE(opt.isRapidCommit());
 
@@ -318,17 +318,17 @@ TEST_F(CommandOptionsTest, LeaseType) {
     CommandOptions opt;
     // Check that the -e address-only works for IPv6.
     ASSERT_NO_THROW(process(opt, "perfdhcp -6 -l etx -e address-only all"));
-    EXPECT_EQ(6, opt.getIpVersion());
+    EXPECT_EQ(6U, opt.getIpVersion());
     EXPECT_EQ("etx", opt.getLocalName());
     EXPECT_TRUE(opt.getLeaseType().is(CommandOptions::LeaseType::ADDRESS));
     // Check that the -e address-only works for IPv4.
     ASSERT_NO_THROW(process(opt, "perfdhcp -4 -l etx -e address-only all"));
-    EXPECT_EQ(4, opt.getIpVersion());
+    EXPECT_EQ(4U, opt.getIpVersion());
     EXPECT_EQ("etx", opt.getLocalName());
     EXPECT_TRUE(opt.getLeaseType().is(CommandOptions::LeaseType::ADDRESS));
     // Check that the -e prefix-only works.
     ASSERT_NO_THROW(process(opt, "perfdhcp -6 -l etx -e prefix-only all"));
-    EXPECT_EQ(6, opt.getIpVersion());
+    EXPECT_EQ(6U, opt.getIpVersion());
     EXPECT_EQ("etx", opt.getLocalName());
     EXPECT_TRUE(opt.getLeaseType().is(CommandOptions::LeaseType::PREFIX));
     // Check that -e prefix-only must not coexist with -4 option.
@@ -458,9 +458,9 @@ TEST_F(CommandOptionsTest, ReportDelay) {
 TEST_F(CommandOptionsTest, ClientsNum) {
     CommandOptions opt;
     EXPECT_NO_THROW(process(opt, "perfdhcp -R 200 -l ethx all"));
-    EXPECT_EQ(200, opt.getClientsNum());
+    EXPECT_EQ(200U, opt.getClientsNum());
     process(opt, "perfdhcp -R 0 -l ethx all");
-    EXPECT_EQ(0, opt.getClientsNum());
+    EXPECT_EQ(0U, opt.getClientsNum());
 
     // Negative test cases
     // Number of clients must be non-negative integer
@@ -535,12 +535,12 @@ TEST_F(CommandOptionsTest, Base) {
 TEST_F(CommandOptionsTest, DropTime) {
     CommandOptions opt;
     EXPECT_NO_THROW(process(opt, "perfdhcp -l ethx -d 12 all"));
-    ASSERT_EQ(2, opt.getDropTime().size());
+    ASSERT_EQ(2U, opt.getDropTime().size());
     EXPECT_DOUBLE_EQ(12, opt.getDropTime()[0]);
     EXPECT_DOUBLE_EQ(1, opt.getDropTime()[1]);
 
     EXPECT_NO_THROW(process(opt, "perfdhcp -l ethx -d 2 -d 4.7 all"));
-    ASSERT_EQ(2, opt.getDropTime().size());
+    ASSERT_EQ(2U, opt.getDropTime().size());
     EXPECT_DOUBLE_EQ(2, opt.getDropTime()[0]);
     EXPECT_DOUBLE_EQ(4.7, opt.getDropTime()[1]);
 
@@ -596,10 +596,10 @@ TEST_F(CommandOptionsTest, Offsets) {
     EXPECT_EQ(2, opt.getRequestedIpOffset());
     EXPECT_EQ(5, opt.getElapsedTimeOffset());
     EXPECT_EQ(3, opt.getServerIdOffset());
-    ASSERT_EQ(2, opt.getRandomOffset().size());
+    ASSERT_EQ(2U, opt.getRandomOffset().size());
     EXPECT_EQ(30, opt.getRandomOffset()[0]);
     EXPECT_EQ(30, opt.getRandomOffset()[1]);
-    ASSERT_EQ(2, opt.getTransactionIdOffset().size());
+    ASSERT_EQ(2U, opt.getTransactionIdOffset().size());
     EXPECT_EQ(7, opt.getTransactionIdOffset()[0]);
     EXPECT_EQ(3, opt.getTransactionIdOffset()[1]);
 
@@ -644,11 +644,11 @@ TEST_F(CommandOptionsTest, Preload) {
 TEST_F(CommandOptionsTest, Seed) {
     CommandOptions opt;
     EXPECT_NO_THROW(process(opt, "perfdhcp -6 -P 2 -s 23 -l ethx all"));
-    EXPECT_EQ(23, opt.getSeed());
+    EXPECT_EQ(23U, opt.getSeed());
     EXPECT_TRUE(opt.isSeeded());
 
     EXPECT_NO_THROW(process(opt, "perfdhcp -6 -P 2 -s 0 -l ethx all"));
-    EXPECT_EQ(0, opt.getSeed());
+    EXPECT_EQ(0U, opt.getSeed());
     EXPECT_FALSE(opt.isSeeded());
 
     // Negative test cases
@@ -662,11 +662,11 @@ TEST_F(CommandOptionsTest, Seed) {
 TEST_F(CommandOptionsTest, TemplateFiles) {
     CommandOptions opt;
     EXPECT_NO_THROW(process(opt, "perfdhcp -T file1.x -l ethx all"));
-    ASSERT_EQ(1, opt.getTemplateFiles().size());
+    ASSERT_EQ(1U, opt.getTemplateFiles().size());
     EXPECT_EQ("file1.x", opt.getTemplateFiles()[0]);
 
     EXPECT_NO_THROW(process(opt, "perfdhcp -T file1.x -s 12 -w start -T file2.x -4 -l ethx all"));
-    ASSERT_EQ(2, opt.getTemplateFiles().size());
+    ASSERT_EQ(2U, opt.getTemplateFiles().size());
     EXPECT_EQ("file1.x", opt.getTemplateFiles()[0]);
     EXPECT_EQ("file2.x", opt.getTemplateFiles()[1]);
 
@@ -838,7 +838,7 @@ TEST_F(CommandOptionsTest, LoadMacsFromFile) {
     EXPECT_EQ(mac_list_full_path, opt.getMacListFile());
 
     const CommandOptions::MacAddrsVector& m = opt.getMacsFromFile();
-    EXPECT_EQ(4, m.size());
+    EXPECT_EQ(4U, m.size());
 }
 
 TEST_F(CommandOptionsTest, LoadRelay4AddrFromFile) {
@@ -849,7 +849,7 @@ TEST_F(CommandOptionsTest, LoadRelay4AddrFromFile) {
     EXPECT_NO_THROW(process(opt, cmd.str()));
     EXPECT_EQ(relay_addr_list_full_path, opt.getRelayAddrListFile());
     EXPECT_TRUE(opt.checkMultiSubnet());
-    EXPECT_EQ(5, opt.getRelayAddrList().size());
+    EXPECT_EQ(5U, opt.getRelayAddrList().size());
 }
 
 TEST_F(CommandOptionsTest, LoadRelay6AddrFromFile) {
@@ -860,7 +860,7 @@ TEST_F(CommandOptionsTest, LoadRelay6AddrFromFile) {
     EXPECT_NO_THROW(process(opt, cmd.str()));
     EXPECT_EQ(relay_addr_list_full_path, opt.getRelayAddrListFile());
     EXPECT_TRUE(opt.checkMultiSubnet());
-    EXPECT_EQ(2, opt.getRelayAddrList().size());
+    EXPECT_EQ(2U, opt.getRelayAddrList().size());
 }
 
 TEST_F(CommandOptionsTest, RelayAddr6ForVersion4) {
@@ -870,7 +870,7 @@ TEST_F(CommandOptionsTest, RelayAddr6ForVersion4) {
     cmd << "perfdhcp -4 -J " << relay_addr_list_full_path << " abc";
     EXPECT_THROW(process(opt, cmd.str()), isc::InvalidParameter);
     EXPECT_FALSE(opt.checkMultiSubnet());
-    EXPECT_EQ(0, opt.getRelayAddrList().size());
+    EXPECT_EQ(0U, opt.getRelayAddrList().size());
 }
 
 TEST_F(CommandOptionsTest, RelayAddr4ForVersion6) {
@@ -880,9 +880,8 @@ TEST_F(CommandOptionsTest, RelayAddr4ForVersion6) {
     cmd << "perfdhcp -6 -J " << relay_addr_list_full_path << " abc";
     EXPECT_THROW(process(opt, cmd.str()), isc::InvalidParameter);
     EXPECT_FALSE(opt.checkMultiSubnet());
-    EXPECT_EQ(0, opt.getRelayAddrList().size());
+    EXPECT_EQ(0U, opt.getRelayAddrList().size());
 }
-
 
 TEST_F(CommandOptionsTest, LoadMacsFromFileNegativeCases) {
     CommandOptions opt;
@@ -906,7 +905,7 @@ TEST_F(CommandOptionsTest, UseRelayV6OptionsWithoutV6) {
     CommandOptions opt;
     EXPECT_NO_THROW(process(opt, "perfdhcp -6 -A1 --or 32,00000E10 -l ethx all"));
     EXPECT_TRUE(opt.isUseRelayedV6());
-    EXPECT_EQ(1, opt.getRelayOpts().size());
+    EXPECT_EQ(1U, opt.getRelayOpts().size());
 
     // --or must be used together with -6
     EXPECT_THROW(process(opt, "perfdhcp -A1 --or 32,00000E10 -l ethx all"), isc::InvalidParameter);
@@ -916,7 +915,7 @@ TEST_F(CommandOptionsTest, UseRelayV6OptionsWithoutRelayEncapsulation) {
     CommandOptions opt;
     EXPECT_NO_THROW(process(opt, "perfdhcp -6 -A1 --or 32,00000E10 -l ethx all"));
     EXPECT_TRUE(opt.isUseRelayedV6());
-    EXPECT_EQ(1, opt.getRelayOpts().size());
+    EXPECT_EQ(1U, opt.getRelayOpts().size());
 
     // --or must be used together with -A
     EXPECT_THROW(process(opt, "perfdhcp -6 --or 32,00000E10 -l ethx all"), isc::InvalidParameter);
@@ -928,7 +927,7 @@ TEST_F(CommandOptionsTest, UseMultipleRelayV6Options) {
                                  "23,20010DB800010000000000000000CAFE -l ethx all"));
     EXPECT_TRUE(opt.isUseRelayedV6());
     // 2 options expected at 1st level of encapsulation
-    EXPECT_EQ(2, opt.getRelayOpts().size());
+    EXPECT_EQ(2U, opt.getRelayOpts().size());
     // no options expected at 2nd level of encapsulation
     EXPECT_THROW(opt.getRelayOpts(2), isc::OutOfRange);
 }
@@ -942,10 +941,10 @@ TEST_F(CommandOptionsTest, UseRelayV6OptionsWithMultiSubnets) {
     EXPECT_NO_THROW(process(opt, cmd.str()));
     EXPECT_EQ(relay_addr_list_full_path, opt.getRelayAddrListFile());
     EXPECT_TRUE(opt.checkMultiSubnet());
-    EXPECT_EQ(2, opt.getRelayAddrList().size());
+    EXPECT_EQ(2U, opt.getRelayAddrList().size());
     EXPECT_TRUE(opt.isUseRelayedV6());
     // 2 options expected at 1st level of encapsulation
-    EXPECT_EQ(2, opt.getRelayOpts().size());
+    EXPECT_EQ(2U, opt.getRelayOpts().size());
     // no options expected at 2nd level of encapsulation
     EXPECT_THROW(opt.getRelayOpts(2), isc::OutOfRange);
 }
@@ -977,7 +976,7 @@ TEST_F(CommandOptionsTest, UseRelayV6OptionsWithEncapsulationLevel) {
     CommandOptions opt;
     EXPECT_NO_THROW(process(opt, "perfdhcp -6 -A1 --or 1:32,00000E10 -l ethx all"));
     EXPECT_TRUE(opt.isUseRelayedV6());
-    EXPECT_EQ(1, opt.getRelayOpts().size());
+    EXPECT_EQ(1U, opt.getRelayOpts().size());
 }
 
 TEST_F(CommandOptionsTest, UseRelayV6OptionsWithNegativeEncapsulationLevel) {
@@ -1014,7 +1013,7 @@ TEST_F(CommandOptionsTest, UseRelayV6OptionsDuplicated) {
     // multiple relayed options with the same option code are supported.
     EXPECT_NO_THROW(process(opt, "perfdhcp -6 -A1 --or 1:32,00000E10  --or 32,00000E11 -l ethx all"));
     EXPECT_TRUE(opt.isUseRelayedV6());
-    EXPECT_EQ(2, opt.getRelayOpts().size());
+    EXPECT_EQ(2U, opt.getRelayOpts().size());
 }
 
 

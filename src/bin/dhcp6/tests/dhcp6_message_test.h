@@ -67,9 +67,8 @@ public:
     /// @param subnets_num Number of subnets being created with the specified
     /// configuration.
     /// @param client Object representing a test DHCPv6 client to use.
-    void requestLease(const std::string& config, const int subnets_num,
+    void requestLease(const std::string& config, const size_t subnets_num,
                       Dhcp6Client& client);
-
 
 protected:
 

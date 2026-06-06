@@ -417,7 +417,7 @@ public:
 
             // Errors can be in a list.
             if (rsp->getType() == Element::list) {
-                ASSERT_EQ(1, rsp->size());
+                ASSERT_EQ(1U, rsp->size());
                 rsp = rsp->get(0);
             }
 
@@ -1191,7 +1191,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSet) {
     // Check that the config was indeed applied.
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     OptionDefinitionPtr def =
         LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
@@ -1220,7 +1220,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSet) {
 
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     def = LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
     ASSERT_TRUE(def);
@@ -1254,7 +1254,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSet) {
 
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(2, subnets->size());
+    EXPECT_EQ(2U, subnets->size());
 
     // Clean up after the test.
     CfgMgr::instance().clear();
@@ -1360,7 +1360,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSetLFCRunning) {
     // Check that the config was indeed applied.
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     OptionDefinitionPtr def =
         LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
@@ -1397,7 +1397,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSetLFCRunning) {
 
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     def = LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
     ASSERT_TRUE(def);
@@ -1509,7 +1509,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSetLFCRunning2) {
     // Check that the config was indeed applied.
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     OptionDefinitionPtr def =
         LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
@@ -1546,7 +1546,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSetLFCRunning2) {
 
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     def = LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
     ASSERT_TRUE(def);
@@ -1670,7 +1670,7 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, configSet) {
     // Check that the config was indeed applied.
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     OptionDefinitionPtr def =
         LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
@@ -1703,7 +1703,7 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, configSet) {
 
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     def = LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
     ASSERT_TRUE(def);
@@ -1737,7 +1737,7 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, configSet) {
 
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(2, subnets->size());
+    EXPECT_EQ(2U, subnets->size());
 
     // Clean up after the test.
     CfgMgr::instance().clear();
@@ -1855,7 +1855,7 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, configSetLFCRunning) {
     // Check that the config was indeed applied.
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     OptionDefinitionPtr def =
         LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
@@ -1889,7 +1889,7 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, configSetLFCRunning) {
 
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     def = LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
     ASSERT_TRUE(def);
@@ -2013,7 +2013,7 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, configSetLFCRunning2) {
     // Check that the config was indeed applied.
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     OptionDefinitionPtr def =
         LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
@@ -2047,7 +2047,7 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, configSetLFCRunning2) {
 
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     def = LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
     ASSERT_TRUE(def);
@@ -2122,7 +2122,7 @@ BaseCtrlChannelDhcpv4Test::testConfigHashGet() {
     ASSERT_TRUE(hash);
     ASSERT_EQ(Element::string, hash->getType());
     // SHA-256 -> 64 hex digits.
-    EXPECT_EQ(64, hash->stringValue().size());
+    EXPECT_EQ(64U, hash->stringValue().size());
 }
 
 TEST_F(HttpCtrlChannelDhcpv4Test, configHashGet) {
@@ -2211,7 +2211,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configTest) {
     // Check that the config was indeed applied.
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     // Create a config with malformed subnet that should fail to parse.
     os.str("");
@@ -2236,7 +2236,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configTest) {
 
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     // Create a valid config with two subnets and no command channel.
     os.str("");
@@ -2267,7 +2267,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configTest) {
 
     // Check that the config was not applied.
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     // Clean up after the test.
     CfgMgr::instance().clear();
@@ -2363,7 +2363,7 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, configTest) {
     // Check that the config was indeed applied.
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     // Create a config with malformed subnet that should fail to parse.
     os.str("");
@@ -2392,7 +2392,7 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, configTest) {
 
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     // Create a valid config with two subnets and no command channel.
     os.str("");
@@ -2423,7 +2423,7 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, configTest) {
 
     // Check that the config was not applied.
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     // Clean up after the test.
     CfgMgr::instance().clear();
@@ -2560,11 +2560,11 @@ BaseCtrlChannelDhcpv4Test::testStatusGet() {
     ASSERT_NO_THROW(response_list = Element::fromJSON(response_txt));
     ASSERT_TRUE(response_list);
     ASSERT_EQ(Element::list, response_list->getType());
-    EXPECT_EQ(1, response_list->size());
+    EXPECT_EQ(1U, response_list->size());
     ConstElementPtr response = response_list->get(0);
     ASSERT_TRUE(response);
     ASSERT_EQ(Element::map, response->getType());
-    EXPECT_EQ(2, response->size());
+    EXPECT_EQ(2U, response->size());
     ConstElementPtr result = response->get("result");
     ASSERT_TRUE(result);
     ASSERT_EQ(Element::integer, result->getType());
@@ -2615,11 +2615,11 @@ BaseCtrlChannelDhcpv4Test::testStatusGet() {
     ASSERT_NO_THROW(response_list = Element::fromJSON(response_txt));
     ASSERT_TRUE(response_list);
     ASSERT_EQ(Element::list, response_list->getType());
-    EXPECT_EQ(1, response_list->size());
+    EXPECT_EQ(1U, response_list->size());
     response = response_list->get(0);
     ASSERT_TRUE(response);
     ASSERT_EQ(Element::map, response->getType());
-    EXPECT_EQ(2, response->size());
+    EXPECT_EQ(2U, response->size());
     result = response->get("result");
     ASSERT_TRUE(result);
     ASSERT_EQ(Element::integer, result->getType());
@@ -2660,7 +2660,7 @@ BaseCtrlChannelDhcpv4Test::testStatusGet() {
     found_queue_stats = arguments->get("packet-queue-statistics");
     ASSERT_TRUE(found_queue_stats);
     ASSERT_EQ(Element::list, found_queue_stats->getType());
-    EXPECT_EQ(3, found_queue_stats->size());
+    EXPECT_EQ(3U, found_queue_stats->size());
 }
 
 TEST_F(HttpCtrlChannelDhcpv4Test, statusGet) {
@@ -2684,7 +2684,7 @@ BaseCtrlChannelDhcpv4Test::testNoManagers() {
     ASSERT_NO_THROW(response_list = Element::fromJSON(response_text));
     ASSERT_TRUE(response_list);
     ASSERT_EQ(Element::list, response_list->getType());
-    EXPECT_EQ(1, response_list->size());
+    EXPECT_EQ(1U, response_list->size());
     ConstElementPtr response = response_list->get(0);
     ASSERT_TRUE(response);
     ASSERT_EQ(Element::map, response->getType());
@@ -2719,7 +2719,7 @@ BaseCtrlChannelDhcpv4Test::testStatusGetSockets() {
     ASSERT_NO_THROW(response_list = Element::fromJSON(response_text));
     ASSERT_TRUE(response_list);
     ASSERT_EQ(Element::list, response_list->getType());
-    EXPECT_EQ(1, response_list->size());
+    EXPECT_EQ(1U, response_list->size());
     ConstElementPtr response = response_list->get(0);
     ASSERT_TRUE(response);
     ASSERT_EQ(Element::map, response->getType());
@@ -2771,7 +2771,7 @@ BaseCtrlChannelDhcpv4Test::testStatusGetSocketsErrors() {
     ASSERT_NO_THROW(response_list = Element::fromJSON(response_text));
     ASSERT_TRUE(response_list);
     ASSERT_EQ(Element::list, response_list->getType());
-    EXPECT_EQ(1, response_list->size());
+    EXPECT_EQ(1U, response_list->size());
     ConstElementPtr response = response_list->get(0);
     ASSERT_TRUE(response);
     ASSERT_EQ(Element::map, response->getType());
@@ -2795,7 +2795,7 @@ BaseCtrlChannelDhcpv4Test::testStatusGetSocketsErrors() {
     ConstElementPtr errors(sockets->get("errors"));
     ASSERT_TRUE(errors);
     ASSERT_EQ(Element::list, errors->getType());
-    ASSERT_EQ(2, errors->size());
+    ASSERT_EQ(2U, errors->size());
 
     ConstElementPtr error(errors->get(0));
     ASSERT_TRUE(error);
@@ -3374,7 +3374,7 @@ BaseCtrlChannelDhcpv4Test::testConfigReloadValid() {
     // Check that the config was indeed applied.
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(2, subnets->size());
+    EXPECT_EQ(2U, subnets->size());
 
     ::remove("test8.json");
 }
@@ -3454,7 +3454,7 @@ BaseCtrlChannelDhcpv4Test::testConfigReloadDetectInterfaces() {
     // Check that the config was indeed applied.
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(2, subnets->size());
+    EXPECT_EQ(2U, subnets->size());
 
     ::remove("test8.json");
 }
@@ -4820,7 +4820,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, noListenerChange) {
     // Check that the config was indeed applied.
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     OptionDefinitionPtr def =
         LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
@@ -4843,7 +4843,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, noListenerChange) {
 
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     // Clean up after the test.
     CfgMgr::instance().clear();
@@ -4955,7 +4955,7 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, noListenerChange) {
     // Check that the config was indeed applied.
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     OptionDefinitionPtr def =
         LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
@@ -4982,7 +4982,7 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, noListenerChange) {
 
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     // Clean up after the test.
     CfgMgr::instance().clear();
@@ -5085,7 +5085,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, handleHttpToHttpsSwitch) {
     // Check that the config was indeed applied.
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     OptionDefinitionPtr def =
         LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
@@ -5128,7 +5128,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, handleHttpToHttpsSwitch) {
 
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     // Clean up after the test.
     CfgMgr::instance().clear();
@@ -5240,7 +5240,7 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, handleHttpsToHttpSwitch) {
     // Check that the config was indeed applied.
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     OptionDefinitionPtr def =
         LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
@@ -5283,7 +5283,7 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, handleHttpsToHttpSwitch) {
 
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(1, subnets->size());
+    EXPECT_EQ(1U, subnets->size());
 
     // Clean up after the test.
     CfgMgr::instance().clear();

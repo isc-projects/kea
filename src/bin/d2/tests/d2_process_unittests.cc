@@ -340,7 +340,7 @@ TEST_F(D2ProcessTest, queueFullRecovery) {
         // Verify that the request can be added to the queue and queue
         // size increments accordingly.
         ASSERT_NO_THROW(queue_mgr->enqueue(ncr));
-        ASSERT_EQ(i+1, queue_mgr->getQueueSize());
+        ASSERT_EQ(i + 1, queue_mgr->getQueueSize());
     }
 
     // Since we are not really receiving, we will simulate QUEUE FULL
@@ -557,7 +557,7 @@ TEST_F(D2ProcessTest, canShutdown) {
     dhcp_ddns::NameChangeRequestPtr ncr;
     ASSERT_NO_THROW(ncr = dhcp_ddns::NameChangeRequest::fromJSON(test_msg));
     ASSERT_NO_THROW(queue_mgr->enqueue(ncr));
-    ASSERT_EQ(1, queue_mgr->getQueueSize());
+    ASSERT_EQ(1U, queue_mgr->getQueueSize());
 
     // Queue Manager is stopped. Queue is not empty, no transactions.
     // SD_DRAIN_FIRST should be false, SD_NORMAL and SD_NOW should be true.
@@ -570,8 +570,8 @@ TEST_F(D2ProcessTest, canShutdown) {
     const D2UpdateMgrPtr& update_mgr = getD2UpdateMgr();
     ASSERT_TRUE(update_mgr);
     ASSERT_NO_THROW(update_mgr->sweep());
-    ASSERT_EQ(0, queue_mgr->getQueueSize());
-    ASSERT_EQ(1, update_mgr->getTransactionCount());
+    ASSERT_EQ(0U, queue_mgr->getQueueSize());
+    ASSERT_EQ(1U, update_mgr->getTransactionCount());
 
     // Queue Manager is stopped. Queue is empty, one transaction.
     // Only SD_NOW should be true.

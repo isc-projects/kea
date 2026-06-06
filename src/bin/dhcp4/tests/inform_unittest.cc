@@ -240,19 +240,19 @@ TEST_F(InformTest, directClientBroadcast) {
     EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
 
     // Make sure that the Routers option has been received.
-    ASSERT_EQ(2, client.config_.routers_.size());
+    ASSERT_EQ(2U, client.config_.routers_.size());
     EXPECT_EQ("10.0.0.200", client.config_.routers_[0].toText());
     EXPECT_EQ("10.0.0.201", client.config_.routers_[1].toText());
     // Make sure that the DNS Servers option has been received.
-    ASSERT_EQ(2, client.config_.dns_servers_.size());
+    ASSERT_EQ(2U, client.config_.dns_servers_.size());
     EXPECT_EQ("10.0.0.202", client.config_.dns_servers_[0].toText());
     EXPECT_EQ("10.0.0.203", client.config_.dns_servers_[1].toText());
     // Make sure that the Log Servers option has been received.
-    ASSERT_EQ(2, client.config_.quotes_servers_.size());
+    ASSERT_EQ(2U, client.config_.quotes_servers_.size());
     EXPECT_EQ("10.0.0.200", client.config_.quotes_servers_[0].toText());
     EXPECT_EQ("10.0.0.201", client.config_.quotes_servers_[1].toText());
     // Make sure that the Quotes Servers option has been received.
-    ASSERT_EQ(2, client.config_.log_servers_.size());
+    ASSERT_EQ(2U, client.config_.log_servers_.size());
     EXPECT_EQ("10.0.0.202", client.config_.log_servers_[0].toText());
     EXPECT_EQ("10.0.0.203", client.config_.log_servers_[1].toText());
 
@@ -281,11 +281,11 @@ TEST_F(InformTest, directClientBroadcast) {
     // Make sure that the server id is present.
     EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
     // Make sure that the Routers option has been received.
-    ASSERT_EQ(2, client.config_.routers_.size());
+    ASSERT_EQ(2U, client.config_.routers_.size());
     EXPECT_EQ("10.0.0.200", client.config_.routers_[0].toText());
     EXPECT_EQ("10.0.0.201", client.config_.routers_[1].toText());
     // Make sure that the DNS Servers option has been received.
-    ASSERT_EQ(2, client.config_.dns_servers_.size());
+    ASSERT_EQ(2U, client.config_.dns_servers_.size());
     EXPECT_EQ("10.0.0.202", client.config_.dns_servers_[0].toText());
     EXPECT_EQ("10.0.0.203", client.config_.dns_servers_[1].toText());
     // Make sure that the Quotes Servers option hasn't been received.
@@ -333,11 +333,11 @@ TEST_F(InformTest, directClientUnicast) {
     // Make sure that the server id is present.
     EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
     // Make sure that the Routers option has been received.
-    ASSERT_EQ(2, client.config_.routers_.size());
+    ASSERT_EQ(2U, client.config_.routers_.size());
     EXPECT_EQ("10.0.0.200", client.config_.routers_[0].toText());
     EXPECT_EQ("10.0.0.201", client.config_.routers_[1].toText());
     // Make sure that the DNS Servers option has been received.
-    ASSERT_EQ(2, client.config_.dns_servers_.size());
+    ASSERT_EQ(2U, client.config_.dns_servers_.size());
     EXPECT_EQ("10.0.0.202", client.config_.dns_servers_[0].toText());
     EXPECT_EQ("10.0.0.203", client.config_.dns_servers_[1].toText());
 }
@@ -369,11 +369,11 @@ TEST_F(InformTest, directClientNoCiaddr) {
     // Make sure that the server id is present.
     EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
     // Make sure that the Routers option has been received.
-    ASSERT_EQ(2, client.config_.routers_.size());
+    ASSERT_EQ(2U, client.config_.routers_.size());
     EXPECT_EQ("10.0.0.200", client.config_.routers_[0].toText());
     EXPECT_EQ("10.0.0.201", client.config_.routers_[1].toText());
     // Make sure that the DNS Servers option has been received.
-    ASSERT_EQ(2, client.config_.dns_servers_.size());
+    ASSERT_EQ(2U, client.config_.dns_servers_.size());
     EXPECT_EQ("10.0.0.202", client.config_.dns_servers_[0].toText());
     EXPECT_EQ("10.0.0.203", client.config_.dns_servers_[1].toText());
 }
@@ -408,19 +408,19 @@ TEST_F(InformTest, relayedClient) {
     // Make sure that the server id is present.
     EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
     // Make sure that the Routers option has been received.
-    ASSERT_EQ(2, client.config_.routers_.size());
+    ASSERT_EQ(2U, client.config_.routers_.size());
     EXPECT_EQ("192.0.2.200", client.config_.routers_[0].toText());
     EXPECT_EQ("192.0.2.201", client.config_.routers_[1].toText());
     // Make sure that the DNS Servers option has been received.
-    ASSERT_EQ(2, client.config_.dns_servers_.size());
+    ASSERT_EQ(2U, client.config_.dns_servers_.size());
     EXPECT_EQ("192.0.2.202", client.config_.dns_servers_[0].toText());
     EXPECT_EQ("192.0.2.203", client.config_.dns_servers_[1].toText());
     // Make sure that the Quotes Servers option has been received.
-    ASSERT_EQ(2, client.config_.quotes_servers_.size());
+    ASSERT_EQ(2U, client.config_.quotes_servers_.size());
     EXPECT_EQ("10.0.0.202", client.config_.quotes_servers_[0].toText());
     EXPECT_EQ("10.0.0.203", client.config_.quotes_servers_[1].toText());
     // Make sure that the Log Servers option has been received.
-    ASSERT_EQ(2, client.config_.log_servers_.size());
+    ASSERT_EQ(2U, client.config_.log_servers_.size());
     EXPECT_EQ("10.0.0.200", client.config_.log_servers_[0].toText());
     EXPECT_EQ("10.0.0.201", client.config_.log_servers_[1].toText());
 }
@@ -443,7 +443,7 @@ TEST_F(InformTest, relayedClientNoCiaddr) {
     // Response should go through a relay as there is no ciaddr.
     EXPECT_EQ(IOAddress("192.0.2.2"), resp->getLocalAddr());
     EXPECT_EQ(IOAddress("192.0.2.2"), resp->getGiaddr());
-    EXPECT_EQ(1, resp->getHops());
+    EXPECT_EQ(1U, resp->getHops());
     EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
     EXPECT_EQ(DHCP4_SERVER_PORT, resp->getRemotePort());
     // In the case when the client didn't set the ciaddr and the message
@@ -453,11 +453,11 @@ TEST_F(InformTest, relayedClientNoCiaddr) {
     // Make sure that the server id is present.
     EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
     // Make sure that the Routers option has been received.
-    ASSERT_EQ(2, client.config_.routers_.size());
+    ASSERT_EQ(2U, client.config_.routers_.size());
     EXPECT_EQ("192.0.2.200", client.config_.routers_[0].toText());
     EXPECT_EQ("192.0.2.201", client.config_.routers_[1].toText());
     // Make sure that the DNS Servers option has been received.
-    ASSERT_EQ(2, client.config_.dns_servers_.size());
+    ASSERT_EQ(2U, client.config_.dns_servers_.size());
     EXPECT_EQ("192.0.2.202", client.config_.dns_servers_[0].toText());
     EXPECT_EQ("192.0.2.203", client.config_.dns_servers_[1].toText());
 }
@@ -550,7 +550,7 @@ TEST_F(InformTest, messageFieldsLongOptions) {
     uint32_t count = 0;
     uint8_t index = 0;
     for (auto const& opt : client.getContext().query_->options_) {
-        if (opt.first == 231) {
+        if (opt.first == 231U) {
             for (auto const& value : opt.second->getData()) {
                 ASSERT_EQ(value, index);
                 index++;
@@ -558,7 +558,7 @@ TEST_F(InformTest, messageFieldsLongOptions) {
             count++;
         }
     }
-    ASSERT_EQ(1, count);
+    ASSERT_EQ(1U, count);
 
     count = 0;
     for (auto const& opt : resp->options_) {
@@ -576,7 +576,7 @@ TEST_F(InformTest, messageFieldsLongOptions) {
         }
     }
     // Multiple options should have been fused by the server on unpack.
-    ASSERT_EQ(count, 1);
+    ASSERT_EQ(count, 1U);
 
     // Check that the reserved and requested values have been assigned.
     string expected =
@@ -594,7 +594,7 @@ TEST_F(InformTest, messageFieldsLongOptions) {
         }
     }
     // Multiple options should have been fused by the server on unpack.
-    ASSERT_EQ(count, 1);
+    ASSERT_EQ(count, 1U);
     ASSERT_EQ(value, string("data") + expected + string("-data"));
 }
 

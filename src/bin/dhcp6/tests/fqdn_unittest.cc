@@ -402,7 +402,7 @@ public:
             if (exp_fwd.value_ || exp_rev.value_) {
                 // Should have created 1 NCR.
                 NameChangeRequestPtr ncr;
-                ASSERT_EQ(1, d2_mgr_.getQueueSize());
+                ASSERT_EQ(1U, d2_mgr_.getQueueSize());
                 ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
                 ASSERT_TRUE(ncr);
                 EXPECT_EQ(dhcp_ddns::CHG_ADD, ncr->getChangeType());
@@ -411,7 +411,7 @@ public:
                 ASSERT_NO_THROW(d2_mgr_.runReadyIO());
             } else {
                 // Should not have created any NCRs.
-                EXPECT_EQ(0, d2_mgr_.getQueueSize());
+                EXPECT_EQ(0U, d2_mgr_.getQueueSize());
             }
         }
     }
@@ -670,14 +670,15 @@ public:
     /// @param pool_idx Element index of the desired pool within the desired subnet
     /// @param type lease type of desired pool
     ///
-    void setSubnetAndPool(int subnet_idx, int pool_idx, Lease::Type type) {
+    void setSubnetAndPool(unsigned subnet_idx, unsigned pool_idx,
+                          Lease::Type type) {
         ConstCfgSubnets6Ptr subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6();
         ASSERT_TRUE(subnets);
         const Subnet6Collection* subnet_col = subnets->getAll();
         ASSERT_EQ(subnet_idx + 1, subnet_col->size());
         auto subnet_it = subnet_col->begin();
         // std::advance is not available for this iterator.
-        for (int i = 0; i < subnet_idx; ++i) {
+        for (unsigned i = 0; i < subnet_idx; ++i) {
             subnet_it = std::next(subnet_it);
         }
         subnet_ = *subnet_it;
@@ -737,7 +738,7 @@ public:
         answer->addOption(fqdn);
 
         ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
-        ASSERT_EQ(1, d2_mgr_.getQueueSize());
+        ASSERT_EQ(1U, d2_mgr_.getQueueSize());
 
         // Verify that NameChangeRequest is correct.
         verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
@@ -864,7 +865,7 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoFQDN) {
     ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
 
     // There should be no new NameChangeRequests.
-    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr_.getQueueSize());
 }
 
 // Test that NameChangeRequests are not generated if an answer message
@@ -884,7 +885,7 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoAddr) {
 
     // We didn't add any IAs, so there should be no NameChangeRequests in the
     // queue.
-    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr_.getQueueSize());
 }
 
 // Test that exactly one NameChangeRequest is created as a result of processing
@@ -913,7 +914,7 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
 
 
     ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
 
     // Verify that NameChangeRequest is correct.
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
@@ -947,7 +948,7 @@ TEST_F(FqdnDhcpv6SrvTest, noConflictResolution) {
     answer->addOption(fqdn);
 
     ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
 
     // Verify that NameChangeRequest is correct.
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
@@ -997,7 +998,7 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestFwdRev) {
 
     ASSERT_NO_THROW(queueNCR(CHG_REMOVE, lease_));
 
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
                             "2001:db8:1::1",
                             "000201415AA33D1187D148275136FA30300478"
@@ -1034,7 +1035,7 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestRev) {
 
     ASSERT_NO_THROW(queueNCR(CHG_REMOVE, lease_));
 
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
 
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, false,
                             "2001:db8:1::1",
@@ -1051,7 +1052,7 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestNoUpdate) {
 
     ASSERT_NO_THROW(queueNCR(CHG_REMOVE, lease_));
 
-    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr_.getQueueSize());
 }
 
 // Test that NameChangeRequest is not generated if the hostname hasn't been
@@ -1064,7 +1065,7 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestNoHostname) {
     Pkt6Ptr pkt(new Pkt6(DHCPREQUEST, 1234));
     ASSERT_NO_THROW(queueNCR(CHG_REMOVE, lease_));
 
-    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr_.getQueueSize());
 }
 
 // Test that NameChangeRequest is not generated if the invalid hostname has
@@ -1077,7 +1078,7 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestWrongHostname) {
 
     ASSERT_NO_THROW(queueNCR(CHG_REMOVE, lease_));
 
-    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr_.getQueueSize());
 }
 
 // Test that Advertise message generated in a response to the Solicit will
@@ -1087,7 +1088,7 @@ TEST_F(FqdnDhcpv6SrvTest, processSolicit) {
     // response using processSolicit function.
     testProcessMessage(DHCPV6_SOLICIT, "myhost.example.com",
                        "myhost.example.com.");
-    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr_.getQueueSize());
 }
 
 // Test that client may send two requests, each carrying FQDN option with
@@ -1107,7 +1108,7 @@ TEST_F(FqdnDhcpv6SrvTest, processTwoRequestsDiffFqdn) {
                                                    IOAddress("2001:db8:1:1::dead:beef"));
     ASSERT_TRUE(lease_);
 
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
@@ -1123,7 +1124,7 @@ TEST_F(FqdnDhcpv6SrvTest, processTwoRequestsDiffFqdn) {
     // remove the existing entries, one to add new entries.
     testProcessMessage(DHCPV6_REQUEST, "otherhost.example.com",
                        "otherhost.example.com.");
-    ASSERT_EQ(2, d2_mgr_.getQueueSize());
+    ASSERT_EQ(2U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
@@ -1152,7 +1153,7 @@ TEST_F(FqdnDhcpv6SrvTest, processTwoRequestsSameFqdn) {
                                                    IOAddress("2001:db8:1:1::dead:beef"));
     ASSERT_TRUE(lease_);
 
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
@@ -1164,7 +1165,7 @@ TEST_F(FqdnDhcpv6SrvTest, processTwoRequestsSameFqdn) {
     // left alone, so we expect no NameChangeRequests queued..
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
                        "myhost.example.com.");
-    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr_.getQueueSize());
 }
 
 // Test that NameChangeRequest is not generated when Solicit message is sent.
@@ -1179,7 +1180,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestSolicit) {
     // to add both reverse and forward mapping to DNS.
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
                        "myhost.example.com.");
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
@@ -1192,7 +1193,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestSolicit) {
     // Request or Renew.
     testProcessMessage(DHCPV6_SOLICIT, "otherhost.example.com",
                        "otherhost.example.com.");
-    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr_.getQueueSize());
 }
 
 // Test that client may send Request followed by the Renew, both holding
@@ -1213,7 +1214,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewDiffFqdn) {
                                                    IOAddress("2001:db8:1:1::dead:beef"));
     ASSERT_TRUE(lease_);
 
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
@@ -1229,7 +1230,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewDiffFqdn) {
     // remove the existing entries, one to add new entries.
     testProcessMessage(DHCPV6_RENEW, "otherhost.example.com",
                        "otherhost.example.com.");
-    ASSERT_EQ(2, d2_mgr_.getQueueSize());
+    ASSERT_EQ(2U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
@@ -1254,21 +1255,21 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewSameFqdn) {
     // to add both reverse and forward mapping to DNS.
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
                        "myhost.example.com.");
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             4000);
 
-    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr_.getQueueSize());
 
     // Client may send Renew message with a same domain-name. In this
     // case the same lease will be returned. No DNS updates should be
     // required, so the NCR queue should be empty.
     testProcessMessage(DHCPV6_RENEW, "myhost.example.com",
                        "myhost.example.com.");
-    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr_.getQueueSize());
 }
 
 // Tests that renewals using the same domain name but differing values for
@@ -1286,14 +1287,14 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewFqdnFlags) {
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
                        "myhost.example.com.", Option6ClientFqdn::FLAG_N);
     // Queue should be empty.
-    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr_.getQueueSize());
 
     // Now renew with Both N and S = 0.  This means the server should only
     // do reverse updates and should result in a reverse-only NCR.
     testProcessMessage(DHCPV6_RENEW, "myhost.example.com",
                        "myhost.example.com.", 0);
     // We should a only have reverse-only ADD, no remove.
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, false,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
@@ -1304,7 +1305,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewFqdnFlags) {
     testProcessMessage(DHCPV6_RENEW, "myhost.example.com",
                        "myhost.example.com.", 0);
     // Queue should be empty.
-    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr_.getQueueSize());
 
     // Renew with both N and S flags = 0. This tells the server to update
     // both directions, which should change forward flag to true. This should
@@ -1319,7 +1320,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewFqdnFlags) {
     ASSERT_TRUE(lease_);
 
     // We should have two NCRs, one remove and one add.
-    ASSERT_EQ(2, d2_mgr_.getQueueSize());
+    ASSERT_EQ(2U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, false,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
@@ -1337,7 +1338,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewFqdnFlags) {
     testProcessMessage(DHCPV6_RENEW, "myhost.example.com",
                        "myhost.example.com.", Option6ClientFqdn::FLAG_N);
     // We should only have the removal NCR.
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
@@ -1361,7 +1362,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
                                                    IOAddress("2001:db8:1:1::dead:beef"));
     ASSERT_TRUE(lease_);
 
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
@@ -1374,7 +1375,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
     // remove DNS entries is generated.
     testProcessMessage(DHCPV6_RELEASE, "otherhost.example.com",
                        "otherhost.example.com.");
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
@@ -1395,7 +1396,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestReleaseNoDelete) {
                                                    IOAddress("2001:db8:1:1::dead:beef"));
     ASSERT_TRUE(lease_);
 
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
@@ -1406,7 +1407,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestReleaseNoDelete) {
     // expired and no NameChangeRequest to remove DNS entries is generated.
     testProcessMessage(DHCPV6_RELEASE, "otherhost.example.com",
                        "otherhost.example.com.");
-    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr_.getQueueSize());
 }
 
 // Checks that the server include DHCPv6 Client FQDN option in its
@@ -1418,7 +1419,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestWithoutFqdn) {
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
                        "myhost.example.com.", Option6ClientFqdn::FLAG_S,
                        IOAddress("2001:db8:1:1::dead:beef"), false);
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
@@ -1433,7 +1434,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestEmptyFqdn) {
                        "myhost-2001-db8-1-1--dead-beef.example.com.",
                        Option6ClientFqdn::FLAG_S,
                        IOAddress("2001:db8:1:1::dead:beef"), false);
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201C905E54BE12DE6AF92ADE72752B9F362"
@@ -1468,7 +1469,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestReuseExpiredLease) {
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
                        "myhost.example.com.");
     // Test that the appropriate NameChangeRequest has been generated.
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
 
     // Get the lease acquired.
     Lease6Ptr lease =
@@ -1502,7 +1503,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestReuseExpiredLease) {
     // reuse this lease.
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com.",
                        "myhost.example.com.");
-    ASSERT_EQ(2, d2_mgr_.getQueueSize());
+    ASSERT_EQ(2U, d2_mgr_.getQueueSize());
     // The first name change request generated, should remove a DNS
     // mapping for an expired lease.
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
@@ -1521,7 +1522,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestReuseExpiredLease) {
 TEST_F(FqdnDhcpv6SrvTest, processClientDelegation) {
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
                        "myhost.example.com.", 0);
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, false,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
@@ -1795,7 +1796,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsScopeTest) {
     EXPECT_EQ("one.example.org.", fqdn->getDomainName());
 
     // ddns-send-updates for subnet 1 should be off, so we should NOT have an NRC.
-    ASSERT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    ASSERT_EQ(0U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 
     // Now let's try with a client on subnet 2.
     Dhcp6Client client2(srv_);
@@ -1822,7 +1823,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsScopeTest) {
     ASSERT_TRUE(p->getEnableUpdates());
 
     // ddns-send-updates for subnet 2 are enabled, verify the NCR is correct.
-    ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    ASSERT_EQ(1U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true, "2001:db8:2::1",
                             "", 4000);
 }
@@ -1897,7 +1898,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest) {
     EXPECT_EQ("client1.one.example.com.", fqdn->getDomainName());
 
     // ddns-send-updates for subnet 1 are enabled, verify the NCR is correct.
-    ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    ASSERT_EQ(1U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true, "2001:db8:1::1",
                             "", 4000, "client1.one.example.com.");
 
@@ -1931,7 +1932,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest) {
     EXPECT_EQ("client2.two.example.com.", fqdn->getDomainName());
 
     // ddns-send-updates for subnet 2 are enabled, verify the NCR is correct.
-    ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    ASSERT_EQ(1U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true, "2001:db8:2::1",
                             "", 4000, "client2.two.example.com.");
 
@@ -1956,7 +1957,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest) {
 
     // ddns-send-updates for subnet 2 are enabled, but currently a renew/rebind does
     // not update, unless the FQDN or flags change.
-    ASSERT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    ASSERT_EQ(0U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 
     // Make sure the lease hostname is still correct.
     lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::1"));
@@ -1976,7 +1977,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest) {
 
     // ddns-send-updates for subnet 1 are enabled, but currently a renew/rebind does
     // not update, unless the FQDN or flags change.
-    ASSERT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    ASSERT_EQ(0U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 
     // Make sure the lease hostname and fqdn flags are correct.
     lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
@@ -2054,7 +2055,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest2) {
     EXPECT_EQ("client1.one.example.com.", fqdn->getDomainName());
 
     // ddns-send-updates for subnet 1 are enabled, verify the NCR is correct.
-    ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    ASSERT_EQ(1U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true, "2001:db8:1::1",
                             "", 4000, "client1.one.example.com.");
 
@@ -2088,7 +2089,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest2) {
     EXPECT_EQ("client2.two.example.com.", fqdn->getDomainName());
 
     // ddns-send-updates for subnet 2 are disabled, verify there is no NCR.
-    ASSERT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    ASSERT_EQ(0U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 
     // Make sure the lease hostname and fdqn flags are correct.
     lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::1"));
@@ -2174,10 +2175,10 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
 
             if (!scenario.send_updates_ || scenario.old_fqdn_.empty()) {
                 // We should not have an NCR.
-                ASSERT_EQ(0, d2_mgr_.getQueueSize());
+                ASSERT_EQ(0U, d2_mgr_.getQueueSize());
             } else {
                 // We should have an NCR add.
-                ASSERT_EQ(1, d2_mgr_.getQueueSize());
+                ASSERT_EQ(1U, d2_mgr_.getQueueSize());
                 verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                                         old_lease->addr_.toText(), "",
                                         old_lease->valid_lft_,
@@ -2408,9 +2409,9 @@ TEST_F(FqdnDhcpv6SrvTest, poolDdnsParametersTest) {
 
         // Verify the NCR if we expect one.
         if (!scenario.expect_ncr_) {
-            ASSERT_EQ(0, d2_mgr_.getQueueSize());
+            ASSERT_EQ(0U, d2_mgr_.getQueueSize());
         } else {
-            ASSERT_EQ(1, d2_mgr_.getQueueSize());
+            ASSERT_EQ(1U, d2_mgr_.getQueueSize());
             verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                                     scenario.expected_address_.toText(),
                                     scenario.expected_dhcid_,

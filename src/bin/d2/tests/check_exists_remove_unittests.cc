@@ -657,7 +657,6 @@ TEST_F(CheckExistsRemoveTransactionTest, removingFwdAddrsHandler_FqdnNotInUse) {
               name_remove->getNextEvent());
 }
 
-
 // Tests removingFwdAddrsHandler with the following scenario:
 //
 //  The request includes a forward and reverse change.
@@ -700,7 +699,6 @@ TEST_F(CheckExistsRemoveTransactionTest, removingFwdAddrsHandler_OtherRcode) {
     EXPECT_EQ(NameChangeTransaction::UPDATE_FAILED_EVT,
               name_remove->getNextEvent());
 }
-
 
 // Tests removingFwdAddrsHandler with the following scenario:
 //
@@ -1516,7 +1514,6 @@ TEST_F(CheckExistsRemoveTransactionTest, processRemoveOkHandler) {
     EXPECT_EQ(StateModel::END_ST, name_remove->getCurrState());
     EXPECT_EQ(StateModel::END_EVT, name_remove->getNextEvent());
 
-
     // Create and prep transaction, poised to run the handler but with an
     // invalid event.
     ASSERT_NO_THROW(name_remove =
@@ -1734,7 +1731,7 @@ TEST_F(CheckExistsRemoveTransactionTest,
     ASSERT_NO_THROW(name_remove->removingFwdAddrsHandler());
 
     // Verify we did not attempt to send anything.
-    EXPECT_EQ(0, name_remove->getUpdateAttempts());
+    EXPECT_EQ(0U, name_remove->getUpdateAttempts());
 
     // Completion flags should be false.
     EXPECT_FALSE(name_remove->getForwardChangeCompleted());
@@ -1774,7 +1771,7 @@ TEST_F(CheckExistsRemoveTransactionTest,
     ASSERT_NO_THROW(name_remove->removingFwdRRsHandler());
 
     // Verify we did not attempt to send anything.
-    EXPECT_EQ(0, name_remove->getUpdateAttempts());
+    EXPECT_EQ(0U, name_remove->getUpdateAttempts());
 
     // Completion flags should be false.
     EXPECT_FALSE(name_remove->getForwardChangeCompleted());
@@ -1814,7 +1811,7 @@ TEST_F(CheckExistsRemoveTransactionTest,
     ASSERT_NO_THROW(name_remove->removingRevPtrsHandler());
 
     // Verify we did not attempt to send anything.
-    EXPECT_EQ(0, name_remove->getUpdateAttempts());
+    EXPECT_EQ(0U, name_remove->getUpdateAttempts());
 
     // Completion flags should be false.
     EXPECT_FALSE(name_remove->getForwardChangeCompleted());

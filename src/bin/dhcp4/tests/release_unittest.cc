@@ -147,7 +147,7 @@ ReleaseTest::acquireAndRelease(const std::string& hw_address_1,
     // Let's get the subnet-id and generate statistics name out of it
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     name << "subnet[" << (*subnets->begin())->getID() << "].assigned-addresses";
 
     ObservationPtr assigned_cnt = StatsMgr::instance().getObservation(name.str());
@@ -177,7 +177,7 @@ ReleaseTest::acquireAndRelease(const std::string& hw_address_1,
         ASSERT_TRUE(lease);
 
         // The update succeeded, so the assigned-address should be expired
-        EXPECT_EQ(lease->valid_lft_, 0);
+        EXPECT_EQ(lease->valid_lft_, 0U);
         EXPECT_EQ(Lease4::STATE_RELEASED, lease->state_);
 
         // The release succeeded, so the assigned-addresses statistic should
@@ -417,7 +417,7 @@ TEST_F(ReleaseTest, releaseNoDeleteNoSubnet) {
     ASSERT_TRUE(lease);
 
     // Check That the lease has been expired
-    EXPECT_EQ(lease->valid_lft_, 0);
+    EXPECT_EQ(lease->valid_lft_, 0U);
 }
 
 // This test verifies that an incoming RELEASE for an address within
@@ -477,7 +477,7 @@ TEST_F(ReleaseTest, releaseAndReclaim) {
     // Let's get the subnet-id and generate statistics name out of it
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     name << "subnet[" << (*subnets->begin())->getID() << "].assigned-addresses";
 
     ObservationPtr assigned_cnt = StatsMgr::instance().getObservation(name.str());
@@ -498,7 +498,7 @@ TEST_F(ReleaseTest, releaseAndReclaim) {
     ASSERT_TRUE(lease);
 
     // Check That the lease has been expired
-    EXPECT_EQ(lease->valid_lft_, 0);
+    EXPECT_EQ(lease->valid_lft_, 0U);
 
     assigned_cnt = StatsMgr::instance().getObservation(name.str());
     ASSERT_TRUE(assigned_cnt);

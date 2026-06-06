@@ -225,9 +225,9 @@ TEST_F(BasicScenTest, initial_settings) {
     processCmdLine(opt, "perfdhcp -6 -l ethx -r 50 -f 30 -F 10 all");
     NakedBasicScen bs(opt);
 
-    EXPECT_EQ(50, bs.basic_rate_control_.getRate());
-    EXPECT_EQ(30, bs.renew_rate_control_.getRate());
-    EXPECT_EQ(10, bs.release_rate_control_.getRate());
+    EXPECT_EQ(50U, bs.basic_rate_control_.getRate());
+    EXPECT_EQ(30U, bs.renew_rate_control_.getRate());
+    EXPECT_EQ(10U, bs.release_rate_control_.getRate());
 }
 
 
@@ -239,10 +239,10 @@ TEST_F(BasicScenTest, Packet4Exchange) {
     // The command line restricts the number of iterations to 10
     // with -n 10 parameter.
     EXPECT_GE(bs.fake_sock_.sent_cnt_, 20); // Discovery + Request
-    EXPECT_GE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::DO), 10);
-    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::DO), 10);
-    EXPECT_GE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RA), 10);
-    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RA), 10);
+    EXPECT_GE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::DO), 10U);
+    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::DO), 10U);
+    EXPECT_GE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RA), 10U);
+    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RA), 10U);
 }
 
 TEST_F(BasicScenTest, Address4Unique) {
@@ -253,12 +253,12 @@ TEST_F(BasicScenTest, Address4Unique) {
     NakedBasicScen bs(opt);
     bs.run();
     EXPECT_GE(bs.fake_sock_.sent_cnt_, 5); // Discovery + Request
-    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::DO), 1);
-    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RA), 1);
-    EXPECT_GE(bs.tc_.getAllUniqueAddrReply().size(), 1);
-    EXPECT_GE(bs.tc_.getAllUniqueAddrAdvert().size(), 1);
-    EXPECT_EQ(bs.tc_.getStatsMgr().getNonUniqueAddrNum(ExchangeType::DO), 9);
-    EXPECT_EQ(bs.tc_.getStatsMgr().getNonUniqueAddrNum(ExchangeType::RA), 9);
+    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::DO), 1U);
+    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RA), 1U);
+    EXPECT_GE(bs.tc_.getAllUniqueAddrReply().size(), 1U);
+    EXPECT_GE(bs.tc_.getAllUniqueAddrAdvert().size(), 1U);
+    EXPECT_EQ(bs.tc_.getStatsMgr().getNonUniqueAddrNum(ExchangeType::DO), 9U);
+    EXPECT_EQ(bs.tc_.getStatsMgr().getNonUniqueAddrNum(ExchangeType::RA), 9U);
 }
 
 TEST_F(BasicScenTest, Address6Unique) {
@@ -269,12 +269,12 @@ TEST_F(BasicScenTest, Address6Unique) {
     NakedBasicScen bs(opt);
     bs.run();
     EXPECT_GE(bs.fake_sock_.sent_cnt_, 5); // Solicit + Request
-    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::SA), 1);
-    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RR), 1);
-    EXPECT_GE(bs.tc_.getAllUniqueAddrReply().size(), 1);
-    EXPECT_GE(bs.tc_.getAllUniqueAddrAdvert().size(), 1);
-    EXPECT_EQ(bs.tc_.getStatsMgr().getNonUniqueAddrNum(ExchangeType::SA), 9);
-    EXPECT_EQ(bs.tc_.getStatsMgr().getNonUniqueAddrNum(ExchangeType::RR), 9);
+    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::SA), 1U);
+    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RR), 1U);
+    EXPECT_GE(bs.tc_.getAllUniqueAddrReply().size(), 1U);
+    EXPECT_GE(bs.tc_.getAllUniqueAddrAdvert().size(), 1U);
+    EXPECT_EQ(bs.tc_.getStatsMgr().getNonUniqueAddrNum(ExchangeType::SA), 9U);
+    EXPECT_EQ(bs.tc_.getStatsMgr().getNonUniqueAddrNum(ExchangeType::RR), 9U);
 }
 
 TEST_F(BasicScenTest, Packet4ExchangeMaxDrop10Proc) {
@@ -297,17 +297,17 @@ TEST_F(BasicScenTest, Packet4ExchangeMaxDrop10Proc) {
     EXPECT_GE(bs.fake_sock_.sent_cnt_, 15); // Discovery + Request
     EXPECT_LE(bs.fake_sock_.sent_cnt_, 20); // Discovery + Request
 
-    EXPECT_GE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::DO), 1);
-    EXPECT_LE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::DO), 15);
+    EXPECT_GE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::DO), 1U);
+    EXPECT_LE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::DO), 15U);
 
-    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::DO), 1);
-    EXPECT_LE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::DO), 15);
+    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::DO), 1U);
+    EXPECT_LE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::DO), 15U);
 
-    EXPECT_GE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RA), 1);
-    EXPECT_LE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RA), 15);
+    EXPECT_GE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RA), 1U);
+    EXPECT_LE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RA), 15U);
 
-    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RA), 1);
-    EXPECT_LE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RA), 15);
+    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RA), 1U);
+    EXPECT_LE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RA), 15U);
 }
 
 
@@ -320,10 +320,10 @@ TEST_F(BasicScenTest, Packet6Exchange) {
     NakedBasicScen bs(opt);
     bs.run();
     EXPECT_GE(bs.fake_sock_.sent_cnt_, 20); // Solicit + Request
-    EXPECT_GE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::SA), 10);
-    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::SA), 10);
-    EXPECT_GE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RR), 10);
-    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RR), 10);
+    EXPECT_GE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::SA), 10U);
+    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::SA), 10U);
+    EXPECT_GE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RR), 10U);
+    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RR), 10U);
 }
 
 TEST_F(BasicScenTest, Packet6ExchangeMaxDrop3Pkt) {
@@ -349,15 +349,15 @@ TEST_F(BasicScenTest, Packet6ExchangeMaxDrop3Pkt) {
     EXPECT_GE(bs.fake_sock_.sent_cnt_, 10);
     EXPECT_LE(bs.fake_sock_.sent_cnt_, 20);
 
-    EXPECT_GE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::SA), 1);
-    EXPECT_LE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::SA), 15);
+    EXPECT_GE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::SA), 1U);
+    EXPECT_LE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::SA), 15U);
 
-    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::SA), 1);
-    EXPECT_LE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::SA), 15);
+    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::SA), 1U);
+    EXPECT_LE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::SA), 15U);
 
-    EXPECT_GE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RR), 1);
-    EXPECT_LE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RR), 15);
+    EXPECT_GE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RR), 1U);
+    EXPECT_LE(bs.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RR), 15U);
 
-    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RR), 1);
-    EXPECT_LE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RR), 15);
+    EXPECT_GE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RR), 1U);
+    EXPECT_LE(bs.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RR), 15U);
 }

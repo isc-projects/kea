@@ -1281,11 +1281,11 @@ TEST_F(Dhcp6ParserTest, unspecifiedRenewTimer) {
 
     EXPECT_TRUE(subnet->getT1().unspecified());
     EXPECT_FALSE(subnet->getT2().unspecified());
-    EXPECT_EQ(2000, subnet->getT2().get());
-    EXPECT_EQ(4000, subnet->getValid().get());
+    EXPECT_EQ(2000U, subnet->getT2().get());
+    EXPECT_EQ(4000U, subnet->getValid().get());
 
     // Check that subnet-id is 1
-    EXPECT_EQ(1, subnet->getID());
+    EXPECT_EQ(1U, subnet->getID());
 }
 
 /// Check that the rebind-timer doesn't have to be specified, in which case
@@ -1314,12 +1314,12 @@ TEST_F(Dhcp6ParserTest, unspecifiedRebindTimer) {
         getCfgSubnets6()->selectSubnet(IOAddress("2001:db8::1"));
     ASSERT_TRUE(subnet);
     EXPECT_FALSE(subnet->getT1().unspecified());
-    EXPECT_EQ(1000, subnet->getT1().get());
+    EXPECT_EQ(1000U, subnet->getT1().get());
     EXPECT_TRUE(subnet->getT2().unspecified());
-    EXPECT_EQ(4000, subnet->getValid().get());
+    EXPECT_EQ(4000U, subnet->getValid().get());
 
     // Check that subnet-id is 1
-    EXPECT_EQ(1, subnet->getID());
+    EXPECT_EQ(1U, subnet->getID());
 }
 
 /// Check that preferred-lifetime must be between min-preferred-lifetime and
@@ -1529,17 +1529,17 @@ TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
     ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(1000, subnet->getT1().get());
-    EXPECT_EQ(2000, subnet->getT2().get());
-    EXPECT_EQ(3000, subnet->getPreferred().get());
-    EXPECT_EQ(2000, subnet->getPreferred().getMin());
-    EXPECT_EQ(4000, subnet->getPreferred().getMax());
-    EXPECT_EQ(4000, subnet->getValid().get());
-    EXPECT_EQ(3000, subnet->getValid().getMin());
-    EXPECT_EQ(5000, subnet->getValid().getMax());
+    EXPECT_EQ(1000U, subnet->getT1().get());
+    EXPECT_EQ(2000U, subnet->getT2().get());
+    EXPECT_EQ(3000U, subnet->getPreferred().get());
+    EXPECT_EQ(2000U, subnet->getPreferred().getMin());
+    EXPECT_EQ(4000U, subnet->getPreferred().getMax());
+    EXPECT_EQ(4000U, subnet->getValid().get());
+    EXPECT_EQ(3000U, subnet->getValid().getMin());
+    EXPECT_EQ(5000U, subnet->getValid().getMax());
 
     // Check that subnet-id is 1
-    EXPECT_EQ(1, subnet->getID());
+    EXPECT_EQ(1U, subnet->getID());
 }
 
 // This test checks that it is possible to assign arbitrary ids for subnets.
@@ -1587,15 +1587,15 @@ TEST_F(Dhcp6ParserTest, multipleSubnetsExplicitIDs) {
         const Subnet6Collection* subnets =
             CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
         ASSERT_TRUE(subnets);
-        ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
+        ASSERT_EQ(4U, subnets->size()); // We expect 4 subnets
 
         // Verify that subnet ids are as expected.
         // Now the subnet order is the subnet id one.
         auto subnet = subnets->begin();
-        EXPECT_EQ(1, (*subnet)->getID());
-        EXPECT_EQ(34, (*++subnet)->getID());
-        EXPECT_EQ(100, (*++subnet)->getID());
-        EXPECT_EQ(1024, (*++subnet)->getID());
+        EXPECT_EQ(1U, (*subnet)->getID());
+        EXPECT_EQ(34U, (*++subnet)->getID());
+        EXPECT_EQ(100U, (*++subnet)->getID());
+        EXPECT_EQ(1024U, (*++subnet)->getID());
 
         // Repeat reconfiguration process 10 times and check that the subnet-id
         // is set to the same value.
@@ -1730,7 +1730,7 @@ TEST_F(Dhcp6ParserTest, reconfigureRemoveSubnet) {
     const Subnet6Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
     ASSERT_TRUE(subnets);
-    ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
+    ASSERT_EQ(4U, subnets->size()); // We expect 4 subnets
 
     CfgMgr::instance().clear();
 
@@ -1743,13 +1743,13 @@ TEST_F(Dhcp6ParserTest, reconfigureRemoveSubnet) {
 
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
     ASSERT_TRUE(subnets);
-    ASSERT_EQ(3, subnets->size()); // We expect 3 subnets now (4th is removed)
+    ASSERT_EQ(3U, subnets->size()); // We expect 3 subnets now (4th is removed)
 
     // Check subnet-ids of each subnet (it should be monotonously increasing)
     auto subnet = subnets->begin();
-    EXPECT_EQ(1, (*subnet)->getID());
-    EXPECT_EQ(2, (*++subnet)->getID());
-    EXPECT_EQ(3, (*++subnet)->getID());
+    EXPECT_EQ(1U, (*subnet)->getID());
+    EXPECT_EQ(2U, (*++subnet)->getID());
+    EXPECT_EQ(3U, (*++subnet)->getID());
 
     CfgMgr::instance().clear();
 
@@ -1770,13 +1770,13 @@ TEST_F(Dhcp6ParserTest, reconfigureRemoveSubnet) {
 
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
     ASSERT_TRUE(subnets);
-    ASSERT_EQ(3, subnets->size()); // We expect 4 subnets
+    ASSERT_EQ(3U, subnets->size()); // We expect 4 subnets
 
     subnet = subnets->begin();
-    EXPECT_EQ(1, (*subnet)->getID());
+    EXPECT_EQ(1U, (*subnet)->getID());
     // The second subnet (with subnet-id = 2) is no longer there
-    EXPECT_EQ(3, (*++subnet)->getID());
-    EXPECT_EQ(4, (*++subnet)->getID());
+    EXPECT_EQ(3U, (*++subnet)->getID());
+    EXPECT_EQ(4U, (*++subnet)->getID());
 }
 
 // Check whether it is possible to configure compatibility flags.
@@ -1904,14 +1904,14 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
     ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(1, subnet->getT1().get());
-    EXPECT_EQ(2, subnet->getT2().get());
-    EXPECT_EQ(3, subnet->getPreferred().get());
-    EXPECT_EQ(2, subnet->getPreferred().getMin());
-    EXPECT_EQ(4, subnet->getPreferred().getMax());
-    EXPECT_EQ(4, subnet->getValid().get());
-    EXPECT_EQ(3, subnet->getValid().getMin());
-    EXPECT_EQ(5, subnet->getValid().getMax());
+    EXPECT_EQ(1U, subnet->getT1().get());
+    EXPECT_EQ(2U, subnet->getT2().get());
+    EXPECT_EQ(3U, subnet->getPreferred().get());
+    EXPECT_EQ(2U, subnet->getPreferred().getMin());
+    EXPECT_EQ(4U, subnet->getPreferred().getMax());
+    EXPECT_EQ(4U, subnet->getValid().get());
+    EXPECT_EQ(3U, subnet->getValid().getMin());
+    EXPECT_EQ(5U, subnet->getValid().getMax());
 }
 
 // This test checks if it is possible to define a subnet with an
@@ -2269,12 +2269,12 @@ TEST_F(Dhcp6ParserTest, multiplePools) {
     const Subnet6Collection* subnets =
         CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->getAll();
     ASSERT_TRUE(subnets);
-    ASSERT_EQ(2, subnets->size()); // We expect 2 subnets
+    ASSERT_EQ(2U, subnets->size()); // We expect 2 subnets
 
     // Check the first subnet
     auto subnet = subnets->begin();
     const PoolCollection& pools1 = (*subnet)->getPools(Lease::TYPE_NA);
-    ASSERT_EQ(2, pools1.size());
+    ASSERT_EQ(2U, pools1.size());
     EXPECT_EQ("type=IA_NA, 2001:db8:1::-2001:db8:1::ffff:ffff, delegated_len=128",
               pools1[0]->toText());
     EXPECT_EQ("type=IA_NA, 2001:db8:1:0:abcd::-2001:db8:1:0:abcd::ffff, delegated_len=128",
@@ -2285,7 +2285,7 @@ TEST_F(Dhcp6ParserTest, multiplePools) {
     // Check the second subnet
     ++subnet;
     const PoolCollection& pools2 = (*subnet)->getPools(Lease::TYPE_NA);
-    ASSERT_EQ(2, pools2.size());
+    ASSERT_EQ(2U, pools2.size());
     EXPECT_EQ("type=IA_NA, 2001:db8:2::1-2001:db8:2::ff, delegated_len=128",
               pools2[0]->toText());
     EXPECT_EQ("type=IA_NA, 2001:db8:2::300-2001:db8:2::3ff, delegated_len=128",
@@ -2349,10 +2349,10 @@ TEST_F(Dhcp6ParserTest, poolPrefixLen) {
     ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(1000, subnet->getT1().get());
-    EXPECT_EQ(2000, subnet->getT2().get());
-    EXPECT_EQ(3000, subnet->getPreferred().get());
-    EXPECT_EQ(4000, subnet->getValid().get());
+    EXPECT_EQ(1000U, subnet->getT1().get());
+    EXPECT_EQ(2000U, subnet->getT2().get());
+    EXPECT_EQ(3000U, subnet->getPreferred().get());
+    EXPECT_EQ(4000U, subnet->getValid().get());
 }
 
 // Goal of this test is to verify if invalid pool definitions
@@ -2555,14 +2555,14 @@ TEST_F(Dhcp6ParserTest, pdPoolBasics) {
     // Fetch the collection of PD pools.  It should have 1 entry.
     PoolCollection pc;
     ASSERT_NO_THROW(pc = subnet->getPools(Lease::TYPE_PD));
-    EXPECT_EQ(1, pc.size());
+    EXPECT_EQ(1U, pc.size());
 
     // Get a pointer to the pd pool instance, and verify its contents.
     Pool6Ptr p6;
     ASSERT_NO_THROW(p6 = boost::dynamic_pointer_cast<Pool6>(pc[0]));
     ASSERT_TRUE(p6);
     EXPECT_EQ("2001:db8:1::", p6->getFirstAddress().toText());
-    EXPECT_EQ(128, p6->getLength());
+    EXPECT_EQ(128U, p6->getLength());
 
     // prefix-len is not directly accessible after pool construction, so
     // verify that it was interpreted correctly by checking the last address
@@ -2615,14 +2615,14 @@ TEST_F(Dhcp6ParserTest, pdPoolPrefixExclude) {
     // Fetch the collection of PD pools.  It should have 1 entry.
     PoolCollection pc;
     ASSERT_NO_THROW(pc = subnet->getPools(Lease::TYPE_PD));
-    EXPECT_EQ(1, pc.size());
+    EXPECT_EQ(1U, pc.size());
 
     // Get a pointer to the pd pool instance, and verify its contents.
     Pool6Ptr p6;
     ASSERT_NO_THROW(p6 = boost::dynamic_pointer_cast<Pool6>(pc[0]));
     ASSERT_TRUE(p6);
     EXPECT_EQ("3000::", p6->getFirstAddress().toText());
-    EXPECT_EQ(64, p6->getLength());
+    EXPECT_EQ(64U, p6->getLength());
 
     // This pool should have Prefix Exclude option associated.
     Option6PDExcludePtr pd_exclude_option = p6->getPrefixExcludeOption();
@@ -2633,7 +2633,7 @@ TEST_F(Dhcp6ParserTest, pdPoolPrefixExclude) {
     // verify that it is correct.
     EXPECT_EQ("3000:0:0:3:1000::",
               pd_exclude_option->getExcludedPrefix(IOAddress("3000:0:0:3::"), 64).toText());
-    EXPECT_EQ(72, static_cast<unsigned>(pd_exclude_option->getExcludedPrefixLength()));
+    EXPECT_EQ(72, static_cast<int>(pd_exclude_option->getExcludedPrefixLength()));
 }
 
 // Goal of this test is verify that a list of PD pools can be configured.
@@ -2697,11 +2697,11 @@ TEST_F(Dhcp6ParserTest, pdPoolList) {
     // Fetch the collection of NA pools.  It should have 1 entry.
     PoolCollection pc;
     ASSERT_NO_THROW(pc = subnet->getPools(Lease::TYPE_NA));
-    EXPECT_EQ(1, pc.size());
+    EXPECT_EQ(1U, pc.size());
 
     // Fetch the collection of PD pools.  It should have 3 entries.
     ASSERT_NO_THROW(pc = subnet->getPools(Lease::TYPE_PD));
-    EXPECT_EQ(3, pc.size());
+    EXPECT_EQ(3U, pc.size());
 
     // Loop through the pools and verify their contents.
     for (unsigned int i = 0; i < 3; i++) {
@@ -2709,7 +2709,7 @@ TEST_F(Dhcp6ParserTest, pdPoolList) {
         ASSERT_NO_THROW(p6 = boost::dynamic_pointer_cast<Pool6>(pc[i]));
         ASSERT_TRUE(p6);
         EXPECT_EQ(prefixes[i], p6->getFirstAddress().toText());
-        EXPECT_EQ((80 + (i * 8)), p6->getLength());
+        EXPECT_EQ((80U + (i * 8)), p6->getLength());
     }
 }
 
@@ -2756,14 +2756,14 @@ TEST_F(Dhcp6ParserTest, subnetAndPrefixDelegated) {
     // Fetch the collection of PD pools.  It should have 1 entry.
     PoolCollection pc;
     ASSERT_NO_THROW(pc = subnet->getPools(Lease::TYPE_PD));
-    EXPECT_EQ(1, pc.size());
+    EXPECT_EQ(1U, pc.size());
 
     // Get a pointer to the pd pool instance, and verify its contents.
     Pool6Ptr p6;
     ASSERT_NO_THROW(p6 = boost::dynamic_pointer_cast<Pool6>(pc[0]));
     ASSERT_TRUE(p6);
     EXPECT_EQ("2001:db8:1::", p6->getFirstAddress().toText());
-    EXPECT_EQ(64, p6->getLength());
+    EXPECT_EQ(64U, p6->getLength());
 
     // prefix-len is not directly accessible after pool construction, so
     // verify that it was interpreted correctly by checking the last address
@@ -2925,7 +2925,7 @@ TEST_F(Dhcp6ParserTest, optionDefIpv6Address) {
 
     // Verify that the option definition data is valid.
     EXPECT_EQ("foo", def->getName());
-    EXPECT_EQ(100, def->getCode());
+    EXPECT_EQ(100U, def->getCode());
     EXPECT_FALSE(def->getArrayType());
     EXPECT_EQ(OPT_IPV6_ADDRESS_TYPE, def->getType());
     EXPECT_TRUE(def->getEncapsulatedSpace().empty());
@@ -2985,7 +2985,7 @@ TEST_F(Dhcp6ParserTest, optionDefRecord) {
 
     // Check the option data.
     EXPECT_EQ("foo", def->getName());
-    EXPECT_EQ(100, def->getCode());
+    EXPECT_EQ(100U, def->getCode());
     EXPECT_EQ(OPT_RECORD_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
     EXPECT_TRUE(def->getEncapsulatedSpace().empty());
@@ -2994,7 +2994,7 @@ TEST_F(Dhcp6ParserTest, optionDefRecord) {
     // fields are present and they are of the expected types.
     const OptionDefinition::RecordFieldsCollection& record_fields =
         def->getRecordFields();
-    ASSERT_EQ(4, record_fields.size());
+    ASSERT_EQ(4U, record_fields.size());
     EXPECT_EQ(OPT_UINT16_TYPE, record_fields[0]);
     EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, record_fields[1]);
     EXPECT_EQ(OPT_IPV6_ADDRESS_TYPE, record_fields[2]);
@@ -3042,7 +3042,7 @@ TEST_F(Dhcp6ParserTest, optionDefMultiple) {
 
     // Check the option data.
     EXPECT_EQ("foo", def1->getName());
-    EXPECT_EQ(100, def1->getCode());
+    EXPECT_EQ(100U, def1->getCode());
     EXPECT_EQ(OPT_UINT32_TYPE, def1->getType());
     EXPECT_FALSE(def1->getArrayType());
     EXPECT_TRUE(def1->getEncapsulatedSpace().empty());
@@ -3054,7 +3054,7 @@ TEST_F(Dhcp6ParserTest, optionDefMultiple) {
 
     // Check the option data.
     EXPECT_EQ("foo-2", def2->getName());
-    EXPECT_EQ(101, def2->getCode());
+    EXPECT_EQ(101U, def2->getCode());
     EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, def2->getType());
     EXPECT_FALSE(def2->getArrayType());
     EXPECT_TRUE(def2->getEncapsulatedSpace().empty());
@@ -3108,7 +3108,7 @@ TEST_F(Dhcp6ParserTest, optionDefDuplicate) {
     string expected = "failed to create or run parser for configuration ";
     expected += "element option-def: option definition with code '100' ";
     expected += "already exists in option space 'isc'";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 
     // The new configuration should have inserted option 100, but
     // once configuration failed (on the duplicate option definition)
@@ -3117,7 +3117,7 @@ TEST_F(Dhcp6ParserTest, optionDefDuplicate) {
     def = LibDHCP::getRuntimeOptionDef("isc", 233);
     ASSERT_TRUE(def);
     EXPECT_EQ("bar", def->getName());
-    EXPECT_EQ(233, def->getCode());
+    EXPECT_EQ(233U, def->getCode());
 }
 
 // The goal of this test is to verify that the option definition
@@ -3157,7 +3157,7 @@ TEST_F(Dhcp6ParserTest, optionDefArray) {
 
     // Check the option data.
     EXPECT_EQ("foo", def->getName());
-    EXPECT_EQ(100, def->getCode());
+    EXPECT_EQ(100U, def->getCode());
     EXPECT_EQ(OPT_UINT32_TYPE, def->getType());
     EXPECT_TRUE(def->getArrayType());
     EXPECT_TRUE(def->getEncapsulatedSpace().empty());
@@ -3200,7 +3200,7 @@ TEST_F(Dhcp6ParserTest, optionDefEncapsulate) {
 
     // Check the option data.
     EXPECT_EQ("foo", def->getName());
-    EXPECT_EQ(100, def->getCode());
+    EXPECT_EQ(100U, def->getCode());
     EXPECT_EQ(OPT_UINT32_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
     EXPECT_EQ("sub-opts-space", def->getEncapsulatedSpace());
@@ -3427,7 +3427,7 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
 
     // Check the option data.
     EXPECT_EQ("foo", def->getName());
-    EXPECT_EQ(100, def->getCode());
+    EXPECT_EQ(100U, def->getCode());
     EXPECT_EQ(OPT_STRING_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
 
@@ -3479,7 +3479,7 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
 
     // Check the option data.
     EXPECT_EQ("geolocation", def->getName());
-    EXPECT_EQ(63, def->getCode());
+    EXPECT_EQ(63U, def->getCode());
     EXPECT_EQ(OPT_STRING_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
 }
@@ -3519,10 +3519,10 @@ TEST_F(Dhcp6ParserTest, optionDataDefaultsGlobal) {
         getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
     OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
-    ASSERT_EQ(0, options->size());
+    ASSERT_EQ(0U, options->size());
 
     options = CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
-    ASSERT_EQ(2, options->size());
+    ASSERT_EQ(2U, options->size());
 
     // Get the search index. Index #1 is to search using option code.
     const OptionContainerTypeIndex& idx = options->get<1>();
@@ -3591,13 +3591,13 @@ TEST_F(Dhcp6ParserTest, optionDataDefaultsSubnet) {
     // These options are subnet options
     OptionContainerPtr options =
         CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
-    ASSERT_EQ(0, options->size());
+    ASSERT_EQ(0U, options->size());
 
     ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
     options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
-    ASSERT_EQ(2, options->size());
+    ASSERT_EQ(2U, options->size());
 
     // Get the search index. Index #1 is to search using option code.
     const OptionContainerTypeIndex& idx = options->get<1>();
@@ -3687,12 +3687,12 @@ TEST_F(Dhcp6ParserTest, optionDataTwoSpaces) {
     OptionDescriptor desc1 =
         CfgMgr::instance().getStagingCfg()->getCfgOption()->get(DHCP6_OPTION_SPACE, 38);
     ASSERT_TRUE(desc1.option_);
-    EXPECT_EQ(38, desc1.option_->getType());
+    EXPECT_EQ(38U, desc1.option_->getType());
     // Try to get the option from the space isc.
     OptionDescriptor desc2 =
         CfgMgr::instance().getStagingCfg()->getCfgOption()->get("isc", 38);
     ASSERT_TRUE(desc2.option_);
-    EXPECT_EQ(38, desc1.option_->getType());
+    EXPECT_EQ(38U, desc1.option_->getType());
     // Try to get the non-existing option from the non-existing
     // option space and  expect that option is not returned.
     OptionDescriptor desc3 = CfgMgr::instance().getStagingCfg()->
@@ -3821,24 +3821,24 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
     OptionContainerPtr options =
         CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_TRUE(options);
-    ASSERT_EQ(1, options->size());
+    ASSERT_EQ(1U, options->size());
 
     // Get the option.
     OptionDescriptor desc =
         CfgMgr::instance().getStagingCfg()->getCfgOption()->get(DHCP6_OPTION_SPACE, 100);
     EXPECT_TRUE(desc.option_);
-    EXPECT_EQ(100, desc.option_->getType());
+    EXPECT_EQ(100U, desc.option_->getType());
 
     // This option should comprise two sub-options.
     // One of them is 'foo' with code 110.
     OptionPtr option_foo = desc.option_->getOption(110);
     ASSERT_TRUE(option_foo);
-    EXPECT_EQ(110, option_foo->getType());
+    EXPECT_EQ(110U, option_foo->getType());
 
     // ...another one 'foo2' with code 111.
     OptionPtr option_foo2 = desc.option_->getOption(111);
     ASSERT_TRUE(option_foo2);
-    EXPECT_EQ(111, option_foo2->getType());
+    EXPECT_EQ(111U, option_foo2->getType());
 }
 
 // Goal of this test is to verify options configuration
@@ -3884,7 +3884,7 @@ TEST_F(Dhcp6ParserTest, optionDataInSingleSubnet) {
         getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
     OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
-    ASSERT_EQ(2, options->size());
+    ASSERT_EQ(2U, options->size());
 
     // Get the search index. Index #1 is to search using option code.
     const OptionContainerTypeIndex& idx = options->get<1>();
@@ -4035,7 +4035,7 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
         getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet1);
     OptionContainerPtr options1 = subnet1->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
-    ASSERT_EQ(1, options1->size());
+    ASSERT_EQ(1U, options1->size());
 
     // Get the search index. Index #1 is to search using option code.
     const OptionContainerTypeIndex& idx1 = options1->get<1>();
@@ -4061,7 +4061,7 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
         getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:2::4"), classify_);
     ASSERT_TRUE(subnet2);
     OptionContainerPtr options2 = subnet2->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
-    ASSERT_EQ(1, options2->size());
+    ASSERT_EQ(1U, options2->size());
 
     const OptionContainerTypeIndex& idx2 = options2->get<1>();
     std::pair<OptionContainerTypeIndex::const_iterator,
@@ -4121,7 +4121,7 @@ TEST_F(Dhcp6ParserTest, optionDataSinglePool) {
 
     OptionContainerPtr options =
         pool6->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
-    ASSERT_EQ(2, options->size());
+    ASSERT_EQ(2U, options->size());
 
     // Get the search index. Index #1 is to search using option code.
     const OptionContainerTypeIndex& idx = options->get<1>();
@@ -4220,7 +4220,7 @@ TEST_F(Dhcp6ParserTest, optionDataMultiplePools) {
 
     OptionContainerPtr options1 =
         pool6->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
-    ASSERT_EQ(1, options1->size());
+    ASSERT_EQ(1U, options1->size());
 
     // Get the search index. Index #1 is to search using option code.
     const OptionContainerTypeIndex& idx1 = options1->get<1>();
@@ -4248,7 +4248,7 @@ TEST_F(Dhcp6ParserTest, optionDataMultiplePools) {
 
     OptionContainerPtr options2 =
         pool6->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
-    ASSERT_EQ(1, options2->size());
+    ASSERT_EQ(1U, options2->size());
 
     const OptionContainerTypeIndex& idx2 = options2->get<1>();
     std::pair<OptionContainerTypeIndex::const_iterator,
@@ -4270,7 +4270,7 @@ TEST_F(Dhcp6ParserTest, optionDataMultiplePools) {
 
     OptionContainerPtr options3 =
         pool6->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
-    ASSERT_EQ(1, options3->size());
+    ASSERT_EQ(1U, options3->size());
 
     const OptionContainerTypeIndex& idx3 = options3->get<1>();
     std::pair<OptionContainerTypeIndex::const_iterator,
@@ -4291,7 +4291,7 @@ TEST_F(Dhcp6ParserTest, optionDataMultiplePools) {
 
     OptionContainerPtr options4 =
         pool6->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
-    ASSERT_EQ(1, options4->size());
+    ASSERT_EQ(1U, options4->size());
 
     const OptionContainerTypeIndex& idx4 = options4->get<1>();
     std::pair<OptionContainerTypeIndex::const_iterator,
@@ -4382,7 +4382,7 @@ TEST_F(Dhcp6ParserTest, optionDataValidHexLiterals) {
             selectSubnet(IOAddress("2001:db8:1::5"), classify_);
         ASSERT_TRUE(subnet);
         OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
-        ASSERT_EQ(1, options->size());
+        ASSERT_EQ(1U, options->size());
 
         // Get the search index. Index #1 is to search using option code.
         const OptionContainerTypeIndex& idx = options->get<1>();
@@ -4431,7 +4431,7 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     ASSERT_TRUE(subnet);
     OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_TRUE(options);
-    ASSERT_EQ(1, options->size());
+    ASSERT_EQ(1U, options->size());
 
     // Get the search index. Index #1 is to search using option code.
     const OptionContainerTypeIndex& idx = options->get<1>();
@@ -4459,9 +4459,9 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     // If cast was successful we may use accessors exposed by
     // Option6IA to validate that the content of this option
     // has been set correctly.
-    EXPECT_EQ(12345, optionIA->getIAID());
-    EXPECT_EQ(6789, optionIA->getT1());
-    EXPECT_EQ(1516, optionIA->getT2());
+    EXPECT_EQ(12345U, optionIA->getIAID());
+    EXPECT_EQ(6789U, optionIA->getT1());
+    EXPECT_EQ(1516U, optionIA->getT2());
 }
 
 // Verify that specific option object is returned for standard
@@ -4486,7 +4486,7 @@ TEST_F(Dhcp6ParserTest, rdnssOption) {
         getCfgSubnets6()->selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
     OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
-    ASSERT_EQ(1, options->size());
+    ASSERT_EQ(1U, options->size());
 
     // Get the search index. Index #1 is to search using option code.
     const OptionContainerTypeIndex& idx = options->get<1>();
@@ -4514,9 +4514,9 @@ TEST_F(Dhcp6ParserTest, rdnssOption) {
     // If cast was successful we may use accessors exposed by
     // optionCustom to validate that the content of this option
     // has been set correctly.
-    ASSERT_EQ(5, optionCustom->getDataFieldsNum());
+    ASSERT_EQ(5U, optionCustom->getDataFieldsNum());
     EXPECT_EQ("2001::1", optionCustom->readAddress(0).toText());
-    EXPECT_EQ(3, optionCustom->readInteger<uint8_t>(1));
+    EXPECT_EQ(3U, optionCustom->readInteger<uint8_t>(1));
     EXPECT_EQ("isc.org.", optionCustom->readFqdn(2));
     EXPECT_EQ("example.org.", optionCustom->readFqdn(3));
     EXPECT_EQ("example.com.", optionCustom->readFqdn(4));
@@ -4637,7 +4637,7 @@ TEST_F(Dhcp6ParserTest, DISABLED_stdOptionDataEncapsulate) {
     // We should have one option available.
     OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_TRUE(options);
-    ASSERT_EQ(1, options->size());
+    ASSERT_EQ(1U, options->size());
 
     // Get the option.
     OptionDescriptor desc = subnet->getCfgOption()->get(DHCP6_OPTION_SPACE, D6O_VENDOR_OPTS);
@@ -4647,7 +4647,7 @@ TEST_F(Dhcp6ParserTest, DISABLED_stdOptionDataEncapsulate) {
     // Option with the code 110 should be added as a sub-option.
     OptionPtr option_foo = desc.option_->getOption(110);
     ASSERT_TRUE(option_foo);
-    EXPECT_EQ(110, option_foo->getType());
+    EXPECT_EQ(110U, option_foo->getType());
     // This option comprises a single uint32_t value thus it is
     // represented by OptionInt<uint32_t> class. Let's get the
     // object of this type.
@@ -4655,12 +4655,12 @@ TEST_F(Dhcp6ParserTest, DISABLED_stdOptionDataEncapsulate) {
         boost::dynamic_pointer_cast<OptionInt<uint32_t> >(option_foo);
     ASSERT_TRUE(option_foo_uint32);
     // Validate the value according to the configuration.
-    EXPECT_EQ(1234, option_foo_uint32->getValue());
+    EXPECT_EQ(1234U, option_foo_uint32->getValue());
 
     // Option with the code 111 should be added as a sub-option.
     OptionPtr option_foo2 = desc.option_->getOption(111);
     ASSERT_TRUE(option_foo2);
-    EXPECT_EQ(111, option_foo2->getType());
+    EXPECT_EQ(111U, option_foo2->getType());
     // This option comprises the IPV4 address. Such option is
     // represented by OptionCustom object.
     OptionCustomPtr option_foo2_v4 =
@@ -4720,12 +4720,12 @@ TEST_F(Dhcp6ParserTest, vendorOptionsHex) {
     OptionDescriptor desc1 = CfgMgr::instance().getStagingCfg()->
         getCfgOption()->get(VENDOR_ID_CABLE_LABS, 100);
     ASSERT_TRUE(desc1.option_);
-    EXPECT_EQ(100, desc1.option_->getType());
+    EXPECT_EQ(100U, desc1.option_->getType());
     // Try to get the option from the vendor space 1234
     OptionDescriptor desc2 =
         CfgMgr::instance().getStagingCfg()->getCfgOption()->get(1234, 100);
     ASSERT_TRUE(desc2.option_);
-    EXPECT_EQ(100, desc1.option_->getType());
+    EXPECT_EQ(100U, desc1.option_->getType());
 
     // Try to get the non-existing option from the non-existing
     // option space and  expect that option is not returned.
@@ -4780,7 +4780,7 @@ TEST_F(Dhcp6ParserTest, vendorOptionsCsv) {
     OptionDescriptor desc1 = CfgMgr::instance().getStagingCfg()->
         getCfgOption()->get(VENDOR_ID_CABLE_LABS, 100);
     ASSERT_TRUE(desc1.option_);
-    EXPECT_EQ(100, desc1.option_->getType());
+    EXPECT_EQ(100U, desc1.option_->getType());
 
     // Try to get the non-existing option from the non-existing
     // option space and  expect that option is not returned.
@@ -4909,7 +4909,7 @@ TEST_F(Dhcp6ParserTest, LibrariesSpecified) {
     // Expect two libraries to be loaded in the correct order (load marker file
     // is present, no unload marker file).
     std::vector<std::string> libraries = HooksManager::getLibraryNames();
-    ASSERT_EQ(2, libraries.size());
+    ASSERT_EQ(2U, libraries.size());
     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
     EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
 
@@ -5235,7 +5235,7 @@ TEST_F(Dhcp6ParserTest, classifySubnets) {
     const Subnet6Collection* subnets =
         CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->getAll();
     ASSERT_TRUE(subnets);
-    ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
+    ASSERT_EQ(4U, subnets->size()); // We expect 4 subnets
 
     // Let's check if client belonging to alpha class is supported in subnet[0]
     // and not supported in any other subnet (except subnet[3], which allows
@@ -5328,9 +5328,9 @@ TEST_F(Dhcp6ParserTest, classifyPools) {
     const Subnet6Collection* subnets =
         CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->getAll();
     ASSERT_TRUE(subnets);
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     const PoolCollection& pools = (*subnets->begin())->getPools(Lease::TYPE_NA);
-    ASSERT_EQ(4, pools.size()); // We expect 4 pools
+    ASSERT_EQ(4U, pools.size()); // We expect 4 pools
 
     // Let's check if client belonging to alpha class is supported in pool[0]
     // and not supported in any other pool (except pool[3], which allows
@@ -5427,9 +5427,9 @@ TEST_F(Dhcp6ParserTest, classifyPdPools) {
     const Subnet6Collection* subnets =
         CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->getAll();
     ASSERT_TRUE(subnets);
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     const PoolCollection& pools = (*subnets->begin())->getPools(Lease::TYPE_PD);
-    ASSERT_EQ(4, pools.size()); // We expect 4 pools
+    ASSERT_EQ(4U, pools.size()); // We expect 4 pools
 
     // Let's check if client belonging to alpha class is supported in pool[0]
     // and not supported in any other pool (except pool[3], which allows
@@ -5529,10 +5529,10 @@ TEST_F(Dhcp6ParserTest, d2ClientConfigValid) {
     // Verify that the configuration values are correct.
     EXPECT_TRUE(d2_client_config->getEnableUpdates());
     EXPECT_EQ("3001::1", d2_client_config->getServerIp().toText());
-    EXPECT_EQ(777, d2_client_config->getServerPort());
+    EXPECT_EQ(777U, d2_client_config->getServerPort());
     EXPECT_EQ("3001::2", d2_client_config->getSenderIp().toText());
-    EXPECT_EQ(778, d2_client_config->getSenderPort());
-    EXPECT_EQ(2048, d2_client_config->getMaxQueueSize());
+    EXPECT_EQ(778U, d2_client_config->getSenderPort());
+    EXPECT_EQ(2048U, d2_client_config->getMaxQueueSize());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
 
@@ -5704,7 +5704,7 @@ TEST_F(Dhcp6ParserTest, reservations) {
     const Subnet6Collection* subnets =
         CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->getAll();
     ASSERT_TRUE(subnets);
-    ASSERT_EQ(3, subnets->size());
+    ASSERT_EQ(3U, subnets->size());
 
     // Hosts configuration must be available.
     CfgHostsPtr hosts_cfg = CfgMgr::instance().getStagingCfg()->getCfgHosts();
@@ -5737,7 +5737,7 @@ TEST_F(Dhcp6ParserTest, reservations) {
         retrieveOption<Option6AddrLstPtr>(*host, D6O_NAME_SERVERS);
     ASSERT_TRUE(opt_dns);
     Option6AddrLst::AddressContainer dns_addrs = opt_dns->getAddresses();
-    ASSERT_EQ(1, dns_addrs.size());
+    ASSERT_EQ(1U, dns_addrs.size());
     EXPECT_EQ("2001:db8:2::abbc", dns_addrs[0].toText());
     OptionUint8Ptr opt_prf =
         retrieveOption<OptionUint8Ptr>(*host, D6O_PREFERENCE);
@@ -5762,7 +5762,7 @@ TEST_F(Dhcp6ParserTest, reservations) {
     opt_dns = retrieveOption<Option6AddrLstPtr>(*host, D6O_NAME_SERVERS);
     ASSERT_TRUE(opt_dns);
     dns_addrs = opt_dns->getAddresses();
-    ASSERT_EQ(1, dns_addrs.size());
+    ASSERT_EQ(1U, dns_addrs.size());
     EXPECT_EQ("2001:db8:2::1111", dns_addrs[0].toText());
     opt_prf = retrieveOption<OptionUint8Ptr>(*host, D6O_PREFERENCE);
     ASSERT_TRUE(opt_prf);
@@ -5805,7 +5805,7 @@ TEST_F(Dhcp6ParserTest, reservations) {
     opt_dns = retrieveOption<Option6AddrLstPtr>(*host, D6O_NAME_SERVERS);
     ASSERT_TRUE(opt_dns);
     dns_addrs = opt_dns->getAddresses();
-    ASSERT_EQ(1, dns_addrs.size());
+    ASSERT_EQ(1U, dns_addrs.size());
     EXPECT_EQ("2001:db8:3::3333", dns_addrs[0].toText());
     opt_prf = retrieveOption<OptionUint8Ptr>(*host, D6O_PREFERENCE);
     ASSERT_TRUE(opt_prf);
@@ -5883,8 +5883,8 @@ TEST_F(Dhcp6ParserTest, reservationWithOptionDefinition) {
     OptionUint32Ptr opt_foo = retrieveOption<OptionUint32Ptr>(*host, "isc",
                                                               100);
     ASSERT_TRUE(opt_foo);
-    EXPECT_EQ(100, opt_foo->getType());
-    EXPECT_EQ(11, opt_foo->getValue());
+    EXPECT_EQ(100U, opt_foo->getType());
+    EXPECT_EQ(11U, opt_foo->getValue());
 }
 
 // This test verifies that the bogus host reservation would trigger a
@@ -6010,7 +6010,7 @@ TEST_F(Dhcp6ParserTest, macSources1) {
 
     CfgMACSources sources = CfgMgr::instance().getStagingCfg()->getMACSources().get();
 
-    ASSERT_EQ(3, sources.size());
+    ASSERT_EQ(3U, sources.size());
     // Let's check the aliases. They should be recognized to their base methods.
     EXPECT_EQ(HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION, sources[0]);
     EXPECT_EQ(HWAddr::HWADDR_SOURCE_REMOTE_ID, sources[1]);
@@ -6040,7 +6040,7 @@ TEST_F(Dhcp6ParserTest, macSources2) {
 
     CfgMACSources sources = CfgMgr::instance().getStagingCfg()->getMACSources().get();
 
-    ASSERT_EQ(3, sources.size());
+    ASSERT_EQ(3U, sources.size());
     // Let's check the aliases. They should be recognized to their base methods.
     EXPECT_EQ(HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION, sources[0]);
     EXPECT_EQ(HWAddr::HWADDR_SOURCE_REMOTE_ID, sources[1]);
@@ -6172,7 +6172,7 @@ TEST_F(Dhcp6ParserTest, hostReservationPerSubnet) {
     ConstCfgSubnets6Ptr subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6();
     ASSERT_TRUE(subnets);
     const Subnet6Collection* subnet_col = subnets->getAll();
-    ASSERT_EQ(7, subnet_col->size()); // We expect 7 subnets
+    ASSERT_EQ(7U, subnet_col->size()); // We expect 7 subnets
 
     // Let's check if the parsed subnets have correct HR modes.
 
@@ -6274,7 +6274,7 @@ TEST_F(Dhcp6ParserTest, hostReservationGlobal) {
     ConstCfgSubnets6Ptr subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6();
     ASSERT_TRUE(subnets);
     const Subnet6Collection* subnet_col = subnets->getAll();
-    ASSERT_EQ(2, subnet_col->size()); // We expect 2 subnets
+    ASSERT_EQ(2U, subnet_col->size()); // We expect 2 subnets
 
     // Let's check if the parsed subnets have correct HR modes.
 
@@ -6326,7 +6326,7 @@ TEST_F(Dhcp6ParserTest, declineTimerDefault) {
     // The value of decline-probation-period must be equal to the
     // default value (86400). The default value is defined in GLOBAL6_DEFAULTS in
     // simple_parser6.cc.
-    EXPECT_EQ(86400, CfgMgr::instance().getStagingCfg()->getDeclinePeriod());
+    EXPECT_EQ(86400U, CfgMgr::instance().getStagingCfg()->getDeclinePeriod());
 }
 
 /// The goal of this test is to verify that configuration can include
@@ -6516,7 +6516,7 @@ TEST_F(Dhcp6ParserTest, dhcp4o6portDefault) {
     // The value of decline-probation-period must be equal to the
     // default value (0). The default value is defined in GLOBAL6_DEFAULTS in
     // simple_parser6.cc.
-    EXPECT_EQ(0, CfgMgr::instance().getStagingCfg()->getDhcp4o6Port());
+    EXPECT_EQ(0U, CfgMgr::instance().getStagingCfg()->getDhcp4o6Port());
 }
 
 /// Check that the decline-probation-period value can be set properly.
@@ -6538,7 +6538,7 @@ TEST_F(Dhcp6ParserTest, declineTimer) {
 
     // The value of decline-probation-period must be equal to the
     // value specified.
-    EXPECT_EQ(12345,
+    EXPECT_EQ(12345U,
               CfgMgr::instance().getStagingCfg()->getDeclinePeriod());
 }
 
@@ -6598,12 +6598,12 @@ TEST_F(Dhcp6ParserTest, expiredLeasesProcessing) {
     ASSERT_TRUE(cfg);
 
     // Verify that parameters are correct.
-    EXPECT_EQ(20, cfg->getReclaimTimerWaitTime());
-    EXPECT_EQ(35, cfg->getFlushReclaimedTimerWaitTime());
-    EXPECT_EQ(1800, cfg->getHoldReclaimedTime());
-    EXPECT_EQ(50, cfg->getMaxReclaimLeases());
-    EXPECT_EQ(100, cfg->getMaxReclaimTime());
-    EXPECT_EQ(10, cfg->getUnwarnedReclaimCycles());
+    EXPECT_EQ(20U, cfg->getReclaimTimerWaitTime());
+    EXPECT_EQ(35U, cfg->getFlushReclaimedTimerWaitTime());
+    EXPECT_EQ(1800U, cfg->getHoldReclaimedTime());
+    EXPECT_EQ(50U, cfg->getMaxReclaimLeases());
+    EXPECT_EQ(100U, cfg->getMaxReclaimTime());
+    EXPECT_EQ(10U, cfg->getUnwarnedReclaimCycles());
 }
 
 // Check that invalid configuration for the expired leases processing is
@@ -6676,7 +6676,7 @@ TEST_F(Dhcp6ParserTest, validClientClassDictionary) {
     ClientClassDictionaryPtr dictionary;
     dictionary = CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
     ASSERT_TRUE(dictionary);
-    EXPECT_EQ(3, dictionary->getClasses()->size());
+    EXPECT_EQ(3U, dictionary->getClasses()->size());
 
     // Execute the commit
     ASSERT_NO_THROW(CfgMgr::instance().commit());
@@ -6684,7 +6684,7 @@ TEST_F(Dhcp6ParserTest, validClientClassDictionary) {
     // Verify that after commit, the current config has the correct dictionary
     dictionary = CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
     ASSERT_TRUE(dictionary);
-    EXPECT_EQ(3, dictionary->getClasses()->size());
+    EXPECT_EQ(3U, dictionary->getClasses()->size());
 }
 
 // Verifies that a class list containing an invalid
@@ -6745,7 +6745,7 @@ TEST_F(Dhcp6ParserTest, clientClassValidLifetime) {
     ClientClassDictionaryPtr dictionary;
     dictionary = CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
     ASSERT_TRUE(dictionary);
-    EXPECT_EQ(2, dictionary->getClasses()->size());
+    EXPECT_EQ(2U, dictionary->getClasses()->size());
 
     // Execute the commit
     ASSERT_NO_THROW(CfgMgr::instance().commit());
@@ -6753,13 +6753,13 @@ TEST_F(Dhcp6ParserTest, clientClassValidLifetime) {
     // Verify that after commit, the current config has the correct dictionary
     dictionary = CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
     ASSERT_TRUE(dictionary);
-    EXPECT_EQ(2, dictionary->getClasses()->size());
+    EXPECT_EQ(2U, dictionary->getClasses()->size());
 
     ClientClassDefPtr class_def = dictionary->findClass("one");
     ASSERT_TRUE(class_def);
-    EXPECT_EQ(class_def->getValid().getMin(), 1000);
-    EXPECT_EQ(class_def->getValid().get(), 2000);
-    EXPECT_EQ(class_def->getValid().getMax(), 3000);
+    EXPECT_EQ(class_def->getValid().getMin(), 1000U);
+    EXPECT_EQ(class_def->getValid().get(), 2000U);
+    EXPECT_EQ(class_def->getValid().getMax(), 3000U);
 
     class_def = dictionary->findClass("two");
     ASSERT_TRUE(class_def);
@@ -6803,7 +6803,7 @@ TEST_F(Dhcp6ParserTest, templateClientClassValidLifetime) {
     ClientClassDictionaryPtr dictionary;
     dictionary = CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
     ASSERT_TRUE(dictionary);
-    EXPECT_EQ(2, dictionary->getClasses()->size());
+    EXPECT_EQ(2U, dictionary->getClasses()->size());
 
     // Execute the commit
     ASSERT_NO_THROW(CfgMgr::instance().commit());
@@ -6811,14 +6811,14 @@ TEST_F(Dhcp6ParserTest, templateClientClassValidLifetime) {
     // Verify that after commit, the current config has the correct dictionary
     dictionary = CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
     ASSERT_TRUE(dictionary);
-    EXPECT_EQ(2, dictionary->getClasses()->size());
+    EXPECT_EQ(2U, dictionary->getClasses()->size());
 
     ClientClassDefPtr class_def = dictionary->findClass("one");
     ASSERT_TRUE(class_def);
     ASSERT_TRUE(dynamic_cast<TemplateClientClassDef*>(class_def.get()));
-    EXPECT_EQ(class_def->getValid().getMin(), 1000);
-    EXPECT_EQ(class_def->getValid().get(), 2000);
-    EXPECT_EQ(class_def->getValid().getMax(), 3000);
+    EXPECT_EQ(class_def->getValid().getMin(), 1000U);
+    EXPECT_EQ(class_def->getValid().get(), 2000U);
+    EXPECT_EQ(class_def->getValid().getMax(), 3000U);
 
     class_def = dictionary->findClass("two");
     ASSERT_TRUE(class_def);
@@ -6848,7 +6848,7 @@ TEST_F(Dhcp6ParserTest, poolUserContextEmpty) {
 
     // The context should be of type map and not contain any parameters.
     EXPECT_EQ(Element::map, ctx->getType());
-    EXPECT_EQ(0, ctx->size());
+    EXPECT_EQ(0U, ctx->size());
 }
 
 // Test verifies that it's possible to specify parameters in the user context
@@ -6863,7 +6863,7 @@ TEST_F(Dhcp6ParserTest, poolUserContextlw4over6) {
 
     // The context should be of type map and contain 4 parameters.
     EXPECT_EQ(Element::map, ctx->getType());
-    EXPECT_EQ(4, ctx->size());
+    EXPECT_EQ(4U, ctx->size());
     ConstElementPtr ratio   = ctx->get("lw4over6-sharing-ratio");
     ConstElementPtr v4pool  = ctx->get("lw4over6-v4-pool");
     ConstElementPtr exclude = ctx->get("lw4over6-sysports-exclude");
@@ -6903,7 +6903,7 @@ TEST_F(Dhcp6ParserTest, poolUserContextData) {
 
     // The context should be of type map and contain 4 parameters.
     EXPECT_EQ(Element::map, ctx->getType());
-    EXPECT_EQ(4, ctx->size());
+    EXPECT_EQ(4U, ctx->size());
     ConstElementPtr ratio   = ctx->get("lw4over6-sharing-ratio");
     ConstElementPtr v4pool  = ctx->get("lw4over6-v4-pool");
     ConstElementPtr exclude = ctx->get("lw4over6-sysports-exclude");
@@ -6943,7 +6943,7 @@ TEST_F(Dhcp6ParserTest, poolMinMaxUserContext) {
 
     // The context should be of type map and contain 4 parameters.
     EXPECT_EQ(Element::map, ctx->getType());
-    EXPECT_EQ(4, ctx->size());
+    EXPECT_EQ(4U, ctx->size());
     ConstElementPtr ratio   = ctx->get("lw4over6-sharing-ratio");
     ConstElementPtr v4pool  = ctx->get("lw4over6-v4-pool");
     ConstElementPtr exclude = ctx->get("lw4over6-sysports-exclude");
@@ -6993,7 +6993,7 @@ TEST_F(Dhcp6ParserTest, pdPoolUserContextEmpty) {
 
     // The context should be of type map and not contain any parameters.
     EXPECT_EQ(Element::map, ctx->getType());
-    EXPECT_EQ(0, ctx->size());
+    EXPECT_EQ(0U, ctx->size());
 }
 
 // Test verifies that it's possible to specify parameters in the user context
@@ -7008,7 +7008,7 @@ TEST_F(Dhcp6ParserTest, pdPoolUserContextlw4over6) {
 
     // The context should be of type map and contain 4 parameters.
     EXPECT_EQ(Element::map, ctx->getType());
-    EXPECT_EQ(4, ctx->size());
+    EXPECT_EQ(4U, ctx->size());
     ConstElementPtr ratio   = ctx->get("lw4over6-sharing-ratio");
     ConstElementPtr v4pool  = ctx->get("lw4over6-v4-pool");
     ConstElementPtr exclude = ctx->get("lw4over6-sysports-exclude");
@@ -7153,7 +7153,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksName) {
     ASSERT_TRUE(cfg_net);
     const SharedNetwork6Collection* nets = cfg_net->getAll();
     ASSERT_TRUE(nets);
-    ASSERT_EQ(1, nets->size());
+    ASSERT_EQ(1U, nets->size());
     SharedNetwork6Ptr net = *(nets->begin());
     ASSERT_TRUE(net);
     EXPECT_EQ("foo", net->getName());
@@ -7161,7 +7161,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksName) {
     // Verify that there are no subnets in this shared-network
     const Subnet6SimpleCollection* subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
-    EXPECT_EQ(0, subs->size());
+    EXPECT_EQ(0U, subs->size());
 }
 
 // Test verifies that a degenerated shared-network (just one subnet) is
@@ -7189,7 +7189,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworks1subnet) {
     // There should be exactly one shared subnet.
     const SharedNetwork6Collection* nets = cfg_net->getAll();
     ASSERT_TRUE(nets);
-    ASSERT_EQ(1, nets->size());
+    ASSERT_EQ(1U, nets->size());
 
     SharedNetwork6Ptr net = *(nets->begin());
     ASSERT_TRUE(net);
@@ -7198,7 +7198,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworks1subnet) {
     // It should have one subnet. The subnet should have default values.
     const Subnet6SimpleCollection* subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
-    EXPECT_EQ(1, subs->size());
+    EXPECT_EQ(1U, subs->size());
     checkSubnet(*subs, "2001:db8::/48", 0, 0, 0, 7200);
 
     // Now make sure the subnet was added to global list of subnets.
@@ -7268,7 +7268,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworks3subnets) {
     ASSERT_TRUE(cfg_net);
     const SharedNetwork6Collection* nets = cfg_net->getAll();
     ASSERT_TRUE(nets);
-    ASSERT_EQ(1, nets->size());
+    ASSERT_EQ(1U, nets->size());
 
     SharedNetwork6Ptr net = *(nets->begin());
     ASSERT_TRUE(net);
@@ -7277,7 +7277,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworks3subnets) {
 
     const Subnet6SimpleCollection* subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
-    EXPECT_EQ(3, subs->size());
+    EXPECT_EQ(3U, subs->size());
     checkSubnet(*subs, "2001:db1::/48",
                 1000, 2000, 3000, 4000,
                 2000, 4000, 3000, 5000);
@@ -7403,7 +7403,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     ASSERT_TRUE(cfg_net);
     const SharedNetwork6Collection* nets = cfg_net->getAll();
     ASSERT_TRUE(nets);
-    ASSERT_EQ(2, nets->size());
+    ASSERT_EQ(2U, nets->size());
 
     // Let's check the first one.
     SharedNetwork6Ptr net = nets->at(0);
@@ -7412,7 +7412,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
     // The first shared network has two subnets.
     const Subnet6SimpleCollection* subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
-    EXPECT_EQ(2, subs->size());
+    EXPECT_EQ(2U, subs->size());
 
     // For the first subnet, the renew-timer should be 10, because it was
     // derived from shared-network level. Other parameters a derived
@@ -7451,7 +7451,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDerive) {
 
     subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
-    EXPECT_EQ(1, subs->size());
+    EXPECT_EQ(1U, subs->size());
 
     // This subnet should derive its renew-timer from global scope.
     // All other parameters should have default values.
@@ -7518,7 +7518,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveInterfaces) {
     ASSERT_TRUE(cfg_net);
     const SharedNetwork6Collection* nets = cfg_net->getAll();
     ASSERT_TRUE(nets);
-    ASSERT_EQ(2, nets->size());
+    ASSERT_EQ(2U, nets->size());
 
     // Let's check the first one.
     SharedNetwork6Ptr net = nets->at(0);
@@ -7526,7 +7526,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveInterfaces) {
 
     const Subnet6SimpleCollection* subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
-    EXPECT_EQ(2, subs->size());
+    EXPECT_EQ(2U, subs->size());
 
     // For the first subnet, the rebind-timer should be 10, because it was
     // derived from shared-network level. Other parameters a derived
@@ -7549,7 +7549,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveInterfaces) {
 
     subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
-    EXPECT_EQ(1, subs->size());
+    EXPECT_EQ(1U, subs->size());
 
     // This subnet should derive its rebind-timer from global scope.
     s = checkSubnet(*subs, "2001:db3::/48", 0, 0, 0, 7200);
@@ -7633,7 +7633,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksRapidCommit) {
     ASSERT_TRUE(cfg_net);
     const SharedNetwork6Collection* nets = cfg_net->getAll();
     ASSERT_TRUE(nets);
-    ASSERT_EQ(2, nets->size());
+    ASSERT_EQ(2U, nets->size());
 
     // Let's check the first one.
     SharedNetwork6Ptr net = nets->at(0);
@@ -7641,7 +7641,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksRapidCommit) {
 
     const Subnet6SimpleCollection* subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
-    ASSERT_EQ(2, subs->size());
+    ASSERT_EQ(2U, subs->size());
     auto sub = subs->begin();
     EXPECT_TRUE((*sub)->getRapidCommit());
     EXPECT_TRUE((*std::next(sub))->getRapidCommit());
@@ -7654,7 +7654,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksRapidCommit) {
 
     subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
-    EXPECT_EQ(1, subs->size());
+    EXPECT_EQ(1U, subs->size());
 
     // This subnet should derive its renew-timer from global scope.
     sub = subs->begin();
@@ -7704,7 +7704,7 @@ TEST_F(Dhcp6ParserTest, hostsDatabases) {
         CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
     ASSERT_TRUE(cfgdb);
     const std::list<std::string>& hal = cfgdb->getHostDbAccessStringList();
-    ASSERT_EQ(2, hal.size());
+    ASSERT_EQ(2U, hal.size());
     // Keywords are in alphabetical order
     EXPECT_EQ("name=keatest1 password=keatest type=mysql user=keatest", hal.front());
     EXPECT_EQ("name=keatest2 password=keatest retry-on-startup=true type=mysql user=keatest", hal.back());
@@ -7722,7 +7722,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     // Check global user context.
     ConstElementPtr ctx = CfgMgr::instance().getStagingCfg()->getContext();
     ASSERT_TRUE(ctx);
-    ASSERT_EQ(1, ctx->size());
+    ASSERT_EQ(1U, ctx->size());
     ASSERT_TRUE(ctx->get("comment"));
     EXPECT_EQ("\"A DHCPv6 server\"", ctx->get("comment")->str());
 
@@ -7734,7 +7734,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     // Check server id user context.
     ConstElementPtr ctx_duid = duid->getContext();
     ASSERT_TRUE(ctx_duid);
-    ASSERT_EQ(1, ctx_duid->size());
+    ASSERT_EQ(1U, ctx_duid->size());
     ASSERT_TRUE(ctx_duid->get("comment"));
     EXPECT_EQ("\"DHCPv6 specific\"", ctx_duid->get("comment")->str());
 
@@ -7745,7 +7745,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     // Check network interface configuration user context.
     ConstElementPtr ctx_iface = iface->getContext();
     ASSERT_TRUE(ctx_iface);
-    ASSERT_EQ(1, ctx_iface->size());
+    ASSERT_EQ(1U, ctx_iface->size());
     ASSERT_TRUE(ctx_iface->get("comment"));
     EXPECT_EQ("\"Use wildcard\"", ctx_iface->get("comment")->str());
 
@@ -7761,7 +7761,7 @@ TEST_F(Dhcp6ParserTest, comments) {
         LibDHCP::getRuntimeOptionDef("isc", 100);
     ASSERT_TRUE(opt_def);
     EXPECT_EQ("foo", opt_def->getName());
-    EXPECT_EQ(100, opt_def->getCode());
+    EXPECT_EQ(100U, opt_def->getCode());
     EXPECT_FALSE(opt_def->getArrayType());
     EXPECT_EQ(OPT_IPV6_ADDRESS_TYPE, opt_def->getType());
     EXPECT_TRUE(opt_def->getEncapsulatedSpace().empty());
@@ -7769,7 +7769,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     // Check option definition user context.
     ConstElementPtr ctx_opt_def = opt_def->getContext();
     ASSERT_TRUE(ctx_opt_def);
-    ASSERT_EQ(1, ctx_opt_def->size());
+    ASSERT_EQ(1U, ctx_opt_def->size());
     ASSERT_TRUE(ctx_opt_def->get("comment"));
     EXPECT_EQ("\"An option definition\"", ctx_opt_def->get("comment")->str());
 
@@ -7783,7 +7783,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     // Check option descriptor user context.
     ConstElementPtr ctx_opt_desc = opt_desc.getContext();
     ASSERT_TRUE(ctx_opt_desc);
-    ASSERT_EQ(1, ctx_opt_desc->size());
+    ASSERT_EQ(1U, ctx_opt_desc->size());
     ASSERT_TRUE(ctx_opt_desc->get("comment"));
     EXPECT_EQ("\"Set option value\"", ctx_opt_desc->get("comment")->str());
 
@@ -7791,7 +7791,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     const ClientClassDictionaryPtr& dict =
         CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
     ASSERT_TRUE(dict);
-    EXPECT_EQ(3, dict->getClasses()->size());
+    EXPECT_EQ(3U, dict->getClasses()->size());
     ClientClassDefPtr cclass = dict->findClass("all");
     ASSERT_TRUE(cclass);
     EXPECT_EQ("all", cclass->getName());
@@ -7800,7 +7800,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     // Check client class user context.
     ConstElementPtr ctx_class = cclass->getContext();
     ASSERT_TRUE(ctx_class);
-    ASSERT_EQ(1, ctx_class->size());
+    ASSERT_EQ(1U, ctx_class->size());
     ASSERT_TRUE(ctx_class->get("comment"));
     EXPECT_EQ("\"match all\"", ctx_class->get("comment")->str());
 
@@ -7817,7 +7817,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     EXPECT_EQ("", cclass->getTest());
     ctx_class = cclass->getContext();
     ASSERT_TRUE(ctx_class);
-    ASSERT_EQ(2, ctx_class->size());
+    ASSERT_EQ(2U, ctx_class->size());
     ASSERT_TRUE(ctx_class->get("comment"));
     EXPECT_EQ("\"a comment\"", ctx_class->get("comment")->str());
     ASSERT_TRUE(ctx_class->get("version"));
@@ -7828,7 +7828,7 @@ TEST_F(Dhcp6ParserTest, comments) {
         CfgMgr::instance().getStagingCfg()->getUnixControlSocketInfo();
     ASSERT_TRUE(socket);
     ASSERT_EQ(Element::list, socket->getType());
-    ASSERT_EQ(socket->size(), 1);
+    ASSERT_EQ(socket->size(), 1U);
     socket = socket->get(0);
     ASSERT_TRUE(socket);
     ASSERT_TRUE(socket->get("socket-type"));
@@ -7839,7 +7839,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     // Check UNIX control socket comment and user context.
     ConstElementPtr ctx_socket = socket->get("user-context");
     ASSERT_TRUE(ctx_socket);
-    ASSERT_EQ(1, ctx_socket->size());
+    ASSERT_EQ(1U, ctx_socket->size());
     ASSERT_TRUE(ctx_socket->get("comment"));
     EXPECT_EQ("\"Indirect comment\"", ctx_socket->get("comment")->str());
 
@@ -7847,7 +7847,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     socket = CfgMgr::instance().getStagingCfg()->getHttpControlSocketInfo();
     ASSERT_TRUE(socket);
     ASSERT_EQ(Element::list, socket->getType());
-    ASSERT_EQ(socket->size(), 1);
+    ASSERT_EQ(socket->size(), 1U);
     socket = socket->get(0);
     ASSERT_TRUE(socket);
     /// @todo use the configuration object.
@@ -7861,14 +7861,14 @@ TEST_F(Dhcp6ParserTest, comments) {
     // Check HTTP control socket comment.
     ctx_socket = socket->get("user-context");
     ASSERT_TRUE(ctx_socket);
-    ASSERT_EQ(1, ctx_socket->size());
+    ASSERT_EQ(1U, ctx_socket->size());
     ASSERT_TRUE(ctx_socket->get("comment"));
     EXPECT_EQ("\"HTTP control socket\"", ctx_socket->get("comment")->str());
 
     // HTTP headers.
     ConstElementPtr headers = socket->get("http-headers");
     ASSERT_TRUE(headers);
-    ASSERT_EQ(1, headers->size());
+    ASSERT_EQ(1U, headers->size());
     ConstElementPtr header = headers->get(0);
     ASSERT_TRUE(header);
     ASSERT_TRUE(header->get("name"));
@@ -7879,7 +7879,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     // Check HTTP header user context.
     ConstElementPtr ctx_header = header->get("user-context");
     ASSERT_TRUE(ctx_header);
-    ASSERT_EQ(1, ctx_header->size());
+    ASSERT_EQ(1U, ctx_header->size());
     ASSERT_TRUE(ctx_header->get("comment"));
     EXPECT_EQ("\"HSTS header\"", ctx_header->get("comment")->str());
 
@@ -7890,14 +7890,14 @@ TEST_F(Dhcp6ParserTest, comments) {
     EXPECT_EQ("\"basic\"", auth->get("type")->str());
     ConstElementPtr ctx_auth = auth->get("user-context");
     ASSERT_TRUE(ctx_auth);
-    ASSERT_EQ(1, ctx_auth->size());
+    ASSERT_EQ(1U, ctx_auth->size());
     ASSERT_TRUE(ctx_auth->get("comment"));
     EXPECT_EQ("\"basic HTTP authentication\"", ctx_auth->get("comment")->str());
 
     // Authentication client.
     ConstElementPtr clients = auth->get("clients");
     ASSERT_TRUE(clients);
-    ASSERT_EQ(1, clients->size());
+    ASSERT_EQ(1U, clients->size());
     ConstElementPtr client;
     ASSERT_NO_THROW(client = clients->get(0));
     ASSERT_TRUE(client);
@@ -7907,7 +7907,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     ASSERT_EQ("\"foobar\"", client->get("password")->str());
     ConstElementPtr ctx_client = client->get("user-context");
     ASSERT_TRUE(ctx_client);
-    ASSERT_EQ(1, ctx_client->size());
+    ASSERT_EQ(1U, ctx_client->size());
     ASSERT_TRUE(ctx_client->get("comment"));
     EXPECT_EQ("\"admin is authorized\"", ctx_client->get("comment")->str());
 
@@ -7917,7 +7917,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     ASSERT_TRUE(cfg_net);
     const SharedNetwork6Collection* nets = cfg_net->getAll();
     ASSERT_TRUE(nets);
-    ASSERT_EQ(1, nets->size());
+    ASSERT_EQ(1U, nets->size());
     SharedNetwork6Ptr net = nets->at(0);
     ASSERT_TRUE(net);
     EXPECT_EQ("foo", net->getName());
@@ -7925,49 +7925,49 @@ TEST_F(Dhcp6ParserTest, comments) {
     // Check shared network user context.
     ConstElementPtr ctx_net = net->getContext();
     ASSERT_TRUE(ctx_net);
-    ASSERT_EQ(1, ctx_net->size());
+    ASSERT_EQ(1U, ctx_net->size());
     ASSERT_TRUE(ctx_net->get("comment"));
     EXPECT_EQ("\"A shared network\"", ctx_net->get("comment")->str());
 
     // The shared network has a subnet.
     const Subnet6SimpleCollection* subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
-    ASSERT_EQ(1, subs->size());
+    ASSERT_EQ(1U, subs->size());
     Subnet6Ptr sub = *subs->begin();
     ASSERT_TRUE(sub);
-    EXPECT_EQ(100, sub->getID());
+    EXPECT_EQ(100U, sub->getID());
     EXPECT_EQ("2001:db1::/48", sub->toText());
 
     // Check subnet user context.
     ConstElementPtr ctx_sub = sub->getContext();
     ASSERT_TRUE(ctx_sub);
-    ASSERT_EQ(1, ctx_sub->size());
+    ASSERT_EQ(1U, ctx_sub->size());
     ASSERT_TRUE(ctx_sub->get("comment"));
     EXPECT_EQ("\"A subnet\"", ctx_sub->get("comment")->str());
 
     // The subnet has a pool.
     const PoolCollection& pools = sub->getPools(Lease::TYPE_NA);
-    ASSERT_EQ(1, pools.size());
+    ASSERT_EQ(1U, pools.size());
     PoolPtr pool = pools.at(0);
     ASSERT_TRUE(pool);
 
     // Check pool user context.
     ConstElementPtr ctx_pool = pool->getContext();
     ASSERT_TRUE(ctx_pool);
-    ASSERT_EQ(1, ctx_pool->size());
+    ASSERT_EQ(1U, ctx_pool->size());
     ASSERT_TRUE(ctx_pool->get("comment"));
     EXPECT_EQ("\"A pool\"", ctx_pool->get("comment")->str());
 
     // The subnet has a prefix pool.
     const PoolCollection& pdpools = sub->getPools(Lease::TYPE_PD);
-    ASSERT_EQ(1, pdpools.size());
+    ASSERT_EQ(1U, pdpools.size());
     PoolPtr pdpool = pdpools.at(0);
     ASSERT_TRUE(pdpool);
 
     // Check prefix pool user context.
     ConstElementPtr ctx_pdpool = pdpool->getContext();
     ASSERT_TRUE(ctx_pdpool);
-    ASSERT_EQ(1, ctx_pdpool->size());
+    ASSERT_EQ(1U, ctx_pdpool->size());
     ASSERT_TRUE(ctx_pdpool->get("comment"));
     EXPECT_EQ("\"A prefix pool\"", ctx_pdpool->get("comment")->str());
 
@@ -7981,13 +7981,13 @@ TEST_F(Dhcp6ParserTest, comments) {
     EXPECT_EQ("aa:bb:cc:dd:ee:ff", host->getHWAddress()->toText(false));
     EXPECT_FALSE(host->getDuid());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv4SubnetID());
-    EXPECT_EQ(100, host->getIPv6SubnetID());
+    EXPECT_EQ(100U, host->getIPv6SubnetID());
     EXPECT_EQ("foo.example.com", host->getHostname());
 
     // Check host user context.
     ConstElementPtr ctx_host = host->getContext();
     ASSERT_TRUE(ctx_host);
-    ASSERT_EQ(1, ctx_host->size());
+    ASSERT_EQ(1U, ctx_host->size());
     ASSERT_TRUE(ctx_host->get("comment"));
     EXPECT_EQ("\"A host reservation\"", ctx_host->get("comment")->str());
 
@@ -8003,7 +8003,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     // Check embedded option data user context.
     ConstElementPtr ctx_host_desc = host_desc.getContext();
     ASSERT_TRUE(ctx_host_desc);
-    ASSERT_EQ(1, ctx_host_desc->size());
+    ASSERT_EQ(1U, ctx_host_desc->size());
     ASSERT_TRUE(ctx_host_desc->get("comment"));
     EXPECT_EQ("\"An option in a reservation\"",
               ctx_host_desc->get("comment")->str());
@@ -8017,7 +8017,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     // Check dynamic DNS update configuration user context.
     ConstElementPtr ctx_d2 = d2->getContext();
     ASSERT_TRUE(ctx_d2);
-    ASSERT_EQ(1, ctx_d2->size());
+    ASSERT_EQ(1U, ctx_d2->size());
     ASSERT_TRUE(ctx_d2->get("comment"));
     EXPECT_EQ("\"No dynamic DNS\"", ctx_d2->get("comment")->str());
 }
@@ -8095,7 +8095,7 @@ TEST_F(Dhcp6ParserTest, globalReservations) {
     const Subnet6Collection* subnets =
         CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->getAll();
     ASSERT_TRUE(subnets);
-    ASSERT_EQ(3, subnets->size());
+    ASSERT_EQ(3U, subnets->size());
 
     // Hosts configuration must be available.
     CfgHostsPtr hosts_cfg = CfgMgr::instance().getStagingCfg()->getCfgHosts();
@@ -8131,7 +8131,7 @@ TEST_F(Dhcp6ParserTest, globalReservations) {
         retrieveOption<Option6AddrLstPtr>(*host, D6O_NAME_SERVERS);
     ASSERT_TRUE(opt_dns);
     Option6AddrLst::AddressContainer dns_addrs = opt_dns->getAddresses();
-    ASSERT_EQ(1, dns_addrs.size());
+    ASSERT_EQ(1U, dns_addrs.size());
     EXPECT_EQ("2001:db8:2::abbc", dns_addrs[0].toText());
     OptionUint8Ptr opt_prf =
         retrieveOption<OptionUint8Ptr>(*host, D6O_PREFERENCE);
@@ -8157,7 +8157,7 @@ TEST_F(Dhcp6ParserTest, globalReservations) {
     opt_dns = retrieveOption<Option6AddrLstPtr>(*host, D6O_NAME_SERVERS);
     ASSERT_TRUE(opt_dns);
     dns_addrs = opt_dns->getAddresses();
-    ASSERT_EQ(1, dns_addrs.size());
+    ASSERT_EQ(1U, dns_addrs.size());
     EXPECT_EQ("2001:db8:2::1111", dns_addrs[0].toText());
     opt_prf = retrieveOption<OptionUint8Ptr>(*host, D6O_PREFERENCE);
     ASSERT_TRUE(opt_prf);
@@ -8207,7 +8207,7 @@ TEST_F(Dhcp6ParserTest, configControlInfo) {
 
     // Fetch the list of config dbs.  It should have two entries.
     const process::ConfigDbInfoList& dblist = info->getConfigDatabases();
-    ASSERT_EQ(2, dblist.size());
+    ASSERT_EQ(2U, dblist.size());
 
     // Make sure the entries are what we expect and in the right order.
     // (DbAccessParser creates access strings with the keywords in
@@ -8219,7 +8219,7 @@ TEST_F(Dhcp6ParserTest, configControlInfo) {
 
     // Verify that the config-fetch-wait-time is correct.
     EXPECT_FALSE(info->getConfigFetchWaitTime().unspecified());
-    EXPECT_EQ(10, info->getConfigFetchWaitTime().get());
+    EXPECT_EQ(10U, info->getConfigFetchWaitTime().get());
 }
 
 // Check whether it is possible to configure server-tag
@@ -8643,7 +8643,7 @@ TEST_F(Dhcp6ParserTest, statsDefaultLimits) {
     CfgMgr::instance().commit();
 
     stats::StatsMgr& stats_mgr = stats::StatsMgr::instance();
-    EXPECT_EQ(10, stats_mgr.getMaxSampleCountDefault());
+    EXPECT_EQ(10U, stats_mgr.getMaxSampleCountDefault());
     EXPECT_EQ("00:00:05",
               util::durationToText(stats_mgr.getMaxSampleAgeDefault(), 0));
 }
@@ -8737,7 +8737,7 @@ TEST_F(Dhcp6ParserTest, parkedPacketLimit) {
     configure(config_no_limit, CONTROL_RESULT_SUCCESS, "");
     ConstElementPtr ppl;
     ASSERT_TRUE(ppl = CfgMgr::instance().getStagingCfg()->getConfiguredGlobal("parked-packet-limit"));
-    EXPECT_EQ(256, ppl->intValue());
+    EXPECT_EQ(256U, ppl->intValue());
 
     // Clear the config
     CfgMgr::instance().clear();
@@ -8746,7 +8746,7 @@ TEST_F(Dhcp6ParserTest, parkedPacketLimit) {
     configure(config_limit, CONTROL_RESULT_SUCCESS, "");
 
     ASSERT_TRUE(ppl = CfgMgr::instance().getStagingCfg()->getConfiguredGlobal("parked-packet-limit"));
-    EXPECT_EQ(777, ppl->intValue());
+    EXPECT_EQ(777U, ppl->intValue());
 
     // Make sure an invalid limit fails to parse.
     ASSERT_THROW(parseDHCP6(bad_limit), std::exception);
@@ -8790,7 +8790,7 @@ TEST_F(Dhcp6ParserTest, clientClassValidPreferredLifetime) {
     ClientClassDictionaryPtr dictionary;
     dictionary = CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
     ASSERT_TRUE(dictionary);
-    EXPECT_EQ(2, dictionary->getClasses()->size());
+    EXPECT_EQ(2U, dictionary->getClasses()->size());
 
     // Execute the commit
     ASSERT_NO_THROW(CfgMgr::instance().commit());
@@ -8798,17 +8798,17 @@ TEST_F(Dhcp6ParserTest, clientClassValidPreferredLifetime) {
     // Verify that after commit, the current config has the correct dictionary
     dictionary = CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
     ASSERT_TRUE(dictionary);
-    EXPECT_EQ(2, dictionary->getClasses()->size());
+    EXPECT_EQ(2U, dictionary->getClasses()->size());
 
     ClientClassDefPtr class_def = dictionary->findClass("one");
     ASSERT_TRUE(class_def);
-    EXPECT_EQ(class_def->getValid().getMin(), 1000);
-    EXPECT_EQ(class_def->getValid().get(), 2000);
-    EXPECT_EQ(class_def->getValid().getMax(), 3000);
+    EXPECT_EQ(class_def->getValid().getMin(), 1000U);
+    EXPECT_EQ(class_def->getValid().get(), 2000U);
+    EXPECT_EQ(class_def->getValid().getMax(), 3000U);
 
-    EXPECT_EQ(class_def->getPreferred().getMin(), 4000);
-    EXPECT_EQ(class_def->getPreferred().get(), 5000);
-    EXPECT_EQ(class_def->getPreferred().getMax(), 6000);
+    EXPECT_EQ(class_def->getPreferred().getMin(), 4000U);
+    EXPECT_EQ(class_def->getPreferred().get(), 5000U);
+    EXPECT_EQ(class_def->getPreferred().getMax(), 6000U);
 
     class_def = dictionary->findClass("two");
     ASSERT_TRUE(class_def);
@@ -8855,7 +8855,7 @@ TEST_F(Dhcp6ParserTest, templateClientClassValidPreferredLifetime) {
     ClientClassDictionaryPtr dictionary;
     dictionary = CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
     ASSERT_TRUE(dictionary);
-    EXPECT_EQ(2, dictionary->getClasses()->size());
+    EXPECT_EQ(2U, dictionary->getClasses()->size());
 
     // Execute the commit
     ASSERT_NO_THROW(CfgMgr::instance().commit());
@@ -8863,18 +8863,18 @@ TEST_F(Dhcp6ParserTest, templateClientClassValidPreferredLifetime) {
     // Verify that after commit, the current config has the correct dictionary
     dictionary = CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
     ASSERT_TRUE(dictionary);
-    EXPECT_EQ(2, dictionary->getClasses()->size());
+    EXPECT_EQ(2U, dictionary->getClasses()->size());
 
     ClientClassDefPtr class_def = dictionary->findClass("one");
     ASSERT_TRUE(class_def);
     ASSERT_TRUE(dynamic_cast<TemplateClientClassDef*>(class_def.get()));
-    EXPECT_EQ(class_def->getValid().getMin(), 1000);
-    EXPECT_EQ(class_def->getValid().get(), 2000);
-    EXPECT_EQ(class_def->getValid().getMax(), 3000);
+    EXPECT_EQ(class_def->getValid().getMin(), 1000U);
+    EXPECT_EQ(class_def->getValid().get(), 2000U);
+    EXPECT_EQ(class_def->getValid().getMax(), 3000U);
 
-    EXPECT_EQ(class_def->getPreferred().getMin(), 4000);
-    EXPECT_EQ(class_def->getPreferred().get(), 5000);
-    EXPECT_EQ(class_def->getPreferred().getMax(), 6000);
+    EXPECT_EQ(class_def->getPreferred().getMin(), 4000U);
+    EXPECT_EQ(class_def->getPreferred().get(), 5000U);
+    EXPECT_EQ(class_def->getPreferred().getMax(), 6000U);
 
     class_def = dictionary->findClass("two");
     ASSERT_TRUE(class_def);
@@ -9058,7 +9058,7 @@ TEST_F(Dhcp6ParserTest, optionClientClassesDuplicateCheck) {
     CfgOptionPtr cfg = CfgMgr::instance().getStagingCfg()->getCfgOption();
     const auto desc = cfg->get(DHCP6_OPTION_SPACE, D6O_DOMAIN_SEARCH);
     ASSERT_TRUE(desc.option_);
-    ASSERT_EQ(desc.client_classes_.size(), 2);
+    ASSERT_EQ(desc.client_classes_.size(), 2U);
     auto cclasses = desc.client_classes_.begin();
     EXPECT_EQ(*cclasses, "foo");
     ++cclasses;
@@ -9109,7 +9109,7 @@ TEST_F(Dhcp6ParserTest, deprecatedRequireClientClassesCheck) {
     ASSERT_TRUE(network);
 
     auto& net_class_list = network->getAdditionalClasses();
-    EXPECT_EQ(1, net_class_list.size());
+    EXPECT_EQ(1U, net_class_list.size());
     auto cclasses = net_class_list.begin();
     EXPECT_EQ(*cclasses, "one");
 
@@ -9118,7 +9118,7 @@ TEST_F(Dhcp6ParserTest, deprecatedRequireClientClassesCheck) {
     ASSERT_TRUE(subnet);
 
     auto& sub_class_list = subnet->getAdditionalClasses();
-    EXPECT_EQ(1, sub_class_list.size());
+    EXPECT_EQ(1U, sub_class_list.size());
     cclasses = sub_class_list.begin();
     EXPECT_EQ(*cclasses, "two");
 
@@ -9126,7 +9126,7 @@ TEST_F(Dhcp6ParserTest, deprecatedRequireClientClassesCheck) {
     ASSERT_TRUE(pool);
 
     auto& pool_class_list = pool->getAdditionalClasses();
-    EXPECT_EQ(1, pool_class_list.size());
+    EXPECT_EQ(1U, pool_class_list.size());
     cclasses = pool_class_list.begin();
     EXPECT_EQ(*cclasses, "three");
 
@@ -9134,7 +9134,7 @@ TEST_F(Dhcp6ParserTest, deprecatedRequireClientClassesCheck) {
     ASSERT_TRUE(pool);
 
     auto& pd_pool_class_list = pool->getAdditionalClasses();
-    EXPECT_EQ(1, pd_pool_class_list.size());
+    EXPECT_EQ(1U, pd_pool_class_list.size());
     cclasses = pd_pool_class_list.begin();
     EXPECT_EQ(*cclasses, "four");
 
@@ -9188,7 +9188,7 @@ TEST_F(Dhcp6ParserTest, deprecatedOnlyIfRequiredCheck) {
 
     auto dictionary = CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
     ASSERT_TRUE(dictionary);
-    EXPECT_EQ(1, dictionary->getClasses()->size());
+    EXPECT_EQ(1U, dictionary->getClasses()->size());
 
     ClientClassDefPtr class_def = dictionary->findClass("foo");
     ASSERT_TRUE(class_def);
@@ -9260,7 +9260,7 @@ TEST_F(Dhcp6ParserTest, deprecatedClientClassesCheck) {
     ASSERT_TRUE(network);
 
     auto& net_class_list = network->getClientClasses();
-    ASSERT_EQ(1, net_class_list.size());
+    ASSERT_EQ(1U, net_class_list.size());
     auto cclasses = net_class_list.begin();
     EXPECT_EQ(*cclasses, "one");
 
@@ -9268,7 +9268,7 @@ TEST_F(Dhcp6ParserTest, deprecatedClientClassesCheck) {
     ASSERT_TRUE(subnet);
 
     auto& sub_class_list = subnet->getClientClasses();
-    ASSERT_EQ(1, sub_class_list.size());
+    ASSERT_EQ(1U, sub_class_list.size());
     cclasses = sub_class_list.begin();
     EXPECT_EQ(*cclasses, "two");
 
@@ -9276,7 +9276,7 @@ TEST_F(Dhcp6ParserTest, deprecatedClientClassesCheck) {
     ASSERT_TRUE(pool);
 
     auto& pool_class_list = pool->getClientClasses();
-    ASSERT_EQ(1, pool_class_list.size());
+    ASSERT_EQ(1U, pool_class_list.size());
     cclasses = pool_class_list.begin();
     EXPECT_EQ(*cclasses, "three");
 
@@ -9284,7 +9284,7 @@ TEST_F(Dhcp6ParserTest, deprecatedClientClassesCheck) {
     ASSERT_TRUE(pool);
 
     auto& pd_pool_class_list = pool->getClientClasses();
-    ASSERT_EQ(1, pd_pool_class_list.size());
+    ASSERT_EQ(1U, pd_pool_class_list.size());
     cclasses = pd_pool_class_list.begin();
     EXPECT_EQ(*cclasses, "four");
 
@@ -9393,13 +9393,13 @@ TEST_F(Dhcp6ParserTest, ddnsTtl) {
     ASSERT_TRUE(subnet);
 
     EXPECT_FALSE(subnet->getDdnsTtl(Network::Inheritance::NONE).unspecified());
-    EXPECT_EQ(250, subnet->getDdnsTtl(Network::Inheritance::NONE).get());
+    EXPECT_EQ(250U, subnet->getDdnsTtl(Network::Inheritance::NONE).get());
 
     EXPECT_FALSE(subnet->getDdnsTtl(Network::Inheritance::PARENT_NETWORK).unspecified());
-    EXPECT_EQ(500, subnet->getDdnsTtl(Network::Inheritance::PARENT_NETWORK).get());
+    EXPECT_EQ(500U, subnet->getDdnsTtl(Network::Inheritance::PARENT_NETWORK).get());
 
     EXPECT_FALSE(subnet->getDdnsTtl(Network::Inheritance::GLOBAL).unspecified());
-    EXPECT_EQ(750, subnet->getDdnsTtl(Network::Inheritance::GLOBAL).get());
+    EXPECT_EQ(750U, subnet->getDdnsTtl(Network::Inheritance::GLOBAL).get());
 }
 
 // Verifies ddns-ttl-min is supported at global,
@@ -9439,13 +9439,13 @@ TEST_F(Dhcp6ParserTest, ddnsTtlMin) {
     ASSERT_TRUE(subnet);
 
     EXPECT_FALSE(subnet->getDdnsTtlMin(Network::Inheritance::NONE).unspecified());
-    EXPECT_EQ(250, subnet->getDdnsTtlMin(Network::Inheritance::NONE).get());
+    EXPECT_EQ(250U, subnet->getDdnsTtlMin(Network::Inheritance::NONE).get());
 
     EXPECT_FALSE(subnet->getDdnsTtlMin(Network::Inheritance::PARENT_NETWORK).unspecified());
-    EXPECT_EQ(500, subnet->getDdnsTtlMin(Network::Inheritance::PARENT_NETWORK).get());
+    EXPECT_EQ(500U, subnet->getDdnsTtlMin(Network::Inheritance::PARENT_NETWORK).get());
 
     EXPECT_FALSE(subnet->getDdnsTtlMin(Network::Inheritance::GLOBAL).unspecified());
-    EXPECT_EQ(750, subnet->getDdnsTtlMin(Network::Inheritance::GLOBAL).get());
+    EXPECT_EQ(750U, subnet->getDdnsTtlMin(Network::Inheritance::GLOBAL).get());
 }
 
 // Verifies ddns-ttl-max is supported at global,
@@ -9485,13 +9485,13 @@ TEST_F(Dhcp6ParserTest, ddnsTtlMax) {
     ASSERT_TRUE(subnet);
 
     EXPECT_FALSE(subnet->getDdnsTtlMax(Network::Inheritance::NONE).unspecified());
-    EXPECT_EQ(250, subnet->getDdnsTtlMax(Network::Inheritance::NONE).get());
+    EXPECT_EQ(250U, subnet->getDdnsTtlMax(Network::Inheritance::NONE).get());
 
     EXPECT_FALSE(subnet->getDdnsTtlMax(Network::Inheritance::PARENT_NETWORK).unspecified());
-    EXPECT_EQ(500, subnet->getDdnsTtlMax(Network::Inheritance::PARENT_NETWORK).get());
+    EXPECT_EQ(500U, subnet->getDdnsTtlMax(Network::Inheritance::PARENT_NETWORK).get());
 
     EXPECT_FALSE(subnet->getDdnsTtlMax(Network::Inheritance::GLOBAL).unspecified());
-    EXPECT_EQ(750, subnet->getDdnsTtlMax(Network::Inheritance::GLOBAL).get());
+    EXPECT_EQ(750U, subnet->getDdnsTtlMax(Network::Inheritance::GLOBAL).get());
 }
 
 TEST_F(Dhcp6ParserTest, poolDdnsParameters) {
@@ -9543,7 +9543,7 @@ TEST_F(Dhcp6ParserTest, poolDdnsParameters) {
     ASSERT_TRUE(subnet);
 
     const PoolCollection pools = subnet->getPools(Lease::TYPE_NA);
-    ASSERT_GE(pools.size(), 2);
+    ASSERT_GE(pools.size(), 2U);
 
     // First pool specifies all but ddns-ttl.
     PoolPtr pool = pools.at(0);
@@ -9586,10 +9586,10 @@ TEST_F(Dhcp6ParserTest, poolDdnsParameters) {
     ASSERT_TRUE(pool->getDdnsTtl().unspecified());
 
     ASSERT_FALSE(pool->getDdnsTtlMin().unspecified());
-    EXPECT_EQ(pool->getDdnsTtlMin().get(), 200);
+    EXPECT_EQ(pool->getDdnsTtlMin().get(), 200U);
 
     ASSERT_FALSE(pool->getDdnsTtlMax().unspecified());
-    EXPECT_EQ(pool->getDdnsTtlMax().get(), 500);
+    EXPECT_EQ(pool->getDdnsTtlMax().get(), 500U);
 
     // Second pool only specifies ddns-ttl.
     pool = pools.at(1);
@@ -9609,7 +9609,7 @@ TEST_F(Dhcp6ParserTest, poolDdnsParameters) {
     ASSERT_TRUE(pool->getDdnsTtlMin().unspecified());
 
     ASSERT_FALSE(pool->getDdnsTtl().unspecified());
-    EXPECT_EQ(pool->getDdnsTtl().get(), 300);
+    EXPECT_EQ(pool->getDdnsTtl().get(), 300U);
 
     ASSERT_TRUE(pool->getDdnsTtlMax().unspecified());
 }

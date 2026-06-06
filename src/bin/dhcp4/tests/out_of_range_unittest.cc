@@ -354,7 +354,7 @@ OutOfRangeTest::oorRenewReleaseTest(CfgIndex cfg_idx,
     // Verify that we received an ACK to our renewal
     resp = client.getContext().response_;
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-    EXPECT_EQ(0, d2_mgr_.getQueueSize());
+    EXPECT_EQ(0U, d2_mgr_.getQueueSize());
 
     // STAGE TWO:
 
@@ -401,12 +401,12 @@ OutOfRangeTest::oorRenewReleaseTest(CfgIndex cfg_idx,
     } else {
         // Lease should still exist, and no NCR should be queued.
         ASSERT_TRUE(lease);
-        EXPECT_EQ(0, d2_mgr_.getQueueSize());
+        EXPECT_EQ(0U, d2_mgr_.getQueueSize());
         if (release_outcome == DOES_RELEASE_EXPIRE) {
-            EXPECT_EQ(lease->valid_lft_, 0);
+            EXPECT_EQ(lease->valid_lft_, 0U);
         } else {
             EXPECT_FALSE(lease->expired());
-            EXPECT_TRUE(lease->valid_lft_ > 0);
+            EXPECT_TRUE(lease->valid_lft_ > 0U);
         }
     }
 }

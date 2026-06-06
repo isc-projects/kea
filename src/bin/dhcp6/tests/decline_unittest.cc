@@ -141,7 +141,7 @@ Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
     // Let's get the subnet-id and generate statistics name out of it.
     const Subnet6Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
 
     // Let's generate the subnet specific statistic
     std::string name = StatsMgr::generateName("subnet",
@@ -156,7 +156,7 @@ Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
 
     // Make sure that the client has acquired NA lease.
     std::vector<Lease6> leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na.size());
+    ASSERT_EQ(1U, leases_client_na.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(iaid1));
 
     // Remember the acquired address.
@@ -201,7 +201,7 @@ Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
 
     // Use the second IAID (but not in NO_IA which has cleared leases)
     if (addr_type != NO_IA) {
-        ASSERT_NE(0, client.config_.leases_.size());
+        ASSERT_NE(0U, client.config_.leases_.size());
         client.config_.leases_[0].iaid_ = iaid2;
     }
 
@@ -229,7 +229,7 @@ Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
         ASSERT_FALSE(lease->hwaddr_);
         ASSERT_TRUE(lease->duid_);
         ASSERT_EQ(*lease->duid_, DUID::EMPTY());
-        ASSERT_EQ(lease->preferred_lft_, 0);
+        ASSERT_EQ(lease->preferred_lft_, 0U);
         ASSERT_TRUE(lease->hostname_.empty());
         ASSERT_FALSE(lease->fqdn_fwd_);
         ASSERT_FALSE(lease->fqdn_rev_);
@@ -245,7 +245,7 @@ Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
         ASSERT_TRUE(lease->hwaddr_);
         ASSERT_TRUE(lease->duid_);
         ASSERT_NE(*lease->duid_, DUID::EMPTY());
-        ASSERT_NE(lease->preferred_lft_, 0);
+        ASSERT_NE(lease->preferred_lft_, 0U);
         ASSERT_FALSE(lease->fqdn_fwd_);
         ASSERT_FALSE(lease->fqdn_rev_);
 
@@ -354,7 +354,7 @@ TEST_F(DeclineTest, declineAfterRelease) {
     // Perform 4-way exchange to obtain a new lease.
     client.doSARR();
     auto leases = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(iaid));
 
     // Release the acquired lease.
@@ -383,7 +383,7 @@ TEST_F(DeclineTest, declineAfterExpire) {
     // Perform 4-way exchange to obtain a new lease.
     client.doSARR();
     auto leases = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(iaid));
 
     // Release the acquired lease.
@@ -412,7 +412,7 @@ TEST_F(DeclineTest, declineAfterReclamation) {
     // Perform 4-way exchange to obtain a new lease.
     client.doSARR();
     auto leases = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(iaid));
 
     // Release the acquired lease.
@@ -429,6 +429,5 @@ TEST_F(DeclineTest, declineAfterReclamation) {
     ASSERT_TRUE(lease);
     EXPECT_EQ(Lease::STATE_EXPIRED_RECLAIMED, lease->state_);
 }
-
 
 } // end of anonymous namespace

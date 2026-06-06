@@ -311,9 +311,9 @@ public:
         //    committed so becomes the current one.
         //  - the command is called outside configuration so it must
         //    be the current configuration. The test explicitly checks this.
-        EXPECT_EQ(1, cb_control->getDatabaseTotalConfigFetchCalls());
-        EXPECT_EQ(0, cb_control->getDatabaseCurrentConfigFetchCalls());
-        EXPECT_EQ(1, cb_control->getDatabaseStagingConfigFetchCalls());
+        EXPECT_EQ(1U, cb_control->getDatabaseTotalConfigFetchCalls());
+        EXPECT_EQ(0U, cb_control->getDatabaseCurrentConfigFetchCalls());
+        EXPECT_EQ(1U, cb_control->getDatabaseStagingConfigFetchCalls());
 
         if (call_command) {
             // The case where there is no backend is tested in the
@@ -321,13 +321,13 @@ public:
             // that the command calls the database config fetch.
 
             // Count the startup.
-            EXPECT_EQ(cb_control->getDatabaseTotalConfigFetchCalls(), 1);
-            EXPECT_EQ(cb_control->getDatabaseCurrentConfigFetchCalls(), 0);
-            EXPECT_EQ(cb_control->getDatabaseStagingConfigFetchCalls(), 1);
+            EXPECT_EQ(cb_control->getDatabaseTotalConfigFetchCalls(), 1U);
+            EXPECT_EQ(cb_control->getDatabaseCurrentConfigFetchCalls(), 0U);
+            EXPECT_EQ(cb_control->getDatabaseStagingConfigFetchCalls(), 1U);
 
             ConstElementPtr list_cmds = createCommand("config-backend-pull");
             ConstElementPtr result = CommandMgr::instance().processCommand(list_cmds);
-            EXPECT_EQ(cb_control->getDatabaseTotalConfigFetchCalls(), 2);
+            EXPECT_EQ(cb_control->getDatabaseTotalConfigFetchCalls(), 2U);
             std::string expected;
 
             if (throw_during_fetch) {
@@ -344,13 +344,13 @@ public:
             ASSERT_NO_THROW(runTimersWithTimeout(srv->getIOService(), 20));
 
             if (config_wait_fetch_time > 0) {
-                EXPECT_GE(cb_control->getDatabaseTotalConfigFetchCalls(), 5);
-                EXPECT_GE(cb_control->getDatabaseCurrentConfigFetchCalls(), 4);
-                EXPECT_EQ(cb_control->getDatabaseStagingConfigFetchCalls(), 1);
+                EXPECT_GE(cb_control->getDatabaseTotalConfigFetchCalls(), 5U);
+                EXPECT_GE(cb_control->getDatabaseCurrentConfigFetchCalls(), 4U);
+                EXPECT_EQ(cb_control->getDatabaseStagingConfigFetchCalls(), 1U);
             } else {
-                EXPECT_EQ(cb_control->getDatabaseTotalConfigFetchCalls(), 2);
-                EXPECT_EQ(cb_control->getDatabaseCurrentConfigFetchCalls(), 1);
-                EXPECT_EQ(cb_control->getDatabaseStagingConfigFetchCalls(), 1);
+                EXPECT_EQ(cb_control->getDatabaseTotalConfigFetchCalls(), 2U);
+                EXPECT_EQ(cb_control->getDatabaseCurrentConfigFetchCalls(), 1U);
+                EXPECT_EQ(cb_control->getDatabaseStagingConfigFetchCalls(), 1U);
             }
 
         } else if ((config_wait_fetch_time > 0) && (!throw_during_fetch)) {
@@ -365,9 +365,9 @@ public:
                     // least 3 attempts to fetch the updates.
                     return (cb_control->getDatabaseTotalConfigFetchCalls() >= 3);
                 }));
-            EXPECT_GE(cb_control->getDatabaseTotalConfigFetchCalls(), 3);
-            EXPECT_GE(cb_control->getDatabaseCurrentConfigFetchCalls(), 2);
-            EXPECT_EQ(cb_control->getDatabaseStagingConfigFetchCalls(), 1);
+            EXPECT_GE(cb_control->getDatabaseTotalConfigFetchCalls(), 3U);
+            EXPECT_GE(cb_control->getDatabaseCurrentConfigFetchCalls(), 2U);
+            EXPECT_EQ(cb_control->getDatabaseStagingConfigFetchCalls(), 1U);
 
         } else {
             ASSERT_NO_THROW(runTimersWithTimeout(srv->getIOService(), 500));
@@ -378,16 +378,16 @@ public:
                 // the number of recorded fetches should be 12. One at
                 // startup, 10 failures and one that causes the timer
                 // to stop.
-                EXPECT_EQ(12, cb_control->getDatabaseTotalConfigFetchCalls());
-                EXPECT_EQ(11, cb_control->getDatabaseCurrentConfigFetchCalls());
-                EXPECT_EQ(1, cb_control->getDatabaseStagingConfigFetchCalls());
+                EXPECT_EQ(12U, cb_control->getDatabaseTotalConfigFetchCalls());
+                EXPECT_EQ(11U, cb_control->getDatabaseCurrentConfigFetchCalls());
+                EXPECT_EQ(1U, cb_control->getDatabaseStagingConfigFetchCalls());
 
             } else {
                 // If the server is not configured to schedule the timer,
                 // we should still have one fetch attempt recorded.
-                EXPECT_EQ(1, cb_control->getDatabaseTotalConfigFetchCalls());
-                EXPECT_EQ(0, cb_control->getDatabaseCurrentConfigFetchCalls());
-                EXPECT_EQ(1, cb_control->getDatabaseStagingConfigFetchCalls());
+                EXPECT_EQ(1U, cb_control->getDatabaseTotalConfigFetchCalls());
+                EXPECT_EQ(0U, cb_control->getDatabaseCurrentConfigFetchCalls());
+                EXPECT_EQ(1U, cb_control->getDatabaseStagingConfigFetchCalls());
             }
         }
     }
@@ -443,17 +443,17 @@ TEST_F(JSONFileBackendTest, jsonFile) {
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     ASSERT_TRUE(subnets);
-    ASSERT_EQ(3, subnets->size()); // We expect 3 subnets.
+    ASSERT_EQ(3U, subnets->size()); // We expect 3 subnets.
 
     // Check subnet 1.
     auto subnet = subnets->begin();
     ASSERT_TRUE(subnet != subnets->end());
     EXPECT_EQ("192.0.2.0", (*subnet)->get().first.toText());
-    EXPECT_EQ(24, (*subnet)->get().second);
+    EXPECT_EQ(24U, (*subnet)->get().second);
 
     // Check pools in the first subnet.
     const PoolCollection& pools1 = (*subnet)->getPools(Lease::TYPE_V4);
-    ASSERT_EQ(1, pools1.size());
+    ASSERT_EQ(1U, pools1.size());
     EXPECT_EQ("192.0.2.1", pools1.at(0)->getFirstAddress().toText());
     EXPECT_EQ("192.0.2.100", pools1.at(0)->getLastAddress().toText());
     EXPECT_EQ(Lease::TYPE_V4, pools1.at(0)->getType());
@@ -462,11 +462,11 @@ TEST_F(JSONFileBackendTest, jsonFile) {
     ++subnet;
     ASSERT_TRUE(subnet != subnets->end());
     EXPECT_EQ("192.0.3.0", (*subnet)->get().first.toText());
-    EXPECT_EQ(24, (*subnet)->get().second);
+    EXPECT_EQ(24U, (*subnet)->get().second);
 
     // Check pools in the second subnet.
     const PoolCollection& pools2 = (*subnet)->getPools(Lease::TYPE_V4);
-    ASSERT_EQ(1, pools2.size());
+    ASSERT_EQ(1U, pools2.size());
     EXPECT_EQ("192.0.3.101", pools2.at(0)->getFirstAddress().toText());
     EXPECT_EQ("192.0.3.150", pools2.at(0)->getLastAddress().toText());
     EXPECT_EQ(Lease::TYPE_V4, pools2.at(0)->getType());
@@ -475,7 +475,7 @@ TEST_F(JSONFileBackendTest, jsonFile) {
     ++subnet;
     ASSERT_TRUE(subnet != subnets->end());
     EXPECT_EQ("192.0.4.0", (*subnet)->get().first.toText());
-    EXPECT_EQ(24, (*subnet)->get().second);
+    EXPECT_EQ(24U, (*subnet)->get().second);
 
     // ... and its only pool.
     const PoolCollection& pools3 = (*subnet)->getPools(Lease::TYPE_V4);
@@ -520,17 +520,17 @@ TEST_F(JSONFileBackendTest, hashComments) {
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     ASSERT_TRUE(subnets);
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
 
     // Check subnet 1.
     auto subnet = subnets->begin();
     ASSERT_TRUE(subnet != subnets->end());
     EXPECT_EQ("192.0.2.0", (*subnet)->get().first.toText());
-    EXPECT_EQ(22, (*subnet)->get().second);
+    EXPECT_EQ(22U, (*subnet)->get().second);
 
     // Check pools in the first subnet.
     const PoolCollection& pools1 = (*subnet)->getPools(Lease::TYPE_V4);
-    ASSERT_EQ(1, pools1.size());
+    ASSERT_EQ(1U, pools1.size());
     EXPECT_EQ("192.0.2.0", pools1.at(0)->getFirstAddress().toText());
     EXPECT_EQ("192.0.2.255", pools1.at(0)->getLastAddress().toText());
     EXPECT_EQ(Lease::TYPE_V4, pools1.at(0)->getType());
@@ -572,17 +572,17 @@ TEST_F(JSONFileBackendTest, cppLineComments) {
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     ASSERT_TRUE(subnets);
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
 
     // Check subnet 1.
     auto subnet = subnets->begin();
     ASSERT_TRUE(subnet != subnets->end());
     EXPECT_EQ("192.0.2.0", (*subnet)->get().first.toText());
-    EXPECT_EQ(22, (*subnet)->get().second);
+    EXPECT_EQ(22U, (*subnet)->get().second);
 
     // Check pools in the first subnet.
     const PoolCollection& pools1 = (*subnet)->getPools(Lease::TYPE_V4);
-    ASSERT_EQ(1, pools1.size());
+    ASSERT_EQ(1U, pools1.size());
     EXPECT_EQ("192.0.2.0", pools1.at(0)->getFirstAddress().toText());
     EXPECT_EQ("192.0.2.255", pools1.at(0)->getLastAddress().toText());
     EXPECT_EQ(Lease::TYPE_V4, pools1.at(0)->getType());
@@ -624,17 +624,17 @@ TEST_F(JSONFileBackendTest, cBlockComments) {
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     ASSERT_TRUE(subnets);
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
 
     // Check subnet 1.
     auto subnet = subnets->begin();
     ASSERT_TRUE(subnet != subnets->end());
     EXPECT_EQ("192.0.2.0", (*subnet)->get().first.toText());
-    EXPECT_EQ(22, (*subnet)->get().second);
+    EXPECT_EQ(22U, (*subnet)->get().second);
 
     // Check pools in the first subnet.
     const PoolCollection& pools1 = (*subnet)->getPools(Lease::TYPE_V4);
-    ASSERT_EQ(1, pools1.size());
+    ASSERT_EQ(1U, pools1.size());
     EXPECT_EQ("192.0.2.0", pools1.at(0)->getFirstAddress().toText());
     EXPECT_EQ("192.0.2.255", pools1.at(0)->getLastAddress().toText());
     EXPECT_EQ(Lease::TYPE_V4, pools1.at(0)->getType());
@@ -676,17 +676,17 @@ TEST_F(JSONFileBackendTest, include) {
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     ASSERT_TRUE(subnets);
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
 
     // Check subnet 1.
     auto subnet = subnets->begin();
     ASSERT_TRUE(subnet != subnets->end());
     EXPECT_EQ("192.0.2.0", (*subnet)->get().first.toText());
-    EXPECT_EQ(22, (*subnet)->get().second);
+    EXPECT_EQ(22U, (*subnet)->get().second);
 
     // Check pools in the first subnet.
     const PoolCollection& pools1 = (*subnet)->getPools(Lease::TYPE_V4);
-    ASSERT_EQ(1, pools1.size());
+    ASSERT_EQ(1U, pools1.size());
     EXPECT_EQ("192.0.2.0", pools1.at(0)->getFirstAddress().toText());
     EXPECT_EQ("192.0.2.255", pools1.at(0)->getLastAddress().toText());
     EXPECT_EQ(Lease::TYPE_V4, pools1.at(0)->getType());

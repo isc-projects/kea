@@ -192,7 +192,7 @@ TEST_F(Dhcp6to4IpcTest, receive) {
     EXPECT_EQ(forwarded->getType(), pkt->getType());
     EXPECT_TRUE(forwarded->getOption(D6O_DHCPV4_MSG));
     EXPECT_EQ("eth0", forwarded->getIface());
-    EXPECT_EQ(ETH0_INDEX, forwarded->getIndex());
+    EXPECT_EQ(static_cast<int>(ETH0_INDEX), forwarded->getIndex());
     EXPECT_EQ("2001:db8:1::123", forwarded->getRemoteAddr().toText());
 
     // Verify statistics
@@ -257,7 +257,7 @@ TEST_F(Dhcp6to4IpcTest, DISABLED_receiveRelayed) {
     EXPECT_EQ(forwarded->getType(), pkt->getType());
     EXPECT_TRUE(forwarded->getOption(D6O_DHCPV4_MSG));
     EXPECT_EQ("eth0", forwarded->getIface());
-    EXPECT_EQ(ETH0_INDEX, forwarded->getIndex());
+    EXPECT_EQ(static_cast<int>(ETH0_INDEX), forwarded->getIndex());
     EXPECT_EQ("2001:db8:1::123", forwarded->getRemoteAddr().toText());
     EXPECT_EQ(DHCP6_CLIENT_PORT, forwarded->getRemotePort());
 

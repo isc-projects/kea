@@ -229,7 +229,7 @@ TEST_F(D2ControllerTest, invalidConfigReload) {
     ASSERT_TRUE(d2_params);
 
     EXPECT_EQ("127.0.0.1", d2_params->getIpAddress().toText());
-    EXPECT_EQ(5031, d2_params->getPort());
+    EXPECT_EQ(5031U, d2_params->getPort());
     EXPECT_TRUE(d2_cfg_mgr->forwardUpdatesEnabled());
     EXPECT_TRUE(d2_cfg_mgr->reverseUpdatesEnabled());
 
@@ -267,7 +267,7 @@ TEST_F(D2ControllerTest, validConfigReload) {
     ASSERT_TRUE(d2_params);
 
     EXPECT_EQ("192.168.77.1", d2_params->getIpAddress().toText());
-    EXPECT_EQ(777, d2_params->getPort());
+    EXPECT_EQ(777U, d2_params->getPort());
     EXPECT_FALSE(d2_cfg_mgr->forwardUpdatesEnabled());
     EXPECT_FALSE(d2_cfg_mgr->reverseUpdatesEnabled());
 

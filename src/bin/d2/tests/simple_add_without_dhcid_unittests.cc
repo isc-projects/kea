@@ -1102,7 +1102,7 @@ TEST_F(SimpleAddWithoutDHCIDTransactionTest, replacingFwdAddrsHandler_BuildReque
     ASSERT_NO_THROW(name_add->replacingFwdAddrsHandler());
 
     // Verify we did not attempt to send anything.
-    EXPECT_EQ(0, name_add->getUpdateAttempts());
+    EXPECT_EQ(0U, name_add->getUpdateAttempts());
 
     // Completion flags should be false.
     EXPECT_FALSE(name_add->getForwardChangeCompleted());
@@ -1138,7 +1138,7 @@ TEST_F(SimpleAddWithoutDHCIDTransactionTest, replacingRevPtrsHandler_BuildReques
     ASSERT_NO_THROW(name_add->replacingRevPtrsHandler());
 
     // Verify we did not attempt to send anything.
-    EXPECT_EQ(0, name_add->getUpdateAttempts());
+    EXPECT_EQ(0U, name_add->getUpdateAttempts());
 
     // Completion flags should be false.
     EXPECT_FALSE(name_add->getForwardChangeCompleted());

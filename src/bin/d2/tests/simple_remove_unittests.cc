@@ -1185,7 +1185,7 @@ TEST_F(SimpleRemoveTransactionTest, removingFwdRRsHandler_BuildRequestException)
     ASSERT_NO_THROW(name_remove->removingFwdRRsHandler());
 
     // Verify we did not attempt to send anything.
-    EXPECT_EQ(0, name_remove->getUpdateAttempts());
+    EXPECT_EQ(0U, name_remove->getUpdateAttempts());
 
     // Completion flags should be false.
     EXPECT_FALSE(name_remove->getForwardChangeCompleted());
@@ -1221,7 +1221,7 @@ TEST_F(SimpleRemoveTransactionTest, removingRevPTRsHandler_BuildRequestException
     ASSERT_NO_THROW(name_remove->removingRevPtrsHandler());
 
     // Verify we did not attempt to send anything.
-    EXPECT_EQ(0, name_remove->getUpdateAttempts());
+    EXPECT_EQ(0U, name_remove->getUpdateAttempts());
 
     // Completion flags should be false.
     EXPECT_FALSE(name_remove->getForwardChangeCompleted());

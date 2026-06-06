@@ -119,7 +119,7 @@ TEST_F(PerfPkt4Test, Constructor) {
     boost::scoped_ptr<PerfPkt4> pkt1(new PerfPkt4(data,
                                                   sizeof(data),
                                                   offset_transid[0]));
-    EXPECT_EQ(1, pkt1->getTransidOffset());
+    EXPECT_EQ(1U, pkt1->getTransidOffset());
 
     // Test constructor to be used for outgoing messages.
     // Use non-zero offset and specify transaction id.
@@ -132,7 +132,7 @@ TEST_F(PerfPkt4Test, Constructor) {
 
     // Test default constructor. Transaction id offset is expected to be 1.
     boost::scoped_ptr<PerfPkt4> pkt3(new PerfPkt4(data, sizeof(data)));
-    EXPECT_EQ(1, pkt3->getTransidOffset());
+    EXPECT_EQ(1U, pkt3->getTransidOffset());
 }
 
 TEST_F(PerfPkt4Test, RawPack) {
@@ -233,8 +233,8 @@ TEST_F(PerfPkt4Test, RawUnpack) {
     OptionBuffer opt_msg_type_data = opt_msg_type->getData();
 
     // Expect one byte of message type payload.
-    ASSERT_EQ(1, opt_msg_type_data.size());
-    EXPECT_EQ(1, opt_msg_type_data[0]);
+    ASSERT_EQ(1U, opt_msg_type_data.size());
+    EXPECT_EQ(1U, opt_msg_type_data[0]);
 }
 
 TEST_F(PerfPkt4Test, InvalidOptions) {
@@ -359,7 +359,7 @@ TEST_F(PerfPkt4Test, UnpackTransactionId) {
     ASSERT_TRUE(pkt1->rawUnpack());
 
     // Get unpacked transaction id and compare with reference.
-    EXPECT_EQ(0x01020304, pkt1->getTransid());
+    EXPECT_EQ(0x01020304U, pkt1->getTransid());
 
     // Create packet with transaction id at invalid offset.
     boost::scoped_ptr<PerfPkt4> pkt2(new PerfPkt4(&in_data[0],
@@ -403,21 +403,21 @@ TEST_F(PerfPkt4Test, Writes) {
     pkt1->writeValueAt<uint8_t>(10, 0x51);
     ASSERT_TRUE(pkt1->rawPack());
     ASSERT_EQ(in_data.size(), pkt1->getBuffer().getLength());
-    EXPECT_EQ(0x51, pkt1->getBuffer()[10]);
+    EXPECT_EQ(0x51U, pkt1->getBuffer()[10]);
     // Write 2 octets (0x5251) at position 20.
     pkt1->writeValueAt<uint16_t>(20, 0x5251);
     ASSERT_TRUE(pkt1->rawPack());
     ASSERT_EQ(in_data.size(), pkt1->getBuffer().getLength());
-    EXPECT_EQ(0x52, pkt1->getBuffer()[20]);
-    EXPECT_EQ(0x51, pkt1->getBuffer()[21]);
+    EXPECT_EQ(0x52U, pkt1->getBuffer()[20]);
+    EXPECT_EQ(0x51U, pkt1->getBuffer()[21]);
     // Write 4 octets (0x54535251) at position 30.
     pkt1->writeValueAt<uint32_t>(30, 0x54535251);
     ASSERT_TRUE(pkt1->rawPack());
     ASSERT_EQ(in_data.size(), pkt1->getBuffer().getLength());
-    EXPECT_EQ(0x54, pkt1->getBuffer()[30]);
-    EXPECT_EQ(0x53, pkt1->getBuffer()[31]);
-    EXPECT_EQ(0x52, pkt1->getBuffer()[32]);
-    EXPECT_EQ(0x51, pkt1->getBuffer()[33]);
+    EXPECT_EQ(0x54U, pkt1->getBuffer()[30]);
+    EXPECT_EQ(0x53U, pkt1->getBuffer()[31]);
+    EXPECT_EQ(0x52U, pkt1->getBuffer()[32]);
+    EXPECT_EQ(0x51U, pkt1->getBuffer()[33]);
 }
 
 }

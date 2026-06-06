@@ -228,7 +228,7 @@ TEST_F(Dhcp4to6IpcTest, receive) {
     Pkt6Ptr pkt6_received = pkt_received->getPkt6();
     ASSERT_TRUE(pkt6_received);
     EXPECT_EQ("eth0", pkt6_received->getIface());
-    EXPECT_EQ(ETH0_INDEX, pkt6_received->getIndex());
+    EXPECT_EQ(static_cast<int>(ETH0_INDEX), pkt6_received->getIndex());
     EXPECT_EQ("2001:db8:1::123", pkt6_received->getRemoteAddr().toText());
 
     // Both DHCP4o6 and encapsulated DHCPv6 packet should have the
@@ -355,7 +355,7 @@ TEST_F(Dhcp4to6IpcTest, process) {
     Pkt6Ptr pkt6_received = pkt_received->getPkt6();
     ASSERT_TRUE(pkt6_received);
     EXPECT_EQ("eth0", pkt6_received->getIface());
-    EXPECT_EQ(ETH0_INDEX, pkt6_received->getIndex());
+    EXPECT_EQ(static_cast<int>(ETH0_INDEX), pkt6_received->getIndex());
     EXPECT_EQ("2001:db8:1::123", pkt6_received->getRemoteAddr().toText());
 
     // Make sure that the message has been processed.
@@ -369,7 +369,7 @@ TEST_F(Dhcp4to6IpcTest, process) {
     ASSERT_TRUE(pkt6_sent);
     EXPECT_EQ(DHCPV6_DHCPV4_RESPONSE, pkt6_sent->getType());
     EXPECT_EQ("eth0", pkt6_sent->getIface());
-    EXPECT_EQ(ETH0_INDEX, pkt6_sent->getIndex());
+    EXPECT_EQ(static_cast<int>(ETH0_INDEX), pkt6_sent->getIndex());
     EXPECT_EQ("2001:db8:1::123", pkt6_sent->getRemoteAddr().toText());
 
     // Both DHCP4o6 and encapsulated DHCPv6 packet should have the
@@ -379,7 +379,7 @@ TEST_F(Dhcp4to6IpcTest, process) {
 
     // Verify the 4o6 part
     OptionCollection sent_msgs = pkt6_sent->getOptions(D6O_DHCPV4_MSG);
-    ASSERT_EQ(1, sent_msgs.size());
+    ASSERT_EQ(1U, sent_msgs.size());
     OptionPtr sent_msg = sent_msgs.begin()->second;
     ASSERT_TRUE(sent_msg);
     const OptionBuffer sent_buf = sent_msg->getData();

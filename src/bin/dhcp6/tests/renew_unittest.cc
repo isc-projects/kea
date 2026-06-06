@@ -342,7 +342,7 @@ TEST_F(RenewTest, requestPrefixInRenew) {
 
     // Make sure that the client has acquired NA lease.
     std::vector<Lease6> leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na.size());
+    ASSERT_EQ(1U, leases_client_na.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     // The client should not acquire a PD lease.
@@ -358,7 +358,7 @@ TEST_F(RenewTest, requestPrefixInRenew) {
 
     std::vector<Lease6> leases_client_na_renewed =
         client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na_renewed.size());
+    ASSERT_EQ(1U, leases_client_na_renewed.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     // Reconfigure the server to use both NA and PD pools.
@@ -369,7 +369,7 @@ TEST_F(RenewTest, requestPrefixInRenew) {
 
     // Make sure that the client has acquired NA lease.
     leases_client_na_renewed = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na_renewed.size());
+    ASSERT_EQ(1U, leases_client_na_renewed.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     // The lease should have been renewed. Allow some time skew.
@@ -385,7 +385,7 @@ TEST_F(RenewTest, requestPrefixInRenew) {
 
     // The client should now also acquire a PD lease.
     leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_EQ(1, leases_client_pd.size());
+    ASSERT_EQ(1U, leases_client_pd.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
 }
 
@@ -412,12 +412,12 @@ TEST_F(RenewTest, renewWithExcludedPrefixPool) {
 
     // Make sure that the client has acquired NA lease.
     std::vector<Lease6> leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na.size());
+    ASSERT_EQ(1U, leases_client_na.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     // The client should also acquire a PD lease.
     std::vector<Lease6> leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_EQ(1, leases_client_pd.size());
+    ASSERT_EQ(1U, leases_client_pd.size());
     ASSERT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
 
     // Send Renew message to the server, including IA_NA and IA_PD.
@@ -425,12 +425,12 @@ TEST_F(RenewTest, renewWithExcludedPrefixPool) {
 
     std::vector<Lease6> leases_client_na_renewed =
         client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na_renewed.size());
+    ASSERT_EQ(1U, leases_client_na_renewed.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     std::vector<Lease6> leases_client_pd_renewed =
         client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_EQ(1, leases_client_pd_renewed.size());
+    ASSERT_EQ(1U, leases_client_pd_renewed.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
 
     // Make sure that Prefix Exclude option hasn't been included.
@@ -449,12 +449,12 @@ TEST_F(RenewTest, renewWithExcludedPrefixPool) {
 
     // Make sure that the client has acquired NA lease.
     leases_client_na_renewed = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na_renewed.size());
+    ASSERT_EQ(1U, leases_client_na_renewed.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     // Make sure that the client has acquired PD lease.
     leases_client_pd_renewed = client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_EQ(1, leases_client_pd_renewed.size());
+    ASSERT_EQ(1U, leases_client_pd_renewed.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
 
     // The leases should have been renewed.
@@ -472,7 +472,7 @@ TEST_F(RenewTest, renewWithExcludedPrefixPool) {
     ASSERT_TRUE(pd_exclude);
     EXPECT_EQ("3000::1000", pd_exclude->getExcludedPrefix(IOAddress("3000::"),
                                                           80).toText());
-    EXPECT_EQ(120, static_cast<unsigned>(pd_exclude->getExcludedPrefixLength()));
+    EXPECT_EQ(120U, static_cast<unsigned>(pd_exclude->getExcludedPrefixLength()));
 }
 
 // Test that it is possible to renew a prefix lease with a Prefix Exclude
@@ -501,12 +501,12 @@ TEST_F(RenewTest, renewWithExcludedPrefixHost) {
 
     // Make sure that the client has acquired NA lease.
     std::vector<Lease6> leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na.size());
+    ASSERT_EQ(1U, leases_client_na.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     // The client should also acquire a PD lease.
     std::vector<Lease6> leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_EQ(1, leases_client_pd.size());
+    ASSERT_EQ(1U, leases_client_pd.size());
     ASSERT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
 
     // Send Renew message to the server, including IA_NA and IA_PD.
@@ -514,12 +514,12 @@ TEST_F(RenewTest, renewWithExcludedPrefixHost) {
 
     std::vector<Lease6> leases_client_na_renewed =
         client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na_renewed.size());
+    ASSERT_EQ(1U, leases_client_na_renewed.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     std::vector<Lease6> leases_client_pd_renewed =
         client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_EQ(1, leases_client_pd_renewed.size());
+    ASSERT_EQ(1U, leases_client_pd_renewed.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
 
     // Make sure that Prefix Exclude option hasn't been included.
@@ -538,12 +538,12 @@ TEST_F(RenewTest, renewWithExcludedPrefixHost) {
 
     // Make sure that the client has acquired NA lease.
     leases_client_na_renewed = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na_renewed.size());
+    ASSERT_EQ(1U, leases_client_na_renewed.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     // Make sure that the client has acquired PD lease.
     leases_client_pd_renewed = client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_EQ(1, leases_client_pd_renewed.size());
+    ASSERT_EQ(1U, leases_client_pd_renewed.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
 
     // The leases should have been renewed.
@@ -561,7 +561,7 @@ TEST_F(RenewTest, renewWithExcludedPrefixHost) {
     ASSERT_TRUE(pd_exclude);
     EXPECT_EQ("3000::2000", pd_exclude->getExcludedPrefix(IOAddress("3000::"),
                                                           80).toText());
-    EXPECT_EQ(120, static_cast<unsigned>(pd_exclude->getExcludedPrefixLength()));
+    EXPECT_EQ(120U, static_cast<unsigned>(pd_exclude->getExcludedPrefixLength()));
 }
 
 // This test verifies that the client can request a prefix delegation
@@ -584,7 +584,7 @@ TEST_F(RenewTest, requestPrefixInRenewUseHint) {
 
     // Make sure that the client has acquired NA lease.
     std::vector<Lease6> leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na.size());
+    ASSERT_EQ(1U, leases_client_na.size());
 
     // The client should not acquire a PD lease.
     std::vector<Lease6> leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
@@ -599,7 +599,7 @@ TEST_F(RenewTest, requestPrefixInRenewUseHint) {
 
     std::vector<Lease6> leases_client_na_renewed =
         client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na_renewed.size());
+    ASSERT_EQ(1U, leases_client_na_renewed.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     // Specify the hint used for IA_PD.
@@ -610,7 +610,7 @@ TEST_F(RenewTest, requestPrefixInRenewUseHint) {
 
     // Make sure that the client has acquired NA lease.
     leases_client_na_renewed = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na_renewed.size());
+    ASSERT_EQ(1U, leases_client_na_renewed.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
@@ -625,7 +625,7 @@ TEST_F(RenewTest, requestPrefixInRenewUseHint) {
 
     // Make sure that the client has acquired NA lease.
     leases_client_na_renewed = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na_renewed.size());
+    ASSERT_EQ(1U, leases_client_na_renewed.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     // The lease should have been renewed.
@@ -633,7 +633,7 @@ TEST_F(RenewTest, requestPrefixInRenewUseHint) {
 
     // The client should now also acquire a PD lease.
     leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_EQ(1, leases_client_pd.size());
+    ASSERT_EQ(1U, leases_client_pd.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
 }
 
@@ -657,25 +657,25 @@ TEST_F(RenewTest, requestAddressInRenew) {
 
     // Make sure that the client has acquired PD lease.
     std::vector<Lease6> leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_EQ(1, leases_client_pd.size());
+    ASSERT_EQ(1U, leases_client_pd.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
 
     // The client should not acquire a NA lease.
     std::vector<Lease6> leases_client_na =
         client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(0, leases_client_na.size());
+    ASSERT_EQ(0U, leases_client_na.size());
     ASSERT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(na_iaid_));
 
     // Send Renew message to the server, including IA_PD and requesting IA_NA.
     // The server should return NoAddrsAvail status code in this case.
     ASSERT_NO_THROW(client.doRenew());
     leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(0, leases_client_na.size());
+    ASSERT_EQ(0U, leases_client_na.size());
     ASSERT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(na_iaid_));
 
     std::vector<Lease6> leases_client_pd_renewed =
         client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_EQ(1, leases_client_pd_renewed.size());
+    ASSERT_EQ(1U, leases_client_pd_renewed.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
     EXPECT_GE(leases_client_pd_renewed[0].cltt_ - leases_client_pd[0].cltt_, 1000);
 
@@ -687,13 +687,13 @@ TEST_F(RenewTest, requestAddressInRenew) {
 
     // Make sure that the client has renewed PD lease.
     leases_client_pd_renewed =  client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_EQ(1, leases_client_pd_renewed.size());
+    ASSERT_EQ(1U, leases_client_pd_renewed.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
     EXPECT_GE(leases_client_pd_renewed[0].cltt_ - leases_client_pd[0].cltt_, 1000);
 
     // The client should now also acquire a NA lease.
     leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na.size());
+    ASSERT_EQ(1U, leases_client_na.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 }
 
@@ -717,13 +717,13 @@ TEST_F(RenewTest, requestAddressInRenewHint) {
 
     // Make sure that the client has acquired PD lease.
     std::vector<Lease6> leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_EQ(1, leases_client_pd.size());
+    ASSERT_EQ(1U, leases_client_pd.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
 
     // The client should not acquire a NA lease.
     std::vector<Lease6> leases_client_na =
         client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(0, leases_client_na.size());
+    ASSERT_EQ(0U, leases_client_na.size());
     ASSERT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(na_iaid_));
 
     client.requestAddress(na_iaid_, IOAddress("2001:db8:1::100"));
@@ -733,14 +733,14 @@ TEST_F(RenewTest, requestAddressInRenewHint) {
     ASSERT_NO_THROW(client.doRenew());
     leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
     // The server should return the hint with the zero lifetimes.
-    ASSERT_EQ(1, leases_client_na.size());
-    EXPECT_EQ(0, leases_client_na[0].preferred_lft_);
-    EXPECT_EQ(0, leases_client_na[0].valid_lft_);
+    ASSERT_EQ(1U, leases_client_na.size());
+    EXPECT_EQ(0U, leases_client_na[0].preferred_lft_);
+    EXPECT_EQ(0U, leases_client_na[0].valid_lft_);
     ASSERT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(na_iaid_));
 
     std::vector<Lease6> leases_client_pd_renewed =
         client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_EQ(1, leases_client_pd_renewed.size());
+    ASSERT_EQ(1U, leases_client_pd_renewed.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
     EXPECT_GE(leases_client_pd_renewed[0].cltt_ - leases_client_pd[0].cltt_, 1000);
 
@@ -752,13 +752,13 @@ TEST_F(RenewTest, requestAddressInRenewHint) {
 
     // Make sure that the client has renewed PD lease.
     leases_client_pd_renewed = client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_EQ(1, leases_client_pd_renewed.size());
+    ASSERT_EQ(1U, leases_client_pd_renewed.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
     EXPECT_GE(leases_client_pd_renewed[0].cltt_ - leases_client_pd[0].cltt_, 1000);
 
     // The client should now also acquire a NA lease.
     leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na.size());
+    ASSERT_EQ(1U, leases_client_na.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 }
 
@@ -789,7 +789,7 @@ TEST_F(RenewTest, docsisORO) {
 
     // Make sure that the client has acquired NA lease.
     std::vector<Lease6> leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na.size());
+    ASSERT_EQ(1U, leases_client_na.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     // Send Renew message to the server.
@@ -797,7 +797,7 @@ TEST_F(RenewTest, docsisORO) {
 
     std::vector<Lease6> leases_client_na_renewed =
         client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na_renewed.size());
+    ASSERT_EQ(1U, leases_client_na_renewed.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     // No vendor option was included in the renew so there should be none
@@ -812,7 +812,7 @@ TEST_F(RenewTest, docsisORO) {
     ASSERT_NO_THROW(client.doRenew());
 
     leases_client_na_renewed = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na_renewed.size());
+    ASSERT_EQ(1U, leases_client_na_renewed.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
 
     // Verify whether there is a vendor option.
@@ -854,7 +854,7 @@ TEST_F(RenewTest, optionsInheritance) {
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
 

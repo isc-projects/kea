@@ -135,24 +135,24 @@ TEST_F(TeeTest, explicitTimers) {
     uint32_t actual_t2;
 
     ASSERT_TRUE(client.getTeeTimes(na_iaid, actual_t1, actual_t2));
-    EXPECT_EQ(1000, actual_t1);
-    EXPECT_EQ(2000, actual_t2);
+    EXPECT_EQ(1000U, actual_t1);
+    EXPECT_EQ(2000U, actual_t2);
 
     ASSERT_TRUE(client.getTeeTimes(pd_iaid, actual_t1, actual_t2));
-    EXPECT_EQ(1000, actual_t1);
-    EXPECT_EQ(2000, actual_t2);
+    EXPECT_EQ(1000U, actual_t1);
+    EXPECT_EQ(2000U, actual_t2);
 
     // Let's renew the leases.
     ASSERT_NO_THROW(client.doRenew());
 
     // Now check the timers again.
     ASSERT_TRUE(client.getTeeTimes(na_iaid, actual_t1, actual_t2));
-    EXPECT_EQ(1000, actual_t1);
-    EXPECT_EQ(2000, actual_t2);
+    EXPECT_EQ(1000U, actual_t1);
+    EXPECT_EQ(2000U, actual_t2);
 
     ASSERT_TRUE(client.getTeeTimes(pd_iaid, actual_t1, actual_t2));
-    EXPECT_EQ(1000, actual_t1);
-    EXPECT_EQ(2000, actual_t2);
+    EXPECT_EQ(1000U, actual_t1);
+    EXPECT_EQ(2000U, actual_t2);
 }
 
 // This test verifies that T1 and T2 are calculated by
@@ -178,24 +178,24 @@ TEST_F(TeeTest, defaultTimers) {
     uint32_t actual_t2;
 
     ASSERT_TRUE(client.getTeeTimes(na_iaid, actual_t1, actual_t2));
-    EXPECT_EQ(1500, actual_t1);
-    EXPECT_EQ(2400, actual_t2);
+    EXPECT_EQ(1500U, actual_t1);
+    EXPECT_EQ(2400U, actual_t2);
 
     ASSERT_TRUE(client.getTeeTimes(pd_iaid, actual_t1, actual_t2));
-    EXPECT_EQ(1500, actual_t1);
-    EXPECT_EQ(2400, actual_t2);
+    EXPECT_EQ(1500U, actual_t1);
+    EXPECT_EQ(2400U, actual_t2);
 
     // Let's renew the leases.
     ASSERT_NO_THROW(client.doRenew());
 
     // Now check the timers again.
     ASSERT_TRUE(client.getTeeTimes(na_iaid, actual_t1, actual_t2));
-    EXPECT_EQ(1500, actual_t1);
-    EXPECT_EQ(2400, actual_t2);
+    EXPECT_EQ(1500U, actual_t1);
+    EXPECT_EQ(2400U, actual_t2);
 
     ASSERT_TRUE(client.getTeeTimes(pd_iaid, actual_t1, actual_t2));
-    EXPECT_EQ(1500, actual_t1);
-    EXPECT_EQ(2400, actual_t2);
+    EXPECT_EQ(1500U, actual_t1);
+    EXPECT_EQ(2400U, actual_t2);
 }
 
 // This test verifies that custom percentages for T1 and T2
@@ -220,26 +220,24 @@ TEST_F(TeeTest, calculateTimers) {
     uint32_t actual_t2;
 
     ASSERT_TRUE(client.getTeeTimes(na_iaid, actual_t1, actual_t2));
-    EXPECT_EQ(1350, actual_t1);
-    EXPECT_EQ(2100, actual_t2);
+    EXPECT_EQ(1350U, actual_t1);
+    EXPECT_EQ(2100U, actual_t2);
 
     ASSERT_TRUE(client.getTeeTimes(pd_iaid, actual_t1, actual_t2));
-    EXPECT_EQ(1350, actual_t1);
-    EXPECT_EQ(2100, actual_t2);
+    EXPECT_EQ(1350U, actual_t1);
+    EXPECT_EQ(2100U, actual_t2);
 
     // Let's renew the leases.
     ASSERT_NO_THROW(client.doRenew());
 
     // Now check the timers again.
     ASSERT_TRUE(client.getTeeTimes(na_iaid, actual_t1, actual_t2));
-    EXPECT_EQ(1350, actual_t1);
-    EXPECT_EQ(2100, actual_t2);
+    EXPECT_EQ(1350U, actual_t1);
+    EXPECT_EQ(2100U, actual_t2);
 
     ASSERT_TRUE(client.getTeeTimes(pd_iaid, actual_t1, actual_t2));
-    EXPECT_EQ(1350, actual_t1);
-    EXPECT_EQ(2100, actual_t2);
+    EXPECT_EQ(1350U, actual_t1);
+    EXPECT_EQ(2100U, actual_t2);
 }
-
-
 
 } // end of anonymous namespace

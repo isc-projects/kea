@@ -803,8 +803,8 @@ TEST_F(ClassifyTest, clientClassesInHostReservations) {
     EXPECT_EQ("1.2.3.4", resp->getSiaddr().toText());
     // This client has no reservations for the classes associated with
     // DNS servers and Routers options.
-    EXPECT_EQ(0, client.config_.routers_.size());
-    EXPECT_EQ(0, client.config_.dns_servers_.size());
+    EXPECT_EQ(0U, client.config_.routers_.size());
+    EXPECT_EQ(0U, client.config_.dns_servers_.size());
 
     // Modify HW address to match the reservations.
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
@@ -815,9 +815,9 @@ TEST_F(ClassifyTest, clientClassesInHostReservations) {
 
     // This time, the client matches 3 classes (for two it has reservations).
     EXPECT_EQ("1.2.3.4", resp->getSiaddr().toText());
-    EXPECT_EQ(1, client.config_.routers_.size());
+    EXPECT_EQ(1U, client.config_.routers_.size());
     EXPECT_EQ("10.0.0.200", client.config_.routers_[0].toText());
-    EXPECT_EQ(1, client.config_.dns_servers_.size());
+    EXPECT_EQ(1U, client.config_.dns_servers_.size());
     EXPECT_EQ("10.0.0.201", client.config_.dns_servers_[0].toText());
 
     // This should also work for DHCPINFORM case.
@@ -826,9 +826,9 @@ TEST_F(ClassifyTest, clientClassesInHostReservations) {
     resp = client.getContext().response_;
 
     EXPECT_EQ("1.2.3.4", resp->getSiaddr().toText());
-    EXPECT_EQ(1, client.config_.routers_.size());
+    EXPECT_EQ(1U, client.config_.routers_.size());
     EXPECT_EQ("10.0.0.200", client.config_.routers_[0].toText());
-    EXPECT_EQ(1, client.config_.dns_servers_.size());
+    EXPECT_EQ(1U, client.config_.dns_servers_.size());
     EXPECT_EQ("10.0.0.201", client.config_.dns_servers_[0].toText());
 }
 
@@ -1232,7 +1232,7 @@ TEST_F(ClassifyTest, precedencePool) {
         boost::dynamic_pointer_cast<Option4AddrLst>(opt);
     ASSERT_TRUE(servers);
     auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
+    ASSERT_EQ(1U, addrs.size());
     EXPECT_EQ("10.0.0.1", addrs[0].toText());
 }
 
@@ -1308,7 +1308,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         boost::dynamic_pointer_cast<Option4AddrLst>(opt);
     ASSERT_TRUE(servers);
     auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
+    ASSERT_EQ(1U, addrs.size());
     EXPECT_EQ("10.0.0.2", addrs[0].toText());
 }
 
@@ -1383,7 +1383,7 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         boost::dynamic_pointer_cast<Option4AddrLst>(opt);
     ASSERT_TRUE(servers);
     auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
+    ASSERT_EQ(1U, addrs.size());
     EXPECT_EQ("10.0.0.3", addrs[0].toText());
 }
 
@@ -1438,7 +1438,7 @@ TEST_F(ClassifyTest, requiredNoTest) {
         boost::dynamic_pointer_cast<Option4AddrLst>(opt);
     ASSERT_TRUE(servers);
     auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
+    ASSERT_EQ(1U, addrs.size());
     EXPECT_EQ("10.0.0.3", addrs[0].toText());
 }
 
@@ -1979,7 +1979,7 @@ TEST_F(ClassifyTest, vendorOptionClassTagTest) {
     ASSERT_TRUE(vendor_resp);
 
     // Should have options 1 and 3, but not 2.
-    EXPECT_EQ(2, vendor_resp->getOptions().size());
+    EXPECT_EQ(2U, vendor_resp->getOptions().size());
     EXPECT_TRUE(vendor_resp->getOption(101));
     EXPECT_FALSE(vendor_resp->getOption(102));
     EXPECT_TRUE(vendor_resp->getOption(103));

@@ -1102,7 +1102,7 @@ TEST_F(SimpleAddTransactionTest, replacingFwdAddrsHandler_BuildRequestException)
     ASSERT_NO_THROW(name_add->replacingFwdAddrsHandler());
 
     // Verify we did not attempt to send anything.
-    EXPECT_EQ(0, name_add->getUpdateAttempts());
+    EXPECT_EQ(0U, name_add->getUpdateAttempts());
 
     // Completion flags should be false.
     EXPECT_FALSE(name_add->getForwardChangeCompleted());
@@ -1138,7 +1138,7 @@ TEST_F(SimpleAddTransactionTest, replacingRevPtrsHandler_BuildRequestException) 
     ASSERT_NO_THROW(name_add->replacingRevPtrsHandler());
 
     // Verify we did not attempt to send anything.
-    EXPECT_EQ(0, name_add->getUpdateAttempts());
+    EXPECT_EQ(0U, name_add->getUpdateAttempts());
 
     // Completion flags should be false.
     EXPECT_FALSE(name_add->getForwardChangeCompleted());

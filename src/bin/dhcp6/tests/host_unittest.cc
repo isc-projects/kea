@@ -830,7 +830,7 @@ public:
         ASSERT_TRUE(opt) << "option " << option_type << " not found or it "
             "is of incorrect type";
         Option6AddrLst::AddressContainer addrs = opt->getAddresses();
-        ASSERT_GE(addrs.size(), 1) << "test failed for option type " << option_type;
+        ASSERT_GE(addrs.size(), 1U) << "test failed for option type " << option_type;
         EXPECT_EQ(expected_addr, addrs[0].toText())
             << "test failed for option type " << option_type;
     }
@@ -852,7 +852,7 @@ public:
 
         const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
             getCfgSubnets6()->getAll();
-        ASSERT_EQ(1, subnets->size());
+        ASSERT_EQ(1U, subnets->size());
 
         // Configure client to request IA_NA and append IA_NA option
         //  to the client's message.
@@ -862,7 +862,7 @@ public:
         ASSERT_NO_THROW(client.doSARR());
 
         // Verify that the client we got the reserved address
-        ASSERT_EQ(1, client.getLeaseNum());
+        ASSERT_EQ(1U, client.getLeaseNum());
         Lease6 lease_client = client.getLease(0);
         EXPECT_EQ(exp_ip_address, lease_client.addr_.toText());
     }
@@ -1121,9 +1121,7 @@ HostTest::doExchange(const uint16_t msg_type, Dhcp6Client& client) {
     // Make sure that the server has responded with a Reply.
     ASSERT_TRUE(client.getContext().response_);
     ASSERT_EQ(DHCPV6_REPLY, client.getContext().response_->getType());
-
 }
-
 
 void
 HostTest::testOverrideRequestedOptions(const uint16_t msg_type) {
@@ -1233,7 +1231,7 @@ HostTest::testMultipleIAs(const std::function<void ()>& client_operation,
     // so as we can test that advertised configuration is correct.
     ASSERT_NO_THROW(client_operation());
 
-    ASSERT_EQ(6, client_.getLeaseNum());
+    ASSERT_EQ(6U, client_.getLeaseNum());
 
     // Count reserved addresses and prefixes assigned from reservations.
     size_t address_count = 0;
@@ -1252,11 +1250,11 @@ HostTest::testMultipleIAs(const std::function<void ()>& client_operation,
                                         IOAddress("2001:db8:1::10"));
     // There are 3 IA_NAs and for a few we have assigned reserved addresses.
     // The remaining ones should be assigned from the dynamic pool.
-    ASSERT_EQ(3 - address_count, leases.size());
+    ASSERT_EQ(3U - address_count, leases.size());
 
     // Get all prefixes assigned from the dynamic pool (not reserved).
     leases =  client_.getLeasesByPrefixPool(IOAddress("3001::"), 32, 64);
-    ASSERT_EQ(3 - prefix_count, leases.size());
+    ASSERT_EQ(3U - prefix_count, leases.size());
 
     // Check that the hints have been allocated to respective IAs.
     if (strict_iaid_check) {
@@ -1414,7 +1412,7 @@ HostTest::testOverrideVendorOptions(const uint16_t msg_type) {
 
     // Address specified in the host scope should be used.
     Option6AddrLst::AddressContainer addrs = tftp->getAddresses();
-    ASSERT_EQ(addrs.size(), 1);
+    ASSERT_EQ(addrs.size(), 1U);
     EXPECT_EQ("3000:1::234", addrs[0].toText());
 }
 
@@ -1435,7 +1433,7 @@ HostTest::testGlobalClassSubnetPoolSelection(const int config_idx,
     // client.
     client_resrv.requestAddress(1, IOAddress(second_address));
     ASSERT_NO_THROW(client_resrv.doSARR());
-    ASSERT_EQ(1, client_resrv.getLeaseNum());
+    ASSERT_EQ(1U, client_resrv.getLeaseNum());
     Lease6 lease_client = client_resrv.getLease(0);
     EXPECT_EQ(first_address, lease_client.addr_.toText());
 
@@ -1449,7 +1447,7 @@ HostTest::testGlobalClassSubnetPoolSelection(const int config_idx,
     // server refuses it in favor of the 2001:db8:2::10.
     client_no_resrv.requestAddress(1, IOAddress(first_address));
     ASSERT_NO_THROW(client_no_resrv.doSARR());
-    ASSERT_EQ(1, client_no_resrv.getLeaseNum());
+    ASSERT_EQ(1U, client_no_resrv.getLeaseNum());
     lease_client = client_no_resrv.getLease(0);
     EXPECT_EQ(second_address, lease_client.addr_.toText());
 }
@@ -1503,7 +1501,7 @@ HostTest::sarrTest(Dhcp6Client& client, const std::string& exp_address,
     ASSERT_NO_THROW(client.doSARR());
 
     // Verify that the client got a dynamic address
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
     EXPECT_EQ(exp_address, lease_client.addr_.toText());
 
@@ -1534,7 +1532,7 @@ TEST_F(HostTest, basicSarrs) {
 
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
 
     // Configure client to request IA_NA and append IA_NA option
     // to the client's message.
@@ -1545,7 +1543,7 @@ TEST_F(HostTest, basicSarrs) {
     ASSERT_NO_THROW(client.doSARR());
 
     // Verify that the client we got the reserved address
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8:1:1::babe", lease_client.addr_.toText());
 
@@ -1563,7 +1561,7 @@ TEST_F(HostTest, basicSarrs) {
     ASSERT_NO_THROW(client.doSARR());
 
     // Verify that the client we got the reserved address
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8:1:1::babf", lease_client.addr_.toText());
 
@@ -1584,7 +1582,7 @@ TEST_F(HostTest, basicSarrs) {
     ASSERT_NO_THROW(client.doSARR());
 
     // Verify that the client got a dynamic address
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8:1:1::", lease_client.addr_.toText());
 
@@ -1607,7 +1605,7 @@ TEST_F(HostTest, sarrAndRenew) {
 
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
 
     // Configure client to request IA_NA and aAppend IA_NA option
     //  to the client's message.
@@ -1621,7 +1619,7 @@ TEST_F(HostTest, sarrAndRenew) {
     client.fastFwdTime(1000);
 
     // Verify that the client we got the reserved address
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8:1:1::babe", lease_client.addr_.toText());
 
@@ -1632,7 +1630,7 @@ TEST_F(HostTest, sarrAndRenew) {
     ASSERT_NO_THROW(client.doRenew());
 
     // Verify that we got an extended lease back
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client2 = client.getLease(0);
     EXPECT_EQ("2001:db8:1:1::babe", lease_client2.addr_.toText());
 
@@ -1659,7 +1657,7 @@ TEST_F(HostTest, sarrAndRebind) {
 
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
 
     // Configure client to request IA_NA and aAppend IA_NA option
     //  to the client's message.
@@ -1673,7 +1671,7 @@ TEST_F(HostTest, sarrAndRebind) {
     client.fastFwdTime(1000);
 
     // Verify that the client we got the reserved address
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8:1:1::babe", lease_client.addr_.toText());
 
@@ -1684,7 +1682,7 @@ TEST_F(HostTest, sarrAndRebind) {
     ASSERT_NO_THROW(client.doRebind());
 
     // Verify that we got an extended lease back
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client2 = client.getLease(0);
     EXPECT_EQ("2001:db8:1:1::babe", lease_client2.addr_.toText());
 
@@ -1950,7 +1948,7 @@ TEST_F(HostTest, multipleIAsRenew) {
     ASSERT_NO_THROW(client_.doRenew());
 
     // Make sure that the client still has the same leases.
-    ASSERT_EQ(6, client_.getLeaseNum());
+    ASSERT_EQ(6U, client_.getLeaseNum());
 
     EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::1")));
     EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::2")));
@@ -1995,7 +1993,7 @@ TEST_F(HostTest, multipleIAsSolicitAfterAcquisition) {
 
     // Make sure that the client still has the same leases and the leases
     // should be assigned to the same IAs.
-    ASSERT_EQ(6, client_.getLeaseNum());
+    ASSERT_EQ(6U, client_.getLeaseNum());
 
     EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::1"),
                                            IAID(1)));
@@ -2040,11 +2038,11 @@ TEST_F(HostTest, appendReservationDuringRenew) {
     std::vector<Lease6> leases =
         client_.getLeasesByAddressRange(IOAddress("2001:db8:1::1"),
                                         IOAddress("2001:db8:1::10"));
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     IOAddress dynamic_address_lease = leases[0].addr_;
 
     leases = client_.getLeasesByPrefixPool(IOAddress("3001::"), 32, 64);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     IOAddress dynamic_prefix_lease = leases[0].addr_;
 
     // Add two additional reservations.
@@ -2066,7 +2064,7 @@ TEST_F(HostTest, appendReservationDuringRenew) {
     // number if leases in the server configuration should include those that
     // are returned with zero lifetimes. Hence, the total number of leases
     // should be equal to 6 + 2 = 8.
-    ASSERT_EQ(8, client_.getLeaseNum());
+    ASSERT_EQ(8U, client_.getLeaseNum());
 
     EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::1")));
     EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1:1::2")));
@@ -2092,7 +2090,7 @@ TEST_F(HostTest, appendReservationDuringRenew) {
 
     // The total number of leases should include removed leases and newly
     // allocated once, i.e. 6 + 6 = 12.
-    ASSERT_EQ(12, client_.getLeaseNum());
+    ASSERT_EQ(12U, client_.getLeaseNum());
 
     // All removed leases should be returned with zero lifetimes.
     EXPECT_TRUE(client_.hasLeaseWithZeroLifetimeForAddress(IOAddress("2001:db8:1:1::1")));
@@ -2105,11 +2103,11 @@ TEST_F(HostTest, appendReservationDuringRenew) {
     // Make sure that all address leases are within the dynamic pool range.
     leases = client_.getLeasesByAddressRange(IOAddress("2001:db8:1::1"),
                                             IOAddress("2001:db8:1::10"));
-    EXPECT_EQ(3, leases.size());
+    EXPECT_EQ(3U, leases.size());
 
     // Make sure that all prefix leases are also within the dynamic pool range.
     leases = client_.getLeasesByPrefixPool(IOAddress("3001::"), 32, 64);
-    EXPECT_EQ(3, leases.size());
+    EXPECT_EQ(3U, leases.size());
 }
 
 // In this test, the client performs 4-way exchange and includes 3 IA_NAs
@@ -2142,11 +2140,11 @@ TEST_F(HostTest, insertReservationDuringRenew) {
     std::vector<Lease6> leases =
         client_.getLeasesByAddressRange(IOAddress("2001:db8:1::1"),
                                         IOAddress("2001:db8:1::10"));
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     IOAddress dynamic_address_lease = leases[0].addr_;
 
     leases = client_.getLeasesByPrefixPool(IOAddress("3001::"), 32, 64);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     IOAddress dynamic_prefix_lease = leases[0].addr_;
 
     // Add two additional reservations.
@@ -2168,7 +2166,7 @@ TEST_F(HostTest, insertReservationDuringRenew) {
     // number if leases in the server configuration should include those that
     // are returned with zero lifetimes. Hence, the total number of leases
     // should be equal to 6 + 2 = 8.
-    ASSERT_EQ(8, client_.getLeaseNum());
+    ASSERT_EQ(8U, client_.getLeaseNum());
 
     // Even though the new reservations have been added before existing
     // reservations, the server should assign them to the IAs with
@@ -2246,7 +2244,7 @@ TEST_F(HostTest, multipleIAsConflict) {
     ASSERT_NO_THROW(do_solicit_request_());
 
     // The client should have obtained 4 leases: two prefixes and two addresses.
-    ASSERT_EQ(4, client_.getLeaseNum());
+    ASSERT_EQ(4U, client_.getLeaseNum());
 
     // The address "2001:db8:1::2" is reserved and available so the
     // server should have assigned it.
@@ -2280,7 +2278,7 @@ TEST_F(HostTest, multipleIAsConflict) {
     // and two leases with address and prefix from the dynamic pools, which
     // replace previously assigned leases. We don't care too much what those
     // leases are, though.
-    EXPECT_EQ(4, client.getLeaseNum());
+    EXPECT_EQ(4U, client.getLeaseNum());
 
     // The second client renews and the server should be now able to assign
     // all reserved leases to this client.
@@ -2289,7 +2287,7 @@ TEST_F(HostTest, multipleIAsConflict) {
     // Client requests 4 leases, but there are additional two with zero
     // lifetimes to indicate that the client should not use the address
     // and prefix from the dynamic pools anymore.
-    ASSERT_EQ(6, client_.getLeaseNum());
+    ASSERT_EQ(6U, client_.getLeaseNum());
 
     // Check that the client has all reserved leases.
     EXPECT_TRUE(client_.hasLeaseForAddress(IOAddress("2001:db8:1::2"),
@@ -2377,7 +2375,7 @@ TEST_F(HostTest, globalReservationsNA) {
 
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(2, subnets->size());
+    ASSERT_EQ(2U, subnets->size());
 
     {
         SCOPED_TRACE("Global HR by DUID with in-range reserved address");
@@ -2458,7 +2456,7 @@ TEST_F(HostTest, globalReservationsPD) {
 
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(2, subnets->size());
+    ASSERT_EQ(2U, subnets->size());
 
     {
         SCOPED_TRACE("Global HR by DUID with reserved prefix");
@@ -2566,7 +2564,7 @@ TEST_F(HostTest, firstClientGetsReservedAddress) {
     // Make sure the client2 got a lease from the configured pool.
     auto leases = client2.getLeasesByAddressRange(IOAddress("2001:db8:1::10"),
                                                   IOAddress("2001:db8:1::200"));
-    EXPECT_EQ(1, leases.size());
+    EXPECT_EQ(1U, leases.size());
 
     // Verify that the client1 can renew the lease.
     ASSERT_NO_THROW(client1.doRenew());
@@ -2577,7 +2575,7 @@ TEST_F(HostTest, firstClientGetsReservedAddress) {
     EXPECT_FALSE(client2.hasLeaseForAddress(IOAddress("2001:db8:1::15"), IAID(1)));
     leases = client2.getLeasesByAddressRange(IOAddress("2001:db8:1::10"),
                                              IOAddress("2001:db8:1::200"));
-    EXPECT_EQ(1, leases.size());
+    EXPECT_EQ(1U, leases.size());
 
     // If the client1 releases the reserved lease, the client2 should acquire it.
     ASSERT_NO_THROW(client1.doRelease());

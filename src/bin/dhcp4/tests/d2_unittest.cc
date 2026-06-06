@@ -278,21 +278,21 @@ TEST_F(Dhcp4SrvD2Test, simpleUDPSend) {
     ASSERT_NO_FATAL_FAILURE(configureD2(true));
     ASSERT_TRUE(mgr.ddnsEnabled());
     ASSERT_NO_THROW(mgr.clearQueue());
-    EXPECT_EQ(0, mgr.getQueueSize());
+    EXPECT_EQ(0U, mgr.getQueueSize());
     ASSERT_NO_THROW(srv_.startD2());
     ASSERT_TRUE(mgr.amSending());
 
     // Verify that we can queue up a message.
     dhcp_ddns::NameChangeRequestPtr ncr = buildTestNcr();
     ASSERT_NO_THROW(mgr.sendRequest(ncr));
-    EXPECT_EQ(1, mgr.getQueueSize());
+    EXPECT_EQ(1U, mgr.getQueueSize());
 
     // Calling receive should detect the ready IO on the sender's select-fd,
     // and invoke callback, which should complete the send.
     ASSERT_NO_THROW(IfaceMgr::instance().receive4(0,0));
 
     // Verify the queue is now empty.
-    EXPECT_EQ(0, mgr.getQueueSize());
+    EXPECT_EQ(0U, mgr.getQueueSize());
 }
 
 // Checks that an IO error in sending a request to D2, results in ddns updates
@@ -318,7 +318,7 @@ TEST_F(Dhcp4SrvD2Test, forceUDPSendFailure) {
                                         "0.0.0.0", 53001));
     ASSERT_TRUE(mgr.ddnsEnabled());
     ASSERT_NO_THROW(mgr.clearQueue());
-    EXPECT_EQ(0, mgr.getQueueSize());
+    EXPECT_EQ(0U, mgr.getQueueSize());
     try {
         srv_.startD2();
     } catch (const std::exception& ex) {
@@ -333,7 +333,7 @@ TEST_F(Dhcp4SrvD2Test, forceUDPSendFailure) {
         dhcp_ddns::NameChangeRequestPtr ncr = buildTestNcr(i + 1);
         ASSERT_NO_THROW(mgr.sendRequest(ncr));
     }
-    EXPECT_EQ(3, mgr.getQueueSize());
+    EXPECT_EQ(3U, mgr.getQueueSize());
 
     // Calling receive should detect the ready IO on the sender's select-fd,
     // and invoke callback, which should complete the send, which should
@@ -348,7 +348,7 @@ TEST_F(Dhcp4SrvD2Test, forceUDPSendFailure) {
     ASSERT_FALSE(mgr.amSending());
 
     // Verify message is still in the queue.
-    EXPECT_EQ(3, mgr.getQueueSize());
+    EXPECT_EQ(3U, mgr.getQueueSize());
 
     // Verify that we can't just restart it.
     /// @todo This may change if we add ability to resume.
@@ -362,7 +362,7 @@ TEST_F(Dhcp4SrvD2Test, forceUDPSendFailure) {
     ASSERT_TRUE(mgr.amSending());
 
     // Verify message is still in the queue.
-    EXPECT_EQ(3, mgr.getQueueSize());
+    EXPECT_EQ(3U, mgr.getQueueSize());
 
     // This will finish sending the 1st message in queue
     // and initiate send of 2nd message.
@@ -370,7 +370,7 @@ TEST_F(Dhcp4SrvD2Test, forceUDPSendFailure) {
     EXPECT_EQ(1, srv_.error_count_);
 
     // First message is off the queue.
-    EXPECT_EQ(2, mgr.getQueueSize());
+    EXPECT_EQ(2U, mgr.getQueueSize());
     mgr.stop();
 }
 
@@ -382,13 +382,13 @@ TEST_F(Dhcp4SrvD2Test, queueMaxError) {
     ASSERT_NO_FATAL_FAILURE(configureD2(true));
     ASSERT_TRUE(mgr.ddnsEnabled());
     ASSERT_NO_THROW(mgr.clearQueue());
-    EXPECT_EQ(0, mgr.getQueueSize());
+    EXPECT_EQ(0U, mgr.getQueueSize());
     ASSERT_NO_THROW(srv_.startD2());
     ASSERT_TRUE(mgr.amSending());
 
     // Attempt to queue more then the maximum allowed.
-    int max_msgs = mgr.getQueueMaxSize();
-    for (int i = 0; i < max_msgs + 1; i++) {
+    size_t max_msgs = mgr.getQueueMaxSize();
+    for (size_t i = 0; i < max_msgs + 1; i++) {
         dhcp_ddns::NameChangeRequestPtr ncr = buildTestNcr(i + 1);
         ASSERT_NO_THROW(mgr.sendRequest(ncr));
     }

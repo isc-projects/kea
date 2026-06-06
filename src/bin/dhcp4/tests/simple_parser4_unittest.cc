@@ -128,7 +128,7 @@ TEST_F(SimpleParser4Test, inheritGlobalToSubnet4) {
     // as it was already defined in the subnet scope.
     size_t num;
     EXPECT_NO_THROW(num = SimpleParser4::deriveParameters(global));
-    EXPECT_EQ(4, num);
+    EXPECT_EQ(4U, num);
 
     // Check the values. 2 of them are inherited, while the third one
     // was already defined in the subnet, so should not be inherited.
@@ -150,7 +150,7 @@ TEST_F(SimpleParser4Test, subnetDefaults4) {
 
     size_t num = 0;
     EXPECT_NO_THROW(num = SimpleParser4::setAllDefaults(global));
-    EXPECT_LE(1, num); // at least 1 parameter has to be modified
+    EXPECT_LE(1U, num); // at least 1 parameter has to be modified
 
     ConstElementPtr subnets = global->find("subnet4");
     ASSERT_TRUE(subnets);
@@ -172,7 +172,7 @@ TEST_F(SimpleParser4Test, optionDataDefaults4) {
 
     size_t num = 0;
     EXPECT_NO_THROW(num = SimpleParser4::setAllDefaults(global));
-    EXPECT_LE(1, num); // at least 1 parameter has to be modified
+    EXPECT_LE(1U, num); // at least 1 parameter has to be modified
 
     ConstElementPtr options = global->find("option-data");
     ASSERT_TRUE(options);
@@ -194,11 +194,11 @@ TEST_F(SimpleParser4Test, optionDefDefaults4) {
 
     size_t num = 0;
     EXPECT_NO_THROW(num = SimpleParser4::setAllDefaults(global));
-    EXPECT_LE(1, num); // at least 1 parameter has to be modified
+    EXPECT_LE(1U, num); // at least 1 parameter has to be modified
 
     ConstElementPtr defs = global->find("option-def");
     ASSERT_TRUE(defs);
-    ASSERT_EQ(1, defs->size());
+    ASSERT_EQ(1U, defs->size());
     ConstElementPtr def = defs->get(0);
     ASSERT_TRUE(def);
 

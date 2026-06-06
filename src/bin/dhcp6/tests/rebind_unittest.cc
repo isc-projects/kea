@@ -388,7 +388,7 @@ TEST_F(RebindTest, directClient) {
     ASSERT_NO_THROW(client.doRebind());
     // The client should still have one lease which belong to one of the
     // subnets.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client2 = client.getLease(0);
     ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
                 selectSubnet(lease_client2.addr_, ClientClasses()));
@@ -426,11 +426,11 @@ TEST_F(RebindTest, directClientChangingSubnet) {
     // subnet and sent zero lifetimes for a previous lease.
 
     std::vector<Lease6> old_leases = client.getLeasesWithZeroLifetime();
-    ASSERT_EQ(1, old_leases.size());
+    ASSERT_EQ(1U, old_leases.size());
     EXPECT_EQ(lease_client.addr_, old_leases[0].addr_);
 
     std::vector<Lease6> new_leases = client.getLeasesWithNonZeroLifetime();
-    ASSERT_EQ(1, new_leases.size());
+    ASSERT_EQ(1U, new_leases.size());
 
     // Make sure, that the lease that client has, is matching the lease
     // in the lease database.
@@ -461,12 +461,12 @@ TEST_F(RebindTest, directClientChangingIAID) {
 
     // The old lease should be returned with 0 lifetimes.
     std::vector<Lease6> old_leases = client.getLeasesWithZeroLifetime();
-    ASSERT_EQ(1, old_leases.size());
+    ASSERT_EQ(1U, old_leases.size());
     EXPECT_EQ(lease_client.addr_, old_leases[0].addr_);
 
     // The new lease should be allocated.
     std::vector<Lease6> new_leases = client.getLeasesWithNonZeroLifetime();
-    ASSERT_EQ(1, new_leases.size());
+    ASSERT_EQ(1U, new_leases.size());
 
     Lease6Ptr lease_server2 = checkLease(new_leases[0]);
     EXPECT_TRUE(lease_server2);
@@ -495,7 +495,7 @@ TEST_F(RebindTest, directClientLostLease) {
 
     // The server should re-allocate this lease to the client.
     std::vector<Lease6> new_leases = client.getLeasesWithNonZeroLifetime();
-    ASSERT_EQ(1, new_leases.size());
+    ASSERT_EQ(1U, new_leases.size());
     EXPECT_EQ(lease_client.addr_, new_leases[0].addr_);
     // Status code should be Success.
     EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
@@ -521,7 +521,7 @@ TEST_F(RebindTest, relayedClient) {
     ASSERT_NO_THROW(client.doRebind());
     // The client should still have one lease which belongs to one of the
     // subnets.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client2 = client.getLease(0);
     ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
                 selectSubnet(lease_client2.addr_, ClientClasses()));
@@ -560,7 +560,7 @@ TEST_F(RebindTest, relayedClientChangingSubnet) {
     ASSERT_NO_THROW(client.doRebind());
     // We are expecting that the server didn't extend the lease because
     // the address that client is using doesn't match the new subnet.
-    ASSERT_EQ(0, client.getLeaseNum());
+    ASSERT_EQ(0U, client.getLeaseNum());
     // Client should have received NoBinding status code.
     EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(1234));
 
@@ -592,12 +592,12 @@ TEST_F(RebindTest, relayedClientChangingIAID) {
 
     // The old lease should be returned with 0 lifetimes.
     std::vector<Lease6> old_leases = client.getLeasesWithZeroLifetime();
-    ASSERT_EQ(1, old_leases.size());
+    ASSERT_EQ(1U, old_leases.size());
     EXPECT_EQ(lease_client.addr_, old_leases[0].addr_);
 
     // The new lease should be allocated.
     std::vector<Lease6> new_leases = client.getLeasesWithNonZeroLifetime();
-    ASSERT_EQ(1, new_leases.size());
+    ASSERT_EQ(1U, new_leases.size());
 
     Lease6Ptr lease_server2 = checkLease(new_leases[0]);
     EXPECT_TRUE(lease_server2);
@@ -630,7 +630,7 @@ TEST_F(RebindTest, relayedClientLostLease) {
 
     // The server should re-allocate this lease to the client.
     std::vector<Lease6> new_leases = client.getLeasesWithNonZeroLifetime();
-    ASSERT_EQ(1, new_leases.size());
+    ASSERT_EQ(1U, new_leases.size());
     EXPECT_EQ(lease_client.addr_, new_leases[0].addr_);
     // Status code should be Success.
     EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
@@ -663,7 +663,7 @@ TEST_F(RebindTest, relayedClientChangingAddress) {
     // Get the client's leases. He should get two addresses:
     // the first one for the bogus 3000::100 address with 0 lifetimes.
     // the second one with the actual lease with non-zero lifetimes.
-    ASSERT_EQ(2, client.getLeaseNum());
+    ASSERT_EQ(2U, client.getLeaseNum());
 
     // Let's check the first one
     Lease6 lease_client1 = client.getLease(0);
@@ -676,21 +676,21 @@ TEST_F(RebindTest, relayedClientChangingAddress) {
 
     // The lifetimes should be set to 0, as an explicit notification to the
     // client to stop using invalid prefix.
-    EXPECT_EQ(0, lease_client1.valid_lft_);
-    EXPECT_EQ(0, lease_client1.preferred_lft_);
+    EXPECT_EQ(0U, lease_client1.valid_lft_);
+    EXPECT_EQ(0U, lease_client1.preferred_lft_);
 
     // Let's check the second lease
     // The lifetimes should be set to 0, as an explicit notification to the
     // client to stop using invalid prefix.
-    EXPECT_NE(0, lease_client2.valid_lft_);
-    EXPECT_NE(0, lease_client2.preferred_lft_);
+    EXPECT_NE(0U, lease_client2.valid_lft_);
+    EXPECT_NE(0U, lease_client2.preferred_lft_);
 
     // Check that server still has the same lease.
     Lease6Ptr lease_server = checkLease(lease_client);
     EXPECT_TRUE(lease_server);
     // Make sure that the lease in the data base hasn't been added.
-    EXPECT_NE(0, lease_server->valid_lft_);
-    EXPECT_NE(0, lease_server->preferred_lft_);
+    EXPECT_NE(0U, lease_server->valid_lft_);
+    EXPECT_NE(0U, lease_server->preferred_lft_);
 }
 
 // Check that the server extends the lease for the client having a prefix.
@@ -706,7 +706,7 @@ TEST_F(RebindTest, directClientPD) {
     ASSERT_NO_THROW(client.doRebind());
     // The client should still have one lease which belong to one of the
     // subnets.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client2 = client.getLease(0);
     // The client's lease should have been extended. The client will
     // update the cltt to current time when the lease gets extended.
@@ -742,11 +742,11 @@ TEST_F(RebindTest, directClientPDChangingSubnet) {
     // subnet and sent zero lifetimes for a previous lease.
 
     std::vector<Lease6> old_leases = client.getLeasesWithZeroLifetime();
-    ASSERT_EQ(1, old_leases.size());
+    ASSERT_EQ(1U, old_leases.size());
     EXPECT_EQ(lease_client.addr_, old_leases[0].addr_);
 
     std::vector<Lease6> new_leases = client.getLeasesWithNonZeroLifetime();
-    ASSERT_EQ(1, new_leases.size());
+    ASSERT_EQ(1U, new_leases.size());
 
     // Make sure, that the lease that client has, is matching the lease
     // in the lease database.
@@ -778,12 +778,12 @@ TEST_F(RebindTest, directClientPDChangingIAID) {
 
     // The old lease should be returned with 0 lifetimes.
     std::vector<Lease6> old_leases = client.getLeasesWithZeroLifetime();
-    ASSERT_EQ(1, old_leases.size());
+    ASSERT_EQ(1U, old_leases.size());
     EXPECT_EQ(lease_client.addr_, old_leases[0].addr_);
 
     // The new lease should be allocated.
     std::vector<Lease6> new_leases = client.getLeasesWithNonZeroLifetime();
-    ASSERT_EQ(1, new_leases.size());
+    ASSERT_EQ(1U, new_leases.size());
 
     Lease6Ptr lease_server2 = checkLease(new_leases[0]);
     EXPECT_TRUE(lease_server2);
@@ -822,7 +822,7 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
         " sent a response indicating that the client should stop using the"
         " lease, by setting lifetime values to 0.";
     // Get the client's lease.
-    ASSERT_EQ(2, client.getLeaseNum());
+    ASSERT_EQ(2U, client.getLeaseNum());
 
     // Client should get two entries. One with the invalid address he requested
     // with zeroed lifetimes and a second one with the actual prefix he has
@@ -830,20 +830,20 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
 
     // Get the lease with 0 lifetimes.
     std::vector<Lease6> invalid_leases = client.getLeasesWithZeroLifetime();
-    ASSERT_EQ(1, invalid_leases.size());
-    EXPECT_EQ(0, invalid_leases[0].valid_lft_);
-    EXPECT_EQ(0, invalid_leases[0].preferred_lft_);
+    ASSERT_EQ(1U, invalid_leases.size());
+    EXPECT_EQ(0U, invalid_leases[0].valid_lft_);
+    EXPECT_EQ(0U, invalid_leases[0].preferred_lft_);
 
     // Get the valid lease with non-zero lifetime.
     std::vector<Lease6> valid_leases = client.getLeasesWithNonZeroLifetime();
-    ASSERT_EQ(1, valid_leases.size());
+    ASSERT_EQ(1U, valid_leases.size());
 
     // Check that server still has the same lease.
     Lease6Ptr lease_server = checkLease(valid_leases[0]);
     ASSERT_TRUE(lease_server);
     // Make sure that the lease in the data base hasn't been added.
-    EXPECT_NE(0, lease_server->valid_lft_);
-    EXPECT_NE(0, lease_server->preferred_lft_);
+    EXPECT_NE(0U, lease_server->valid_lft_);
+    EXPECT_NE(0U, lease_server->preferred_lft_);
 }
 
 /// @todo Extend PD tests for relayed messages.
@@ -867,7 +867,7 @@ TEST_F(RebindTest, unicast) {
     ASSERT_NO_THROW(client.doRebind());
     // The client's lease should remain with no change (shouldn't be extended)
     // because server is supposed to drop the message sent to a unicast address.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client2 = client.getLease(0);
     ASSERT_TRUE(lease_client2 == lease_client);
     // Check that server still has the lease.
@@ -899,7 +899,7 @@ TEST_F(RebindTest, relayedUnicast) {
     ASSERT_NO_THROW(client.doRebind());
     // The client should still have one lease which belongs to one of the
     // subnets.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client2 = client.getLease(0);
     ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
                 selectSubnet(lease_client2.addr_, ClientClasses()));
@@ -932,7 +932,7 @@ TEST_F(RebindTest, requestPrefixInRebind) {
 
     // Make sure that the client has acquired NA lease.
     std::vector<Lease6> leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na.size());
+    ASSERT_EQ(1U, leases_client_na.size());
 
     // The client should not acquire a PD lease.
     std::vector<Lease6> leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
@@ -955,7 +955,7 @@ TEST_F(RebindTest, requestPrefixInRebind) {
     // Make sure that the client has acquired NA lease.
     std::vector<Lease6> leases_client_na_rebound =
         client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na_rebound.size());
+    ASSERT_EQ(1U, leases_client_na_rebound.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
 
     // The lease should have been rebound.
@@ -963,7 +963,7 @@ TEST_F(RebindTest, requestPrefixInRebind) {
 
     // The client should now also acquire a PD lease.
     leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_EQ(1, leases_client_pd.size());
+    ASSERT_EQ(1U, leases_client_pd.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(5678));
 }
 
@@ -987,20 +987,20 @@ TEST_F(RebindTest, requestAddressInRebind) {
 
     // Make sure that the client has acquired PD lease.
     std::vector<Lease6> leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_EQ(1, leases_client_pd.size());
+    ASSERT_EQ(1U, leases_client_pd.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(5678));
 
     // The client should not acquire a NA lease.
     std::vector<Lease6> leases_client_na =
         client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(0, leases_client_na.size());
+    ASSERT_EQ(0U, leases_client_na.size());
     ASSERT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(1234));
 
     // Send Rebind message to the server, including IA_PD and requesting IA_NA.
     // The server should return NoAddrsAvail status code in this case.
     ASSERT_NO_THROW(client.doRebind());
     leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(0, leases_client_na.size());
+    ASSERT_EQ(0U, leases_client_na.size());
     ASSERT_EQ(STATUS_NoAddrsAvail, client.getStatusCode(1234));
 
     // Reconfigure the server to use both NA and PD pools.
@@ -1012,13 +1012,13 @@ TEST_F(RebindTest, requestAddressInRebind) {
     // Make sure that the client has renewed PD lease.
     std::vector<Lease6> leases_client_pd_renewed =
         client.getLeasesByType(Lease::TYPE_PD);
-    ASSERT_EQ(1, leases_client_pd_renewed.size());
+    ASSERT_EQ(1U, leases_client_pd_renewed.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(5678));
     EXPECT_GE(leases_client_pd_renewed[0].cltt_ - leases_client_pd[0].cltt_, 1000);
 
     // The client should now also acquire a NA lease.
     leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases_client_na.size());
+    ASSERT_EQ(1U, leases_client_na.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(1234));
 }
 
@@ -1044,7 +1044,7 @@ TEST_F(RebindTest, docsisORO) {
     ASSERT_NO_THROW(client.doRebind());
     // The client should still have one lease which belong to one of the
     // subnets.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client2 = client.getLease(0);
     ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
                 selectSubnet(lease_client2.addr_, ClientClasses()));
@@ -1066,7 +1066,7 @@ TEST_F(RebindTest, docsisORO) {
     ASSERT_NO_THROW(client.doRebind());
     // The client should still have one lease which belong to one of the
     // subnets.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     lease_client2 = client.getLease(0);
     ASSERT_TRUE(CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->
                 selectSubnet(lease_client2.addr_, ClientClasses()));
@@ -1113,7 +1113,7 @@ TEST_F(RebindTest, optionsInheritance) {
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
 

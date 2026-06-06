@@ -690,8 +690,8 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
         l = LeaseMgrFactory::instance().getLease6(type, release_addr);
         ASSERT_TRUE(l);
 
-        EXPECT_EQ(l->valid_lft_, 0);
-        EXPECT_EQ(l->preferred_lft_, 0);
+        EXPECT_EQ(l->valid_lft_, 0U);
+        EXPECT_EQ(l->preferred_lft_, 0U);
 
         EXPECT_EQ(Lease6::STATE_RELEASED, l->state_);
 
@@ -700,8 +700,8 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
                                                   subnet_->getID());
         ASSERT_TRUE(l);
 
-        EXPECT_EQ(l->valid_lft_, 0);
-        EXPECT_EQ(l->preferred_lft_, 0);
+        EXPECT_EQ(l->valid_lft_, 0U);
+        EXPECT_EQ(l->preferred_lft_, 0U);
         EXPECT_EQ(Lease::STATE_RELEASED, l->state_);
     }
 
@@ -792,7 +792,7 @@ Dhcpv6SrvTest::testReleaseAndReclaim(Lease::Type type) {
     // Let's get the subnet-id and generate statistics name out of it
     const Subnet6Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
 
     // And prepopulate the stats counter
     std::string name = StatsMgr::generateName("subnet", (*subnets->begin())->getID(),
@@ -813,7 +813,7 @@ Dhcpv6SrvTest::testReleaseAndReclaim(Lease::Type type) {
 
     // Make sure that the client has acquired NA lease.
     std::vector<Lease6> leases = client.getLeasesByType(type);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     EXPECT_EQ(STATUS_Success, client.getStatusCode(iaid));
 
     // Let's create a RELEASE
@@ -848,8 +848,8 @@ Dhcpv6SrvTest::testReleaseAndReclaim(Lease::Type type) {
     Lease6Ptr l = LeaseMgrFactory::instance().getLease6(type, leases[0].addr_);
     ASSERT_TRUE(l);
 
-    EXPECT_EQ(l->valid_lft_, 0);
-    EXPECT_EQ(l->preferred_lft_, 0);
+    EXPECT_EQ(l->valid_lft_, 0U);
+    EXPECT_EQ(l->preferred_lft_, 0U);
 
     EXPECT_EQ(Lease6::STATE_RELEASED, l->state_);
 
@@ -858,8 +858,8 @@ Dhcpv6SrvTest::testReleaseAndReclaim(Lease::Type type) {
                                               (*subnets->begin())->getID());
     ASSERT_TRUE(l);
 
-    EXPECT_EQ(l->valid_lft_, 0);
-    EXPECT_EQ(l->preferred_lft_, 0);
+    EXPECT_EQ(l->valid_lft_, 0U);
+    EXPECT_EQ(l->preferred_lft_, 0U);
     EXPECT_EQ(Lease::STATE_RELEASED, l->state_);
 
     stat = StatsMgr::instance().getObservation(type == Lease::TYPE_NA ?
@@ -878,8 +878,8 @@ Dhcpv6SrvTest::testReleaseAndReclaim(Lease::Type type) {
     l = LeaseMgrFactory::instance().getLease6(type, leases[0].addr_);
     ASSERT_TRUE(l);
 
-    EXPECT_EQ(l->valid_lft_, 0);
-    EXPECT_EQ(l->preferred_lft_, 0);
+    EXPECT_EQ(l->valid_lft_, 0U);
+    EXPECT_EQ(l->preferred_lft_, 0U);
 
     EXPECT_EQ(Lease6::STATE_EXPIRED_RECLAIMED, l->state_);
 
@@ -888,8 +888,8 @@ Dhcpv6SrvTest::testReleaseAndReclaim(Lease::Type type) {
                                               (*subnets->begin())->getID());
     ASSERT_TRUE(l);
 
-    EXPECT_EQ(l->valid_lft_, 0);
-    EXPECT_EQ(l->preferred_lft_, 0);
+    EXPECT_EQ(l->valid_lft_, 0U);
+    EXPECT_EQ(l->preferred_lft_, 0U);
     EXPECT_EQ(Lease::STATE_EXPIRED_RECLAIMED, l->state_);
 
     stat = StatsMgr::instance().getObservation(type == Lease::TYPE_NA ?
@@ -947,8 +947,8 @@ Dhcpv6SrvTest::testReleaseNoDelete(Lease::Type type, const IOAddress& addr,
     l = LeaseMgrFactory::instance().getLease6(type, *duid_, iaid,
                                               subnet_->getID());
     ASSERT_TRUE(l);
-    EXPECT_EQ(l->valid_lft_, 0);
-    EXPECT_EQ(l->preferred_lft_, 0);
+    EXPECT_EQ(l->valid_lft_, 0U);
+    EXPECT_EQ(l->preferred_lft_, 0U);
 
     // Create query
     Pkt6Ptr query;
@@ -1008,8 +1008,8 @@ Dhcpv6SrvTest::testReleaseNoDelete(Lease::Type type, const IOAddress& addr,
                                               subnet_->getID());
     ASSERT_TRUE(l);
     if (qtype == DHCPV6_SOLICIT) {
-        EXPECT_EQ(l->valid_lft_, 0);
-        EXPECT_EQ(l->preferred_lft_, 0);
+        EXPECT_EQ(l->valid_lft_, 0U);
+        EXPECT_EQ(l->preferred_lft_, 0U);
     } else {
         EXPECT_EQ(l->valid_lft_, subnet_->getValid());
         EXPECT_EQ(l->preferred_lft_, subnet_->getPreferred());
@@ -1419,8 +1419,8 @@ NakedDhcpv6SrvTest::checkIA_NAStatusCode(
                 boost::dynamic_pointer_cast<isc::dhcp::Option6IAAddr>(opt.second);
             ASSERT_TRUE(addr);
 
-            EXPECT_EQ(0, addr->getPreferred());
-            EXPECT_EQ(0, addr->getValid());
+            EXPECT_EQ(0U, addr->getPreferred());
+            EXPECT_EQ(0U, addr->getValid());
         }
     }
 

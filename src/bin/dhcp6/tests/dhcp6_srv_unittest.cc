@@ -284,7 +284,7 @@ Dhcpv6SrvTest::loadConfigFile(const string& path) {
     IfaceMgrTestConfig test_config(true);
 
     // Do not use DHCP6_SERVER_PORT here as 0 means don't open sockets.
-    EXPECT_EQ(0, srv_->server_port_);
+    EXPECT_EQ(0U, srv_->server_port_);
 
     ConfigBackendDHCPv6Mgr::instance().registerBackendFactory("mysql",
             [](const db::DatabaseConnection::ParameterMap&) -> ConfigBackendDHCPv6Ptr {
@@ -634,32 +634,32 @@ TEST_F(Dhcpv6SrvTest, DUID) {
     case DUID::DUID_LLT: {
         // DUID must contain at least 6 bytes long MAC
         // + 8 bytes of fixed header
-        EXPECT_GE(len, 14);
+        EXPECT_GE(len, 14U);
 
         uint16_t hw_type = data.readUint16();
         // there's no real way to find out "correct"
         // hardware type
-        EXPECT_GT(hw_type, 0);
+        EXPECT_GT(hw_type, 0U);
 
         // check that timer is counted since 1.1.2000,
         // not from 1.1.1970.
         uint32_t seconds = data.readUint32();
-        EXPECT_LE(seconds, DUID_TIME_EPOCH);
+        EXPECT_LE(seconds, static_cast<uint32_t>(DUID_TIME_EPOCH));
         // this test will start failing after 2030.
         // Hopefully we will be at BIND12 by then.
 
         // MAC must not be zeros
-        vector<uint8_t> mac(len-8);
-        vector<uint8_t> zeros(len-8, 0);
-        data.readVector(mac, len-8);
+        vector<uint8_t> mac(len - 8);
+        vector<uint8_t> zeros(len - 8, 0);
+        data.readVector(mac, len - 8);
         EXPECT_TRUE(mac != zeros);
         break;
     }
     case DUID::DUID_EN: {
         // there's not much we can check. Just simple
         // check if it is not all zeros
-        vector<uint8_t> content(len-2);
-        data.readVector(content, len-2);
+        vector<uint8_t> content(len - 2);
+        data.readVector(content, len - 2);
         EXPECT_FALSE(isRangeZero(content.begin(), content.end()));
         break;
     }
@@ -747,7 +747,7 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     ASSERT_TRUE(reply_nameservers);
 
     Option6AddrLst::AddressContainer addrs = reply_nameservers->getAddresses();
-    ASSERT_EQ(2, addrs.size());
+    ASSERT_EQ(2U, addrs.size());
     EXPECT_TRUE(addrs[0] == IOAddress("2001:db8:1234:FFFF::1"));
     EXPECT_TRUE(addrs[1] == IOAddress("2001:db8:1234:FFFF::2"));
 
@@ -758,7 +758,7 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
 
     // Check that the option contains valid data (from configuration).
     std::vector<uint8_t> data = tmp->getData();
-    ASSERT_EQ(2, data.size());
+    ASSERT_EQ(2U, data.size());
 
     const uint8_t foo_expected[] = {
         0x12, 0x34
@@ -2529,7 +2529,8 @@ TEST_F(Dhcpv6SrvTest, testUnicast) {
     StatsMgr& mgr = StatsMgr::instance();
     ObservationPtr stat = mgr.getObservation("pkt6-rfc-violation");
     ASSERT_TRUE(stat);
-    EXPECT_EQ(sizeof(not_allowed_unicast), stat->getInteger().first);
+    EXPECT_EQ(sizeof(not_allowed_unicast),
+              static_cast<size_t>(stat->getInteger().first));
 
     // Explicitly list client/relay message types which are allowed to
     // be sent to unicast.
@@ -2874,7 +2875,7 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayInterfaceId) {
 // Checks if server responses are sent to the proper port.
 TEST_F(Dhcpv6SrvTest, portsClientPort) {
     // Enforce a specific client port value.
-    EXPECT_EQ(0, srv_->client_port_);
+    EXPECT_EQ(0U, srv_->client_port_);
     srv_->client_port_ = 1234;
 
     // Let's create a simple SOLICIT
@@ -2900,7 +2901,7 @@ TEST_F(Dhcpv6SrvTest, portsClientPort) {
 // Checks if server responses are sent to the proper port.
 TEST_F(Dhcpv6SrvTest, portsServerPort) {
     // Enforce a specific server port value.
-    EXPECT_EQ(0, srv_->server_port_);
+    EXPECT_EQ(0U, srv_->server_port_);
     srv_->server_port_ = 1234;
 
     // Let's create a simple SOLICIT
@@ -3032,8 +3033,8 @@ TEST_F(Dhcpv6SrvTest, relaySourcePort) {
     srv_->run();
 
     // Check trace of processing
-    EXPECT_EQ(1234, query->getRemotePort());
-    ASSERT_EQ(1, query->relay_info_.size());
+    EXPECT_EQ(1234U, query->getRemotePort());
+    ASSERT_EQ(1U, query->relay_info_.size());
     EXPECT_TRUE(query->getRelayOption(D6O_RELAY_SOURCE_PORT, 0));
 
     // Get Response...
@@ -3042,7 +3043,7 @@ TEST_F(Dhcpv6SrvTest, relaySourcePort) {
     ASSERT_TRUE(rsp);
 
     // Check it
-    EXPECT_EQ(1234, rsp->getRemotePort());
+    EXPECT_EQ(1234U, rsp->getRemotePort());
     EXPECT_EQ(DHCPV6_RELAY_REPL, rsp->getBuffer()[0]);
 
     // Get Advertise
@@ -3052,7 +3053,7 @@ TEST_F(Dhcpv6SrvTest, relaySourcePort) {
 
     // Check it
     EXPECT_EQ(DHCPV6_ADVERTISE, adv->getType());
-    ASSERT_EQ(1, adv->relay_info_.size());
+    ASSERT_EQ(1U, adv->relay_info_.size());
     EXPECT_TRUE(adv->getRelayOption(D6O_RELAY_SOURCE_PORT, 0));
 }
 
@@ -3191,7 +3192,7 @@ TEST_F(Dhcpv6SrvTest, prlPersistency) {
     // The subscriber-id option should be present but only once despite
     // it is both requested and has always-send.
     const OptionCollection& sifs = response->getOptions(D6O_SUBSCRIBER_ID);
-    ASSERT_EQ(1, sifs.size());
+    ASSERT_EQ(1U, sifs.size());
     // But no dns-servers
     ASSERT_FALSE(response->getOption(D6O_NAME_SERVERS));
     // Nor a sntp-servers
@@ -3344,7 +3345,7 @@ TEST_F(Dhcpv6SrvTest, relayOverride) {
     // Let's get the subnet configuration objects
     const Subnet6Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
-    ASSERT_EQ(2, subnets->size());
+    ASSERT_EQ(2U, subnets->size());
 
     // Let's get them for easy reference
     Subnet6Ptr subnet1 = *subnets->begin();
@@ -3634,14 +3635,14 @@ TEST_F(Dhcpv6SrvTest, rsooOverride) {
     ASSERT_TRUE(opt);
     // We check that this is the option injected by the relay by
     // checking option length. It should have 10 bytes long payload.
-    ASSERT_EQ(10, opt->getData().size());
+    ASSERT_EQ(10U, opt->getData().size());
 
     // The second option should be the one configured on the server,
     // rather than the one injected by the relay.
     opt = client.config_.findOption(120);
     ASSERT_TRUE(opt);
     // It should have the size of 1.
-    ASSERT_EQ(1, opt->getData().size());
+    ASSERT_EQ(1U, opt->getData().size());
 }
 
 // Test checks if pkt6-advertise-received is bumped up correctly.
@@ -3894,7 +3895,7 @@ TEST_F(Dhcpv6SrvTest, userContext) {
     ConstSrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
     const Subnet6Collection* subnets = cfg->getCfgSubnets6()->getAll();
     ASSERT_TRUE(subnets);
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
 
     // Let's get the subnet and check its context.
     Subnet6Ptr subnet1 = (*subnets->begin());
@@ -3904,14 +3905,14 @@ TEST_F(Dhcpv6SrvTest, userContext) {
 
     // Ok, not get the address pool in it and check its context, too.
     PoolCollection pools = subnet1->getPools(Lease::TYPE_NA);
-    ASSERT_EQ(1, pools.size());
+    ASSERT_EQ(1U, pools.size());
     ASSERT_TRUE(pools[0]);
     ASSERT_TRUE(pools[0]->getContext());
     EXPECT_EQ("{ \"value\": 42 }", pools[0]->getContext()->str());
 
     // Ok, not get the prefix pool in it and check its context, too.
     pools = subnet1->getPools(Lease::TYPE_PD);
-    ASSERT_EQ(1, pools.size());
+    ASSERT_EQ(1U, pools.size());
     ASSERT_TRUE(pools[0]);
     ASSERT_TRUE(pools[0]->getContext());
     EXPECT_EQ("{ \"type\": \"prefixes\" }", pools[0]->getContext()->str());
@@ -4141,8 +4142,8 @@ TEST_F(Dhcpv6SrvTest, generateFqdnUpdate) {
     boost::shared_ptr<Option6IAAddr> iaaddr = checkIA_NA(reply, 234, 1000, 2000);
     ASSERT_TRUE(iaaddr);
     EXPECT_EQ(addr, iaaddr->getAddress());
-    EXPECT_EQ(3000, iaaddr->getPreferred());
-    EXPECT_EQ(4000, iaaddr->getValid());
+    EXPECT_EQ(3000U, iaaddr->getPreferred());
+    EXPECT_EQ(4000U, iaaddr->getValid());
 
     // Fetch the lease in the database and verify hostname has been updated
     // with generated FQDN.
@@ -4151,8 +4152,8 @@ TEST_F(Dhcpv6SrvTest, generateFqdnUpdate) {
     EXPECT_EQ("myhost-2001-db8-1--1.example.com.", l->hostname_);
 
     // Should see follow log message ids in the log file.
-    EXPECT_EQ(1, countFile("DHCP6_DDNS_FQDN_GENERATED"));
-    EXPECT_EQ(0, countFile("DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL"));
+    EXPECT_EQ(1U, countFile("DHCP6_DDNS_FQDN_GENERATED"));
+    EXPECT_EQ(0U, countFile("DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL"));
 }
 
 
@@ -4206,12 +4207,12 @@ TEST_F(Dhcpv6SrvTest, generateFqdnNoUpdate) {
     boost::shared_ptr<Option6IAAddr> iaaddr = checkIA_NA(reply, 234, 0, 0);
     ASSERT_TRUE(iaaddr);
     EXPECT_EQ(addr, iaaddr->getAddress());
-    EXPECT_EQ(0, iaaddr->getPreferred());
-    EXPECT_EQ(0, iaaddr->getValid());
+    EXPECT_EQ(0U, iaaddr->getPreferred());
+    EXPECT_EQ(0U, iaaddr->getValid());
 
     // Should not see either of the follow log message ids in the log file.
-    EXPECT_EQ(0, countFile("DHCP6_DDNS_FQDN_GENERATED"));
-    EXPECT_EQ(0, countFile("DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL"));
+    EXPECT_EQ(0U, countFile("DHCP6_DDNS_FQDN_GENERATED"));
+    EXPECT_EQ(0U, countFile("DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL"));
 
     // Fetch the lease in the database and verify hostname has not been updated.
     Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);

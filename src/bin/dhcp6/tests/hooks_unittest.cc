@@ -1202,7 +1202,7 @@ TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveValueChange) {
     srv_->run();
 
     // Check that the server did send a response
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
 
     // Make sure that we received a response
     Pkt6Ptr adv = srv_->fake_sent_.front();
@@ -1214,7 +1214,7 @@ TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveValueChange) {
     ASSERT_TRUE(clientid);
 
     // ... and check if it is the modified value
-    EXPECT_EQ(0xff, clientid->getData()[0]);
+    EXPECT_EQ(0xffU, clientid->getData()[0]);
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(sol);
@@ -1241,7 +1241,7 @@ TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveDeleteClientId) {
     srv_->run();
 
     // Check that the server dropped the packet and did not send a response
-    ASSERT_EQ(0, srv_->fake_sent_.size());
+    ASSERT_EQ(0U, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(sol);
@@ -1267,7 +1267,7 @@ TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveSkip) {
     srv_->run();
 
     // Check that the server dropped the packet and did not produce any response
-    ASSERT_EQ(0, srv_->fake_sent_.size());
+    ASSERT_EQ(0U, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(sol);
@@ -1293,13 +1293,13 @@ TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveDrop) {
     srv_->run();
 
     // Check that the server dropped the packet and did not produce any response
-    ASSERT_EQ(0, srv_->fake_sent_.size());
+    ASSERT_EQ(0U, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(sol);
 
     // Drop statistics should be maintained by the callouts, not by the server.
-    EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
+    EXPECT_EQ(0U, getStatistic("pkt6-receive-drop"));
 }
 
 // Checks if callouts installed on pkt6_receive are indeed called and the
@@ -1363,7 +1363,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveValueChange) {
     srv_->run();
 
     // Check that the server did send a response
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
 
     // Make sure that we received a response
     Pkt6Ptr adv = srv_->fake_sent_.front();
@@ -1401,7 +1401,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveDeleteClientId) {
     srv_->run();
 
     // Check that the server dropped the packet and did not send a response
-    ASSERT_EQ(0, srv_->fake_sent_.size());
+    ASSERT_EQ(0U, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(sol);
@@ -1427,7 +1427,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveSkip) {
     srv_->run();
 
     // Check that the server dropped the packet and did not produce any response
-    ASSERT_EQ(0, srv_->fake_sent_.size());
+    ASSERT_EQ(0U, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(sol);
@@ -1453,13 +1453,13 @@ TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveDrop) {
     srv_->run();
 
     // Check that the server dropped the packet and did not produce any response
-    ASSERT_EQ(0, srv_->fake_sent_.size());
+    ASSERT_EQ(0U, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(sol);
 
     // Drop statistics should be maintained by the callouts, not by the server.
-    EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
+    EXPECT_EQ(0U, getStatistic("pkt6-receive-drop"));
 }
 
 // Checks if callouts installed on pkt6_send are indeed called and the
@@ -1485,7 +1485,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6SendSimple) {
     EXPECT_EQ("pkt6_send", callback_name_);
 
     // Check that there is one packet sent
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
     Pkt6Ptr adv = srv_->fake_sent_.front();
 
     // Check that pkt6 argument passing was successful and returned proper
@@ -1538,7 +1538,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6SendValueChange) {
     srv_->run();
 
     // Check that the server did send a response
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
 
     // Make sure that we received a response
     Pkt6Ptr adv = srv_->fake_sent_.front();
@@ -1577,7 +1577,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6SendDeleteServerId) {
     srv_->run();
 
     // Check that the server indeed sent a malformed ADVERTISE
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
 
     // Get that ADVERTISE
     Pkt6Ptr adv = srv_->fake_sent_.front();
@@ -1610,14 +1610,14 @@ TEST_F(HooksDhcpv6SrvTest, pkt6SendSkip) {
     srv_->run();
 
     // Check that the server sent the packet
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
 
     // Get the first packet and check that it has zero length (i.e. the server
     // did not do packing on its own)
     Pkt6Ptr sent = srv_->fake_sent_.front();
 
     // The actual size of sent packet should be 0
-    EXPECT_EQ(0, sent->getBuffer().getLength());
+    EXPECT_EQ(0U, sent->getBuffer().getLength());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(sol);
@@ -1643,7 +1643,7 @@ TEST_F(HooksDhcpv6SrvTest, pkt6SendDrop) {
     srv_->run();
 
     // Check that the server does not send the packet
-    EXPECT_EQ(0, srv_->fake_sent_.size());
+    EXPECT_EQ(0U, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(sol);
@@ -1672,7 +1672,7 @@ TEST_F(HooksDhcpv6SrvTest, buffer6SendSimple) {
     EXPECT_EQ("buffer6_send", callback_name_);
 
     // Check that there is one packet sent
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
     Pkt6Ptr adv = srv_->fake_sent_.front();
 
     // Check that pkt6 argument passing was successful and returned proper value
@@ -1713,7 +1713,7 @@ TEST_F(HooksDhcpv6SrvTest, buffer6SendSkip) {
     EXPECT_EQ("buffer6_send", callback_name_);
 
     // Check that there is no packet sent.
-    ASSERT_EQ(0, srv_->fake_sent_.size());
+    ASSERT_EQ(0U, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(sol);
@@ -1742,7 +1742,7 @@ TEST_F(HooksDhcpv6SrvTest, buffer6SendDrop) {
     EXPECT_EQ("buffer6_send", callback_name_);
 
     // Check that there is no packet sent
-    EXPECT_EQ(0, srv_->fake_sent_.size());
+    EXPECT_EQ(0U, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(sol);
@@ -1826,7 +1826,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SelectSimple) {
 
     // Server is supposed to report two subnets
     ASSERT_EQ(exp_subnets->size(), callback_subnet6collection_->size());
-    ASSERT_GE(exp_subnets->size(), 2);
+    ASSERT_GE(exp_subnets->size(), 2U);
 
     // Compare that the available subnets are reported as expected
     EXPECT_TRUE((*exp_subnets->begin())->get() == (*callback_subnet6collection_->begin())->get());
@@ -1914,7 +1914,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SelectChange) {
     // Get all subnets and use second subnet for verification
     const Subnet6Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
-    ASSERT_EQ(2, subnets->size());
+    ASSERT_EQ(2U, subnets->size());
 
     // Advertised address must belong to the second pool (in subnet's range,
     // in dynamic pool)
@@ -1946,13 +1946,13 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SelectDrop) {
     srv_->run();
 
     // Check that the server dropped the packet and did not produce any response
-    ASSERT_EQ(0, srv_->fake_sent_.size());
+    ASSERT_EQ(0U, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(sol);
 
     // Drop statistics should be maintained by the callouts, not by the server.
-    EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
+    EXPECT_EQ(0U, getStatistic("pkt6-receive-drop"));
 }
 
 // This test verifies that the leases6_committed hook point is not triggered
@@ -2129,7 +2129,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRapidCommit) {
 
     // Newly allocated lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(1, callback_new_leases6_->size());
+    ASSERT_EQ(1U, callback_new_leases6_->size());
     Lease6Ptr lease = callback_new_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
@@ -2204,11 +2204,11 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRapidCommitPrefixes) {
 
     // Newly allocated lease should be passed to the callout.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(1, callback_new_leases6_->size());
+    ASSERT_EQ(1U, callback_new_leases6_->size());
     Lease6Ptr lease = callback_new_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1:28::", lease->addr_.toText());
-    EXPECT_EQ(64, lease->prefixlen_);
+    EXPECT_EQ(64U, lease->prefixlen_);
 
     // Deleted lease must not be present, because it is a new allocation.
     ASSERT_TRUE(callback_deleted_leases6_);
@@ -2310,7 +2310,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRequest) {
 
     // Newly allocated lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(1, callback_new_leases6_->size());
+    ASSERT_EQ(1U, callback_new_leases6_->size());
     Lease6Ptr lease = callback_new_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
@@ -2338,7 +2338,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRequest) {
 
     // Requested lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(1, callback_new_leases6_->size());
+    ASSERT_EQ(1U, callback_new_leases6_->size());
     lease = callback_new_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
@@ -2369,7 +2369,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRequest) {
 
     // New lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(2, callback_new_leases6_->size());
+    ASSERT_EQ(2U, callback_new_leases6_->size());
     lease = callback_new_leases6_->at(1);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::29", lease->addr_.toText());
@@ -2398,7 +2398,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRequest) {
     EXPECT_EQ("leases6_committed", callback_name_);
 
     ASSERT_TRUE(callback_new_leases6_);
-    EXPECT_EQ(3, callback_new_leases6_->size());
+    EXPECT_EQ(3U, callback_new_leases6_->size());
     lease = callback_new_leases6_->at(2);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::", lease->addr_.toText());
@@ -2429,7 +2429,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRequest) {
     EXPECT_EQ("leases6_committed", callback_name_);
 
     ASSERT_TRUE(callback_new_leases6_);
-    EXPECT_EQ(3, callback_new_leases6_->size());
+    EXPECT_EQ(3U, callback_new_leases6_->size());
     ASSERT_TRUE(callback_deleted_leases6_);
     EXPECT_TRUE(callback_deleted_leases6_->empty());
 
@@ -2490,11 +2490,11 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRequestPrefix) {
 
     // Newly allocated lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(1, callback_new_leases6_->size());
+    ASSERT_EQ(1U, callback_new_leases6_->size());
     Lease6Ptr lease = callback_new_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1:28::", lease->addr_.toText());
-    EXPECT_EQ(64, lease->prefixlen_);
+    EXPECT_EQ(64U, lease->prefixlen_);
 
     // Deleted lease must not be present, because it is a new allocation.
     ASSERT_TRUE(callback_deleted_leases6_);
@@ -2519,11 +2519,11 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRequestPrefix) {
 
     // Requested lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(1, callback_new_leases6_->size());
+    ASSERT_EQ(1U, callback_new_leases6_->size());
     lease = callback_new_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1:28::", lease->addr_.toText());
-    EXPECT_EQ(64, lease->prefixlen_);
+    EXPECT_EQ(64U, lease->prefixlen_);
 
     // Deleted lease must not be present, because it is a new allocation.
     ASSERT_TRUE(callback_deleted_leases6_);
@@ -2551,11 +2551,11 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRequestPrefix) {
 
     // New lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(2, callback_new_leases6_->size());
+    ASSERT_EQ(2U, callback_new_leases6_->size());
     lease = callback_new_leases6_->at(1);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1:29::", lease->addr_.toText());
-    EXPECT_EQ(64, lease->prefixlen_);
+    EXPECT_EQ(64U, lease->prefixlen_);
 
     // The old lease is kept.
     ASSERT_TRUE(callback_deleted_leases6_);
@@ -2581,11 +2581,11 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRequestPrefix) {
     EXPECT_EQ("leases6_committed", callback_name_);
 
     ASSERT_TRUE(callback_new_leases6_);
-    EXPECT_EQ(3, callback_new_leases6_->size());
+    EXPECT_EQ(3U, callback_new_leases6_->size());
     lease = callback_new_leases6_->at(2);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::", lease->addr_.toText());
-    EXPECT_EQ(64, lease->prefixlen_);
+    EXPECT_EQ(64U, lease->prefixlen_);
     ASSERT_TRUE(callback_deleted_leases6_);
     EXPECT_TRUE(callback_deleted_leases6_->empty());
 
@@ -2613,7 +2613,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRequestPrefix) {
     EXPECT_EQ("leases6_committed", callback_name_);
 
     ASSERT_TRUE(callback_new_leases6_);
-    EXPECT_EQ(3, callback_new_leases6_->size());
+    EXPECT_EQ(3U, callback_new_leases6_->size());
     ASSERT_TRUE(callback_deleted_leases6_);
     EXPECT_TRUE(callback_deleted_leases6_->empty());
 
@@ -2671,7 +2671,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRenew) {
 
     // Newly allocated lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(1, callback_new_leases6_->size());
+    ASSERT_EQ(1U, callback_new_leases6_->size());
     Lease6Ptr lease = callback_new_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
@@ -2699,7 +2699,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRenew) {
 
     // Renewed lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(1, callback_new_leases6_->size());
+    ASSERT_EQ(1U, callback_new_leases6_->size());
     lease = callback_new_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
@@ -2727,7 +2727,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRenew) {
 
     // New lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(2, callback_new_leases6_->size());
+    ASSERT_EQ(2U, callback_new_leases6_->size());
     lease = callback_new_leases6_->at(1);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::29", lease->addr_.toText());
@@ -2756,7 +2756,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRenew) {
     EXPECT_EQ("leases6_committed", callback_name_);
 
     ASSERT_TRUE(callback_new_leases6_);
-    EXPECT_EQ(3, callback_new_leases6_->size());
+    EXPECT_EQ(3U, callback_new_leases6_->size());
     lease = callback_new_leases6_->at(2);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::", lease->addr_.toText());
@@ -2787,7 +2787,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRenew) {
     EXPECT_EQ("leases6_committed", callback_name_);
 
     ASSERT_TRUE(callback_new_leases6_);
-    EXPECT_EQ(3, callback_new_leases6_->size());
+    EXPECT_EQ(3U, callback_new_leases6_->size());
     ASSERT_TRUE(callback_deleted_leases6_);
     EXPECT_TRUE(callback_deleted_leases6_->empty());
 
@@ -2848,11 +2848,11 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRenewPrefix) {
 
     // Newly allocated lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(1, callback_new_leases6_->size());
+    ASSERT_EQ(1U, callback_new_leases6_->size());
     Lease6Ptr lease = callback_new_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1:28::", lease->addr_.toText());
-    EXPECT_EQ(64, lease->prefixlen_);
+    EXPECT_EQ(64U, lease->prefixlen_);
 
     // Deleted lease must not be present, because it is a new allocation.
     ASSERT_TRUE(callback_deleted_leases6_);
@@ -2874,11 +2874,11 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRenewPrefix) {
 
     // Renewed lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(1, callback_new_leases6_->size());
+    ASSERT_EQ(1U, callback_new_leases6_->size());
     lease = callback_new_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1:28::", lease->addr_.toText());
-    EXPECT_EQ(64, lease->prefixlen_);
+    EXPECT_EQ(64U, lease->prefixlen_);
 
     // Deleted lease must not be present, because it is a new allocation.
     ASSERT_TRUE(callback_deleted_leases6_);
@@ -2906,11 +2906,11 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRenewPrefix) {
 
     // New lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(2, callback_new_leases6_->size());
+    ASSERT_EQ(2U, callback_new_leases6_->size());
     lease = callback_new_leases6_->at(1);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1:29::", lease->addr_.toText());
-    EXPECT_EQ(64, lease->prefixlen_);
+    EXPECT_EQ(64U, lease->prefixlen_);
 
     // The old lease is kept.
     ASSERT_TRUE(callback_deleted_leases6_);
@@ -2936,11 +2936,11 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRenewPrefix) {
     EXPECT_EQ("leases6_committed", callback_name_);
 
     ASSERT_TRUE(callback_new_leases6_);
-    EXPECT_EQ(3, callback_new_leases6_->size());
+    EXPECT_EQ(3U, callback_new_leases6_->size());
     lease = callback_new_leases6_->at(2);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::", lease->addr_.toText());
-    EXPECT_EQ(64, lease->prefixlen_);
+    EXPECT_EQ(64U, lease->prefixlen_);
     ASSERT_TRUE(callback_deleted_leases6_);
     EXPECT_TRUE(callback_deleted_leases6_->empty());
 
@@ -2968,7 +2968,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRenewPrefix) {
     EXPECT_EQ("leases6_committed", callback_name_);
 
     ASSERT_TRUE(callback_new_leases6_);
-    EXPECT_EQ(3, callback_new_leases6_->size());
+    EXPECT_EQ(3U, callback_new_leases6_->size());
     ASSERT_TRUE(callback_deleted_leases6_);
     EXPECT_TRUE(callback_deleted_leases6_->empty());
 
@@ -3026,7 +3026,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebind) {
 
     // Newly allocated lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(1, callback_new_leases6_->size());
+    ASSERT_EQ(1U, callback_new_leases6_->size());
     Lease6Ptr lease = callback_new_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
@@ -3054,7 +3054,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebind) {
 
     // Rebound lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(1, callback_new_leases6_->size());
+    ASSERT_EQ(1U, callback_new_leases6_->size());
     lease = callback_new_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
@@ -3085,7 +3085,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebind) {
 
     // New lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(2, callback_new_leases6_->size());
+    ASSERT_EQ(2U, callback_new_leases6_->size());
     lease = callback_new_leases6_->at(1);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::29", lease->addr_.toText());
@@ -3114,7 +3114,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebind) {
     EXPECT_EQ("leases6_committed", callback_name_);
 
     ASSERT_TRUE(callback_new_leases6_);
-    EXPECT_EQ(3, callback_new_leases6_->size());
+    EXPECT_EQ(3U, callback_new_leases6_->size());
     lease = callback_new_leases6_->at(2);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::", lease->addr_.toText());
@@ -3145,7 +3145,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebind) {
     EXPECT_EQ("leases6_committed", callback_name_);
 
     ASSERT_TRUE(callback_new_leases6_);
-    EXPECT_EQ(3, callback_new_leases6_->size());
+    EXPECT_EQ(3U, callback_new_leases6_->size());
     ASSERT_TRUE(callback_deleted_leases6_);
     EXPECT_TRUE(callback_deleted_leases6_->empty());
 
@@ -3206,11 +3206,11 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebindPrefix) {
 
     // Newly allocated lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(1, callback_new_leases6_->size());
+    ASSERT_EQ(1U, callback_new_leases6_->size());
     Lease6Ptr lease = callback_new_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1:28::", lease->addr_.toText());
-    EXPECT_EQ(64, lease->prefixlen_);
+    EXPECT_EQ(64U, lease->prefixlen_);
 
     // Deleted lease must not be present, because it is a new allocation.
     ASSERT_TRUE(callback_deleted_leases6_);
@@ -3235,11 +3235,11 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebindPrefix) {
 
     // Rebound lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(1, callback_new_leases6_->size());
+    ASSERT_EQ(1U, callback_new_leases6_->size());
     lease = callback_new_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1:28::", lease->addr_.toText());
-    EXPECT_EQ(64, lease->prefixlen_);
+    EXPECT_EQ(64U, lease->prefixlen_);
 
     // Deleted lease must not be present, because it is a new allocation.
     ASSERT_TRUE(callback_deleted_leases6_);
@@ -3267,11 +3267,11 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebindPrefix) {
 
     // New lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(2, callback_new_leases6_->size());
+    ASSERT_EQ(2U, callback_new_leases6_->size());
     lease = callback_new_leases6_->at(1);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1:29::", lease->addr_.toText());
-    EXPECT_EQ(64, lease->prefixlen_);
+    EXPECT_EQ(64U, lease->prefixlen_);
 
     // The old lease is kept.
     ASSERT_TRUE(callback_deleted_leases6_);
@@ -3297,11 +3297,11 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebindPrefix) {
     EXPECT_EQ("leases6_committed", callback_name_);
 
     ASSERT_TRUE(callback_new_leases6_);
-    EXPECT_EQ(3, callback_new_leases6_->size());
+    EXPECT_EQ(3U, callback_new_leases6_->size());
     lease = callback_new_leases6_->at(2);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::", lease->addr_.toText());
-    EXPECT_EQ(64, lease->prefixlen_);
+    EXPECT_EQ(64U, lease->prefixlen_);
     ASSERT_TRUE(callback_deleted_leases6_);
     EXPECT_TRUE(callback_deleted_leases6_->empty());
 
@@ -3329,7 +3329,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebindPrefix) {
     EXPECT_EQ("leases6_committed", callback_name_);
 
     ASSERT_TRUE(callback_new_leases6_);
-    EXPECT_EQ(3, callback_new_leases6_->size());
+    EXPECT_EQ(3U, callback_new_leases6_->size());
     ASSERT_TRUE(callback_deleted_leases6_);
     EXPECT_TRUE(callback_deleted_leases6_->empty());
 
@@ -3392,7 +3392,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedDecline) {
 
     // Declined lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(1, callback_new_leases6_->size());
+    ASSERT_EQ(1U, callback_new_leases6_->size());
     Lease6Ptr lease = callback_new_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
@@ -3458,7 +3458,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedDeclineTwoNAs) {
 
     // Declined lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(2, callback_new_leases6_->size());
+    ASSERT_EQ(2U, callback_new_leases6_->size());
     Lease6Ptr lease = callback_new_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
@@ -3527,7 +3527,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRelease) {
 
     // Released lease should be returned.
     ASSERT_TRUE(callback_deleted_leases6_);
-    EXPECT_EQ(1, callback_deleted_leases6_->size());
+    EXPECT_EQ(1U, callback_deleted_leases6_->size());
     Lease6Ptr lease = callback_deleted_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
@@ -3596,11 +3596,11 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedReleasePrefix) {
 
     // Released lease should be returned.
     ASSERT_TRUE(callback_deleted_leases6_);
-    EXPECT_EQ(1, callback_deleted_leases6_->size());
+    EXPECT_EQ(1U, callback_deleted_leases6_->size());
     Lease6Ptr lease = callback_deleted_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1:28::", lease->addr_.toText());
-    EXPECT_EQ(64, lease->prefixlen_);
+    EXPECT_EQ(64U, lease->prefixlen_);
 
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
@@ -3672,7 +3672,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedReleaseMultiple) {
 
     // Released lease should be returned.
     ASSERT_TRUE(callback_deleted_leases6_);
-    EXPECT_EQ(4, callback_deleted_leases6_->size());
+    EXPECT_EQ(4U, callback_deleted_leases6_->size());
 
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
@@ -3731,7 +3731,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedCache) {
 
     // Newly allocated lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(1, callback_new_leases6_->size());
+    ASSERT_EQ(1U, callback_new_leases6_->size());
     Lease6Ptr lease = callback_new_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
@@ -3825,11 +3825,11 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedCachePrefix) {
 
     // Newly allocated lease should be returned.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(1, callback_new_leases6_->size());
+    ASSERT_EQ(1U, callback_new_leases6_->size());
     Lease6Ptr lease = callback_new_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1:28::", lease->addr_.toText());
-    EXPECT_EQ(64, lease->prefixlen_);
+    EXPECT_EQ(64U, lease->prefixlen_);
 
     // Deleted lease must not be present, because it is a new allocation.
     ASSERT_TRUE(callback_deleted_leases6_);
@@ -3920,7 +3920,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRequests) {
 
     // Newly allocated lease should be passed to the callout.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(1, callback_new_leases6_->size());
+    ASSERT_EQ(1U, callback_new_leases6_->size());
     Lease6Ptr lease = callback_new_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1::28", lease->addr_.toText());
@@ -4030,11 +4030,11 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRequestsPrefixes) {
 
     // Newly allocated lease should be passed to the callout.
     ASSERT_TRUE(callback_new_leases6_);
-    ASSERT_EQ(1, callback_new_leases6_->size());
+    ASSERT_EQ(1U, callback_new_leases6_->size());
     Lease6Ptr lease = callback_new_leases6_->at(0);
     ASSERT_TRUE(lease);
     EXPECT_EQ("2001:db8:1:28::", lease->addr_.toText());
-    EXPECT_EQ(64, lease->prefixlen_);
+    EXPECT_EQ(64U, lease->prefixlen_);
 
     // Deleted lease must not be present, because it is a new allocation.
     ASSERT_TRUE(callback_deleted_leases6_);
@@ -4855,16 +4855,16 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSimpleNoDelete) {
     l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
     ASSERT_TRUE(l);
 
-    EXPECT_EQ(l->valid_lft_, 0);
-    EXPECT_EQ(l->preferred_lft_, 0);
+    EXPECT_EQ(l->valid_lft_, 0U);
+    EXPECT_EQ(l->preferred_lft_, 0U);
 
     // Get lease by subnetid/duid/iaid combination
     l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, *duid_, iaid,
                                               subnet_->getID());
     ASSERT_TRUE(l);
 
-    EXPECT_EQ(l->valid_lft_, 0);
-    EXPECT_EQ(l->preferred_lft_, 0);
+    EXPECT_EQ(l->valid_lft_, 0U);
+    EXPECT_EQ(l->preferred_lft_, 0U);
 
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
@@ -5101,16 +5101,16 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleasePrefixSimpleNoDelete) {
     l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD, prefix);
     ASSERT_TRUE(l);
 
-    EXPECT_EQ(l->valid_lft_, 0);
-    EXPECT_EQ(l->preferred_lft_, 0);
+    EXPECT_EQ(l->valid_lft_, 0U);
+    EXPECT_EQ(l->preferred_lft_, 0U);
 
     // Get lease by subnetid/duid/iaid combination
     l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD, *duid_, iaid,
                                               subnet_->getID());
     ASSERT_TRUE(l);
 
-    EXPECT_EQ(l->valid_lft_, 0);
-    EXPECT_EQ(l->preferred_lft_, 0);
+    EXPECT_EQ(l->valid_lft_, 0U);
+    EXPECT_EQ(l->preferred_lft_, 0U);
 
     // Pkt passed to a callout must be configured to copy retrieved options.
     EXPECT_TRUE(callback_qry_options_copy_);
@@ -5765,11 +5765,11 @@ TEST_F(HooksDhcpv6SrvTest, leases6ParkedPacketLimit) {
     auto const& parking_lot = ServerHooks::getServerHooks()
                               .getParkingLotPtr("leases6_committed");
     ASSERT_TRUE(parking_lot);
-    ASSERT_EQ(0, parking_lot->size());
+    ASSERT_EQ(0U, parking_lot->size());
 
     // Statistic should not show any drops.
-    EXPECT_EQ(0, getStatistic("pkt6-queue-full"));
-    EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
+    EXPECT_EQ(0U, getStatistic("pkt6-queue-full"));
+    EXPECT_EQ(0U, getStatistic("pkt6-receive-drop"));
 
     // This callout uses provided IO service object to post a function
     // that unparks the packet. The packet is parked and can be unparked
@@ -5792,9 +5792,9 @@ TEST_F(HooksDhcpv6SrvTest, leases6ParkedPacketLimit) {
     EXPECT_EQ("leases6_committed", callback_name_);
 
     // Verify we have one parked packet and no drops.
-    ASSERT_EQ(1, parking_lot->size());
-    EXPECT_EQ(0, getStatistic("pkt6-queue-full"));
-    EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
+    ASSERT_EQ(1U, parking_lot->size());
+    EXPECT_EQ(0U, getStatistic("pkt6-queue-full"));
+    EXPECT_EQ(0U, getStatistic("pkt6-receive-drop"));
 
     // Reset all indicators because we'll be now creating a second client.
     resetCalloutBuffers();
@@ -5814,9 +5814,9 @@ TEST_F(HooksDhcpv6SrvTest, leases6ParkedPacketLimit) {
     EXPECT_EQ("", callback_name_);
 
     // Verify we have one parked packet and one drop.
-    ASSERT_EQ(1, parking_lot->size());
-    EXPECT_EQ(1, getStatistic("pkt6-queue-full"));
-    EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
+    ASSERT_EQ(1U, parking_lot->size());
+    EXPECT_EQ(1U, getStatistic("pkt6-queue-full"));
+    EXPECT_EQ(1U, getStatistic("pkt6-receive-drop"));
 
     // There should now be one action scheduled on our IO service
     // by the invoked callout. It should unpark the REPLY message
@@ -5831,9 +5831,9 @@ TEST_F(HooksDhcpv6SrvTest, leases6ParkedPacketLimit) {
     EXPECT_TRUE(client1.hasLeaseForAddress(IOAddress("2001:db8:1::28")));
 
     // Verify we have no parked packets and one drop.
-    ASSERT_EQ(0, parking_lot->size());
-    EXPECT_EQ(1, getStatistic("pkt6-queue-full"));
-    EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
+    ASSERT_EQ(0U, parking_lot->size());
+    EXPECT_EQ(1U, getStatistic("pkt6-queue-full"));
+    EXPECT_EQ(1U, getStatistic("pkt6-receive-drop"));
 
     // Should not anything to receive for client2.
     ASSERT_NO_THROW(client2.receiveResponse());
@@ -5855,9 +5855,9 @@ TEST_F(HooksDhcpv6SrvTest, leases6ParkedPacketLimit) {
     EXPECT_EQ("leases6_committed", callback_name_);
 
     // Verify we again have one parked packet and one drop.
-    ASSERT_EQ(1, parking_lot->size());
-    EXPECT_EQ(1, getStatistic("pkt6-queue-full"));
-    EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
+    ASSERT_EQ(1U, parking_lot->size());
+    EXPECT_EQ(1U, getStatistic("pkt6-queue-full"));
+    EXPECT_EQ(1U, getStatistic("pkt6-receive-drop"));
 
     // There should now be one action scheduled on our IO service
     // by the invoked callout. It should unpark the REPLY message
@@ -5872,9 +5872,9 @@ TEST_F(HooksDhcpv6SrvTest, leases6ParkedPacketLimit) {
     EXPECT_TRUE(client2.hasLeaseForAddress(IOAddress("2001:db8:1::29")));
 
     // Verify we no parked packets and one drop.
-    ASSERT_EQ(0, parking_lot->size());
-    EXPECT_EQ(1, getStatistic("pkt6-queue-full"));
-    EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
+    ASSERT_EQ(0U, parking_lot->size());
+    EXPECT_EQ(1U, getStatistic("pkt6-queue-full"));
+    EXPECT_EQ(1U, getStatistic("pkt6-receive-drop"));
 }
 
 // Checks that postponed hook start service can fail.
@@ -6027,7 +6027,7 @@ TEST_F(HooksDhcpv6SrvTest, ddns6Update) {
 
     // Verify the subnet.
     ASSERT_TRUE(callback_subnet6_);
-    EXPECT_EQ(1, callback_subnet6_->getID());
+    EXPECT_EQ(1U, callback_subnet6_->getID());
 
     // Verify the hostname.
     EXPECT_EQ("client-name.example.com.", callback_hostname_);

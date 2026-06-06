@@ -71,7 +71,7 @@ TEST(NetconfCfgMgr, contextServer) {
     // Check managed server parameters.
     // By default, there are no server stored.
     ASSERT_TRUE(ctx.getCfgServersMap());
-    EXPECT_EQ(0, ctx.getCfgServersMap()->size());
+    EXPECT_EQ(0U, ctx.getCfgServersMap()->size());
 
     CfgControlSocketPtr
         socket1(new CfgControlSocket(CfgControlSocket::Type::UNIX,
@@ -93,7 +93,7 @@ TEST(NetconfCfgMgr, contextServer) {
     EXPECT_NO_THROW_LOG(ctx.getCfgServersMap()->insert(make_pair("d2", server1)));
 
     // Now check the values returned
-    EXPECT_EQ(1, ctx.getCfgServersMap()->size());
+    EXPECT_EQ(1U, ctx.getCfgServersMap()->size());
     ASSERT_NO_THROW_LOG(ctx.getCfgServersMap()->at("d2"));
     EXPECT_EQ(server1, ctx.getCfgServersMap()->at("d2"));
     EXPECT_FALSE(ctx.getCfgServersMap()->contains("dhcp4"));
@@ -102,7 +102,7 @@ TEST(NetconfCfgMgr, contextServer) {
     EXPECT_NO_THROW_LOG(ctx.getCfgServersMap()->insert(make_pair("dhcp6", server2)));
 
     // Should be possible to retrieve two servers
-    EXPECT_EQ(2, ctx.getCfgServersMap()->size());
+    EXPECT_EQ(2U, ctx.getCfgServersMap()->size());
     ASSERT_NO_THROW_LOG(ctx.getCfgServersMap()->at("dhcp6"));
     EXPECT_EQ(server1, ctx.getCfgServersMap()->at("d2"));
     EXPECT_EQ(server2, ctx.getCfgServersMap()->at("dhcp6"));
@@ -126,7 +126,7 @@ TEST(NetconfCfgMgr, contextHookParams) {
     libs.add("libthree.so", Element::fromJSON("{\"bar\": 42}"));
 
     const HooksConfig& stored_libs = ctx.getHooksConfig();
-    EXPECT_EQ(3, stored_libs.get().size());
+    EXPECT_EQ(3U, stored_libs.get().size());
 
     EXPECT_EQ(libs.get(), stored_libs.get());
 }
@@ -139,7 +139,7 @@ TEST(NetconfCfgMgr, contextGlobals) {
     ElementPtr globals = ctx.getConfiguredGlobals();
     ASSERT_TRUE(globals);
     ASSERT_EQ(Element::map, globals->getType());
-    EXPECT_EQ(0, globals->mapValue().size());
+    EXPECT_EQ(0U, globals->mapValue().size());
 
     // Attempting to extract globals from a non-map should throw.
     EXPECT_THROW_MSG(ctx.extractConfiguredGlobals(Element::create(777)), BadValue,
@@ -166,7 +166,7 @@ TEST(NetconfCfgMgr, contextGlobals) {
     globals = ctx.getConfiguredGlobals();
     ASSERT_TRUE(globals);
     ASSERT_EQ(Element::map, globals->getType());
-    EXPECT_NE(0, globals->mapValue().size());
+    EXPECT_NE(0U, globals->mapValue().size());
 
     // Maps and lists should be excluded.
     for (auto const& it : globals->mapValue()) {
@@ -442,7 +442,7 @@ TEST_F(NetconfParserTest, configParseEmpty) {
     NetconfConfigPtr ctx = cfg_mgr_.getNetconfConfig();
     ASSERT_TRUE(ctx);
     ASSERT_TRUE(ctx->getCfgServersMap());
-    EXPECT_EQ(0, ctx->getCfgServersMap()->size());
+    EXPECT_EQ(0U, ctx->getCfgServersMap()->size());
 }
 
 // This test verifies if a config with only globals is handled properly.
@@ -452,7 +452,7 @@ TEST_F(NetconfParserTest, configParseGlobalOnly) {
     NetconfConfigPtr ctx = cfg_mgr_.getNetconfConfig();
     ASSERT_TRUE(ctx);
     ASSERT_TRUE(ctx->getCfgServersMap());
-    EXPECT_EQ(0, ctx->getCfgServersMap()->size());
+    EXPECT_EQ(0U, ctx->getCfgServersMap()->size());
     ConstElementPtr globals = ctx->getConfiguredGlobals();
     ASSERT_TRUE(globals);
     string expected = "{ "
@@ -470,7 +470,7 @@ TEST_F(NetconfParserTest, configParseEmptyCfgServer) {
     NetconfConfigPtr ctx = cfg_mgr_.getNetconfConfig();
     ASSERT_TRUE(ctx);
     ASSERT_TRUE(ctx->getCfgServersMap());
-    EXPECT_EQ(1, ctx->getCfgServersMap()->size());
+    EXPECT_EQ(1U, ctx->getCfgServersMap()->size());
     ASSERT_NO_THROW_LOG(ctx->getCfgServersMap()->at("dhcp4"));
     CfgServerPtr server = ctx->getCfgServersMap()->at("dhcp4");
     ASSERT_TRUE(server);
@@ -502,7 +502,7 @@ TEST_F(NetconfParserTest, configParseServerDhcp4) {
     NetconfConfigPtr ctx = cfg_mgr_.getNetconfConfig();
     ASSERT_TRUE(ctx);
     ASSERT_TRUE(ctx->getCfgServersMap());
-    EXPECT_EQ(1, ctx->getCfgServersMap()->size());
+    EXPECT_EQ(1U, ctx->getCfgServersMap()->size());
     ASSERT_NO_THROW_LOG(ctx->getCfgServersMap()->at("dhcp4"));
     CfgServerPtr server = ctx->getCfgServersMap()->at("dhcp4");
     ASSERT_TRUE(server);
@@ -525,7 +525,7 @@ TEST_F(NetconfParserTest, configParseServerD2) {
     NetconfConfigPtr ctx = cfg_mgr_.getNetconfConfig();
     ASSERT_TRUE(ctx);
     ASSERT_TRUE(ctx->getCfgServersMap());
-    EXPECT_EQ(1, ctx->getCfgServersMap()->size());
+    EXPECT_EQ(1U, ctx->getCfgServersMap()->size());
     ASSERT_NO_THROW_LOG(ctx->getCfgServersMap()->at("d2"));
     CfgServerPtr server = ctx->getCfgServersMap()->at("d2");
     ASSERT_TRUE(server);
@@ -547,7 +547,7 @@ TEST_F(NetconfParserTest, configParseServerDhcp6) {
     NetconfConfigPtr ctx = cfg_mgr_.getNetconfConfig();
     ASSERT_TRUE(ctx);
     ASSERT_TRUE(ctx->getCfgServersMap());
-    EXPECT_EQ(1, ctx->getCfgServersMap()->size());
+    EXPECT_EQ(1U, ctx->getCfgServersMap()->size());
     ASSERT_NO_THROW_LOG(ctx->getCfgServersMap()->at("dhcp6"));
     CfgServerPtr server = ctx->getCfgServersMap()->at("dhcp6");
     ASSERT_TRUE(server);
@@ -567,7 +567,7 @@ TEST_F(NetconfParserTest, configParse4Servers) {
     NetconfConfigPtr ctx = cfg_mgr_.getNetconfConfig();
     ASSERT_TRUE(ctx);
     ASSERT_TRUE(ctx->getCfgServersMap());
-    EXPECT_EQ(3, ctx->getCfgServersMap()->size());
+    EXPECT_EQ(3U, ctx->getCfgServersMap()->size());
 
     ASSERT_NO_THROW_LOG(ctx->getCfgServersMap()->at("dhcp4"));
     CfgServerPtr server = ctx->getCfgServersMap()->at("dhcp4");
@@ -678,7 +678,7 @@ TEST_F(NetconfParserTest, configParseHooks) {
     // The context now should have the library specified.
     NetconfConfigPtr ctx = cfg_mgr_.getNetconfConfig();
     const HookLibsCollection libs = ctx->getHooksConfig().get();
-    ASSERT_EQ(1, libs.size());
+    ASSERT_EQ(1U, libs.size());
     EXPECT_EQ(string(BASIC_CALLOUT_LIBRARY), libs[0].libname_);
     ASSERT_TRUE(libs[0].parameters_);
     EXPECT_EQ("{ \"param1\": \"foo\" }", libs[0].parameters_->str());
@@ -693,7 +693,7 @@ TEST_F(NetconfParserTest, comments) {
     // Check global user context.
     ConstElementPtr ctx = netconf_ctx->getContext();
     ASSERT_TRUE(ctx);
-    ASSERT_EQ(1, ctx->size());
+    ASSERT_EQ(1U, ctx->size());
     ASSERT_TRUE(ctx->get("comment"));
     EXPECT_EQ("\"Indirect comment\"", ctx->get("comment")->str());
 
@@ -706,7 +706,7 @@ TEST_F(NetconfParserTest, comments) {
     // Check DHCP4 server user context.
     ConstElementPtr ctx4 = server->getContext();
     ASSERT_TRUE(ctx4);
-    ASSERT_EQ(1, ctx4->size());
+    ASSERT_EQ(1U, ctx4->size());
     ASSERT_TRUE(ctx4->get("comment"));
     EXPECT_EQ("\"dhcp4 server\"", ctx4->get("comment")->str());
 
@@ -722,7 +722,7 @@ TEST_F(NetconfParserTest, comments) {
     // Check DHCP6 control socket user context.
     ConstElementPtr ctx6 = socket->getContext();
     ASSERT_TRUE(ctx6);
-    ASSERT_EQ(1, ctx6->size());
+    ASSERT_EQ(1U, ctx6->size());
     ASSERT_TRUE(ctx6->get("version"));
     EXPECT_EQ("1", ctx6->get("version")->str());
 }

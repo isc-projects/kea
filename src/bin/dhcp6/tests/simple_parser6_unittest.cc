@@ -171,18 +171,18 @@ TEST_F(SimpleParser6Test, inheritGlobalToSubnet6) {
     // as it was already defined in the subnet scope.
     size_t num;
     EXPECT_NO_THROW(num = SimpleParser6::deriveParameters(global));
-    EXPECT_EQ(7, num);
+    EXPECT_EQ(7U, num);
 
     // Check the values. 3 of them are inherited, while the fourth one
     // was already defined in the subnet, so should not be inherited.
-    checkIntegerValue(subnet, "renew-timer", 100);
-    checkIntegerValue(subnet, "rebind-timer", 2);
-    checkIntegerValue(subnet, "preferred-lifetime", 3);
-    checkIntegerValue(subnet, "min-preferred-lifetime", 2);
-    checkIntegerValue(subnet, "max-preferred-lifetime", 4);
-    checkIntegerValue(subnet, "valid-lifetime", 4);
-    checkIntegerValue(subnet, "min-valid-lifetime", 3);
-    checkIntegerValue(subnet, "max-valid-lifetime", 5);
+    checkIntegerValue(subnet, "renew-timer", 100U);
+    checkIntegerValue(subnet, "rebind-timer", 2U);
+    checkIntegerValue(subnet, "preferred-lifetime", 3U);
+    checkIntegerValue(subnet, "min-preferred-lifetime", 2U);
+    checkIntegerValue(subnet, "max-preferred-lifetime", 4U);
+    checkIntegerValue(subnet, "valid-lifetime", 4U);
+    checkIntegerValue(subnet, "min-valid-lifetime", 3U);
+    checkIntegerValue(subnet, "max-valid-lifetime", 5U);
 }
 
 // This test checks if the parameters in "subnet6" are assigned default values
@@ -197,7 +197,7 @@ TEST_F(SimpleParser6Test, subnetDefaults6) {
 
     size_t num = 0;
     EXPECT_NO_THROW(num = SimpleParser6::setAllDefaults(global));
-    EXPECT_LE(1, num); // at least 1 parameter has to be modified
+    EXPECT_LE(1U, num); // at least 1 parameter has to be modified
 
     ConstElementPtr subnets = global->find("subnet6");
     ASSERT_TRUE(subnets);
@@ -220,7 +220,7 @@ TEST_F(SimpleParser6Test, optionDataDefaults6) {
 
     size_t num = 0;
     EXPECT_NO_THROW(num = SimpleParser6::setAllDefaults(global));
-    EXPECT_LE(1, num); // at least 1 parameter has to be modified
+    EXPECT_LE(1U, num); // at least 1 parameter has to be modified
 
     ConstElementPtr options = global->find("option-data");
     ASSERT_TRUE(options);
@@ -242,11 +242,11 @@ TEST_F(SimpleParser6Test, optionDefDefaults6) {
 
     size_t num = 0;
     EXPECT_NO_THROW(num = SimpleParser6::setAllDefaults(global));
-    EXPECT_LE(1, num); // at least 1 parameter has to be modified
+    EXPECT_LE(1U, num); // at least 1 parameter has to be modified
 
     ConstElementPtr defs = global->find("option-def");
     ASSERT_TRUE(defs);
-    ASSERT_EQ(1, defs->size());
+    ASSERT_EQ(1U, defs->size());
     ConstElementPtr def = defs->get(0);
     ASSERT_TRUE(def);
 

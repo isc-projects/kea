@@ -29,14 +29,14 @@ TEST(LocalizedOptionTest, Constructor) {
                                                                 opt_buf));
     EXPECT_EQ(Option::V6, opt1->getUniverse());
     EXPECT_EQ(D6O_CLIENTID, opt1->getType());
-    EXPECT_EQ(0, opt1->getOffset());
+    EXPECT_EQ(0U, opt1->getOffset());
 
     // Create option with non-default offset.
     boost::scoped_ptr<LocalizedOption> opt2(new LocalizedOption(Option::V6,
                                                                 D6O_CLIENTID,
                                                                 opt_buf,
                                                                 40));
-    EXPECT_EQ(40, opt2->getOffset());
+    EXPECT_EQ(40U, opt2->getOffset());
 }
 
 }

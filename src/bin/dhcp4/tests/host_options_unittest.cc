@@ -318,19 +318,19 @@ HostOptionsTest::testOverrideRequestedOptions(const bool stateless) {
         ASSERT_EQ("10.0.0.7", client.config_.lease_.addr_.toText());
     }
 
-    ASSERT_EQ(2, client.config_.routers_.size());
+    ASSERT_EQ(2U, client.config_.routers_.size());
     EXPECT_EQ("10.0.0.200", client.config_.routers_[0].toText());
     EXPECT_EQ("10.0.0.201", client.config_.routers_[1].toText());
     // Make sure that the DNS Servers option has been received.
-    ASSERT_EQ(2, client.config_.dns_servers_.size());
+    ASSERT_EQ(2U, client.config_.dns_servers_.size());
     EXPECT_EQ("10.0.0.202", client.config_.dns_servers_[0].toText());
     EXPECT_EQ("10.0.0.203", client.config_.dns_servers_[1].toText());
     // Make sure that the Quotes Servers option has been received.
-    ASSERT_EQ(2, client.config_.quotes_servers_.size());
+    ASSERT_EQ(2U, client.config_.quotes_servers_.size());
     EXPECT_EQ("10.1.1.202", client.config_.quotes_servers_[0].toText());
     EXPECT_EQ("10.1.1.203", client.config_.quotes_servers_[1].toText());
     // Make sure that the Log Servers option has been received.
-    ASSERT_EQ(2, client.config_.log_servers_.size());
+    ASSERT_EQ(2U, client.config_.log_servers_.size());
     EXPECT_EQ("10.1.1.200", client.config_.log_servers_[0].toText());
     EXPECT_EQ("10.1.1.201", client.config_.log_servers_[1].toText());
 }
@@ -373,19 +373,19 @@ HostOptionsTest::testOverrideDefaultOptions(const bool stateless) {
         ASSERT_EQ("10.0.0.7", client.config_.lease_.addr_.toText());
     }
 
-    ASSERT_EQ(2, client.config_.routers_.size());
+    ASSERT_EQ(2U, client.config_.routers_.size());
     EXPECT_EQ("10.1.1.200", client.config_.routers_[0].toText());
     EXPECT_EQ("10.1.1.201", client.config_.routers_[1].toText());
     // Make sure that the DNS Servers option has been received.
-    ASSERT_EQ(2, client.config_.dns_servers_.size());
+    ASSERT_EQ(2U, client.config_.dns_servers_.size());
     EXPECT_EQ("10.1.1.202", client.config_.dns_servers_[0].toText());
     EXPECT_EQ("10.1.1.203", client.config_.dns_servers_[1].toText());
     // Make sure that the Quotes Servers option has been received.
-    ASSERT_EQ(2, client.config_.quotes_servers_.size());
+    ASSERT_EQ(2U, client.config_.quotes_servers_.size());
     EXPECT_EQ("10.0.0.206", client.config_.quotes_servers_[0].toText());
     EXPECT_EQ("10.0.0.207", client.config_.quotes_servers_[1].toText());
     // Make sure that the Log Servers option has been received.
-    ASSERT_EQ(2, client.config_.log_servers_.size());
+    ASSERT_EQ(2U, client.config_.log_servers_.size());
     EXPECT_EQ("10.0.0.204", client.config_.log_servers_[0].toText());
     EXPECT_EQ("10.0.0.205", client.config_.log_servers_[1].toText());
 }
@@ -424,17 +424,17 @@ HostOptionsTest::testHostOnlyOptions(const bool stateless) {
     }
 
     // Make sure that the Routers options has been received.
-    ASSERT_EQ(2, client.config_.routers_.size());
+    ASSERT_EQ(2U, client.config_.routers_.size());
     EXPECT_EQ("10.1.1.200", client.config_.routers_[0].toText());
     EXPECT_EQ("10.1.1.201", client.config_.routers_[1].toText());
     // Make sure that the Quotes Servers option has been received.
-    ASSERT_EQ(2, client.config_.quotes_servers_.size());
+    ASSERT_EQ(2U, client.config_.quotes_servers_.size());
     EXPECT_EQ("10.1.1.206", client.config_.quotes_servers_[0].toText());
     EXPECT_EQ("10.1.1.207", client.config_.quotes_servers_[1].toText());
 
     // Other options are not configured and should not be delivered.
-    EXPECT_EQ(0, client.config_.dns_servers_.size());
-    EXPECT_EQ(0, client.config_.log_servers_.size());
+    EXPECT_EQ(0U, client.config_.dns_servers_.size());
+    EXPECT_EQ(0U, client.config_.log_servers_.size());
 }
 
 void
@@ -480,7 +480,7 @@ HostOptionsTest::testOverrideVendorOptions(const bool stateless) {
 
     // Make sure the server has responded with a V-I Vendor Specific
     // Information option with exactly one suboption.
-    ASSERT_EQ(1, client.config_.vendor_suboptions_.size());
+    ASSERT_EQ(1U, client.config_.vendor_suboptions_.size());
     // Assume this suboption is a TFTP servers suboption.
     std::multimap<unsigned int, OptionPtr>::const_iterator opt =
         client.config_.vendor_suboptions_.find(DOCSIS3_V4_TFTP_SERVERS);
@@ -490,7 +490,7 @@ HostOptionsTest::testOverrideVendorOptions(const bool stateless) {
     ASSERT_TRUE(opt_tftp);
     // TFTP servers suboption should contain addresses specified on host level.
     const Option4AddrLst::AddressContainer& tftps = opt_tftp->getAddresses();
-    ASSERT_EQ(2, tftps.size());
+    ASSERT_EQ(2U, tftps.size());
     EXPECT_EQ("10.1.1.202", tftps[0].toText());
     EXPECT_EQ("10.1.1.203", tftps[1].toText());
 }

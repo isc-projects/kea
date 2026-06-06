@@ -253,7 +253,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
     // We will send response over the same interface which was used to receive
     // query.
     EXPECT_EQ("eth1", resp->getIface());
-    EXPECT_EQ(ETH1_INDEX, resp->getIndex());
+    EXPECT_EQ(static_cast<int>(ETH1_INDEX), resp->getIndex());
 
     // Let's do another test and set other fields: ciaddr and
     // flags. By doing it, we want to make sure that the relay
@@ -346,7 +346,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelayPort) {
     // We will send response over the same interface which was used to receive
     // query.
     EXPECT_EQ("eth1", resp->getIface());
-    EXPECT_EQ(ETH1_INDEX, resp->getIndex());
+    EXPECT_EQ(static_cast<int>(ETH1_INDEX), resp->getIndex());
 }
 
 // This test verifies that it is possible to configure the server to use
@@ -429,7 +429,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataUseRouting) {
 
     EXPECT_EQ("192.0.2.5", resp->getLocalAddr().toText());
     EXPECT_EQ("eth1", resp->getIface());
-    EXPECT_EQ(ETH1_INDEX, resp->getIndex());
+    EXPECT_EQ(static_cast<int>(ETH1_INDEX), resp->getIndex());
 }
 
 // This test verifies that the destination address of the response
@@ -543,7 +543,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRenew) {
     EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
     // The interface data should match the data in the query.
     EXPECT_EQ("eth1", resp->getIface());
-    EXPECT_EQ(ETH1_INDEX, resp->getIndex());
+    EXPECT_EQ(static_cast<int>(ETH1_INDEX), resp->getIndex());
 }
 
 // This test verifies that the destination address of the response message
@@ -676,7 +676,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataSelect) {
     // The response should be sent via the same interface through which
     // query has been received.
     EXPECT_EQ("eth1", resp->getIface());
-    EXPECT_EQ(ETH1_INDEX, resp->getIndex());
+    EXPECT_EQ(static_cast<int>(ETH1_INDEX), resp->getIndex());
 
     // We also want to test the case when the server has capability to
     // respond directly to the client which is not configured. Server
@@ -810,7 +810,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataBroadcast) {
     // The response should be sent via the same interface through which
     // query has been received.
     EXPECT_EQ("eth1", resp->getIface());
-    EXPECT_EQ(ETH1_INDEX, resp->getIndex());
+    EXPECT_EQ(static_cast<int>(ETH1_INDEX), resp->getIndex());
 }
 
 // This test verifies that the destination address of the response message
@@ -900,7 +900,7 @@ TEST_F(Dhcpv4SrvTest, initResponse) {
     EXPECT_EQ(111, response->getIndex());
     EXPECT_TRUE(response->getSiaddr().isV4Zero());
     EXPECT_TRUE(response->getCiaddr().isV4Zero());
-    EXPECT_EQ(5, response->getHops());
+    EXPECT_EQ(5U, response->getHops());
     EXPECT_TRUE(hw == *response->getHWAddr());
     EXPECT_EQ(IOAddress("10.10.10.10"), response->getGiaddr());
     EXPECT_TRUE(src_hw == *response->getLocalHWAddr());
@@ -1835,7 +1835,7 @@ TEST_F(Dhcpv4SrvTest, discoverEchoClientId) {
 
     ConstSrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
     const Subnet4Collection* subnets = cfg->getCfgSubnets4()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     CfgMgr::instance().clear();
     CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(*subnets->begin());
     CfgMgr::instance().getStagingCfg()->setEchoClientId(false);
@@ -1984,7 +1984,7 @@ TEST_F(Dhcpv4SrvTest, requestEchoClientId) {
 
     ConstSrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
     const Subnet4Collection* subnets = cfg->getCfgSubnets4()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
     CfgMgr::instance().clear();
     CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(*subnets->begin());
     CfgMgr::instance().getStagingCfg()->setEchoClientId(false);
@@ -2742,7 +2742,7 @@ Dhcpv4SrvTest::relayAgentInfoEcho() {
     srv_->run();
 
     // Check that the server did send a response
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
 
     // Make sure that we received a response
     Pkt4Ptr offer = srv_->fake_sent_.front();
@@ -2785,7 +2785,7 @@ Dhcpv4SrvTest::badRelayAgentInfoEcho() {
     srv_->run();
 
     // Check that the server did send a response
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
 
     // Make sure that we received a response
     Pkt4Ptr offer = srv_->fake_sent_.front();
@@ -2794,7 +2794,7 @@ Dhcpv4SrvTest::badRelayAgentInfoEcho() {
     // Get Relay Agent Info from query...
     OptionPtr rai_query = dis->getOption(DHO_DHCP_AGENT_OPTIONS);
     ASSERT_TRUE(rai_query);
-    ASSERT_EQ(2, rai_query->len());
+    ASSERT_EQ(2U, rai_query->len());
 
     // Get Relay Agent Info from response...
     OptionPtr rai_response = offer->getOption(DHO_DHCP_AGENT_OPTIONS);
@@ -2806,7 +2806,7 @@ Dhcpv4SrvTest::portsClientPort() {
     IfaceMgrTestConfig test_config(true);
 
     // By default te client port is supposed to be zero.
-    EXPECT_EQ(0, srv_->client_port_);
+    EXPECT_EQ(0U, srv_->client_port_);
 
     // Use of the captured DHCPDISCOVER packet requires that
     // subnet 10.254.226.0/24 is in use, because this packet
@@ -2831,7 +2831,7 @@ Dhcpv4SrvTest::portsClientPort() {
     srv_->run();
 
     // Check that the server did send a response
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
 
     // Make sure that we received a response
     Pkt4Ptr offer = srv_->fake_sent_.front();
@@ -2846,7 +2846,7 @@ Dhcpv4SrvTest::portsServerPort() {
     IfaceMgrTestConfig test_config(true);
 
     // Do not use DHCP4_SERVER_PORT here as 0 means don't open sockets.
-    EXPECT_EQ(0, srv_->server_port_);
+    EXPECT_EQ(0U, srv_->server_port_);
 
     // Use of the captured DHCPDISCOVER packet requires that
     // subnet 10.254.226.0/24 is in use, because this packet
@@ -2871,7 +2871,7 @@ Dhcpv4SrvTest::portsServerPort() {
     srv_->run();
 
     // Check that the server did send a response
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
 
     // Make sure that we received a response
     Pkt4Ptr offer = srv_->fake_sent_.front();
@@ -2938,7 +2938,7 @@ Dhcpv4SrvTest::loadConfigFile(const string& path) {
     IfaceMgrTestConfig test_config(true);
 
     // Do not use DHCP4_SERVER_PORT here as 0 means don't open sockets.
-    EXPECT_EQ(0, srv_->server_port_);
+    EXPECT_EQ(0U, srv_->server_port_);
 
     ConfigBackendDHCPv4Mgr::instance().registerBackendFactory("mysql",
             [](const db::DatabaseConnection::ParameterMap&) -> ConfigBackendDHCPv4Ptr {
@@ -3415,9 +3415,9 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
     srv_->classifyPacket(query2);
     srv_->classifyPacket(query3);
 
-    EXPECT_EQ(query1->classes_.size(), 6);
-    EXPECT_EQ(query2->classes_.size(), 3);
-    EXPECT_EQ(query3->classes_.size(), 6);
+    EXPECT_EQ(query1->classes_.size(), 6U);
+    EXPECT_EQ(query2->classes_.size(), 3U);
+    EXPECT_EQ(query3->classes_.size(), 6U);
 
     EXPECT_TRUE(query1->inClass("ALL"));
     EXPECT_TRUE(query2->inClass("ALL"));
@@ -3640,7 +3640,7 @@ TEST_F(Dhcpv4SrvTest, subnetClassPriority) {
     ASSERT_GT(opt->len(), opt->getHeaderLen());
     // Classification sets the value to true/1, subnet to false/0
     // Here subnet has the priority
-    EXPECT_EQ(0, opt->getUint8());
+    EXPECT_EQ(0U, opt->getUint8());
 }
 
 // Checks subnet options have the priority over global options
@@ -3709,7 +3709,7 @@ TEST_F(Dhcpv4SrvTest, subnetGlobalPriority) {
     ASSERT_GT(opt->len(), opt->getHeaderLen());
     // Global sets the value to true/1, subnet to false/0
     // Here subnet has the priority
-    EXPECT_EQ(0, opt->getUint8());
+    EXPECT_EQ(0U, opt->getUint8());
 }
 
 // Checks class options have the priority over global options
@@ -4217,7 +4217,7 @@ TEST_F(Dhcpv4SrvTest, privateOption) {
     // Verifies the content
     opt32 = boost::dynamic_pointer_cast<OptionUint32>(opt);
     ASSERT_TRUE(opt32);
-    EXPECT_EQ(12345678, opt32->getValue());
+    EXPECT_EQ(12345678U, opt32->getValue());
 }
 
 // Checks that parser errors are non fatal.
@@ -4420,7 +4420,7 @@ TEST_F(Dhcpv4SrvTest, relayOverride) {
     // Let's get the subnet configuration objects
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    ASSERT_EQ(2, subnets->size());
+    ASSERT_EQ(2U, subnets->size());
 
     // Let's get them for easy reference
     Subnet4Ptr subnet1 = *subnets->begin();
@@ -4508,7 +4508,7 @@ TEST_F(Dhcpv4SrvTest, relayOverrideAndClientClass) {
 
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    ASSERT_EQ(2, subnets->size());
+    ASSERT_EQ(2U, subnets->size());
 
     // Let's get them for easy reference
     Subnet4Ptr subnet1 = *subnets->begin();
@@ -4573,7 +4573,7 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     // Let's get the subnet configuration objects
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    ASSERT_EQ(3, subnets->size());
+    ASSERT_EQ(3U, subnets->size());
 
     // Let's get them for easy reference
     auto subnet_it = subnets->begin();
@@ -4704,7 +4704,7 @@ TEST_F(Dhcpv4SrvTest, relayIgnoreLinkSelect) {
     // Let's get the subnet configuration objects
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    ASSERT_EQ(3, subnets->size());
+    ASSERT_EQ(3U, subnets->size());
 
     // Let's get them for easy reference
     auto subnet_it = subnets->begin();
@@ -4836,7 +4836,7 @@ TEST_F(Dhcpv4SrvTest, subnetSelect) {
     // Let's get the subnet configuration objects
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    ASSERT_EQ(3, subnets->size());
+    ASSERT_EQ(3U, subnets->size());
 
     // Let's get them for easy reference
     auto subnet_it = subnets->begin();
@@ -5048,7 +5048,7 @@ TEST_F(Dhcpv4SrvTest, acceptMessageType) {
     isc::util::encode::decodeHex(invalid_msg_type, bin);
     pkt.reset(new Pkt4(&bin[0], bin.size()));
     pkt->unpack();
-    ASSERT_EQ(0xff, pkt->getType());
+    ASSERT_EQ(0xffU, pkt->getType());
     EXPECT_FALSE(srv_->acceptMessageType(pkt));
 }
 
@@ -5226,7 +5226,7 @@ TEST_F(Dhcpv4SrvTest, userContext) {
     ConstSrvConfigPtr cfg = CfgMgr::instance().getCurrentCfg();
     const Subnet4Collection* subnets = cfg->getCfgSubnets4()->getAll();
     ASSERT_TRUE(subnets);
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
 
     // Let's get the subnet and check its context.
     Subnet4Ptr subnet1 = *subnets->begin();
@@ -5236,7 +5236,7 @@ TEST_F(Dhcpv4SrvTest, userContext) {
 
     // Ok, not get the sole pool in it and check its context, too.
     PoolCollection pools = subnet1->getPools(Lease::TYPE_V4);
-    ASSERT_EQ(1, pools.size());
+    ASSERT_EQ(1U, pools.size());
     ASSERT_TRUE(pools[0]);
     ASSERT_TRUE(pools[0]->getContext());
     EXPECT_EQ("{ \"value\": 42 }", pools[0]->getContext()->str());
@@ -6514,9 +6514,9 @@ TEST_F(Dhcpv4SrvTest, v6OnlyPreferredNoSelectedSubnet) {
     ASSERT_FALSE(resp);
 
     // Should have logged a NAK_0001.
-    EXPECT_EQ(1, countFile("DHCP4_PACKET_NAK_0001 [hwtype=1 ], cid=[64:65:66:67],"
-                           " tid=0x4d2: failed to select a subnet for incoming packet,"
-                           " src 192.0.99.1, type DHCPDISCOVER"));
+    EXPECT_EQ(1U, countFile("DHCP4_PACKET_NAK_0001 [hwtype=1 ], cid=[64:65:66:67],"
+                            " tid=0x4d2: failed to select a subnet for incoming packet,"
+                            " src 192.0.99.1, type DHCPDISCOVER"));
 
 }
 
@@ -6920,7 +6920,7 @@ TEST_F(StashAgentOptionTest, hexString) {
 TEST_F(StashAgentOptionTest, badRelayAgentInfo) {
     // Set the sub-options entry to truncated RAI content.
     string content = sub_options_->stringValue();
-    ASSERT_LT(2, content.size());
+    ASSERT_LT(2U, content.size());
     content.resize(content.size() - 2);
     sub_options_ = Element::create(content);
     relay_agent_info_->set("sub-options", sub_options_);
@@ -6936,7 +6936,7 @@ TEST_F(StashAgentOptionTest, badRelayAgentInfo) {
     // Set the sub-options entry to invalid RAI content.
     content = rai_->toHexString();
     // length is in the second octet so patch the third hexdigit.
-    ASSERT_LE(5, content.size());
+    ASSERT_LE(5U, content.size());
     ASSERT_EQ('4', content[5]);
     content[5] = '3';
     sub_options_ = Element::create(content);

@@ -400,7 +400,7 @@ TEST_F(AddrRegTest, unexpectedIA_NA) {
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client fe80::abcd, ";
     expected += "unexpected IA_NA option";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test that an IA_TA option is forbidden.
@@ -434,7 +434,7 @@ TEST_F(AddrRegTest, unexpectedIA_TA) {
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client fe80::abcd, ";
     expected += "unexpected IA_TA option";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test that an IA_PD option is forbidden.
@@ -467,7 +467,7 @@ TEST_F(AddrRegTest, unexpectedIA_PD) {
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client fe80::abcd, ";
     expected += "unexpected IA_PD option";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test that an IAADDR option is required.
@@ -499,7 +499,7 @@ TEST_F(AddrRegTest, noIAADDR) {
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client fe80::abcd, ";
     expected += "Exactly 1 IAADDR option expected, but 0 received";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test that an exactly one IAADDR option is required.
@@ -533,7 +533,7 @@ TEST_F(AddrRegTest, twoIAADDR) {
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client fe80::abcd, ";
     expected += "Exactly 1 IAADDR option expected, but 2 received";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test that a well formed IAADDR option is required.
@@ -571,7 +571,7 @@ TEST_F(AddrRegTest, badIAADDR) {
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client fe80::abcd, ";
     expected += "can't convert the IAADDR option";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test that addresses must match.
@@ -605,7 +605,7 @@ TEST_F(AddrRegTest, noAddrMatch) {
     expected += "error on ADDR-REG-INFORM from client fe80::abcd, ";
     expected += "Address mismatch: client at fe80::abcd ";
     expected += "wants to register 2001:db8:1::1";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test that addresses must match with a relay.
@@ -645,7 +645,7 @@ TEST_F(AddrRegTest, noAddrMatchRelay) {
     expected += "error on ADDR-REG-INFORM from client fe80::1, ";
     expected += "Address mismatch: client at fe80::1 ";
     expected += "wants to register 2001:db8:1::1";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test that addresses must match with relays.
@@ -691,7 +691,7 @@ TEST_F(AddrRegTest, noAddrMatch2Relays) {
     expected += "error on ADDR-REG-INFORM from client fe80::1, ";
     expected += "Address mismatch: client at fe80::1 ";
     expected += "wants to register 2001:db8:1::1";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test that the registering address must be in the subnet.
@@ -725,7 +725,7 @@ TEST_F(AddrRegTest, noInSubnet) {
     expected += "error on ADDR-REG-INFORM from client 2001:db8::1, ";
     expected += "Address 2001:db8::1 is not in subnet ";
     expected += "2001:db8:1::/64 (id 1)";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test that the registering address must be not reserved.
@@ -758,7 +758,7 @@ TEST_F(AddrRegTest, reserved) {
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client 2001:db8:1::10, ";
     expected += "Address 2001:db8:1::10 is reserved";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 void
@@ -799,7 +799,7 @@ AddrRegTest::testAddressInUse(const uint32_t state) {
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
     expected += "error on ADDR-REG-INFORM from client 2001:db8:1::1, ";
     expected +=  "Address 2001:db8:1::1 already in use Type:";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Check that a lease in the defaul state (0) makes the registering address
@@ -864,8 +864,8 @@ AddrRegTest::testBasic() {
     Option6IAAddrPtr iaaddr = getIAAddr(response);
     ASSERT_TRUE(iaaddr);
     EXPECT_EQ(addr, iaaddr->getAddress());
-    EXPECT_EQ(3000, iaaddr->getPreferred());
-    EXPECT_EQ(4000, iaaddr->getValid());
+    EXPECT_EQ(3000U, iaaddr->getPreferred());
+    EXPECT_EQ(4000U, iaaddr->getValid());
 
     // Verify the added lease.
     Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
@@ -874,14 +874,14 @@ AddrRegTest::testBasic() {
     EXPECT_EQ(addr, l->addr_);
     ASSERT_TRUE(l->duid_);
     EXPECT_TRUE(*l->duid_ == *duid_);
-    EXPECT_EQ(0, l->iaid_);
-    EXPECT_EQ(1, l->subnet_id_);
+    EXPECT_EQ(0U, l->iaid_);
+    EXPECT_EQ(1U, l->subnet_id_);
     EXPECT_FALSE(l->fqdn_fwd_);
     EXPECT_FALSE(l->fqdn_rev_);
 
     string expected = "DHCPSRV_MEMFILE_ADD_ADDR6 ";
     expected += "adding IPv6 lease with address 2001:db8:1::1";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test the basic positive scenario.
@@ -939,12 +939,12 @@ TEST_F(AddrRegTest, relayed) {
     Option6IAAddrPtr iaaddr = getIAAddr(response);
     ASSERT_TRUE(iaaddr);
     EXPECT_EQ(addr, iaaddr->getAddress());
-    EXPECT_EQ(3000, iaaddr->getPreferred());
-    EXPECT_EQ(4000, iaaddr->getValid());
+    EXPECT_EQ(3000U, iaaddr->getPreferred());
+    EXPECT_EQ(4000U, iaaddr->getValid());
 
     // Verify relays.
     auto relay_info = response->relay_info_;
-    ASSERT_EQ(2, relay_info.size());
+    ASSERT_EQ(2U, relay_info.size());
     EXPECT_EQ(relay.linkaddr_, relay_info[0].linkaddr_);
     EXPECT_EQ(relay.peeraddr_, relay_info[0].peeraddr_);
     EXPECT_EQ(relay2.linkaddr_, relay_info[1].linkaddr_);
@@ -957,14 +957,14 @@ TEST_F(AddrRegTest, relayed) {
     EXPECT_EQ(addr, l->addr_);
     ASSERT_TRUE(l->duid_);
     EXPECT_TRUE(*l->duid_ == *duid_);
-    EXPECT_EQ(0, l->iaid_);
-    EXPECT_EQ(1, l->subnet_id_);
+    EXPECT_EQ(0U, l->iaid_);
+    EXPECT_EQ(1U, l->subnet_id_);
     EXPECT_FALSE(l->fqdn_fwd_);
     EXPECT_FALSE(l->fqdn_rev_);
 
     string expected = "DHCPSRV_MEMFILE_ADD_ADDR6 ";
     expected += "adding IPv6 lease with address 2001:db8:1::1";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test that the registration can be renewed.
@@ -1006,16 +1006,16 @@ AddrRegTest::testRenew() {
     EXPECT_EQ(addr, l->addr_);
     ASSERT_TRUE(l->duid_);
     EXPECT_TRUE(*l->duid_ == *duid_);
-    EXPECT_EQ(0, l->iaid_);
-    EXPECT_EQ(1, l->subnet_id_);
+    EXPECT_EQ(0U, l->iaid_);
+    EXPECT_EQ(1U, l->subnet_id_);
     EXPECT_FALSE(l->fqdn_fwd_);
     EXPECT_FALSE(l->fqdn_rev_);
 
     string expected = "DHCPSRV_MEMFILE_UPDATE_ADDR6 ";
     expected += "updating IPv6 lease for address 2001:db8:1::1";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
     expected = "DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE";
-    EXPECT_EQ(0, countFile(expected));
+    EXPECT_EQ(0U, countFile(expected));
 }
 
 // Test that the registration can be renewed.
@@ -1067,20 +1067,20 @@ AddrRegTest::testAnotherClient() {
     EXPECT_EQ(addr, l->addr_);
     ASSERT_TRUE(l->duid_);
     EXPECT_TRUE(*l->duid_ == *duid_);
-    EXPECT_EQ(0, l->iaid_);
-    EXPECT_EQ(1, l->subnet_id_);
+    EXPECT_EQ(0U, l->iaid_);
+    EXPECT_EQ(1U, l->subnet_id_);
     EXPECT_FALSE(l->fqdn_fwd_);
     EXPECT_FALSE(l->fqdn_rev_);
 
     string expected = "DHCPSRV_MEMFILE_UPDATE_ADDR6 ";
     expected += "updating IPv6 lease for address 2001:db8:1::1";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
     expected = "DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE ";
     expected += "received an ADDR-REG-INFORM for 2001:db8:1::1 from client '";
     expected += duid_->toText();
     expected += "' but the address was registered by another client ";
     expected += "'44:44:44:44:44:44:44:44'";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test that the registered lease is updated even it belongs to another client.
@@ -1132,16 +1132,16 @@ AddrRegTest::testAnotherSubnet() {
     EXPECT_EQ(addr, l->addr_);
     ASSERT_TRUE(l->duid_);
     EXPECT_TRUE(*l->duid_ == *duid_);
-    EXPECT_EQ(0, l->iaid_);
-    EXPECT_EQ(1, l->subnet_id_);
+    EXPECT_EQ(0U, l->iaid_);
+    EXPECT_EQ(1U, l->subnet_id_);
     EXPECT_FALSE(l->fqdn_fwd_);
     EXPECT_FALSE(l->fqdn_rev_);
 
     string expected = "DHCPSRV_MEMFILE_UPDATE_ADDR6 ";
     expected += "updating IPv6 lease for address 2001:db8:1::1";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
     expected = "DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE";
-    EXPECT_EQ(0, countFile(expected));
+    EXPECT_EQ(0U, countFile(expected));
 }
 
 // Test that the registered lease is updated even it belongs to another subnet.
@@ -1194,8 +1194,8 @@ TEST_F(AddrRegTest, fqdn) {
     Option6IAAddrPtr iaaddr = getIAAddr(response);
     ASSERT_TRUE(iaaddr);
     EXPECT_EQ(addr, iaaddr->getAddress());
-    EXPECT_EQ(3000, iaaddr->getPreferred());
-    EXPECT_EQ(4000, iaaddr->getValid());
+    EXPECT_EQ(3000U, iaaddr->getPreferred());
+    EXPECT_EQ(4000U, iaaddr->getValid());
     EXPECT_TRUE(response->getOption(D6O_CLIENT_FQDN));
 
     Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
@@ -1204,20 +1204,20 @@ TEST_F(AddrRegTest, fqdn) {
     EXPECT_EQ(addr, l->addr_);
     ASSERT_TRUE(l->duid_);
     EXPECT_TRUE(*l->duid_ == *duid_);
-    EXPECT_EQ(0, l->iaid_);
-    EXPECT_EQ(1, l->subnet_id_);
+    EXPECT_EQ(0U, l->iaid_);
+    EXPECT_EQ(1U, l->subnet_id_);
     EXPECT_EQ("client.example.com.", l->hostname_);
     EXPECT_TRUE(l->fqdn_fwd_);
     EXPECT_TRUE(l->fqdn_rev_);
 
     // There should be one name change request generated.
-    EXPECT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    EXPECT_EQ(1U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 
     string expected = "DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST duid=[";
     expected += duid_->toText();
     expected += "], [no hwaddr info], tid=0x4d2: ";
     expected += "created name change request: Type: 0 (CHG_ADD)";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test that DDNS is skipped on renew.
@@ -1258,11 +1258,11 @@ TEST_F(AddrRegTest, renewDdns) {
 
     // There should be one name change request generated.
     auto& d2_mgr = CfgMgr::instance().getD2ClientMgr();
-    EXPECT_EQ(1, d2_mgr.getQueueSize());
+    EXPECT_EQ(1U, d2_mgr.getQueueSize());
 
     // Clear the queue.
     ASSERT_NO_THROW(d2_mgr.runReadyIO());
-    EXPECT_EQ(0, d2_mgr.getQueueSize());
+    EXPECT_EQ(0U, d2_mgr.getQueueSize());
 
     // Process it a second time.
     AllocEngine::ClientContext6 ctx2;
@@ -1279,14 +1279,14 @@ TEST_F(AddrRegTest, renewDdns) {
 
     // DDNS is skipped when ddns-update-on-renew is false (default).
     EXPECT_FALSE(ctx2.getDdnsParams()->getUpdateOnRenew());
-    EXPECT_EQ(0, d2_mgr.getQueueSize());
+    EXPECT_EQ(0U, d2_mgr.getQueueSize());
 
     string expected = "DHCPSRV_MEMFILE_ADD_ADDR6 ";
     expected += "adding IPv6 lease with address 2001:db8:1::1";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
     expected = "DHCPSRV_MEMFILE_UPDATE_ADDR6 ";
     expected += "updating IPv6 lease for address 2001:db8:1::1";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test that DDNS is not skipped on renew when ddns-update-on-renew is true.
@@ -1331,11 +1331,11 @@ TEST_F(AddrRegTest, renewDdnsUpdateOnRenew) {
 
     // There should be one name change request generated.
     auto& d2_mgr = CfgMgr::instance().getD2ClientMgr();
-    EXPECT_EQ(1, d2_mgr.getQueueSize());
+    EXPECT_EQ(1U, d2_mgr.getQueueSize());
 
     // Clear the queue.
     ASSERT_NO_THROW(d2_mgr.runReadyIO());
-    EXPECT_EQ(0, d2_mgr.getQueueSize());
+    EXPECT_EQ(0U, d2_mgr.getQueueSize());
 
     // Process it a second time.
     AllocEngine::ClientContext6 ctx2;
@@ -1353,14 +1353,14 @@ TEST_F(AddrRegTest, renewDdnsUpdateOnRenew) {
     // DDNS is not skipped when ddns-update-on-renew is true.
     EXPECT_TRUE(ctx2.getDdnsParams()->getUpdateOnRenew());
     // One CHG_REMOVE and one CHG_ADD (no CHG_UPDATE).
-    EXPECT_EQ(2, d2_mgr.getQueueSize());
+    EXPECT_EQ(2U, d2_mgr.getQueueSize());
 
     string expected = "DHCPSRV_MEMFILE_ADD_ADDR6 ";
     expected += "adding IPv6 lease with address 2001:db8:1::1";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
     expected = "DHCPSRV_MEMFILE_UPDATE_ADDR6 ";
     expected += "updating IPv6 lease for address 2001:db8:1::1";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test that DDNS is not skipped when the hostname changes.
@@ -1401,11 +1401,11 @@ TEST_F(AddrRegTest, renewDdnsHostname) {
 
     // There should be one name change request generated.
     auto& d2_mgr = CfgMgr::instance().getD2ClientMgr();
-    EXPECT_EQ(1, d2_mgr.getQueueSize());
+    EXPECT_EQ(1U, d2_mgr.getQueueSize());
 
     // Clear the queue.
     ASSERT_NO_THROW(d2_mgr.runReadyIO());
-    EXPECT_EQ(0, d2_mgr.getQueueSize());
+    EXPECT_EQ(0U, d2_mgr.getQueueSize());
 
     // Change the hostname.
     ASSERT_TRUE(addr_reg_inf->delOption(D6O_CLIENT_FQDN));
@@ -1430,14 +1430,14 @@ TEST_F(AddrRegTest, renewDdnsHostname) {
     // DDNS is not skipped when the hostname changed.
     EXPECT_FALSE(ctx2.getDdnsParams()->getUpdateOnRenew());
     // One CHG_REMOVE and one CHG_ADD (no CHG_UPDATE).
-    EXPECT_EQ(2, d2_mgr.getQueueSize());
+    EXPECT_EQ(2U, d2_mgr.getQueueSize());
 
     string expected = "DHCPSRV_MEMFILE_ADD_ADDR6 ";
     expected += "adding IPv6 lease with address 2001:db8:1::1";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
     expected = "DHCPSRV_MEMFILE_UPDATE_ADDR6 ";
     expected += "updating IPv6 lease for address 2001:db8:1::1";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test that the ORO option is handled.
@@ -1479,15 +1479,15 @@ TEST_F(AddrRegTest, oro) {
     Option6IAAddrPtr iaaddr = getIAAddr(response);
     ASSERT_TRUE(iaaddr);
     EXPECT_EQ(addr, iaaddr->getAddress());
-    EXPECT_EQ(3000, iaaddr->getPreferred());
-    EXPECT_EQ(4000, iaaddr->getValid());
+    EXPECT_EQ(3000U, iaaddr->getPreferred());
+    EXPECT_EQ(4000U, iaaddr->getValid());
 
     // Check the name-servers option.
     OptionPtr opt = response->getOption(D6O_NAME_SERVERS);
     Option6AddrLstPtr ns = boost::dynamic_pointer_cast<Option6AddrLst>(opt);
     ASSERT_TRUE(ns);
     Option6AddrLst::AddressContainer ns_addrs = ns->getAddresses();
-    ASSERT_EQ(2, ns_addrs.size());
+    ASSERT_EQ(2U, ns_addrs.size());
     EXPECT_EQ("2001:db8:1::45", ns_addrs[0].toText());
     EXPECT_EQ("2001:db8:1::100", ns_addrs[1].toText());
 
@@ -1510,7 +1510,7 @@ TEST_F(AddrRegTest, callout) {
 
     string expected = "HOOKS_CALLOUTS_BEGIN ";
     expected += "begin all callouts for hook addr6_register";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test the callout in the renew scenario.
@@ -1529,7 +1529,7 @@ TEST_F(AddrRegTest, calloutRenew) {
 
     string expected = "HOOKS_CALLOUTS_BEGIN ";
     expected += "begin all callouts for hook addr6_register";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test the callout in the another client scenario.
@@ -1548,7 +1548,7 @@ TEST_F(AddrRegTest, calloutAnotherClient) {
 
     string expected = "HOOKS_CALLOUTS_BEGIN ";
     expected += "begin all callouts for hook addr6_register";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test the callout in the another subnet scenario.
@@ -1567,7 +1567,7 @@ TEST_F(AddrRegTest, calloutAnotherSubnet) {
 
     string expected = "HOOKS_CALLOUTS_BEGIN ";
     expected += "begin all callouts for hook addr6_register";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test that when the callout sets the status skip the lease operation
@@ -1613,15 +1613,15 @@ TEST_F(AddrRegTest, calloutSkip) {
     Option6IAAddrPtr iaaddr = getIAAddr(response);
     ASSERT_TRUE(iaaddr);
     EXPECT_EQ(addr, iaaddr->getAddress());
-    EXPECT_EQ(3000, iaaddr->getPreferred());
-    EXPECT_EQ(4000, iaaddr->getValid());
+    EXPECT_EQ(3000U, iaaddr->getPreferred());
+    EXPECT_EQ(4000U, iaaddr->getValid());
 
     // No lease was added.
     EXPECT_FALSE(LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr));
 
     string expected = "DHCPSRV_MEMFILE_ADD_ADDR6";
-    EXPECT_EQ(0, countFile(expected));
-    EXPECT_EQ(1, countFile("DHCP6_HOOK_ADDR6_REGISTER_SKIP"));
+    EXPECT_EQ(0U, countFile(expected));
+    EXPECT_EQ(1U, countFile("DHCP6_HOOK_ADDR6_REGISTER_SKIP"));
 }
 
 // Test that when the callout sets the status drop the query is dropped.
@@ -1662,8 +1662,8 @@ TEST_F(AddrRegTest, calloutDrop) {
 
     string expected = "HOOKS_CALLOUTS_BEGIN ";
     expected += "begin all callouts for hook addr6_register";
-    EXPECT_EQ(1, countFile(expected));
-    EXPECT_EQ(1, countFile("DHCP6_HOOK_ADDR6_REGISTER_DROP"));
+    EXPECT_EQ(1U, countFile(expected));
+    EXPECT_EQ(1U, countFile("DHCP6_HOOK_ADDR6_REGISTER_DROP"));
 }
 
 // Check the statistics for the basic scenario.
@@ -1795,17 +1795,17 @@ TEST_F(AddrRegTest, client) {
     EXPECT_EQ(addr, l->addr_);
     ASSERT_TRUE(l->duid_);
     EXPECT_TRUE(*l->duid_ == *duid);
-    EXPECT_EQ(0, l->iaid_);
-    EXPECT_EQ(1, l->subnet_id_);
-    EXPECT_EQ(3000, l->preferred_lft_);
-    EXPECT_EQ(4000, l->valid_lft_);
+    EXPECT_EQ(0U, l->iaid_);
+    EXPECT_EQ(1U, l->subnet_id_);
+    EXPECT_EQ(3000U, l->preferred_lft_);
+    EXPECT_EQ(4000U, l->valid_lft_);
 
     string expected = "DHCPSRV_MEMFILE_ADD_ADDR6 ";
     expected += "adding IPv6 lease with address 2001:db8:1::1";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
     expected = "HOOKS_CALLOUTS_BEGIN ";
     expected += "begin all callouts for hook leases6_committed";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Check the renew scenario with the client test tool.
@@ -1848,17 +1848,17 @@ TEST_F(AddrRegTest, clientRenew) {
     EXPECT_EQ(addr, l->addr_);
     ASSERT_TRUE(l->duid_);
     EXPECT_TRUE(*l->duid_ == *duid);
-    EXPECT_EQ(0, l->iaid_);
-    EXPECT_EQ(1, l->subnet_id_);
-    EXPECT_EQ(3000, l->preferred_lft_);
-    EXPECT_EQ(4000, l->valid_lft_);
+    EXPECT_EQ(0U, l->iaid_);
+    EXPECT_EQ(1U, l->subnet_id_);
+    EXPECT_EQ(3000U, l->preferred_lft_);
+    EXPECT_EQ(4000U, l->valid_lft_);
 
     string expected = "DHCPSRV_MEMFILE_UPDATE_ADDR6 ";
     expected += "updating IPv6 lease for address 2001:db8:1::1";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
     expected = "HOOKS_CALLOUTS_BEGIN ";
     expected += "begin all callouts for hook leases6_committed";
-    EXPECT_EQ(1, countFile(expected));
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 // Test the global allow-address-registration = false;
@@ -1924,7 +1924,7 @@ TEST_F(AddrRegTest, allowAddressRegistrationFalse) {
     ASSERT_TRUE(stat);
     EXPECT_EQ(1, stat->getInteger().first);
 
-    EXPECT_EQ(1, countFile("DHCP6_ADDR6_REGISTER_DISABLED_DROP ADDR-REG-INFORM"));
+    EXPECT_EQ(1U, countFile("DHCP6_ADDR6_REGISTER_DISABLED_DROP ADDR-REG-INFORM"));
 }
 
 // Test the global allow-address-registration = true;

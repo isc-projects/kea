@@ -263,12 +263,12 @@ TEST_F(StatsMgrTest, Constructor) {
         stats_mgr->getMinDelay(ExchangeType::DO)
     );
     EXPECT_DOUBLE_EQ(0, stats_mgr->getMaxDelay(ExchangeType::DO));
-    EXPECT_EQ(0, stats_mgr->getOrphans(ExchangeType::DO));
-    EXPECT_EQ(0, stats_mgr->getOrderedLookups(ExchangeType::DO));
-    EXPECT_EQ(0, stats_mgr->getUnorderedLookups(ExchangeType::DO));
-    EXPECT_EQ(0, stats_mgr->getSentPacketsNum(ExchangeType::DO));
-    EXPECT_EQ(0, stats_mgr->getRcvdPacketsNum(ExchangeType::DO));
-    EXPECT_EQ(0, stats_mgr->getCollectedNum(ExchangeType::DO));
+    EXPECT_EQ(0U, stats_mgr->getOrphans(ExchangeType::DO));
+    EXPECT_EQ(0U, stats_mgr->getOrderedLookups(ExchangeType::DO));
+    EXPECT_EQ(0U, stats_mgr->getUnorderedLookups(ExchangeType::DO));
+    EXPECT_EQ(0U, stats_mgr->getSentPacketsNum(ExchangeType::DO));
+    EXPECT_EQ(0U, stats_mgr->getRcvdPacketsNum(ExchangeType::DO));
+    EXPECT_EQ(0U, stats_mgr->getCollectedNum(ExchangeType::DO));
 
     EXPECT_THROW(stats_mgr->getAvgDelay(ExchangeType::DO), InvalidOperation);
     EXPECT_THROW(stats_mgr->getStdDevDelay(ExchangeType::DO),
@@ -330,7 +330,7 @@ TEST_F(StatsMgrTest, MultipleExchanges) {
     stats_mgr->addExchangeStats(ExchangeType::RR);
 
     // Simulate sending number of solicit packets.
-    const int solicit_packets_num = 10;
+    const size_t solicit_packets_num = 10;
     passMultiplePackets6(stats_mgr, ExchangeType::SA, DHCPV6_SOLICIT,
                          solicit_packets_num);
 
@@ -338,7 +338,7 @@ TEST_F(StatsMgrTest, MultipleExchanges) {
     // number of request packets is different then number of solicit
     // packets. We can now check if right number packets went to
     // the right exchange type group.
-    const int request_packets_num = 5;
+    const size_t request_packets_num = 5;
     passMultiplePackets6(stats_mgr, ExchangeType::RR, DHCPV6_REQUEST,
                          request_packets_num);
 
@@ -387,19 +387,19 @@ TEST_F(StatsMgrTest, SendReceiveSimple) {
     ASSERT_NO_THROW(
         stats_mgr->passRcvdPacket(ExchangeType::DO, rcvd_packet)
     );
-    EXPECT_EQ(1, stats_mgr->getOrphans(ExchangeType::DO));
+    EXPECT_EQ(1U, stats_mgr->getOrphans(ExchangeType::DO));
 }
 
 TEST_F(StatsMgrTest, SendReceiveUnordered) {
     CommandOptions opt;
-    const int packets_num = 10;
+    const size_t packets_num = 10;
     boost::scoped_ptr<StatsMgr> stats_mgr(new StatsMgr(opt));
     stats_mgr->addExchangeStats(ExchangeType::DO);
 
     // Transaction ids of 10 packets to be sent and received.
     uint32_t transid[packets_num] =
         { 1, 1024, 2, 1025, 3, 1026, 4, 1027, 5, 1028 };
-    for (int i = 0; i < packets_num; ++i) {
+    for (size_t i = 0; i < packets_num; ++i) {
         boost::shared_ptr<Pkt4> sent_packet(createPacket4(DHCPDISCOVER,
                                                           transid[i]));
         ASSERT_NO_THROW(
@@ -409,7 +409,7 @@ TEST_F(StatsMgrTest, SendReceiveUnordered) {
 
     // We are simulating that received packets are coming in reverse order:
     // 1028, 5, 1027 ....
-    for (int i = 0; i < packets_num; ++i) {
+    for (size_t i = 0; i < packets_num; ++i) {
         boost::shared_ptr<Pkt4>
             rcvd_packet(createPacket4(DHCPDISCOVER,
                                       transid[packets_num - 1 - i]));
@@ -418,13 +418,13 @@ TEST_F(StatsMgrTest, SendReceiveUnordered) {
         );
     }
     // All packets are expected to match (we did not drop any)
-    EXPECT_EQ(0, stats_mgr->getOrphans(ExchangeType::DO));
+    EXPECT_EQ(0U, stats_mgr->getOrphans(ExchangeType::DO));
     // Most of the time we have to do unordered lookups except for the last
     // one. Packets are removed from the sent list every time we have a match
     // so eventually we come up with the single packet that caching iterator
     // is pointing to. This is counted as ordered lookup.
-    EXPECT_EQ(1, stats_mgr->getOrderedLookups(ExchangeType::DO));
-    EXPECT_EQ(9, stats_mgr->getUnorderedLookups(ExchangeType::DO));
+    EXPECT_EQ(1U, stats_mgr->getOrderedLookups(ExchangeType::DO));
+    EXPECT_EQ(9U, stats_mgr->getUnorderedLookups(ExchangeType::DO));
 }
 
 TEST_F(StatsMgrTest, SendReceiveCollected) {
@@ -437,19 +437,19 @@ TEST_F(StatsMgrTest, SendReceiveCollected) {
 
 TEST_F(StatsMgrTest, Orphans) {
     CommandOptions opt;
-    const int packets_num = 6;
+    const size_t packets_num = 6;
     boost::scoped_ptr<StatsMgr> stats_mgr(new StatsMgr(opt));
     stats_mgr->addExchangeStats(ExchangeType::DO);
 
     // We skip every second packet to simulate drops.
-    for (int i = 0; i < packets_num; i += 2) {
+    for (size_t i = 0; i < packets_num; i += 2) {
         boost::shared_ptr<Pkt4> sent_packet(createPacket4(DHCPDISCOVER, i));
         ASSERT_NO_THROW(
             stats_mgr->passSentPacket(ExchangeType::DO, sent_packet)
         );
     }
     // We pass all received packets.
-    for (int i = 0; i < packets_num; ++i) {
+    for (size_t i = 0; i < packets_num; ++i) {
         boost::shared_ptr<Pkt4> rcvd_packet(createPacket4(DHCPOFFER, i));
         ASSERT_NO_THROW(
             stats_mgr->passRcvdPacket(ExchangeType::DO, rcvd_packet);
@@ -542,7 +542,7 @@ TEST_F(StatsMgrTest, PrintStats) {
 
     // Simulate sending and receiving one packet. Otherwise printing
     // functions will complain about lack of packets.
-    const int packets_num = 1;
+    const size_t packets_num = 1;
     passMultiplePackets6(stats_mgr, ExchangeType::SA, DHCPV6_SOLICIT,
                          packets_num);
     passMultiplePackets6(stats_mgr, ExchangeType::SA, DHCPV6_ADVERTISE,

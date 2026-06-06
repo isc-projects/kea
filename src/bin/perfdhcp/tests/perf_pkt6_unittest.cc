@@ -107,7 +107,7 @@ TEST_F(PerfPkt6Test, Constructor) {
     boost::scoped_ptr<PerfPkt6> pkt1(new PerfPkt6(data, sizeof(data)));
     EXPECT_EQ(sizeof(data), pkt1->data_.size());
     EXPECT_EQ(0, memcmp(&pkt1->data_[0], data, sizeof(data)));
-    EXPECT_EQ(1, pkt1->getTransidOffset());
+    EXPECT_EQ(1U, pkt1->getTransidOffset());
 
     // Test constructor to be used for outgoing messages.
     // Use non-zero offset and specify transaction id.
@@ -117,8 +117,8 @@ TEST_F(PerfPkt6Test, Constructor) {
                                                   offset_transid, transid));
     EXPECT_EQ(sizeof(data), pkt2->data_.size());
     EXPECT_EQ(0, memcmp(&pkt2->data_[0], data, sizeof(data)));
-    EXPECT_EQ(0x010203, pkt2->getTransid());
-    EXPECT_EQ(10, pkt2->getTransidOffset());
+    EXPECT_EQ(0x010203U, pkt2->getTransid());
+    EXPECT_EQ(10U, pkt2->getTransidOffset());
 }
 
 TEST_F(PerfPkt6Test, RawPackUnpack) {
@@ -194,7 +194,7 @@ TEST_F(PerfPkt6Test, RawPackUnpack) {
     // Expecting option contents be the same as original.
     OptionBuffer pkt2_elapsed_time_data = pkt2_elapsed_time->getData();
     OptionBuffer pkt2_duid_data = pkt2_duid->getData();
-    EXPECT_EQ(0x0101, pkt2_elapsed_time->getUint16());
+    EXPECT_EQ(0x0101U, pkt2_elapsed_time->getUint16());
     EXPECT_TRUE(std::equal(pkt2_duid_data.begin(),
                            pkt2_duid_data.end(),
                            buf_duid));
@@ -309,7 +309,7 @@ TEST_F(PerfPkt6Test, UnpackTransactionId) {
     // Get transaction id out of buffer and store in class member.
     ASSERT_TRUE(pkt1->rawUnpack());
     // Test value of transaction id.
-    EXPECT_EQ(0x010203, pkt1->getTransid());
+    EXPECT_EQ(0x010203U, pkt1->getTransid());
 
     // Out of bounds transaction id offset.
     boost::scoped_ptr<PerfPkt6> pkt2(new PerfPkt6(data,

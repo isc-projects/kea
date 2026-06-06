@@ -1463,7 +1463,7 @@ public:
         ASSERT_NO_FATAL_FAILURE(configure(config, *client1.getServer()));
 
         // Ok, client should have one
-        EXPECT_EQ(0, client1.getLeaseNum());
+        EXPECT_EQ(0U, client1.getLeaseNum());
 
         // Client #1 should be assigned an address from shared network. The first
         // subnet has rapid-commit enabled, so the address should be assigned.
@@ -1496,7 +1496,7 @@ public:
             EXPECT_EQ(DHCPV6_ADVERTISE, client1.getContext().response_->getType());
 
             // And that it doesn't have any leases.
-            EXPECT_EQ(0, client1.getLeaseNum());
+            EXPECT_EQ(0U, client1.getLeaseNum());
         }
 
         // Create client #2. This client behaves the same as the first one, but the
@@ -1526,7 +1526,7 @@ public:
             EXPECT_EQ(DHCPV6_ADVERTISE, client1.getContext().response_->getType());
 
             // And that it doesn't have any leases.
-            EXPECT_EQ(0, client1.getLeaseNum());
+            EXPECT_EQ(0U, client1.getLeaseNum());
         }
     }
 
@@ -1550,7 +1550,7 @@ public:
         ASSERT_NO_THROW(client.doSARR());
 
         // Check response.
-        EXPECT_EQ(1, client.getLeaseNum());
+        EXPECT_EQ(1U, client.getLeaseNum());
         Pkt6Ptr resp = client.getContext().response_;
         ASSERT_TRUE(resp);
 
@@ -1561,7 +1561,7 @@ public:
             boost::dynamic_pointer_cast<Option6AddrLst>(opt);
         ASSERT_TRUE(servers);
         auto addrs = servers->getAddresses();
-        ASSERT_EQ(1, addrs.size());
+        ASSERT_EQ(1U, addrs.size());
         EXPECT_EQ(ns_address, addrs[0].toText());
     }
 
@@ -1591,14 +1591,14 @@ public:
             // Make sure that the server responded.
             ASSERT_TRUE(next_client.getContext().response_);
             auto leases = next_client.getLeasesByType(Lease::TYPE_PD);
-            ASSERT_EQ(1, leases.size());
+            ASSERT_EQ(1U, leases.size());
             // Make sure that the prefix is not zero.
             ASSERT_FALSE(leases[0].addr_.isV6Zero());
             // Remember the allocated prefix uniqueness.
             allocated_set.insert(leases[0].addr_.toText());
         }
         // Make sure that we have 32 distinct allocations.
-        ASSERT_EQ(32, allocated_set.size());
+        ASSERT_EQ(32U, allocated_set.size());
 
         // Try one more time. This time no leases should be allocated because
         // the pools are exhausted.
@@ -1642,7 +1642,7 @@ TEST_F(Dhcpv6SharedNetworkTest, parse) {
     SharedNetwork6Ptr network = cfg->getByName("frog");
     ConstElementPtr context = network->getContext();
     ASSERT_TRUE(context);
-    ASSERT_EQ(1, context->size());
+    ASSERT_EQ(1U, context->size());
     ASSERT_TRUE(context->get("comment"));
     EXPECT_EQ("\"example\"", context->get("comment")->str());
 }
@@ -1682,27 +1682,27 @@ TEST_F(Dhcpv6SharedNetworkTest, addressPoolInSharedNetworkShortage) {
     testAssigned([&client3] {
         ASSERT_NO_THROW(client3.doSolicit(true));
     });
-    EXPECT_EQ(0, client3.getLeaseNum());
+    EXPECT_EQ(0U, client3.getLeaseNum());
 
     // Client #3 should be assigned an address if subnet 3 is selected for it.
     client3.setInterface("eth0");
     testAssigned([&client3] {
         ASSERT_NO_THROW(client3.doSolicit(true));
     });
-    EXPECT_EQ(1, client3.getLeaseNum());
+    EXPECT_EQ(1U, client3.getLeaseNum());
 
     // Client #1 should be able to renew its lease.
     testAssigned([&client1] {
         ASSERT_NO_THROW(client1.doRenew());
     });
-    EXPECT_EQ(1, client1.getLeaseNum());
+    EXPECT_EQ(1U, client1.getLeaseNum());
     EXPECT_TRUE(hasLeaseForAddress(client1, IOAddress("2001:db8:1::20")));
 
     // Client #2 should be able to renew its lease too.
     testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doRenew());
     });
-    EXPECT_EQ(1, client2.getLeaseNum());
+    EXPECT_EQ(1U, client2.getLeaseNum());
     EXPECT_TRUE(hasLeaseForAddress(client2, IOAddress("2001:db8:2::20")));
 }
 
@@ -1772,7 +1772,7 @@ TEST_F(Dhcpv6SharedNetworkTest, hintWithinSharedNetwork) {
         ASSERT_NO_THROW(client.doSolicit(true));
     });
     std::vector<Lease6> leases = client.getLeasesByType(Lease::TYPE_NA);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     if (!hasLeaseForAddress(client, IOAddress("2001:db8:1::20"),
                             LeaseOnServer::MUST_NOT_EXIST) &&
         !hasLeaseForAddress(client, IOAddress("2001:db8:2::20"),
@@ -1831,7 +1831,7 @@ TEST_F(Dhcpv6SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
     testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doRenew());
     });
-    EXPECT_EQ(0, client2.getLeaseNum());
+    EXPECT_EQ(0U, client2.getLeaseNum());
 
     // If we add option 1234 with a value matching this class, the lease should
     // get renewed.
@@ -1840,7 +1840,7 @@ TEST_F(Dhcpv6SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
     testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doRenew());
     });
-    EXPECT_EQ(1, client2.getLeaseNum());
+    EXPECT_EQ(1U, client2.getLeaseNum());
 }
 
 // IPv6 address reservation exists in one of the subnets within shared network.
@@ -2352,7 +2352,7 @@ TEST_F(Dhcpv6SharedNetworkTest, reservedAddressAndPrefix) {
     testAssigned([&client] {
         ASSERT_NO_THROW(client.doSARR());
     });
-    ASSERT_EQ(4, client.getLeaseNum());
+    ASSERT_EQ(4U, client.getLeaseNum());
     // The client should have got one reserved address and one reserved prefix.
     ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::28")));
     ASSERT_TRUE(hasLeaseForPrefix(client, IOAddress("5000::8:0000"), 112, IAID(0x1111)));
@@ -2360,28 +2360,28 @@ TEST_F(Dhcpv6SharedNetworkTest, reservedAddressAndPrefix) {
     // The client should have got dynamically allocated address too and it must be
     // different than the reserved address.
     std::vector<Lease6> leases_1234 = client.getLeasesByIAID(0x1234);
-    ASSERT_EQ(1, leases_1234.size());
+    ASSERT_EQ(1U, leases_1234.size());
     ASSERT_NE("2001:db8:2::28", leases_1234[0].addr_.toText());
 
     // Same for prefix.
     std::vector<Lease6> leases_2222 = client.getLeasesByIAID(0x2222);
-    ASSERT_EQ(1, leases_2222.size());
+    ASSERT_EQ(1U, leases_2222.size());
     ASSERT_NE("1234::", leases_2222[0].addr_.toText());
 
     // Try to renew and check this again.
     testAssigned([&client] {
         ASSERT_NO_THROW(client.doRenew());
     });
-    ASSERT_EQ(4, client.getLeaseNum());
+    ASSERT_EQ(4U, client.getLeaseNum());
     ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::28")));
     ASSERT_TRUE(hasLeaseForPrefix(client, IOAddress("5000::8:0000"), 112, IAID(0x1111)));
 
     leases_1234 = client.getLeasesByIAID(0x1234);
-    ASSERT_EQ(1, leases_1234.size());
+    ASSERT_EQ(1U, leases_1234.size());
     ASSERT_NE("2001:db8:2::28", leases_1234[0].addr_.toText());
 
     leases_2222 = client.getLeasesByIAID(0x2222);
-    ASSERT_EQ(1, leases_2222.size());
+    ASSERT_EQ(1U, leases_2222.size());
     ASSERT_NE(IOAddress("5000::8:0000").toText(), leases_2222[0].addr_.toText());
 }
 
@@ -2404,7 +2404,7 @@ TEST_F(Dhcpv6SharedNetworkTest, relaySpecifiedForEachSubnet) {
     testAssigned([&client] {
         ASSERT_NO_THROW(client.doSARR());
     });
-    ASSERT_EQ(2, client.getLeaseNum());
+    ASSERT_EQ(2U, client.getLeaseNum());
 
     // The client should have got two leases, one from each subnet within the
     // shared network.
@@ -2546,7 +2546,7 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSharedNetworkSelectedByClass) {
     testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doRenew());
     });
-    EXPECT_EQ(0, client2.getLeasesWithNonZeroLifetime().size());
+    EXPECT_EQ(0U, client2.getLeasesWithNonZeroLifetime().size());
 
     // If we add option 1234 with a value matching this class, the lease should
     // get renewed.
@@ -2555,8 +2555,8 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSharedNetworkSelectedByClass) {
     testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doRenew());
     });
-    EXPECT_EQ(1, client2.getLeaseNum());
-    EXPECT_EQ(1, client2.getLeasesWithNonZeroLifetime().size());
+    EXPECT_EQ(1U, client2.getLeaseNum());
+    EXPECT_EQ(1U, client2.getLeasesWithNonZeroLifetime().size());
 }
 
 // Pool is selected based on the client class specified using a plain subnet.
@@ -2609,7 +2609,7 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSubnetSelectedByClass) {
     testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doRenew());
     });
-    EXPECT_EQ(0, client2.getLeasesWithNonZeroLifetime().size());
+    EXPECT_EQ(0U, client2.getLeasesWithNonZeroLifetime().size());
 
     // If we add option 1234 with a value matching this class, the lease should
     // get renewed.
@@ -2618,8 +2618,8 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSubnetSelectedByClass) {
     testAssigned([&client2] {
         ASSERT_NO_THROW(client2.doRenew());
     });
-    EXPECT_EQ(1, client2.getLeaseNum());
-    EXPECT_EQ(1, client2.getLeasesWithNonZeroLifetime().size());
+    EXPECT_EQ(1U, client2.getLeaseNum());
+    EXPECT_EQ(1U, client2.getLeasesWithNonZeroLifetime().size());
 }
 
 // Test that different allocator types can be used within a shared network.
@@ -3141,11 +3141,11 @@ TEST_F(Dhcpv6SharedNetworkTest, useReclaimedReservedLease) {
     // Check response.
     Pkt6Ptr resp = client.getContext().response_;
     ASSERT_TRUE(resp);
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::88")));
 
     // We should see the reselect twice, once on solicit, once on request.
-    EXPECT_EQ(2, countFile("DHCP6_SUBNET_DYNAMICALLY_CHANGED duid=[01:02:03:04:05:06]"));
+    EXPECT_EQ(2U, countFile("DHCP6_SUBNET_DYNAMICALLY_CHANGED duid=[01:02:03:04:05:06]"));
 
     // The FQDN should be generated using the hostname from the reservation.
     auto fqdn_opt = boost::dynamic_pointer_cast<Option6ClientFqdn>

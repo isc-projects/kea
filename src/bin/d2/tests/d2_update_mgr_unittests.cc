@@ -293,7 +293,7 @@ TEST(D2UpdateMgr, construction) {
                                                      io_service, 100)));
 
     // Verify that max transactions is correct.
-    EXPECT_EQ(100, update_mgr->getMaxTransactions());
+    EXPECT_EQ(100U, update_mgr->getMaxTransactions());
 }
 
 /// @brief Tests the D2UpdateManager's transaction list services
@@ -311,7 +311,7 @@ TEST_F(D2UpdateMgrTest, transactionList) {
 
     // Verify that we can add a transaction.
     EXPECT_NO_THROW(update_mgr_->makeTransaction(ncr));
-    EXPECT_EQ(1, update_mgr_->getTransactionCount());
+    EXPECT_EQ(1U, update_mgr_->getTransactionCount());
 
     // Verify that we can find a transaction by key.
     EXPECT_NO_THROW(pos = update_mgr_->findTransaction(ncr->getDhcid()));
@@ -330,11 +330,11 @@ TEST_F(D2UpdateMgrTest, transactionList) {
 
     // Verify that adding a transaction for the same key fails.
     EXPECT_THROW(update_mgr_->makeTransaction(ncr), D2UpdateMgrError);
-    EXPECT_EQ(1, update_mgr_->getTransactionCount());
+    EXPECT_EQ(1U, update_mgr_->getTransactionCount());
 
     // Verify the we can remove a transaction by key.
     EXPECT_NO_THROW(update_mgr_->removeTransaction(ncr->getDhcid()));
-    EXPECT_EQ(0, update_mgr_->getTransactionCount());
+    EXPECT_EQ(0U, update_mgr_->getTransactionCount());
 
     // Verify the we can try to remove a non-existent transaction without harm.
     EXPECT_NO_THROW(update_mgr_->removeTransaction(ncr->getDhcid()));
@@ -360,7 +360,7 @@ TEST_F(D2UpdateMgrTest, bothEnabled) {
     ASSERT_NO_THROW(update_mgr_->makeTransaction(ncr));
 
     // Verify we create a transaction with both directions turned on.
-    EXPECT_EQ(1, update_mgr_->getTransactionCount());
+    EXPECT_EQ(1U, update_mgr_->getTransactionCount());
     EXPECT_TRUE(ncr->isForwardChange());
     EXPECT_TRUE(ncr->isReverseChange());
 }
@@ -386,7 +386,7 @@ TEST_F(D2UpdateMgrTest, reverseDisable) {
     ASSERT_NO_THROW(update_mgr_->makeTransaction(ncr));
 
     // Verify we create a transaction with only forward turned on.
-    EXPECT_EQ(1, update_mgr_->getTransactionCount());
+    EXPECT_EQ(1U, update_mgr_->getTransactionCount());
     EXPECT_TRUE(ncr->isForwardChange());
     EXPECT_FALSE(ncr->isReverseChange());
 }
@@ -412,7 +412,7 @@ TEST_F(D2UpdateMgrTest, forwardDisabled) {
     ASSERT_NO_THROW(update_mgr_->makeTransaction(ncr));
 
     // Verify we create a transaction with only reverse turned on.
-    EXPECT_EQ(1, update_mgr_->getTransactionCount());
+    EXPECT_EQ(1U, update_mgr_->getTransactionCount());
     EXPECT_FALSE(ncr->isForwardChange());
     EXPECT_TRUE(ncr->isReverseChange());
 }
@@ -440,7 +440,7 @@ TEST_F(D2UpdateMgrTest, bothDisabled) {
     ASSERT_NO_THROW(update_mgr_->makeTransaction(ncr));
 
     // Verify that do not create a transaction.
-    EXPECT_EQ(0, update_mgr_->getTransactionCount());
+    EXPECT_EQ(0U, update_mgr_->getTransactionCount());
 }
 
 /// @brief Tests D2UpdateManager's checkFinishedTransactions method.
@@ -523,7 +523,7 @@ TEST_F(D2UpdateMgrTest, pickNextJob) {
     }
 
     // Verify that the queue has been drained.
-    EXPECT_EQ(0, update_mgr_->getQueueCount());
+    EXPECT_EQ(0U, update_mgr_->getQueueCount());
 
     // Now verify that a subsequent request for a DCHID for which a
     // transaction is in progress, is not dequeued.
@@ -531,7 +531,7 @@ TEST_F(D2UpdateMgrTest, pickNextJob) {
     dhcp_ddns::NameChangeRequestPtr
         subsequent_ncr(new dhcp_ddns::NameChangeRequest(*(canned_ncrs_[2])));
     EXPECT_NO_THROW(queue_mgr_->enqueue(subsequent_ncr));
-    EXPECT_EQ(1, update_mgr_->getQueueCount());
+    EXPECT_EQ(1U, update_mgr_->getQueueCount());
 
     // Verify that invoking pickNextJob:
     // 1. Does not throw
@@ -539,7 +539,7 @@ TEST_F(D2UpdateMgrTest, pickNextJob) {
     // 3. Does not dequeue the entry
     EXPECT_NO_THROW(update_mgr_->pickNextJob());
     EXPECT_EQ(canned_count_, update_mgr_->getTransactionCount());
-    EXPECT_EQ(1, update_mgr_->getQueueCount());
+    EXPECT_EQ(1U, update_mgr_->getQueueCount());
 
     // Clear out the queue and transaction list.
     queue_mgr_->clearQueue();
@@ -560,8 +560,8 @@ TEST_F(D2UpdateMgrTest, pickNextJob) {
     // 2. Does not make a new transaction
     // 3. Does dequeue the entry
     EXPECT_NO_THROW(update_mgr_->pickNextJob());
-    EXPECT_EQ(0, update_mgr_->getTransactionCount());
-    EXPECT_EQ(0, update_mgr_->getQueueCount());
+    EXPECT_EQ(0U, update_mgr_->getTransactionCount());
+    EXPECT_EQ(0U, update_mgr_->getQueueCount());
 
     // Make a reverse change NCR with an FQDN that has no reverse match.
     bogus_ncr.reset(new dhcp_ddns::NameChangeRequest(*(canned_ncrs_[0])));
@@ -574,8 +574,8 @@ TEST_F(D2UpdateMgrTest, pickNextJob) {
     // 2. Does not make a new transaction
     // 3. Does dequeue the entry
     EXPECT_NO_THROW(update_mgr_->pickNextJob());
-    EXPECT_EQ(0, update_mgr_->getTransactionCount());
-    EXPECT_EQ(0, update_mgr_->getQueueCount());
+    EXPECT_EQ(0U, update_mgr_->getTransactionCount());
+    EXPECT_EQ(0U, update_mgr_->getQueueCount());
 }
 
 /// @brief Tests D2UpdateManager's pickNextJob method.
@@ -606,11 +606,11 @@ TEST_F(D2UpdateMgrTest, pickNextJobSkips) {
     }
 
     ASSERT_EQ(2 + canned_count_, update_mgr_->getQueueCount());
-    ASSERT_EQ(0, update_mgr_->getTransactionCount());
+    ASSERT_EQ(0U, update_mgr_->getTransactionCount());
 
     // Invoke pickNextJob once.
     EXPECT_NO_THROW(update_mgr_->pickNextJob());
-    EXPECT_EQ(1, update_mgr_->getTransactionCount());
+    EXPECT_EQ(1U, update_mgr_->getTransactionCount());
     EXPECT_TRUE(update_mgr_->hasTransaction(canned_ncrs_[0]->getDhcid()));
 
     // Verify that the queue has all but one of the canned requests still queued.
@@ -618,18 +618,18 @@ TEST_F(D2UpdateMgrTest, pickNextJobSkips) {
 
     // Empty the queue and transaction list.
     queue_mgr_->clearQueue();
-    ASSERT_EQ(0, update_mgr_->getQueueCount());
+    ASSERT_EQ(0U, update_mgr_->getQueueCount());
     update_mgr_->clearTransactionList();
-    EXPECT_EQ(0, update_mgr_->getTransactionCount());
+    EXPECT_EQ(0U, update_mgr_->getTransactionCount());
 
     // Add two no match requests.
     ASSERT_NO_THROW(queue_mgr_->enqueue(bogus_ncr));
     ASSERT_NO_THROW(queue_mgr_->enqueue(bogus_ncr));
-    ASSERT_EQ(2, update_mgr_->getQueueCount());
+    ASSERT_EQ(2U, update_mgr_->getQueueCount());
 
     // Invoking pickNextJob() should empty the queue without adding transactions.
     EXPECT_NO_THROW(update_mgr_->pickNextJob());
-    EXPECT_EQ(0, update_mgr_->getQueueCount());
+    EXPECT_EQ(0U, update_mgr_->getQueueCount());
 }
 
 /// @brief Tests D2UpdateManager's sweep method.
@@ -659,7 +659,7 @@ TEST_F(D2UpdateMgrTest, sweep) {
     }
 
     // Verify that the queue has been drained.
-    EXPECT_EQ(0, update_mgr_->getQueueCount());
+    EXPECT_EQ(0U, update_mgr_->getQueueCount());
 
     // Verify max transactions can't be less than current transaction count.
     EXPECT_THROW(update_mgr_->setMaxTransactions(1), D2UpdateMgrError);
@@ -668,13 +668,13 @@ TEST_F(D2UpdateMgrTest, sweep) {
     dhcp_ddns::NameChangeRequestPtr
         subsequent_ncr(new dhcp_ddns::NameChangeRequest(*(canned_ncrs_[2])));
     EXPECT_NO_THROW(queue_mgr_->enqueue(subsequent_ncr));
-    EXPECT_EQ(1, update_mgr_->getQueueCount());
+    EXPECT_EQ(1U, update_mgr_->getQueueCount());
 
     // Verify that invoking sweep, does not dequeue the job nor make a
     // transaction for it.
     EXPECT_NO_THROW(update_mgr_->sweep());
     EXPECT_EQ(canned_count_, update_mgr_->getTransactionCount());
-    EXPECT_EQ(1, update_mgr_->getQueueCount());
+    EXPECT_EQ(1U, update_mgr_->getQueueCount());
 
     // Mark the transaction complete.
     completeTransaction(2, dhcp_ddns::ST_COMPLETED);
@@ -683,20 +683,20 @@ TEST_F(D2UpdateMgrTest, sweep) {
     // dequeues the queued job and adds its transaction to the list.
     EXPECT_NO_THROW(update_mgr_->sweep());
     EXPECT_EQ(canned_count_, update_mgr_->getTransactionCount());
-    EXPECT_EQ(0, update_mgr_->getQueueCount());
+    EXPECT_EQ(0U, update_mgr_->getQueueCount());
 
     // Queue up a request from a new DHCID.
     dhcp_ddns::NameChangeRequestPtr
         another_ncr(new dhcp_ddns::NameChangeRequest(*(canned_ncrs_[0])));
     another_ncr->setDhcid("AABBCCDDEEFF");
     EXPECT_NO_THROW(queue_mgr_->enqueue(another_ncr));
-    EXPECT_EQ(1, update_mgr_->getQueueCount());
+    EXPECT_EQ(1U, update_mgr_->getQueueCount());
 
     // Verify that sweep does not dequeue the new request as we are at
     // maximum transaction count.
     EXPECT_NO_THROW(update_mgr_->sweep());
     EXPECT_EQ(canned_count_, update_mgr_->getTransactionCount());
-    EXPECT_EQ(1, update_mgr_->getQueueCount());
+    EXPECT_EQ(1U, update_mgr_->getQueueCount());
 
     // Set max transactions to same as current transaction count.
     EXPECT_NO_THROW(update_mgr_->setMaxTransactions(canned_count_ + 1));
@@ -705,11 +705,11 @@ TEST_F(D2UpdateMgrTest, sweep) {
     // a transaction for it.
     EXPECT_NO_THROW(update_mgr_->sweep());
     EXPECT_EQ(canned_count_ + 1, update_mgr_->getTransactionCount());
-    EXPECT_EQ(0, update_mgr_->getQueueCount());
+    EXPECT_EQ(0U, update_mgr_->getQueueCount());
 
     // Verify that clearing transaction list works.
     EXPECT_NO_THROW(update_mgr_->clearTransactionList());
-    EXPECT_EQ(0, update_mgr_->getTransactionCount());
+    EXPECT_EQ(0U, update_mgr_->getTransactionCount());
 }
 
 /// @brief Tests integration of NameAddTransaction
@@ -744,7 +744,7 @@ TEST_F(D2UpdateMgrTest, addTransaction) {
     // and sent the DNS request.
     ASSERT_TRUE(trans->getCurrentServer());
     ASSERT_TRUE(trans->isModelRunning());
-    ASSERT_EQ(1, trans->getUpdateAttempts());
+    ASSERT_EQ(1U, trans->getUpdateAttempts());
     ASSERT_EQ(StateModel::NOP_EVT, trans->getNextEvent());
 
     // Create a server based on the transaction's current server, and
@@ -801,7 +801,7 @@ TEST_F(D2UpdateMgrTest, removeTransaction) {
     // and sent the DNS request.
     ASSERT_TRUE(trans->getCurrentServer());
     ASSERT_TRUE(trans->isModelRunning());
-    ASSERT_EQ(1, trans->getUpdateAttempts());
+    ASSERT_EQ(1U, trans->getUpdateAttempts());
     ASSERT_EQ(StateModel::NOP_EVT, trans->getNextEvent());
 
     // Create a server based on the transaction's current server, and
@@ -849,7 +849,7 @@ TEST_F(D2UpdateMgrTest, errorTransaction) {
     ASSERT_TRUE(trans);
 
     ASSERT_TRUE(trans->isModelRunning());
-    ASSERT_EQ(1, trans->getUpdateAttempts());
+    ASSERT_EQ(1U, trans->getUpdateAttempts());
     ASSERT_EQ(StateModel::NOP_EVT, trans->getNextEvent());
     ASSERT_TRUE(trans->getCurrentServer());
 
@@ -872,8 +872,6 @@ TEST_F(D2UpdateMgrTest, errorTransaction) {
               trans->getPrevState());
     EXPECT_EQ(NameChangeTransaction::NO_MORE_SERVERS_EVT,
               trans->getLastEvent());
-
-
 }
 
 /// @brief Tests processing of multiple transactions.
@@ -883,10 +881,10 @@ TEST_F(D2UpdateMgrTest, errorTransaction) {
 /// transactions are a mix of both adds and removes.
 TEST_F(D2UpdateMgrTest, multiTransaction) {
     // Queue up all the requests.
-    int test_count = canned_count_;
-    for (int i = test_count; i > 0; i--) {
-        canned_ncrs_[i-1]->setReverseChange(true);
-        ASSERT_NO_THROW(queue_mgr_->enqueue(canned_ncrs_[i-1]));
+    unsigned test_count = canned_count_;
+    for (unsigned i = test_count; i > 0; i--) {
+        canned_ncrs_[i - 1]->setReverseChange(true);
+        ASSERT_NO_THROW(queue_mgr_->enqueue(canned_ncrs_[i - 1]));
     }
 
     // Create a server and start it listening. Note this relies on the fact
@@ -899,7 +897,7 @@ TEST_F(D2UpdateMgrTest, multiTransaction) {
     // Run sweep and IO until everything is done.
     processAll();
 
-    for (int i = 0; i < test_count; i++) {
+    for (unsigned i = 0; i < test_count; i++) {
         EXPECT_EQ(dhcp_ddns::ST_COMPLETED, canned_ncrs_[i]->getStatus());
     }
 }
@@ -911,10 +909,10 @@ TEST_F(D2UpdateMgrTest, multiTransaction) {
 /// transactions are a mix of both adds and removes.
 TEST_F(D2UpdateMgrTest, multiTransactionTimeout) {
     // Queue up all the requests.
-    int test_count = canned_count_;
-    for (int i = test_count; i > 0; i--) {
-        canned_ncrs_[i-1]->setReverseChange(true);
-        ASSERT_NO_THROW(queue_mgr_->enqueue(canned_ncrs_[i-1]));
+    unsigned test_count = canned_count_;
+    for (unsigned i = test_count; i > 0; i--) {
+        canned_ncrs_[i - 1]->setReverseChange(true);
+        ASSERT_NO_THROW(queue_mgr_->enqueue(canned_ncrs_[i - 1]));
     }
 
     // No server is running, so everything will time out.
@@ -922,7 +920,7 @@ TEST_F(D2UpdateMgrTest, multiTransactionTimeout) {
     // Run sweep and IO until everything is done.
     processAll();
 
-    for (int i = 0; i < test_count; i++) {
+    for (unsigned i = 0; i < test_count; i++) {
         EXPECT_EQ(dhcp_ddns::ST_FAILED, canned_ncrs_[i]->getStatus());
     }
 }
@@ -960,7 +958,7 @@ TEST_F(D2UpdateMgrTest, simpleAddTransaction) {
     // and sent the DNS request.
     ASSERT_TRUE(trans->getCurrentServer());
     ASSERT_TRUE(trans->isModelRunning());
-    ASSERT_EQ(1, trans->getUpdateAttempts());
+    ASSERT_EQ(1U, trans->getUpdateAttempts());
     ASSERT_EQ(StateModel::NOP_EVT, trans->getNextEvent());
 
     // Create a server based on the transaction's current server, and
@@ -1018,7 +1016,7 @@ TEST_F(D2UpdateMgrTest, simpleRemoveTransaction) {
     // and sent the DNS request.
     ASSERT_TRUE(trans->getCurrentServer());
     ASSERT_TRUE(trans->isModelRunning());
-    ASSERT_EQ(1, trans->getUpdateAttempts());
+    ASSERT_EQ(1U, trans->getUpdateAttempts());
     ASSERT_EQ(StateModel::NOP_EVT, trans->getNextEvent());
 
     // Create a server based on the transaction's current server, and

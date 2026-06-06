@@ -1653,7 +1653,7 @@ TEST_F(CheckExistsAddTransactionTest, addingFwdAddrsHandler_BuildRequestExceptio
     ASSERT_NO_THROW(name_add->addingFwdAddrsHandler());
 
     // Verify we did not attempt to send anything.
-    EXPECT_EQ(0, name_add->getUpdateAttempts());
+    EXPECT_EQ(0U, name_add->getUpdateAttempts());
 
     // Completion flags should be false.
     EXPECT_FALSE(name_add->getForwardChangeCompleted());
@@ -1691,7 +1691,7 @@ TEST_F(CheckExistsAddTransactionTest, replacingFwdAddrsHandler_BuildRequestExcep
     ASSERT_NO_THROW(name_add->replacingFwdAddrsHandler());
 
     // Verify we did not attempt to send anything.
-    EXPECT_EQ(0, name_add->getUpdateAttempts());
+    EXPECT_EQ(0U, name_add->getUpdateAttempts());
 
     // Completion flags should be false.
     EXPECT_FALSE(name_add->getForwardChangeCompleted());
@@ -1730,7 +1730,7 @@ TEST_F(CheckExistsAddTransactionTest, replacingRevPtrsHandler_BuildRequestExcept
     ASSERT_NO_THROW(name_add->replacingRevPtrsHandler());
 
     // Verify we did not attempt to send anything.
-    EXPECT_EQ(0, name_add->getUpdateAttempts());
+    EXPECT_EQ(0U, name_add->getUpdateAttempts());
 
     // Completion flags should be false.
     EXPECT_FALSE(name_add->getForwardChangeCompleted());
@@ -1744,6 +1744,5 @@ TEST_F(CheckExistsAddTransactionTest, replacingRevPtrsHandler_BuildRequestExcept
     EXPECT_EQ(NameChangeTransaction::UPDATE_FAILED_EVT,
               name_add->getNextEvent());
 }
-
 
 }

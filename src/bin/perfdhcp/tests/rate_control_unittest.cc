@@ -39,7 +39,7 @@ public:
 // Test default constructor.
 TEST(RateControl, constructorDefault) {
     NakedRateControl rc;
-    EXPECT_EQ(0, rc.getRate());
+    EXPECT_EQ(0U, rc.getRate());
 }
 
 // Test the constructor which sets the rate.
@@ -47,22 +47,22 @@ TEST(RateControl, constructor) {
     // Call the constructor and verify that it sets the appropriate
     // values.
     NakedRateControl rc1(3);
-    EXPECT_EQ(3, rc1.getRate());
+    EXPECT_EQ(3U, rc1.getRate());
 
     // Call the constructor again and make sure that different values
     // will be set correctly.
     NakedRateControl rc2(5);
-    EXPECT_EQ(5, rc2.getRate());
+    EXPECT_EQ(5U, rc2.getRate());
 }
 
 // Check the rate accessor.
 TEST(RateControl, getRate) {
     RateControl rc;
-    ASSERT_EQ(0, rc.getRate());
+    ASSERT_EQ(0U, rc.getRate());
     rc.setRate(5);
-    ASSERT_EQ(5, rc.getRate());
+    ASSERT_EQ(5U, rc.getRate());
     rc.setRate(10);
-    EXPECT_EQ(10, rc.getRate());
+    EXPECT_EQ(10U, rc.getRate());
 }
 
 // Check that the function returns the number of messages to be sent "now"
@@ -79,7 +79,7 @@ TEST(RateControl, getOutboundMessageCount) {
     // no good estimate at the beginning how many packets to send.
     uint64_t count = 0;
     ASSERT_NO_THROW(count = rc.getOutboundMessageCount());
-    EXPECT_EQ(count, 1);
+    EXPECT_EQ(count, 1U);
 
     // After a given amount of time number of packets to send should
     // allow to catch up with requested rate, ie for rate 2pks/s after 1500ms
@@ -87,13 +87,13 @@ TEST(RateControl, getOutboundMessageCount) {
     // To simulate 1500ms lets get back start time by 1500ms.
     rc.start_time_ -= boost::posix_time::milliseconds(1500);
     ASSERT_NO_THROW(count = rc.getOutboundMessageCount());
-    EXPECT_EQ(count, 2);
+    EXPECT_EQ(count, 2U);
 
     // If elapsed time is big then a big number of packets would need to be sent.
     // But the pkts number is capped to 3. Check it.
     rc.start_time_ -= boost::posix_time::milliseconds(10000);
     ASSERT_NO_THROW(count = rc.getOutboundMessageCount());
-    EXPECT_EQ(count, 3);
+    EXPECT_EQ(count, 3U);
 }
 
 // Test the rate modifier for valid and invalid rate values.

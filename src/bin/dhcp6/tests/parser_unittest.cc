@@ -841,9 +841,9 @@ TEST(ParserTest, mapEntries) {
     // Remove deprecated parameters. This needs to be done because even though
     // they are supported, examples are loaded by yang tests also and they don't
     // support both old and new syntax.
-    ASSERT_EQ(syntax_keys.erase("client-class"), 1);
-    ASSERT_EQ(syntax_keys.erase("only-if-required"), 1);
-    ASSERT_EQ(syntax_keys.erase("require-client-classes"), 1);
+    ASSERT_EQ(syntax_keys.erase("client-class"), 1U);
+    ASSERT_EQ(syntax_keys.erase("only-if-required"), 1U);
+    ASSERT_EQ(syntax_keys.erase("require-client-classes"), 1U);
     EXPECT_EQ(syntax_keys, sample_keys)
         << "syntax has: " << print_keys(syntax_keys) << endl
         << "sample has: " << print_keys(sample_keys) << endl;

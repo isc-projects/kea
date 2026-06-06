@@ -374,7 +374,7 @@ public:
 
             // Errors can be in a list.
             if (rsp->getType() == Element::list) {
-                ASSERT_EQ(1, rsp->size());
+                ASSERT_EQ(1U, rsp->size());
                 rsp = rsp->get(0);
             }
 
@@ -832,11 +832,11 @@ BaseCtrlChannelD2Test::testStatusGet() {
     ASSERT_NO_THROW(response_list = Element::fromJSON(response_txt));
     ASSERT_TRUE(response_list);
     ASSERT_EQ(Element::list, response_list->getType());
-    EXPECT_EQ(1, response_list->size());
+    EXPECT_EQ(1U, response_list->size());
     ConstElementPtr response = response_list->get(0);
     ASSERT_TRUE(response);
     ASSERT_EQ(Element::map, response->getType());
-    EXPECT_EQ(2, response->size());
+    EXPECT_EQ(2U, response->size());
     ConstElementPtr result = response->get("result");
     ASSERT_TRUE(result);
     ASSERT_EQ(Element::integer, result->getType());
@@ -933,7 +933,7 @@ BaseCtrlChannelD2Test::testConfigHashGet() {
     ASSERT_TRUE(hash);
     ASSERT_EQ(Element::string, hash->getType());
     // SHA-256 -> 64 hex digits.
-    EXPECT_EQ(64, hash->stringValue().size());
+    EXPECT_EQ(64U, hash->stringValue().size());
 }
 
 TEST_F(HttpCtrlChannelD2Test, configHashGet) {
@@ -985,7 +985,7 @@ TEST_F(HttpCtrlChannelD2Test, configTest) {
     ASSERT_TRUE(d2_context);
     TSIGKeyInfoMapPtr keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 
     ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
 
@@ -1024,7 +1024,7 @@ TEST_F(HttpCtrlChannelD2Test, configTest) {
     d2_context = cfg_mgr->getD2CfgContext();
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 
     // Create a valid config with two keys and no command channel.
     config_test_txt =
@@ -1059,7 +1059,7 @@ TEST_F(HttpCtrlChannelD2Test, configTest) {
     d2_context = cfg_mgr->getD2CfgContext();
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 }
 
 // Verify that the "config-test" command will do what we expect.
@@ -1114,7 +1114,7 @@ TEST_F(HttpsCtrlChannelD2Test, configTest) {
     ASSERT_TRUE(d2_context);
     TSIGKeyInfoMapPtr keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 
     ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
 
@@ -1153,7 +1153,7 @@ TEST_F(HttpsCtrlChannelD2Test, configTest) {
     d2_context = cfg_mgr->getD2CfgContext();
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 
     // Create a valid config with two keys and no command channel.
     config_test_txt =
@@ -1188,7 +1188,7 @@ TEST_F(HttpsCtrlChannelD2Test, configTest) {
     d2_context = cfg_mgr->getD2CfgContext();
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 }
 
 // Verify that the "config-set" command will do what we expect.
@@ -1232,7 +1232,7 @@ TEST_F(HttpCtrlChannelD2Test, configSet) {
     ASSERT_TRUE(d2_context);
     TSIGKeyInfoMapPtr keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 
     ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
 
@@ -1271,7 +1271,7 @@ TEST_F(HttpCtrlChannelD2Test, configSet) {
     d2_context = cfg_mgr->getD2CfgContext();
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 
     // Create a valid config with two keys and no command channel.
     config_set_txt =
@@ -1314,7 +1314,7 @@ TEST_F(HttpCtrlChannelD2Test, configSet) {
     d2_context = cfg_mgr->getD2CfgContext();
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(2, keys->size());
+    EXPECT_EQ(2U, keys->size());
 }
 
 // Verify that the "config-set" command will do what we expect.
@@ -1369,7 +1369,7 @@ TEST_F(HttpsCtrlChannelD2Test, configSet) {
     ASSERT_TRUE(d2_context);
     TSIGKeyInfoMapPtr keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 
     ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
 
@@ -1408,7 +1408,7 @@ TEST_F(HttpsCtrlChannelD2Test, configSet) {
     d2_context = cfg_mgr->getD2CfgContext();
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 
     // Create a valid config with two keys and no command channel.
     config_set_txt =
@@ -1451,7 +1451,7 @@ TEST_F(HttpsCtrlChannelD2Test, configSet) {
     d2_context = cfg_mgr->getD2CfgContext();
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(2, keys->size());
+    EXPECT_EQ(2U, keys->size());
 }
 
 // Tests if config-write can be called without any parameters.
@@ -1694,7 +1694,7 @@ BaseCtrlChannelD2Test::testConfigReloadFileValid() {
     ASSERT_TRUE(d2_params);
 
     EXPECT_EQ("192.168.77.1", d2_params->getIpAddress().toText());
-    EXPECT_EQ(777, d2_params->getPort());
+    EXPECT_EQ(777U, d2_params->getPort());
     EXPECT_FALSE(d2_cfg_mgr->forwardUpdatesEnabled());
     EXPECT_FALSE(d2_cfg_mgr->reverseUpdatesEnabled());
 
@@ -2125,7 +2125,7 @@ TEST_F(HttpCtrlChannelD2Test, noListenerChange) {
     ASSERT_TRUE(d2_context);
     TSIGKeyInfoMapPtr keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 
     ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
     auto const listener = HttpCommandMgr::instance().getHttpListener().get();
@@ -2156,7 +2156,7 @@ TEST_F(HttpCtrlChannelD2Test, noListenerChange) {
     d2_context = cfg_mgr->getD2CfgContext();
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 }
 
 // Verify that the "config-set" command will reuse listener
@@ -2211,7 +2211,7 @@ TEST_F(HttpsCtrlChannelD2Test, noListenerChange) {
     ASSERT_TRUE(d2_context);
     TSIGKeyInfoMapPtr keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 
     ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
     auto const listener = HttpCommandMgr::instance().getHttpListener().get();
@@ -2246,7 +2246,7 @@ TEST_F(HttpsCtrlChannelD2Test, noListenerChange) {
     d2_context = cfg_mgr->getD2CfgContext();
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 }
 
 // Verify that the "config-set" command will exit with an error
@@ -2290,7 +2290,7 @@ TEST_F(HttpCtrlChannelD2Test, handleHttpToHttpsSwitch) {
     ASSERT_TRUE(d2_context);
     TSIGKeyInfoMapPtr keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 
     ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
     auto const listener = HttpCommandMgr::instance().getHttpListener().get();
@@ -2344,7 +2344,7 @@ TEST_F(HttpCtrlChannelD2Test, handleHttpToHttpsSwitch) {
     d2_context = cfg_mgr->getD2CfgContext();
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 }
 
 // Verify that the "config-set" command will exit with an error
@@ -2399,7 +2399,7 @@ TEST_F(HttpsCtrlChannelD2Test, handleHttpsToHttpSwitch) {
     ASSERT_TRUE(d2_context);
     TSIGKeyInfoMapPtr keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 
     ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
     auto const listener = HttpCommandMgr::instance().getHttpListener().get();
@@ -2451,7 +2451,7 @@ TEST_F(HttpsCtrlChannelD2Test, handleHttpsToHttpSwitch) {
     d2_context = cfg_mgr->getD2CfgContext();
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 }
 
 } // end of anonymous namespace

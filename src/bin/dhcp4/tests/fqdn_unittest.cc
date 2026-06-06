@@ -850,7 +850,7 @@ public:
         EXPECT_EQ("client1.example.com", lease->hostname_);
 
         // Verify that an NCR was generated correctly.
-        ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+        ASSERT_EQ(1U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
         verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                                 resp->getYiaddr().toText(),
                                 "client1.example.com.", "",
@@ -955,10 +955,10 @@ public:
             bool exp_fwd = (response_flags & Option4ClientFqdn::FLAG_S);
             bool exp_rev = (!(response_flags & Option4ClientFqdn::FLAG_N));
             if (!exp_fwd && !exp_rev) {
-                ASSERT_EQ(0, d2_mgr_.getQueueSize());
+                ASSERT_EQ(0U, d2_mgr_.getQueueSize());
             } else {
                 // Verify that there is one NameChangeRequest as expected.
-                ASSERT_EQ(1, d2_mgr_.getQueueSize());
+                ASSERT_EQ(1U, d2_mgr_.getQueueSize());
                 verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD,
                                         exp_rev, exp_fwd,
                                         reply->getYiaddr().toText(),
@@ -1208,7 +1208,7 @@ TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsNewLease) {
     ASSERT_TRUE(getDdnsParams()->getEnableUpdates());
 
     ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease, *getDdnsParams()));
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
 
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "192.0.2.3", "myhost.example.com.",
@@ -1228,7 +1228,7 @@ TEST_F(NameDhcpv4SrvTest, noConflictResolution) {
     subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
 
     ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease, *getDdnsParams()));
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
 
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "192.0.2.3", "myhost.example.com.",
@@ -1355,7 +1355,7 @@ TEST_F(NameDhcpv4SrvTest, processDiscover) {
     ASSERT_NO_THROW(reply = srv_->processDiscover(req));
     checkResponse(reply, DHCPOFFER, 1234);
 
-    EXPECT_EQ(0, d2_mgr_.getQueueSize());
+    EXPECT_EQ(0U, d2_mgr_.getQueueSize());
 }
 
 // Test that server generates client's hostname from the IP address assigned
@@ -1374,7 +1374,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestFqdnEmptyDomainName) {
     checkResponse(reply, DHCPACK, 1234);
 
     // Verify that there is one NameChangeRequest generated.
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
 
     // The hostname is generated from the IP address acquired (yiaddr).
     std::string hostname = generatedNameFromAddress(reply->getYiaddr());
@@ -1393,7 +1393,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestFqdnEmptyDomainName) {
     checkResponse(reply, DHCPACK, 1234);
 
     // Verify that there are no NameChangeRequests generated.
-    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr_.getQueueSize());
 }
 
 // Test that server generates client's hostname from the IP address assigned
@@ -1441,7 +1441,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestTopLevelHostname) {
     checkResponse(reply, DHCPACK, 1234);
 
     // Verify that there is one NameChangeRequest generated.
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
 
     // The hostname is generated from the IP address acquired (yiaddr).
     std::string hostname = generatedNameFromAddress(reply->getYiaddr());
@@ -1471,7 +1471,7 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsFqdn) {
     checkResponse(reply, DHCPACK, 1234);
 
     // Verify that there is one NameChangeRequest generated.
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             reply->getYiaddr().toText(), "myhost.example.com.",
                             "00010132E91AA355CFBB753C0F0497A5A940436"
@@ -1491,7 +1491,7 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsFqdn) {
     checkResponse(reply, DHCPACK, 1234);
 
     // There should be two NameChangeRequests. Verify that they are valid.
-    ASSERT_EQ(2, d2_mgr_.getQueueSize());
+    ASSERT_EQ(2U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
                             reply->getYiaddr().toText(),
                             "myhost.example.com.",
@@ -1529,7 +1529,7 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
     checkResponse(reply, DHCPACK, 1234);
 
     // Verify that there is one NameChangeRequest generated.
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             reply->getYiaddr().toText(), "myhost.example.com.",
                             "00010132E91AA355CFBB753C0F0497A5A940436"
@@ -1551,7 +1551,7 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
     checkResponse(reply, DHCPACK, 1234);
 
     // There should be two NameChangeRequests. Verify that they are valid.
-    ASSERT_EQ(2, d2_mgr_.getQueueSize());
+    ASSERT_EQ(2U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
                             reply->getYiaddr().toText(),
                             "myhost.example.com.",
@@ -1585,7 +1585,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestRenewFqdn) {
     checkResponse(reply, DHCPACK, 1234);
 
     // Verify that there is one NameChangeRequest generated.
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             reply->getYiaddr().toText(), "myhost.example.com.",
                             "00010132E91AA355CFBB753C0F0497A5A940436"
@@ -1604,7 +1604,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestRenewFqdn) {
     checkResponse(reply, DHCPACK, 1234);
 
     // There should be no NameChangeRequests.
-    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr_.getQueueSize());
 }
 
 // Test that client may send two requests, each carrying the same hostname
@@ -1627,7 +1627,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestRenewHostname) {
     checkResponse(reply, DHCPACK, 1234);
 
     // Verify that there is one NameChangeRequest generated.
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             reply->getYiaddr().toText(), "myhost.example.com.",
                             "00010132E91AA355CFBB753C0F0497A5A940436"
@@ -1648,7 +1648,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestRenewHostname) {
     checkResponse(reply, DHCPACK, 1234);
 
     // There should be no NameChangeRequests.
-    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr_.getQueueSize());
 }
 
 // Test that when a release message is sent for a previously acquired lease,
@@ -1674,7 +1674,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestRelease) {
     checkResponse(reply, DHCPACK, 1234);
 
     // Verify that there is one NameChangeRequest generated for lease.
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             reply->getYiaddr().toText(), "myhost.example.com.",
                             "00010132E91AA355CFBB753C0F0497A5A940436"
@@ -1691,7 +1691,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestRelease) {
 
     // The lease has been removed, so there should be a NameChangeRequest to
     // remove corresponding DNS entries.
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
                             reply->getYiaddr().toText(), "myhost.example.com.",
                             "00010132E91AA355CFBB753C0F0497A5A940436"
@@ -1719,7 +1719,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestReleaseNoDelete) {
     checkResponse(reply, DHCPACK, 1234);
 
     // Verify that there is one NameChangeRequest generated for lease.
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             reply->getYiaddr().toText(), "myhost.example.com.",
                             "00010132E91AA355CFBB753C0F0497A5A940436"
@@ -1736,7 +1736,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestReleaseNoDelete) {
 
     // The lease has been expired, so there should not be a NameChangeRequest to
     // remove corresponding DNS entries.
-    ASSERT_EQ(0, d2_mgr_.getQueueSize());
+    ASSERT_EQ(0U, d2_mgr_.getQueueSize());
 }
 
 // Test that when the Release message is sent for a previously acquired lease
@@ -1802,7 +1802,7 @@ TEST_F(NameDhcpv4SrvTest, fqdnReservation) {
     EXPECT_EQ("unique-host.example.com.", fqdn->getDomainName());
 
     // When receiving DHCPDISCOVER, no NCRs should be generated.
-    EXPECT_EQ(0, d2_mgr_.getQueueSize());
+    EXPECT_EQ(0U, d2_mgr_.getQueueSize());
 
     // Now send the DHCPREQUEST with including the FQDN option.
     ASSERT_NO_THROW(client.doRequest());
@@ -1821,7 +1821,7 @@ TEST_F(NameDhcpv4SrvTest, fqdnReservation) {
 
         // Because this is a new lease, there should be one NCR which adds the
         // new DNS entry.
-        ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+        ASSERT_EQ(1U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
         verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                                 resp->getYiaddr().toText(),
                                 "unique-host.example.com.",
@@ -1860,7 +1860,7 @@ TEST_F(NameDhcpv4SrvTest, fqdnReservation) {
 
     // Now there should be two name NCRs. One that removes the previous entry
     // and the one that adds a new entry for the new hostname.
-    ASSERT_EQ(2, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    ASSERT_EQ(2U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 
     {
         SCOPED_TRACE("Verify the correctness of the CHG_REMOVE NCR for the "
@@ -1934,7 +1934,7 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservation) {
 
     // Because this is a new lease, there should be one NCR which adds the
     // new DNS entry.
-    ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    ASSERT_EQ(1U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     {
         SCOPED_TRACE("Verify the correctness of the NCR for the"
                      "unique-host.example.com");
@@ -1972,7 +1972,7 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservation) {
 
     // Now there should be two name NCRs. One that removes the previous entry
     // and the one that adds a new entry for the new hostname.
-    ASSERT_EQ(2, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    ASSERT_EQ(2U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     {
         SCOPED_TRACE("Verify the correctness of the CHG_REMOVE NCR for the "
                      "unique-host.example.com");
@@ -2562,7 +2562,7 @@ TEST_F(NameDhcpv4SrvTest, ddnsScopeTest) {
     EXPECT_EQ("client1.example.com.", fqdn->getDomainName());
 
     // ddns-send-updates for subnet 1 should be off, so we should NOT have an NRC.
-    ASSERT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    ASSERT_EQ(0U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 
     // Now let's try with a client on subnet 2.
     Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
@@ -2586,7 +2586,7 @@ TEST_F(NameDhcpv4SrvTest, ddnsScopeTest) {
     EXPECT_EQ("two.example.com.", fqdn->getDomainName());
 
     // ddns-send-updates for subnet 2 are enabled, verify the NCR is correct.
-    ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    ASSERT_EQ(1U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             resp->getYiaddr().toText(),
                             "two.example.com.", "",
@@ -2680,9 +2680,9 @@ TEST_F(NameDhcpv4SrvTest, processReuseExpired) {
 
             // Verify that there is one NameChangeRequest generated.
             if (scenario.hostname1_.empty()) {
-                ASSERT_EQ(0, d2_mgr_.getQueueSize());
+                ASSERT_EQ(0U, d2_mgr_.getQueueSize());
             } else {
-                ASSERT_EQ(1, d2_mgr_.getQueueSize());
+                ASSERT_EQ(1U, d2_mgr_.getQueueSize());
                 verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD,
                                 true, true,
                                 resp->getYiaddr().toText(), scenario.hostname1_,
@@ -2778,7 +2778,7 @@ TEST_F(NameDhcpv4SrvTest, ddnsSharedNetworkTest) {
     EXPECT_EQ("client1.one.example.com", lease->hostname_);
 
     // Verify that an NCR was generated correctly.
-    ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    ASSERT_EQ(1U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             resp->getYiaddr().toText(),
                             "client1.one.example.com.", "",
@@ -2803,7 +2803,7 @@ TEST_F(NameDhcpv4SrvTest, ddnsSharedNetworkTest) {
     EXPECT_EQ("client2.two.example.com", hostname->getValue());
 
     // Verify the NCR is there and correct.
-    ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    ASSERT_EQ(1U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             resp->getYiaddr().toText(),
                             "client2.two.example.com.", "",
@@ -2862,7 +2862,7 @@ TEST_F(NameDhcpv4SrvTest, withOfferLifetime) {
     EXPECT_EQ("client-name.example.com.", fqdn->getDomainName());
 
     // When receiving DHCPDISCOVER, no NCRs should be generated.
-    EXPECT_EQ(0, d2_mgr_.getQueueSize());
+    EXPECT_EQ(0U, d2_mgr_.getQueueSize());
 
     // Make sure the lease was created with offer-lifetime, fqdn flags = false,
     // and the FQDN.
@@ -2895,7 +2895,7 @@ TEST_F(NameDhcpv4SrvTest, withOfferLifetime) {
     EXPECT_EQ("client-name.example.com.", fqdn->getDomainName());
 
     // There should be one NCR which adds the new DNS entry.
-    ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    ASSERT_EQ(1U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             resp->getYiaddr().toText(),
                             "client-name.example.com.",
@@ -2949,7 +2949,7 @@ TEST_F(NameDhcpv4SrvTest, withDdnsTtlPercent) {
     EXPECT_EQ("client1.example.com", lease->hostname_);
 
     // Verify that an NCR was generated correctly.
-    ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    ASSERT_EQ(1U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             resp->getYiaddr().toText(),
                             "client1.example.com.", "",
@@ -2967,7 +2967,7 @@ TEST_F(NameDhcpv4SrvTest, checkWithDHCIDConflictResolutionMode) {
     subnet_->setDdnsConflictResolutionMode("check-with-dhcid");
 
     ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease, *getDdnsParams()));
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
 
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "192.0.2.3", "myhost.example.com.",
@@ -2987,7 +2987,7 @@ TEST_F(NameDhcpv4SrvTest, noCheckWithDHCIDConflictResolutionMode) {
     subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
 
     ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease, *getDdnsParams()));
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
 
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "192.0.2.3", "myhost.example.com.",
@@ -3007,7 +3007,7 @@ TEST_F(NameDhcpv4SrvTest, noCheckWithoutDHCIDConflictResolutionMode) {
     subnet_->setDdnsConflictResolutionMode("no-check-without-dhcid");
 
     ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease, *getDdnsParams()));
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
 
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "192.0.2.3", "myhost.example.com.",
@@ -3027,7 +3027,7 @@ TEST_F(NameDhcpv4SrvTest, checkExistsDHCIDConflictResolutionMode) {
     subnet_->setDdnsConflictResolutionMode("check-exists-with-dhcid");
 
     ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease, *getDdnsParams()));
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
 
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "192.0.2.3", "myhost.example.com.",
@@ -3169,9 +3169,9 @@ TEST_F(NameDhcpv4SrvTest, poolDdnsParametersTest) {
 
         // Verify the NCR if we expect one.
         if (!scenario.expect_ncr_) {
-            ASSERT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+            ASSERT_EQ(0U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
         } else {
-            ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+            ASSERT_EQ(1U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
             verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                                     resp->getYiaddr().toText(),
                                     (scenario.expected_hostname_ + "."), "",
@@ -3200,7 +3200,7 @@ TEST_F(NameDhcpv4SrvTest, hostnameScrubbedEmpty) {
 
     // Should have logged that it was scrubbed empty.
     std::string log = "DHCP4_CLIENT_HOSTNAME_SCRUBBED_EMPTY";
-    EXPECT_EQ(1, countFile(log));
+    EXPECT_EQ(1U, countFile(log));
 
     // Hostname should not be in the response.
     ASSERT_FALSE(resp->getOption(DHO_HOST_NAME));
@@ -3226,7 +3226,7 @@ TEST_F(NameDhcpv4SrvTest, fqdnScrubbedEmpty) {
 
     // Should have logged that it was scrubbed empty.
     std::string log = "DHCP4_CLIENT_FQDN_SCRUBBED_EMPTY";
-    EXPECT_EQ(1, countFile(log));
+    EXPECT_EQ(1U, countFile(log));
 
     // Hostname should not be in the response.
     ASSERT_FALSE(resp->getOption(DHO_FQDN));

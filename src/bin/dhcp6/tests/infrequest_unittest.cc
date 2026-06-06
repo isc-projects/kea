@@ -149,7 +149,7 @@ TEST_F(InfRequestTest, infRequestBasic) {
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
 
     // Perform 2-way exchange (Inf-request/reply)
     client.requestOption(D6O_NAME_SERVERS);
@@ -174,7 +174,7 @@ TEST_F(InfRequestTest, infRequestBasic) {
                             (response->getOption(D6O_NAME_SERVERS));
     ASSERT_TRUE(dns);
     Option6AddrLst::AddressContainer addrs = dns->getAddresses();
-    ASSERT_EQ(2, addrs.size());
+    ASSERT_EQ(2U, addrs.size());
     EXPECT_EQ("2001:db8::1", addrs[0].toText());
     EXPECT_EQ("2001:db8::2", addrs[1].toText());
 }
@@ -190,7 +190,7 @@ TEST_F(InfRequestTest, infRequestAnonymous) {
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
 
     // Perform 2-way exchange (Inf-request/reply)
     client.requestOption(D6O_NAME_SERVERS);
@@ -206,7 +206,7 @@ TEST_F(InfRequestTest, infRequestAnonymous) {
                             (response->getOption(D6O_NAME_SERVERS));
     ASSERT_TRUE(dns);
     Option6AddrLst::AddressContainer addrs = dns->getAddresses();
-    ASSERT_EQ(2, addrs.size());
+    ASSERT_EQ(2U, addrs.size());
     EXPECT_EQ("2001:db8::1", addrs[0].toText());
     EXPECT_EQ("2001:db8::2", addrs[1].toText());
 }
@@ -221,7 +221,7 @@ TEST_F(InfRequestTest, infRequestStateless) {
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
 
     // Perform 2-way exchange (Inf-request/reply)
     client.requestOption(D6O_SIP_SERVERS_ADDR);
@@ -236,7 +236,7 @@ TEST_F(InfRequestTest, infRequestStateless) {
                             (response->getOption(D6O_SIP_SERVERS_ADDR));
     ASSERT_TRUE(sip);
     Option6AddrLst::AddressContainer addrs = sip->getAddresses();
-    ASSERT_EQ(1, addrs.size());
+    ASSERT_EQ(1U, addrs.size());
     EXPECT_EQ("2001:db8::abcd", addrs[0].toText());
 }
 
@@ -250,7 +250,7 @@ TEST_F(InfRequestTest, infRequestSubnetAndGlobal) {
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
 
     // Perform 2-way exchange (Inf-request/reply)
     client.requestOption(D6O_SIP_SERVERS_ADDR);
@@ -266,7 +266,7 @@ TEST_F(InfRequestTest, infRequestSubnetAndGlobal) {
                             (response->getOption(D6O_SIP_SERVERS_ADDR));
     ASSERT_TRUE(sip);
     Option6AddrLst::AddressContainer addrs = sip->getAddresses();
-    ASSERT_EQ(1, addrs.size());
+    ASSERT_EQ(1U, addrs.size());
     EXPECT_EQ("2001:db8::1", addrs[0].toText());
 
     // Check that we received the requested dns servers option
@@ -274,7 +274,7 @@ TEST_F(InfRequestTest, infRequestSubnetAndGlobal) {
                             (response->getOption(D6O_NAME_SERVERS));
     ASSERT_TRUE(dns);
     addrs = dns->getAddresses();
-    ASSERT_EQ(1, addrs.size());
+    ASSERT_EQ(1U, addrs.size());
     EXPECT_EQ("2001:db8::2", addrs[0].toText());
 }
 
@@ -288,7 +288,7 @@ TEST_F(InfRequestTest, infRequestNoSubnets) {
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(0, subnets->size());
+    ASSERT_EQ(0U, subnets->size());
 
     // Perform 2-way exchange (Inf-request/reply)
     client.requestOption(D6O_NIS_SERVERS);
@@ -303,7 +303,7 @@ TEST_F(InfRequestTest, infRequestNoSubnets) {
                             (response->getOption(D6O_NIS_SERVERS));
     ASSERT_TRUE(nis);
     Option6AddrLst::AddressContainer addrs = nis->getAddresses();
-    ASSERT_EQ(2, addrs.size());
+    ASSERT_EQ(2U, addrs.size());
     EXPECT_EQ("2001:db8::1", addrs[0].toText());
     EXPECT_EQ("2001:db8::2", addrs[1].toText());
 }
@@ -323,7 +323,7 @@ TEST_F(InfRequestTest, infRequestStats) {
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets6()->getAll();
-    ASSERT_EQ(1, subnets->size());
+    ASSERT_EQ(1U, subnets->size());
 
     // Check that the tested statistics is initially set to 0
     StatsMgr& mgr = StatsMgr::instance();

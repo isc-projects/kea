@@ -668,7 +668,7 @@ TEST_F(CtrlChannelD2Test, statusGet) {
     ASSERT_NO_THROW(response = Element::fromJSON(response_txt));
     ASSERT_TRUE(response);
     ASSERT_EQ(Element::map, response->getType());
-    EXPECT_EQ(2, response->size());
+    EXPECT_EQ(2U, response->size());
     ConstElementPtr result = response->get("result");
     ASSERT_TRUE(result);
     ASSERT_EQ(Element::integer, result->getType());
@@ -749,7 +749,7 @@ TEST_F(CtrlChannelD2Test, configHashGet) {
     ASSERT_TRUE(hash);
     ASSERT_EQ(Element::string, hash->getType());
     // SHA-256 -> 64 hex digits.
-    EXPECT_EQ(64, hash->stringValue().size());
+    EXPECT_EQ(64U, hash->stringValue().size());
 }
 
 // Verify that the "config-test" command will do what we expect.
@@ -832,7 +832,7 @@ TEST_F(CtrlChannelD2Test, configTest) {
     ASSERT_TRUE(d2_context);
     TSIGKeyInfoMapPtr keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 
     ASSERT_GT(UnixCommandMgr::instance().getControlSocketFD(), -1);
 
@@ -862,7 +862,7 @@ TEST_F(CtrlChannelD2Test, configTest) {
     d2_context = cfg_mgr->getD2CfgContext();
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 
     // Create a valid config with two keys and no command channel.
     os.str("");
@@ -894,7 +894,7 @@ TEST_F(CtrlChannelD2Test, configTest) {
     d2_context = cfg_mgr->getD2CfgContext();
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 }
 
 // Verify that the "config-set" command will do what we expect.
@@ -978,7 +978,7 @@ TEST_F(CtrlChannelD2Test, configSet) {
     ASSERT_TRUE(d2_context);
     TSIGKeyInfoMapPtr keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 
     ASSERT_GT(UnixCommandMgr::instance().getControlSocketFD(), -1);
 
@@ -1008,7 +1008,7 @@ TEST_F(CtrlChannelD2Test, configSet) {
     d2_context = cfg_mgr->getD2CfgContext();
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(1, keys->size());
+    EXPECT_EQ(1U, keys->size());
 
     // Create a valid config with two keys and no command channel.
     os.str("");
@@ -1041,7 +1041,7 @@ TEST_F(CtrlChannelD2Test, configSet) {
     d2_context = cfg_mgr->getD2CfgContext();
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    EXPECT_EQ(2, keys->size());
+    EXPECT_EQ(2U, keys->size());
 }
 
 // Tests if config-write can be called without any parameters.
@@ -1231,7 +1231,7 @@ TEST_F(CtrlChannelD2Test, configReloadFileValid) {
     ASSERT_TRUE(d2_params);
 
     EXPECT_EQ("192.168.77.1", d2_params->getIpAddress().toText());
-    EXPECT_EQ(777, d2_params->getPort());
+    EXPECT_EQ(777U, d2_params->getPort());
     EXPECT_FALSE(d2_cfg_mgr->forwardUpdatesEnabled());
     EXPECT_FALSE(d2_cfg_mgr->reverseUpdatesEnabled());
 

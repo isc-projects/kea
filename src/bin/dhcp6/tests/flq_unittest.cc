@@ -88,7 +88,7 @@ public:
 
         // Make sure that the client has got the requested prefix.
         EXPECT_EQ("2001:db8:1:e000::", lease->addr_.toText());
-        EXPECT_EQ(51, lease->prefixlen_);
+        EXPECT_EQ(51U, lease->prefixlen_);
 
         if (near_preferred) {
             EXPECT_NEAR(exp_preferred, lease->preferred_lft_, 2);
@@ -160,7 +160,7 @@ TEST_F(FLQTest, empty) {
     ASSERT_NO_THROW(client.doSARR());
 
     // Server should have assigned a prefix.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6Ptr lease = checkLease(client.getLease(0));
 
     // Preferred lifetime should be the config preferred-lifetime (200).
@@ -183,7 +183,7 @@ TEST_F(FLQTest, last) {
     ASSERT_NO_THROW(client.doSARR());
 
     // Server should have assigned a prefix.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6Ptr lease = checkLease(client.getLease(0));
 
     // Preferred lifetime should be the config min-preferred-lifetime (100).
@@ -211,7 +211,7 @@ TEST_F(FLQTest, expired) {
     ASSERT_NO_THROW(client.doSARR());
 
     // Server should have assigned a prefix.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6Ptr lease = checkLease(client.getLease(0));
 
     // Preferred lifetime should be the config min-preferred-lifetime (100).
@@ -239,7 +239,7 @@ TEST_F(FLQTest, reclaimed) {
     ASSERT_NO_THROW(client.doSARR());
 
     // Server should have assigned a prefix.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6Ptr lease = checkLease(client.getLease(0));
 
     // Preferred lifetime should be the config min-preferred-lifetime (100).
@@ -259,7 +259,7 @@ TEST_F(FLQTest, renew) {
     ASSERT_NO_THROW(client.doSARR());
 
     // Server should have assigned a prefix.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6Ptr lease = checkLease(client.getLease(0));
 
     // Preferred lifetime should be the config preferred-lifetime (200).
@@ -273,7 +273,7 @@ TEST_F(FLQTest, renew) {
     ASSERT_NO_THROW(client.doRenew());
 
     // Server should have renewed the prefix.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6Ptr renewed = checkLease(client.getLease(0));
 
     // Preferred lifetime should be the config preferred-lifetime (200).
@@ -296,7 +296,7 @@ TEST_F(FLQTest, renewFull) {
     ASSERT_NO_THROW(client.doSARR());
 
     // Server should have assigned a prefix.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6Ptr lease = checkLease(client.getLease(0));
 
     // Preferred lifetime should be the config preferred-lifetime (200).
@@ -313,7 +313,7 @@ TEST_F(FLQTest, renewFull) {
     ASSERT_NO_THROW(client.doRenew());
 
     // Server should have renewed the prefix.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6Ptr renewed = checkLease(client.getLease(0));
     ASSERT_TRUE(renewed);
 
@@ -337,7 +337,7 @@ TEST_F(FLQTest, renewRemaining) {
     ASSERT_NO_THROW(client.doSARR());
 
     // Server should have assigned a prefix.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6Ptr lease = checkLease(client.getLease(0));
 
     // Preferred lifetime should be the config preferred-lifetime (200).
@@ -354,7 +354,7 @@ TEST_F(FLQTest, renewRemaining) {
     ASSERT_NO_THROW(client.doRenew());
 
     // Server should have renewed the prefix.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6Ptr renewed = checkLease(client.getLease(0));
 
     // Preferred lifetime should be the remaining lifetime so ~150.
@@ -378,7 +378,7 @@ TEST_F(FLQTest, renewRemainingValid) {
     ASSERT_NO_THROW(client.doSARR());
 
     // Server should have assigned a prefix.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6Ptr lease = checkLease(client.getLease(0));
 
     // Preferred lifetime should be the config preferred-lifetime (200).
@@ -395,7 +395,7 @@ TEST_F(FLQTest, renewRemainingValid) {
     ASSERT_NO_THROW(client.doRenew());
 
     // Server should have renewed the prefix.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6Ptr renewed = checkLease(client.getLease(0));
 
     // Preferred lifetime should be the config min-preferred-lifetime (100).

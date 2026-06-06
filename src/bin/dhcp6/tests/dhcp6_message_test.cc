@@ -41,7 +41,7 @@ Dhcpv6MessageTest::bumpSubnet(const IOAddress& input_addr) {
 
 void
 Dhcpv6MessageTest::requestLease(const std::string& config,
-                                const int subnets_num,
+                                const size_t subnets_num,
                                 Dhcp6Client& client) {
     // Configure the server.
     configure(config, *client.getServer());
@@ -55,13 +55,13 @@ Dhcpv6MessageTest::requestLease(const std::string& config,
     client.fastFwdTime(1000);
     // Make sure that we have obtained a lease that belongs to one of the
     // subnets.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
 
     // Check if the lease belongs to one of the available pools.
     bool pool_found = false;
     auto subnet = subnets->begin();
-    for (int i = 0; i < subnets_num; ++i, ++subnet) {
+    for (size_t i = 0; i < subnets_num; ++i, ++subnet) {
         ASSERT_TRUE(subnet != subnets->end());
         if ((*subnet)->getPool(lease_client.type_, lease_client.addr_)) {
             pool_found = true;

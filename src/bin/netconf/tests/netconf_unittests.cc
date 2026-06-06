@@ -352,29 +352,29 @@ TEST_F(NetconfAgentTest, initSysrepo) {
     EXPECT_NO_THROW_LOG(agent_->initSysrepo());
     EXPECT_TRUE(agent_->startup_sess_);
     EXPECT_TRUE(agent_->running_sess_);
-    EXPECT_EQ(0, agent_->subscriptions_.size());
-    EXPECT_LE(16, agent_->modules_.size());
+    EXPECT_EQ(0U, agent_->subscriptions_.size());
+    EXPECT_LE(16U, agent_->modules_.size());
 }
 
 // Verifies that the checkModule method emits expected errors.
 TEST_F(NetconfAgentLogTest, checkModule) {
     // Various modules should be available.
-    EXPECT_EQ(1, YANG_REVISIONS.count("keatest-module"));
-    ASSERT_EQ(1, YANG_REVISIONS.count("kea-dhcp4-server"));
-    ASSERT_EQ(1, YANG_REVISIONS.count("kea-dhcp6-server"));
+    EXPECT_EQ(1U, YANG_REVISIONS.count("keatest-module"));
+    ASSERT_EQ(1U, YANG_REVISIONS.count("kea-dhcp4-server"));
+    ASSERT_EQ(1U, YANG_REVISIONS.count("kea-dhcp6-server"));
 
     // Non-existing modules should not.
-    EXPECT_EQ(0, agent_->modules_.count("does-not-exist"));
+    EXPECT_EQ(0U, agent_->modules_.count("does-not-exist"));
 
     // kea-dhcp[46]-server should be available.
     EXPECT_NO_THROW_LOG(agent_->initSysrepo());
-    EXPECT_EQ(1, agent_->modules_.count("kea-dhcp4-server"));
-    EXPECT_EQ(1, agent_->modules_.count("kea-dhcp6-server"));
+    EXPECT_EQ(1U, agent_->modules_.count("kea-dhcp4-server"));
+    EXPECT_EQ(1U, agent_->modules_.count("kea-dhcp6-server"));
     EXPECT_TRUE(agent_->checkModule("kea-dhcp4-server"));
     EXPECT_TRUE(agent_->checkModule("kea-dhcp6-server"));
 
     // Unknown module should emit a missing error.
-    EXPECT_EQ(0, agent_->modules_.count("does-not-exist"));
+    EXPECT_EQ(0U, agent_->modules_.count("does-not-exist"));
     EXPECT_FALSE(agent_->checkModule("does-not-exist"));
     addString("NETCONF_MODULE_MISSING_ERR Missing essential module "
               "does-not-exist in sysrepo");
@@ -401,13 +401,13 @@ TEST_F(NetconfAgentLogTest, checkModule) {
 // Verifies that the checkModules method emits expected warnings.
 TEST_F(NetconfAgentLogTest, checkModules) {
     // kea-dhcp[46]-server must be in YANG_REVISIONS.
-    ASSERT_EQ(1, YANG_REVISIONS.count("kea-dhcp4-server"));
-    ASSERT_EQ(1, YANG_REVISIONS.count("kea-dhcp6-server"));
+    ASSERT_EQ(1U, YANG_REVISIONS.count("kea-dhcp4-server"));
+    ASSERT_EQ(1U, YANG_REVISIONS.count("kea-dhcp6-server"));
 
     // kea-dhcp[46]-server should be available.
     EXPECT_NO_THROW_LOG(agent_->initSysrepo());
-    EXPECT_EQ(1, agent_->modules_.count("kea-dhcp4-server"));
-    EXPECT_EQ(1, agent_->modules_.count("kea-dhcp6-server"));
+    EXPECT_EQ(1U, agent_->modules_.count("kea-dhcp4-server"));
+    EXPECT_EQ(1U, agent_->modules_.count("kea-dhcp6-server"));
 
     // Run checkModules but it will be indirectly checked as
     // emitting nothing.
@@ -601,7 +601,7 @@ TEST_F(NetconfAgentTest, keaConfig) {
     // Get service pair.
     CfgServersMapPtr servers_map = ctx->getCfgServersMap();
     ASSERT_TRUE(servers_map);
-    ASSERT_EQ(1, servers_map->size());
+    ASSERT_EQ(1U, servers_map->size());
     CfgServersMapPair service_pair = *servers_map->begin();
 
     // Launch server.
@@ -617,7 +617,7 @@ TEST_F(NetconfAgentTest, keaConfig) {
     waitStopped();
 
     // Check request.
-    ASSERT_EQ(1, requests_.size());
+    ASSERT_EQ(1U, requests_.size());
     const string& request_str = requests_[0];
     ElementPtr request;
     ASSERT_NO_THROW_LOG(request = Element::fromJSON(request_str));
@@ -631,7 +631,7 @@ TEST_F(NetconfAgentTest, keaConfig) {
     // EXPECT_EQ(prettyPrint(expected), prettyPrint(request));
 
     // Check response.
-    ASSERT_EQ(1, responses_.size());
+    ASSERT_EQ(1U, responses_.size());
     const string& response_str = responses_[0];
     ElementPtr response;
     ASSERT_NO_THROW_LOG(response = Element::fromJSON(response_str));
@@ -702,7 +702,7 @@ TEST_F(NetconfAgentTest, yangConfig) {
     // Get service pair.
     CfgServersMapPtr servers_map = ctx->getCfgServersMap();
     ASSERT_TRUE(servers_map);
-    ASSERT_EQ(1, servers_map->size());
+    ASSERT_EQ(1U, servers_map->size());
     CfgServersMapPair service_pair = *servers_map->begin();
 
     // Launch server.
@@ -718,7 +718,7 @@ TEST_F(NetconfAgentTest, yangConfig) {
     waitStopped();
 
     // Check request.
-    ASSERT_EQ(1, requests_.size());
+    ASSERT_EQ(1U, requests_.size());
     const string& request_str = requests_[0];
     ElementPtr request;
     ASSERT_NO_THROW_LOG(request = Element::fromJSON(request_str));
@@ -747,7 +747,7 @@ TEST_F(NetconfAgentTest, yangConfig) {
     EXPECT_EQ(prettyPrint(expected), prettyPrint(request));
 
     // Check response.
-    ASSERT_EQ(1, responses_.size());
+    ASSERT_EQ(1U, responses_.size());
     const string& response_str = responses_[0];
     ElementPtr response;
     ASSERT_NO_THROW_LOG(response = Element::fromJSON(response_str));
@@ -798,15 +798,15 @@ TEST_F(NetconfAgentTest, subscribeToDataChanges) {
     // Get service pair.
     CfgServersMapPtr servers_map = ctx->getCfgServersMap();
     ASSERT_TRUE(servers_map);
-    ASSERT_EQ(1, servers_map->size());
+    ASSERT_EQ(1U, servers_map->size());
     CfgServersMapPair service_pair = *servers_map->begin();
 
     // Try subscribeToDataChanges.
-    EXPECT_EQ(0, agent_->subscriptions_.size());
+    EXPECT_EQ(0U, agent_->subscriptions_.size());
     ASSERT_NO_THROW_LOG(agent_->initSysrepo());
-    EXPECT_EQ(0, agent_->subscriptions_.size());
+    EXPECT_EQ(0U, agent_->subscriptions_.size());
     EXPECT_NO_THROW_LOG(agent_->subscribeToDataChanges(service_pair));
-    EXPECT_EQ(1, agent_->subscriptions_.size());
+    EXPECT_EQ(1U, agent_->subscriptions_.size());
 
     /// Unsubscribe.
     EXPECT_NO_THROW_LOG(agent_->subscriptions_.clear());
@@ -871,13 +871,13 @@ TEST_F(NetconfAgentTest, update) {
     // Get service pair.
     CfgServersMapPtr servers_map = ctx->getCfgServersMap();
     ASSERT_TRUE(servers_map);
-    ASSERT_EQ(1, servers_map->size());
+    ASSERT_EQ(1U, servers_map->size());
     CfgServersMapPair service_pair = *servers_map->begin();
 
     // Subscribe to YANG changes.
-    EXPECT_EQ(0, agent_->subscriptions_.size());
+    EXPECT_EQ(0U, agent_->subscriptions_.size());
     EXPECT_NO_THROW_LOG(agent_->subscribeToDataChanges(service_pair));
-    EXPECT_EQ(1, agent_->subscriptions_.size());
+    EXPECT_EQ(1U, agent_->subscriptions_.size());
 
     // Launch server.
     thread_.reset(new thread([this]() { fakeServer(); signalStopped(); }));
@@ -902,7 +902,7 @@ TEST_F(NetconfAgentTest, update) {
     waitStopped();
 
     // Check request.
-    ASSERT_EQ(1, requests_.size());
+    ASSERT_EQ(1U, requests_.size());
     const string& request_str = requests_[0];
     ElementPtr request;
     ASSERT_NO_THROW_LOG(request = Element::fromJSON(request_str));
@@ -931,7 +931,7 @@ TEST_F(NetconfAgentTest, update) {
     EXPECT_EQ(prettyPrint(expected), prettyPrint(request));
 
     // Check response.
-    ASSERT_EQ(1, responses_.size());
+    ASSERT_EQ(1U, responses_.size());
     const string& response_str = responses_[0];
     ElementPtr response;
     ASSERT_NO_THROW_LOG(response = Element::fromJSON(response_str));
@@ -1000,13 +1000,13 @@ TEST_F(NetconfAgentTest, validate) {
     // Get service pair.
     CfgServersMapPtr servers_map = ctx->getCfgServersMap();
     ASSERT_TRUE(servers_map);
-    ASSERT_EQ(1, servers_map->size());
+    ASSERT_EQ(1U, servers_map->size());
     CfgServersMapPair service_pair = *servers_map->begin();
 
     // Subscribe to YANG changes.
-    EXPECT_EQ(0, agent_->subscriptions_.size());
+    EXPECT_EQ(0U, agent_->subscriptions_.size());
     EXPECT_NO_THROW_LOG(agent_->subscribeToDataChanges(service_pair));
-    EXPECT_EQ(1, agent_->subscriptions_.size());
+    EXPECT_EQ(1U, agent_->subscriptions_.size());
 
     // Launch server twice.
     thread_.reset(new thread([this]() {
@@ -1035,7 +1035,7 @@ TEST_F(NetconfAgentTest, validate) {
     waitStopped();
 
     // Check that the fake server received the first request.
-    ASSERT_LE(1, requests_.size());
+    ASSERT_LE(1U, requests_.size());
     string request_str = requests_[0];
     ElementPtr request;
     ASSERT_NO_THROW_LOG(request = Element::fromJSON(request_str));
@@ -1064,7 +1064,7 @@ TEST_F(NetconfAgentTest, validate) {
     EXPECT_EQ(prettyPrint(expected), prettyPrint(request));
 
     // Check that the fake server received the second request.
-    ASSERT_EQ(2, requests_.size());
+    ASSERT_EQ(2U, requests_.size());
     request_str = requests_[1];
     ASSERT_NO_THROW_LOG(request = Element::fromJSON(request_str));
     expected_str = "{\n"
@@ -1091,7 +1091,7 @@ TEST_F(NetconfAgentTest, validate) {
     EXPECT_EQ(prettyPrint(expected), prettyPrint(request));
 
     // Check responses.
-    ASSERT_EQ(2, responses_.size());
+    ASSERT_EQ(2U, responses_.size());
     string response_str = responses_[0];
     ElementPtr response;
     ASSERT_NO_THROW_LOG(response = Element::fromJSON(response_str));
@@ -1162,13 +1162,13 @@ TEST_F(NetconfAgentTest, noValidate) {
     // Get service pair.
     CfgServersMapPtr servers_map = ctx->getCfgServersMap();
     ASSERT_TRUE(servers_map);
-    ASSERT_EQ(1, servers_map->size());
+    ASSERT_EQ(1U, servers_map->size());
     CfgServersMapPair service_pair = *servers_map->begin();
 
     // Subscribe to YANG changes.
-    EXPECT_EQ(0, agent_->subscriptions_.size());
+    EXPECT_EQ(0U, agent_->subscriptions_.size());
     EXPECT_NO_THROW_LOG(agent_->subscribeToDataChanges(service_pair));
-    EXPECT_EQ(1, agent_->subscriptions_.size());
+    EXPECT_EQ(1U, agent_->subscriptions_.size());
 
     // Change configuration (add invalid user context).
     const YRTree tree1 = YangRepr::buildTreeFromVector({

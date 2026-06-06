@@ -1311,7 +1311,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveValueChange) {
     srv_->run();
 
     // Check that the server did send a response
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
 
     // Make sure that we received a response
     Pkt4Ptr offer = srv_->fake_sent_.front();
@@ -1324,7 +1324,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveValueChange) {
 
     // ... and check if it is the modified value
     ASSERT_FALSE(hwaddr->hwaddr_.empty()); // there must be a MAC address
-    EXPECT_EQ(0xff, hwaddr->hwaddr_[0]); // check that its first byte was modified
+    EXPECT_EQ(0xffU, hwaddr->hwaddr_[0]); // check that its first byte was modified
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(discover);
@@ -1353,7 +1353,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveSkip) {
     srv_->run();
 
     // Check that the server dropped the packet and did not produce any response
-    ASSERT_EQ(0, srv_->fake_sent_.size());
+    ASSERT_EQ(0U, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(discover);
@@ -1382,13 +1382,13 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveDrop) {
     srv_->run();
 
     // Check that the server dropped the packet and did not produce any response
-    ASSERT_EQ(0, srv_->fake_sent_.size());
+    ASSERT_EQ(0U, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(discover);
 
     // Drop statistics should be maintained by the callouts, not by the server.
-    EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
+    EXPECT_EQ(0U, getStatistic("pkt4-receive-drop"));
 }
 
 // Checks if callouts installed on pkt4_receive are indeed called and the
@@ -1458,7 +1458,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveValueChange) {
     srv_->run();
 
     // Check that the server did send a response
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
 
     // Make sure that we received a response
     Pkt4Ptr adv = srv_->fake_sent_.front();
@@ -1499,7 +1499,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveDeleteClientId) {
     srv_->run();
 
     // Check that the server dropped the packet and did not send a response
-    ASSERT_EQ(0, srv_->fake_sent_.size());
+    ASSERT_EQ(0U, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(discover);
@@ -1528,7 +1528,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveSkip) {
     srv_->run();
 
     // Check that the server dropped the packet and did not produce any response
-    ASSERT_EQ(0, srv_->fake_sent_.size());
+    ASSERT_EQ(0U, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(discover);
@@ -1557,13 +1557,13 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveDrop) {
     srv_->run();
 
     // Check that the server dropped the packet and did not produce any response
-    ASSERT_EQ(0, srv_->fake_sent_.size());
+    ASSERT_EQ(0U, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(discover);
 
     // Drop statistics should be maintained by the callouts, not by the server.
-    EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
+    EXPECT_EQ(0U, getStatistic("pkt4-receive-drop"));
 }
 
 // Checks if callouts installed on pkt4_send are indeed called and the
@@ -1592,7 +1592,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendSimple) {
     EXPECT_EQ("pkt4_send", callback_name_);
 
     // Check that there is one packet sent
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
     Pkt4Ptr adv = srv_->fake_sent_.front();
 
     // Check that pkt4 argument passing was successful and returned proper
@@ -1650,7 +1650,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendValueChange) {
     srv_->run();
 
     // Check that the server did send a response
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
 
     // Make sure that we received a response
     Pkt4Ptr adv = srv_->fake_sent_.front();
@@ -1692,7 +1692,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendDeleteServerId) {
     srv_->run();
 
     // Check that the server indeed sent a malformed ADVERTISE
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
 
     // Get that ADVERTISE
     Pkt4Ptr adv = srv_->fake_sent_.front();
@@ -1728,14 +1728,14 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendSkip) {
     srv_->run();
 
     // Check that the server sent the packet
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
 
     // Get the first packet and check that it has zero length (i.e. the server
     // did not do packing on its own)
     Pkt4Ptr sent = srv_->fake_sent_.front();
 
     // The actual size of sent packet should be 0
-    EXPECT_EQ(0, sent->getBuffer().getLength());
+    EXPECT_EQ(0U, sent->getBuffer().getLength());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(discover);
@@ -1764,7 +1764,7 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendDrop) {
     srv_->run();
 
     // Check that the server does not send the packet
-    EXPECT_EQ(0, srv_->fake_sent_.size());
+    EXPECT_EQ(0U, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(discover);
@@ -1796,7 +1796,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendSimple) {
     EXPECT_EQ("buffer4_send", callback_name_);
 
     // Check that there is one packet sent
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
     Pkt4Ptr adv = srv_->fake_sent_.front();
 
     // Check that pkt4 argument passing was successful and returned proper value
@@ -1837,7 +1837,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendChange) {
     srv_->run();
 
     // Check that there is one packet sent
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
     Pkt4Ptr adv = srv_->fake_sent_.front();
 
     // The callout is supposed to fill the output buffer with dummyFile content
@@ -1874,7 +1874,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendSkip) {
     EXPECT_EQ("buffer4_send", callback_name_);
 
     // Check that there is no packet sent.
-    ASSERT_EQ(0, srv_->fake_sent_.size());
+    ASSERT_EQ(0U, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(discover);
@@ -1906,7 +1906,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendDrop) {
     EXPECT_EQ("buffer4_send", callback_name_);
 
     // Check that there is no packet sent
-    EXPECT_EQ(0, srv_->fake_sent_.size());
+    EXPECT_EQ(0U, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(discover);
@@ -1984,7 +1984,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
 
     // Server is supposed to report two subnets
     ASSERT_EQ(exp_subnets->size(), callback_subnet4collection_->size());
-    ASSERT_GE(exp_subnets->size(), 2);
+    ASSERT_GE(exp_subnets->size(), 2U);
 
     // Compare that the available subnets are reported as expected
     EXPECT_TRUE((*exp_subnets->begin())->get() == (*callback_subnet4collection_->begin())->get());
@@ -2059,7 +2059,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
     // Get all subnets and use second subnet for verification
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    ASSERT_EQ(2, subnets->size());
+    ASSERT_EQ(2U, subnets->size());
 
     // Advertised address must belong to the second pool (in subnet's range,
     // in dynamic pool)
@@ -2094,13 +2094,13 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectDrop) {
     srv_->run();
 
     // Check that the server dropped the packet and did not produce any response
-    ASSERT_EQ(0, srv_->fake_sent_.size());
+    ASSERT_EQ(0U, srv_->fake_sent_.size());
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(discover);
 
     // Drop statistics should be maintained by the callouts, not by the server.
-    EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
+    EXPECT_EQ(0U, getStatistic("pkt4-receive-drop"));
 }
 
 // This test verifies that the leases4_committed hook point is not triggered
@@ -2738,7 +2738,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
 
     // Try to get the lease by hardware address
     Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*hw);
-    EXPECT_EQ(leases.size(), 0);
+    EXPECT_EQ(leases.size(), 0U);
 
     // Try to get it by hw/subnet_id combination
     l = LeaseMgrFactory::instance().getLease4(*hw, subnet_->getID());
@@ -2746,7 +2746,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
 
     // Try by client-id
     leases = LeaseMgrFactory::instance().getLease4(*client_id_);
-    EXPECT_EQ(leases.size(), 0);
+    EXPECT_EQ(leases.size(), 0U);
 
     // Try by client-id/subnet-id
     l = LeaseMgrFactory::instance().getLease4(*client_id_, subnet_->getID());
@@ -2825,7 +2825,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimpleInfiniteLease) {
 
     // Try to get the lease by hardware address
     Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*hw);
-    EXPECT_EQ(leases.size(), 0);
+    EXPECT_EQ(leases.size(), 0U);
 
     // Try to get it by hw/subnet_id combination
     l = LeaseMgrFactory::instance().getLease4(*hw, subnet_->getID());
@@ -2833,7 +2833,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimpleInfiniteLease) {
 
     // Try by client-id
     leases = LeaseMgrFactory::instance().getLease4(*client_id_);
-    EXPECT_EQ(leases.size(), 0);
+    EXPECT_EQ(leases.size(), 0U);
 
     // Try by client-id/subnet-id
     l = LeaseMgrFactory::instance().getLease4(*client_id_, subnet_->getID());
@@ -2911,7 +2911,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimpleNoDelete) {
 
     // Try to get the lease by hardware address
     Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*hw);
-    EXPECT_EQ(leases.size(), 1);
+    EXPECT_EQ(leases.size(), 1U);
 
     // Try to get it by hw/subnet_id combination
     l = LeaseMgrFactory::instance().getLease4(*hw, subnet_->getID());
@@ -2919,7 +2919,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimpleNoDelete) {
 
     // Try by client-id
     leases = LeaseMgrFactory::instance().getLease4(*client_id_);
-    EXPECT_EQ(leases.size(), 1);
+    EXPECT_EQ(leases.size(), 1U);
 
     // Try by client-id/subnet-id
     l = LeaseMgrFactory::instance().getLease4(*client_id_, subnet_->getID());
@@ -3002,11 +3002,11 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
 
     // Try to get the lease by hardware address, should succeed
     Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*hw);
-    EXPECT_EQ(leases.size(), 1);
+    EXPECT_EQ(leases.size(), 1U);
 
     // Try by client-id, should be successful as well.
     leases = LeaseMgrFactory::instance().getLease4(*client_id_);
-    EXPECT_EQ(leases.size(), 1);
+    EXPECT_EQ(leases.size(), 1U);
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(rel);
@@ -3066,11 +3066,11 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseDrop) {
 
     // Try to get the lease by hardware address, should succeed
     Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*hw);
-    EXPECT_EQ(leases.size(), 1);
+    EXPECT_EQ(leases.size(), 1U);
 
     // Try by client-id, should be successful as well.
     leases = LeaseMgrFactory::instance().getLease4(*client_id_);
-    EXPECT_EQ(leases.size(), 1);
+    EXPECT_EQ(leases.size(), 1U);
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(rel);
@@ -3287,7 +3287,7 @@ TEST_F(HooksDhcpv4SrvTest, host4Identifier) {
     srv_->run();
 
     // check that the server did send a response
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
 
     // Make sure that we received a response
     Pkt4Ptr adv = srv_->fake_sent_.front();
@@ -3359,7 +3359,7 @@ TEST_F(HooksDhcpv4SrvTest, host4IdentifierHWAddr) {
     srv_->run();
 
     // check that the server did send a response
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
 
     // Make sure that we received a response
     Pkt4Ptr adv = srv_->fake_sent_.front();
@@ -3588,8 +3588,8 @@ TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
                     "leases4_committed", leases4_committed_park_callout));
 
     // Statistic should not show any drops.
-    EXPECT_EQ(0, getStatistic("pkt4-queue-full"));
-    EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
+    EXPECT_EQ(0U, getStatistic("pkt4-queue-full"));
+    EXPECT_EQ(0U, getStatistic("pkt4-receive-drop"));
 
     // Create a client and initiate a DORA cycle for it.
     Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
@@ -3606,7 +3606,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
     // Verify we have a packet parked.
     auto const& parking_lot = ServerHooks::getServerHooks().getParkingLotPtr("leases4_committed");
     ASSERT_TRUE(parking_lot);
-    ASSERT_EQ(1, parking_lot->size());
+    ASSERT_EQ(1U, parking_lot->size());
 
     // Clear callout buffers.
     resetCalloutBuffers();
@@ -3626,11 +3626,11 @@ TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
     ASSERT_FALSE(client2.getContext().response_);
 
     // Verify we have not parked another packet.
-    ASSERT_EQ(1, parking_lot->size());
+    ASSERT_EQ(1U, parking_lot->size());
 
     // Statistic should show one drop.
-    EXPECT_EQ(1, getStatistic("pkt4-queue-full"));
-    EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
+    EXPECT_EQ(1U, getStatistic("pkt4-queue-full"));
+    EXPECT_EQ(1U, getStatistic("pkt4-receive-drop"));
 
     // Invoking poll should run the scheduled action only for
     // the first client.
@@ -3644,7 +3644,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
     EXPECT_EQ("192.0.2.100", rsp->getYiaddr().toText());
 
     // Verify we have no parked packets.
-    ASSERT_EQ(0, parking_lot->size());
+    ASSERT_EQ(0U, parking_lot->size());
 
     resetCalloutBuffers();
 
@@ -3658,7 +3658,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
     ASSERT_FALSE(client2.getContext().response_);
 
     // Verify we parked the packet.
-    ASSERT_EQ(1, parking_lot->size());
+    ASSERT_EQ(1U, parking_lot->size());
 
     // Invoking poll should run the scheduled action.
     ASSERT_NO_THROW(io_service_->poll());
@@ -3671,11 +3671,11 @@ TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
     EXPECT_EQ("192.0.2.101", rsp->getYiaddr().toText());
 
     // Verify we have no parked packets.
-    ASSERT_EQ(0, parking_lot->size());
+    ASSERT_EQ(0U, parking_lot->size());
 
     // Statistic should still show one drop.
-    EXPECT_EQ(1, getStatistic("pkt4-queue-full"));
-    EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
+    EXPECT_EQ(1U, getStatistic("pkt4-queue-full"));
+    EXPECT_EQ(1U, getStatistic("pkt4-receive-drop"));
 }
 
 // This test verifies that the lease4_offer hook point is triggered
@@ -3955,8 +3955,8 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferParkedPacketLimit) {
         "lease4_offer", lease4_offer_park_callout));
 
     // Statistic should not show any drops.
-    EXPECT_EQ(0, getStatistic("pkt4-queue-full"));
-    EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
+    EXPECT_EQ(0U, getStatistic("pkt4-queue-full"));
+    EXPECT_EQ(0U, getStatistic("pkt4-receive-drop"));
 
     // Create a client and initiate a DORA cycle for it.
     Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
@@ -3973,7 +3973,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferParkedPacketLimit) {
     // Verify we have a packet parked.
     auto const& parking_lot = ServerHooks::getServerHooks().getParkingLotPtr("lease4_offer");
     ASSERT_TRUE(parking_lot);
-    ASSERT_EQ(1, parking_lot->size());
+    ASSERT_EQ(1U, parking_lot->size());
 
     // Clear callout buffers.
     resetCalloutBuffers();
@@ -3993,11 +3993,11 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferParkedPacketLimit) {
     ASSERT_FALSE(client2.getContext().response_);
 
     // Verify we have not parked another packet.
-    ASSERT_EQ(1, parking_lot->size());
+    ASSERT_EQ(1U, parking_lot->size());
 
     // Statistic should show one drop.
-    EXPECT_EQ(1, getStatistic("pkt4-queue-full"));
-    EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
+    EXPECT_EQ(1U, getStatistic("pkt4-queue-full"));
+    EXPECT_EQ(1U, getStatistic("pkt4-receive-drop"));
 
     // Invoking poll should run the scheduled action only for
     // the first client.
@@ -4011,7 +4011,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferParkedPacketLimit) {
     EXPECT_EQ("192.0.2.100", rsp->getYiaddr().toText());
 
     // Verify we have no parked packets.
-    ASSERT_EQ(0, parking_lot->size());
+    ASSERT_EQ(0U, parking_lot->size());
 
     resetCalloutBuffers();
 
@@ -4025,7 +4025,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferParkedPacketLimit) {
     ASSERT_FALSE(client2.getContext().response_);
 
     // Verify we parked the packet.
-    ASSERT_EQ(1, parking_lot->size());
+    ASSERT_EQ(1U, parking_lot->size());
 
     // Invoking poll should run the scheduled action.
     ASSERT_NO_THROW(io_service_->poll());
@@ -4038,11 +4038,11 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferParkedPacketLimit) {
     EXPECT_EQ("192.0.2.101", rsp->getYiaddr().toText());
 
     // Verify we have no parked packets.
-    ASSERT_EQ(0, parking_lot->size());
+    ASSERT_EQ(0U, parking_lot->size());
 
     // Statistic should still show one drop.
-    EXPECT_EQ(1, getStatistic("pkt4-queue-full"));
-    EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
+    EXPECT_EQ(1U, getStatistic("pkt4-queue-full"));
+    EXPECT_EQ(1U, getStatistic("pkt4-receive-drop"));
 }
 
 // This test verifies that a lease4_offer callout that marks a
@@ -4277,7 +4277,7 @@ TEST_F(HooksDhcpv4SrvTest, ddns4Update) {
 
     // Verify the subnet.
     ASSERT_TRUE(callback_subnet4_);
-    EXPECT_EQ(1, callback_subnet4_->getID());
+    EXPECT_EQ(1U, callback_subnet4_->getID());
 
     // Verify the hostname.
     EXPECT_EQ("client-name.example.com.", callback_hostname_);

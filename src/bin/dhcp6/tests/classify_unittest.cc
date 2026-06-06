@@ -628,7 +628,7 @@ public:
         ASSERT_TRUE(ip_forwarding_opt);
         // The option comprises 2 bytes of option code, 2 bytes of option length,
         // and a single 1 byte value. This makes it 5 bytes of a total length.
-        ASSERT_EQ(5, ip_forwarding_opt->len());
+        ASSERT_EQ(5U, ip_forwarding_opt->len());
         ASSERT_EQ(static_cast<int>(ip_forwarding),
                   static_cast<int>(ip_forwarding_opt->getUint8()));
 
@@ -639,7 +639,7 @@ public:
             ASSERT_TRUE(dns_servers_opt);
             Option6AddrLst::AddressContainer addresses = dns_servers_opt->getAddresses();
             // For simplicity, we expect only a single address.
-            ASSERT_EQ(1, addresses.size());
+            ASSERT_EQ(1U, addresses.size());
             EXPECT_EQ(dns_servers, addresses[0].toText());
 
         } else {
@@ -653,7 +653,7 @@ public:
             ASSERT_TRUE(nis_servers_opt);
             Option6AddrLst::AddressContainer addresses = nis_servers_opt->getAddresses();
             // For simplicity, we expect only a single address.
-            ASSERT_EQ(1, addresses.size());
+            ASSERT_EQ(1U, addresses.size());
             EXPECT_EQ(nis_servers, addresses[0].toText());
 
         } else {
@@ -802,9 +802,9 @@ TEST_F(ClassifyTest, matchClassification) {
     srv_->classifyPacket(query2);
     srv_->classifyPacket(query3);
 
-    EXPECT_EQ(query1->classes_.size(), 6);
-    EXPECT_EQ(query2->classes_.size(), 3);
-    EXPECT_EQ(query3->classes_.size(), 6);
+    EXPECT_EQ(query1->classes_.size(), 6U);
+    EXPECT_EQ(query2->classes_.size(), 3U);
+    EXPECT_EQ(query3->classes_.size(), 6U);
 
     EXPECT_TRUE(query1->inClass("ALL"));
     EXPECT_TRUE(query2->inClass("ALL"));
@@ -1175,7 +1175,7 @@ TEST_F(ClassifyTest, subnetClassPriority) {
     ASSERT_GT(opt->len(), opt->getHeaderLen());
     // Classification sets the value to true/1, subnet to false/0
     // Here subnet has the priority
-    EXPECT_EQ(0, opt->getUint8());
+    EXPECT_EQ(0U, opt->getUint8());
 }
 
 // Checks subnet options have the priority over global options
@@ -1243,7 +1243,7 @@ TEST_F(ClassifyTest, subnetGlobalPriority) {
     ASSERT_GT(opt->len(), opt->getHeaderLen());
     // Global sets the value to true/1, subnet to false/0
     // Here subnet has the priority
-    EXPECT_EQ(0, opt->getUint8());
+    EXPECT_EQ(0U, opt->getUint8());
 }
 
 // Checks class options have the priority over global options
@@ -1392,7 +1392,7 @@ TEST_F(ClassifyTest, classGlobalPersistency) {
     ASSERT_GT(opt->len(), opt->getHeaderLen());
     // Global sets the value to true/1, subnet to false/0
     // Here subnet has the priority
-    EXPECT_EQ(0, opt->getUint8());
+    EXPECT_EQ(0U, opt->getUint8());
 }
 
 // Checks class never-send options have the priority over everything else.
@@ -1785,7 +1785,7 @@ TEST_F(ClassifyTest, relayOverrideAndClientClass) {
     // Let's get the subnet configuration objects
     const Subnet6Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
-    ASSERT_EQ(2, subnets->size());
+    ASSERT_EQ(2U, subnets->size());
 
     // Let's get them for easy reference
     Subnet6Ptr subnet1 = *subnets->begin();
@@ -2111,7 +2111,7 @@ TEST_F(ClassifyTest, precedenceNone) {
     ASSERT_NO_THROW(client.doSARR());
 
     // Check response
-    EXPECT_EQ(1, client.getLeaseNum());
+    EXPECT_EQ(1U, client.getLeaseNum());
     Pkt6Ptr resp = client.getContext().response_;
     ASSERT_TRUE(resp);
 
@@ -2185,7 +2185,7 @@ TEST_F(ClassifyTest, precedencePool) {
     ASSERT_NO_THROW(client.doSARR());
 
     // Check response
-    EXPECT_EQ(1, client.getLeaseNum());
+    EXPECT_EQ(1U, client.getLeaseNum());
     Pkt6Ptr resp = client.getContext().response_;
     ASSERT_TRUE(resp);
 
@@ -2196,7 +2196,7 @@ TEST_F(ClassifyTest, precedencePool) {
         boost::dynamic_pointer_cast<Option6AddrLst>(opt);
     ASSERT_TRUE(servers);
     auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
+    ASSERT_EQ(1U, addrs.size());
     EXPECT_EQ("2001:db8:1::1", addrs[0].toText());
 }
 
@@ -2266,7 +2266,7 @@ TEST_F(ClassifyTest, precedencePdPool) {
     ASSERT_NO_THROW(client.doSARR());
 
     // Check response
-    EXPECT_EQ(1, client.getLeaseNum());
+    EXPECT_EQ(1U, client.getLeaseNum());
     Pkt6Ptr resp = client.getContext().response_;
     ASSERT_TRUE(resp);
 
@@ -2277,7 +2277,7 @@ TEST_F(ClassifyTest, precedencePdPool) {
         boost::dynamic_pointer_cast<Option6AddrLst>(opt);
     ASSERT_TRUE(servers);
     auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
+    ASSERT_EQ(1U, addrs.size());
     EXPECT_EQ("2001:db8:1::1", addrs[0].toText());
 }
 
@@ -2345,7 +2345,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
     ASSERT_NO_THROW(client.doSARR());
 
     // Check response
-    EXPECT_EQ(1, client.getLeaseNum());
+    EXPECT_EQ(1U, client.getLeaseNum());
     Pkt6Ptr resp = client.getContext().response_;
     ASSERT_TRUE(resp);
 
@@ -2356,7 +2356,7 @@ TEST_F(ClassifyTest, precedenceSubnet) {
         boost::dynamic_pointer_cast<Option6AddrLst>(opt);
     ASSERT_TRUE(servers);
     auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
+    ASSERT_EQ(1U, addrs.size());
     EXPECT_EQ("2001:db8:1::2", addrs[0].toText());
 }
 
@@ -2423,7 +2423,7 @@ TEST_F(ClassifyTest, precedenceNetwork) {
     ASSERT_NO_THROW(client.doSARR());
 
     // Check response
-    EXPECT_EQ(1, client.getLeaseNum());
+    EXPECT_EQ(1U, client.getLeaseNum());
     Pkt6Ptr resp = client.getContext().response_;
     ASSERT_TRUE(resp);
 
@@ -2434,7 +2434,7 @@ TEST_F(ClassifyTest, precedenceNetwork) {
         boost::dynamic_pointer_cast<Option6AddrLst>(opt);
     ASSERT_TRUE(servers);
     auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
+    ASSERT_EQ(1U, addrs.size());
     EXPECT_EQ("2001:db8:1::3", addrs[0].toText());
 }
 
@@ -2481,7 +2481,7 @@ TEST_F(ClassifyTest, additionalNoTest) {
     ASSERT_NO_THROW(client.doSARR());
 
     // Check response
-    EXPECT_EQ(1, client.getLeaseNum());
+    EXPECT_EQ(1U, client.getLeaseNum());
     Pkt6Ptr resp = client.getContext().response_;
     ASSERT_TRUE(resp);
 
@@ -2492,7 +2492,7 @@ TEST_F(ClassifyTest, additionalNoTest) {
         boost::dynamic_pointer_cast<Option6AddrLst>(opt);
     ASSERT_TRUE(servers);
     auto addrs = servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
+    ASSERT_EQ(1U, addrs.size());
     EXPECT_EQ("2001:db8:1::3", addrs[0].toText());
 }
 
@@ -2531,7 +2531,7 @@ TEST_F(ClassifyTest, additionalNotDefined) {
     ASSERT_NO_THROW(client.doSARR());
 
     // Check response
-    EXPECT_EQ(1, client.getLeaseNum());
+    EXPECT_EQ(1U, client.getLeaseNum());
     Pkt6Ptr resp = client.getContext().response_;
     ASSERT_TRUE(resp);
 }
@@ -2559,7 +2559,7 @@ TEST_F(ClassifyTest, server1Telephone) {
     ASSERT_TRUE(resp);
 
     // The address is from the first pool.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8:1:1::", lease_client.addr_.toText());
 }
@@ -2587,7 +2587,7 @@ TEST_F(ClassifyTest, server1Computer) {
     ASSERT_TRUE(resp);
 
     // The address is from the second pool.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8:1:2::", lease_client.addr_.toText());
 }
@@ -2615,7 +2615,7 @@ TEST_F(ClassifyTest, server2Telephone) {
     ASSERT_TRUE(resp);
 
     // The address is from the third pool.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8:1:3::", lease_client.addr_.toText());
 }
@@ -2643,7 +2643,7 @@ TEST_F(ClassifyTest, server2Computer) {
     ASSERT_TRUE(resp);
 
     // The address is from the forth pool.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8:1:4::", lease_client.addr_.toText());
 }
@@ -2672,7 +2672,7 @@ TEST_F(ClassifyTest, pDserver1Telephone) {
     ASSERT_TRUE(resp);
 
     // The prefix is from the first pool.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8:1::", lease_client.addr_.toText());
 }
@@ -2701,7 +2701,7 @@ TEST_F(ClassifyTest, pDserver1Computer) {
     ASSERT_TRUE(resp);
 
     // The prefix is from the second pool.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8:2::", lease_client.addr_.toText());
 }
@@ -2730,7 +2730,7 @@ TEST_F(ClassifyTest, pDserver2Telephone) {
     ASSERT_TRUE(resp);
 
     // The prefix is from the third pool.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8:3::", lease_client.addr_.toText());
 }
@@ -2759,7 +2759,7 @@ TEST_F(ClassifyTest, pDserver2Computer) {
     ASSERT_TRUE(resp);
 
     // The prefix is from the forth pool.
-    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_EQ(1U, client.getLeaseNum());
     Lease6 lease_client = client.getLease(0);
     EXPECT_EQ("2001:db8:4::", lease_client.addr_.toText());
 }
@@ -3218,7 +3218,7 @@ TEST_F(ClassifyTest, vendorClassOptionClassTag) {
     processQuery(*srv_, query, response);
 
     const auto& vendor_classes = response->getOptions(D6O_VENDOR_CLASS);
-    ASSERT_EQ(1, vendor_classes.size());
+    ASSERT_EQ(1U, vendor_classes.size());
 
     // Create a SOLICIT that does not match class "right".
     query = createSolicit();
@@ -3234,7 +3234,7 @@ TEST_F(ClassifyTest, vendorClassOptionClassTag) {
 
     // Should not have any vendor class options.
     const auto& vendor_classes2 = response->getOptions(D6O_VENDOR_CLASS);
-    ASSERT_EQ(0, vendor_classes2.size());
+    ASSERT_EQ(0U, vendor_classes2.size());
 }
 
 // Verifies that D6O_VENDOR_OPTS option can be gated by option class
@@ -3290,7 +3290,7 @@ TEST_F(ClassifyTest, persistedVendorOptsOptionClassTag) {
 
     // The response should not have the D6O_VENDOR_OPTS option.
     const auto& vendor_opts = response->getOptions(D6O_VENDOR_OPTS);
-    ASSERT_EQ(0, vendor_opts.size());
+    ASSERT_EQ(0U, vendor_opts.size());
 
     // Create a SOLICIT that matches class "melon".
     query = createSolicit();
@@ -3312,7 +3312,7 @@ TEST_F(ClassifyTest, persistedVendorOptsOptionClassTag) {
 
     // The response should have the D6O_VENDOR_OPTS option.
     const auto& vendor_opts2 = response->getOptions(D6O_VENDOR_OPTS);
-    ASSERT_EQ(1, vendor_opts2.size());
+    ASSERT_EQ(1U, vendor_opts2.size());
 }
 
 // Verifies that vendor options can be gated by option class tagging.
@@ -3416,13 +3416,13 @@ TEST_F(ClassifyTest, requestedVendorOptionsClassTag) {
 
     // Should have 1 vendor response option.
     const auto& vendor_opts = response->getOptions(D6O_VENDOR_OPTS);
-    ASSERT_EQ(1, vendor_opts.size());
+    ASSERT_EQ(1U, vendor_opts.size());
 
     auto const& opt = (*vendor_opts.begin()).second;
     OptionVendorPtr vendor_resp = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor_resp);
 
-    ASSERT_EQ(4491, vendor_resp->getVendorId());
+    ASSERT_EQ(4491U, vendor_resp->getVendorId());
     // It should vendor otions 101 and 103, but not 102.
     OptionPtr custom = vendor_resp->getOption(101);
     EXPECT_TRUE(custom);
@@ -3489,7 +3489,7 @@ TEST_F(ClassifyTest, classTaggingAndAlwaysSend) {
     OptionPtr opt = response->getOption(2345);
     ASSERT_TRUE(opt);
     ASSERT_GT(opt->len(), opt->getHeaderLen());
-    EXPECT_EQ(1, opt->getUint8());
+    EXPECT_EQ(1U, opt->getUint8());
 }
 
 // Verifies that option class-tagging does not subvert never-send.

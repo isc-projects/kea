@@ -1365,7 +1365,7 @@ public:
             boost::dynamic_pointer_cast<Option4AddrLst>(opt);
         ASSERT_TRUE(servers);
         auto addrs = servers->getAddresses();
-        ASSERT_EQ(1, addrs.size());
+        ASSERT_EQ(1U, addrs.size());
         EXPECT_EQ(ns_address, addrs[0].toText());
     }
 
@@ -1471,7 +1471,7 @@ public:
             allocated_set.insert(next_client.config_.lease_.addr_.toText());
         }
         // Make sure that we have 20 distinct allocations.
-        ASSERT_EQ(20, allocated_set.size());
+        ASSERT_EQ(20U, allocated_set.size());
 
         // Try one more time. This time no leases should be allocated because
         // the pools are exhausted.
@@ -1517,7 +1517,7 @@ TEST_F(Dhcpv4SharedNetworkTest, parse) {
     SharedNetwork4Ptr network = cfg->getByName("frog");
     ConstElementPtr context = network->getContext();
     ASSERT_TRUE(context);
-    ASSERT_EQ(1, context->size());
+    ASSERT_EQ(1U, context->size());
     ASSERT_TRUE(context->get("comment"));
     EXPECT_EQ("\"example\"", context->get("comment")->str());
 }
@@ -1965,21 +1965,21 @@ TEST_F(Dhcpv4SharedNetworkTest, optionsDerivation) {
     doDORA(client1, "192.0.2.63", "192.0.2.63");
 
     // This option is specified at the global level.
-    ASSERT_EQ(1, client1.config_.log_servers_.size());
+    ASSERT_EQ(1U, client1.config_.log_servers_.size());
     EXPECT_EQ("1.2.3.4", client1.config_.log_servers_[0].toText());
 
     // This option is specified on the subnet level.
-    ASSERT_EQ(1, client1.config_.routers_.size());
+    ASSERT_EQ(1U, client1.config_.routers_.size());
     EXPECT_EQ("192.0.2.5", client1.config_.routers_[0].toText());
 
     // This option is specified on the shared network level and the subnet level.
     // The instance on the subnet level should take precedence.
-    ASSERT_EQ(1, client1.config_.quotes_servers_.size());
+    ASSERT_EQ(1U, client1.config_.quotes_servers_.size());
     EXPECT_EQ("10.5.4.3", client1.config_.quotes_servers_[0].toText());
 
     // This option is only specified on the shared network level and should be
     // inherited by all subnets within this network.
-    ASSERT_EQ(1, client1.config_.dns_servers_.size());
+    ASSERT_EQ(1U, client1.config_.dns_servers_.size());
     EXPECT_EQ("10.1.2.3", client1.config_.dns_servers_[0].toText());
 
     // Client #2.
@@ -1992,17 +1992,17 @@ TEST_F(Dhcpv4SharedNetworkTest, optionsDerivation) {
     doDORA(client2, "10.0.0.16", "10.0.0.16");
 
     // This option is specified at the global level.
-    ASSERT_EQ(1, client2.config_.log_servers_.size());
+    ASSERT_EQ(1U, client2.config_.log_servers_.size());
     EXPECT_EQ("1.2.3.4", client2.config_.log_servers_[0].toText());
 
     // This option is only specified on the shared network level and should be
     // inherited by all subnets within this network.
-    ASSERT_EQ(1, client2.config_.quotes_servers_.size());
+    ASSERT_EQ(1U, client2.config_.quotes_servers_.size());
     EXPECT_EQ("10.6.5.4", client2.config_.quotes_servers_[0].toText());
 
     // This option is only specified on the shared network level and should be
     // inherited by all subnets within this network.
-    ASSERT_EQ(1, client2.config_.dns_servers_.size());
+    ASSERT_EQ(1U, client2.config_.dns_servers_.size());
     EXPECT_EQ("10.1.2.3", client2.config_.dns_servers_[0].toText());
 
     // Client #3.
@@ -2015,17 +2015,17 @@ TEST_F(Dhcpv4SharedNetworkTest, optionsDerivation) {
     doDORA(client3, "192.0.2.65");
 
     // This option is specified at the global level.
-    ASSERT_EQ(1, client3.config_.log_servers_.size());
+    ASSERT_EQ(1U, client3.config_.log_servers_.size());
     EXPECT_EQ("1.2.3.4", client3.config_.log_servers_[0].toText());
 
     // This option is specified on the subnet level.
-    ASSERT_EQ(1, client3.config_.quotes_servers_.size());
+    ASSERT_EQ(1U, client3.config_.quotes_servers_.size());
     EXPECT_EQ("10.1.1.1", client3.config_.quotes_servers_[0].toText());
 
     // This option is only specified on the shared network level and thus it should
     // not be returned to this client, because the client doesn't belong to the
     // shared network.
-    ASSERT_EQ(0, client3.config_.dns_servers_.size());
+    ASSERT_EQ(0U, client3.config_.dns_servers_.size());
 }
 
 // Client has a lease in a subnet within shared network.

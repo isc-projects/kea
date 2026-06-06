@@ -256,7 +256,7 @@ DirectClientTest::twoSubnets() {
     srv_->run();
 
     // Check that the server did send responses.
-    ASSERT_EQ(2, srv_->fake_sent_.size());
+    ASSERT_EQ(2U, srv_->fake_sent_.size());
 
     // In multi-threading responses can be received out of order.
     Pkt4Ptr offer;
@@ -327,7 +327,7 @@ DirectClientTest::oneSubnet() {
 
     // Check that the server sent one response for the message received
     // through eth0. The other client's message should be discarded.
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
 
     // Check the response. The first Discover was sent via eth0 for which
     // the subnet has been configured.

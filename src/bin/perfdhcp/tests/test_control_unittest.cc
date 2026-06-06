@@ -48,8 +48,8 @@ public:
 
     IfacePtr iface_;  ///< Local fake interface.
 
-    int sent_cnt_;  ///< Counter of sent packets
-    int recv_cnt_;  ///< Counter of received packets.
+    size_t sent_cnt_;  ///< Counter of sent packets
+    size_t recv_cnt_;  ///< Counter of received packets.
 
     /// \brief Simulate receiving DHCPv4 packet.
     virtual dhcp::Pkt4Ptr receive4(uint32_t timeout_sec, uint32_t timeout_usec) override {
@@ -362,7 +362,7 @@ public:
     /// of MAC address has to change if multiple clients are simulated
     /// and do not change if single client is simulated.
     void testDuid(CommandOptions &opt) const {
-        int clients_num = opt.getClientsNum();
+        uint32_t clients_num = opt.getClientsNum();
         // Initialize Test Control class.
         NakedTestControl tc(opt);
         // The old duid will be holding the previously generated DUID.
@@ -384,7 +384,7 @@ public:
         // Keep generated DUIDs in this container.
         std::list<std::vector<uint8_t> > duids;
         // Perform number of iterations to generate number of DUIDs.
-        for (int i = 0; i < 10 * clients_num; ++i) {
+        for (uint32_t i = 0; i < 10 * clients_num; ++i) {
             if (new_duid.empty()) {
                 new_duid = old_duid;
             } else {
@@ -398,7 +398,7 @@ public:
             // DUID_LLT value, two octets of hardware type, 4 octets
             // of time value and 6 octets of variable link layer (MAC)
             // address.
-            const int duid_llt_size = 14;
+            const size_t duid_llt_size = 14;
             ASSERT_EQ(duid_llt_size, new_duid.size());
             // The first four octets do not change.
             EXPECT_TRUE(std::equal(new_duid.begin(), new_duid.begin() + 4,
@@ -428,13 +428,14 @@ public:
             std::pair<DuidIterator, DuidIterator> mismatch_pos =
                 std::mismatch(old_duid.begin(), old_duid.end(),
                               new_duid.begin());
-            size_t mismatch_dist =
+            int mismatch_dist =
                 std::distance(mismatch_pos.first, old_duid.end());
             // For single client total_dist is expected to be 0 because
             // old_duid and new_duid should always match. If we have
             // more clients then duids have to differ except the case
             // if randomization algorithm generates the same values but
             // this would be an error in randomization algorithm.
+            ASSERT_LE(0, mismatch_dist);
             total_dist += mismatch_dist;
             // Mismatch may have occurred on the DUID octet position
             // up to calculated earlier unequal_pos.
@@ -468,7 +469,7 @@ public:
         }
         // If we have more than one client at least one mismatch occurred.
         if (clients_num < 2) {
-            EXPECT_EQ(0, total_dist);
+            EXPECT_EQ(0U, total_dist);
         }
     }
 
@@ -485,8 +486,8 @@ public:
     /// \param iterations_num number of exchanges to simulate.
     /// \param receive_num number of received OFFER packets.
     /// \param tc test control instance
-    void testPkt4Exchange(int iterations_num,
-                          int receive_num,
+    void testPkt4Exchange(size_t iterations_num,
+                          size_t receive_num,
                           bool use_templates,
                           NakedTestControl& tc) const {
         //int sock_handle = 0;
@@ -506,7 +507,7 @@ public:
         NakedTestControl::IncrementalGeneratorPtr
             generator(new NakedTestControl::IncrementalGenerator());
         tc.setTransidGenerator(generator);
-        for (int i = 0; i < iterations_num; ++i) {
+        for (size_t i = 0; i < iterations_num; ++i) {
             // Get next transaction id, without actually using it. The same
             // id will be used by the TestControl class for DHCPDISCOVER.
             uint32_t transid = generator->getNext();
@@ -539,8 +540,8 @@ public:
     /// \param iterations_num number of exchanges to simulate.
     /// \param receive_num number of received OFFER packets.
     /// \param tc test control instance
-    void testPkt6Exchange(int iterations_num,
-                          int receive_num,
+    void testPkt6Exchange(size_t iterations_num,
+                          size_t receive_num,
                           bool use_templates,
                           NakedTestControl& tc) const {
         //int sock_handle = 0;
@@ -561,7 +562,7 @@ public:
             generator(new NakedTestControl::IncrementalGenerator());
         tc.setTransidGenerator(generator);
         uint32_t transid = 0;
-        for (int i = 0; i < iterations_num; ++i) {
+        for (size_t i = 0; i < iterations_num; ++i) {
             // Do not simulate responses for packets later
             // that specified as receive_num. This simulates
             // packet drops.
@@ -590,7 +591,7 @@ public:
     /// greater than 1. It also checks if the same MAC addresses is
     /// generated if only 1 client is simulated.
     void testMacAddress(CommandOptions &opt) const {
-        int clients_num = opt.getClientsNum();
+        uint32_t clients_num = opt.getClientsNum();
         // The old_mac will be holding the value of previously generated
         // MAC address. We will be comparing the newly generated one with it
         // to see if it changes when multiple clients are simulated or if it
@@ -610,7 +611,7 @@ public:
         // Keep generated MACs in this container.
         std::list<std::vector<uint8_t> > macs;
         // Do many iterations to generate and test MAC address values.
-        for (int i = 0; i < clients_num * 10; ++i) {
+        for (uint32_t i = 0; i < clients_num * 10; ++i) {
             // Generate new MAC address.
             uint8_t randomized = 0;
             MacAddress new_mac(tc.generateMacAddress(randomized));
@@ -619,13 +620,14 @@ public:
             // and current.
             std::pair<MacAddressIterator, MacAddressIterator> mismatch_pos =
                 std::mismatch(old_mac.begin(), old_mac.end(), new_mac.begin());
-            size_t mismatch_dist =
+            int mismatch_dist =
                 std::distance(mismatch_pos.first, old_mac.end());
             // For single client total_dist is expected to be 0 because
             // old_mac and new_mac should always match. If we have
             // more clients then MAC addresses have to differ except
             // the case if randomization algorithm generates the same
             // values but this would be an error in randomization algorithm.
+            ASSERT_LE(0, mismatch_dist);
             total_dist += mismatch_dist;
             // Mismatch may have occurred on the MAC address's octet position
             // up to calculated earlier unequal_pos.
@@ -659,7 +661,7 @@ public:
 
         }
         if (clients_num < 2)  {
-            EXPECT_EQ(total_dist, 0);
+            EXPECT_EQ(total_dist, 0U);
         }
     }
 
@@ -727,19 +729,19 @@ public:
         // should be able to send renewal.
         msg_num = tc.sendMultipleMessages4(msg_type, 5);
         // Make sure that we have sent 5 messages.
-        EXPECT_EQ(5, msg_num);
+        EXPECT_EQ(5U, msg_num);
 
         // Try to do it again. We should still have 5 Reply packets for
         // which renews haven't been sent yet.
         msg_num = tc.sendMultipleMessages4(msg_type, 5);
-        EXPECT_EQ(5, msg_num);
+        EXPECT_EQ(5U, msg_num);
 
         // We used all the DHCPACK packets (we sent renew or release for each of
         // them already). Therefore, no further renew messages should be sent
         // before we acquire new leases.
         msg_num = tc.sendMultipleMessages4(msg_type, 5);
         // Make sure that no message has been sent.
-        EXPECT_EQ(0, msg_num);
+        EXPECT_EQ(0U, msg_num);
     }
 
     /// \brief Test that the DHCPREQUEST message is created correctly and
@@ -825,7 +827,7 @@ public:
         ASSERT_TRUE(msg);
         // Check that the message type and transaction id is correct.
         EXPECT_EQ(msg_type, msg->getType());
-        EXPECT_EQ(1, msg->getTransid());
+        EXPECT_EQ(1U, msg->getTransid());
 
         // Check that the message has expected options. These are the same for
         // Release and Renew.
@@ -924,19 +926,19 @@ public:
         // send Renew or Release.
         msg_num = tc.sendMultipleMessages6(msg_type, 5);
         // Make sure that we have sent 5 messages.
-        EXPECT_EQ(5, msg_num);
+        EXPECT_EQ(5U, msg_num);
 
         // Try to do it again. We should still have 5 Reply packets for
         // which Renews or Releases haven't been sent yet.
         msg_num = tc.sendMultipleMessages6(msg_type, 5);
-        EXPECT_EQ(5, msg_num);
+        EXPECT_EQ(5U, msg_num);
 
         // We used all the Reply packets (we sent Renew or Release for each of
         // them already). Therefore, no further Renew or Release messages should
         // be sent before we acquire new leases.
         msg_num = tc.sendMultipleMessages6(msg_type, 5);
         // Make sure that no message has been sent.
-        EXPECT_EQ(0, msg_num);
+        EXPECT_EQ(0U, msg_num);
 
     }
 
@@ -971,7 +973,7 @@ public:
             tc.processReceivedPacket6(advertise);
         }
         // counter of rejected leases has to be 6
-        EXPECT_EQ(tc.stats_mgr_.getRejLeasesNum(ExchangeType::SA), 6);
+        EXPECT_EQ(tc.stats_mgr_.getRejLeasesNum(ExchangeType::SA), 6U);
         // Simulate Advertise responses from the server. Each advertise is
         // assigned a transaction id from the range of 7 to 10 with correct IA
         // included in the message
@@ -980,7 +982,7 @@ public:
             tc.processReceivedPacket6(advertise);
         }
         // counter of rejected leases can't change at this point
-        EXPECT_EQ(tc.stats_mgr_.getRejLeasesNum(ExchangeType::SA), 6);
+        EXPECT_EQ(tc.stats_mgr_.getRejLeasesNum(ExchangeType::SA), 6U);
     }
 
     /// \brief Parse command line string with CommandOptions.
@@ -1193,12 +1195,12 @@ TEST_F(TestControlTest, generateClientId) {
 
     // Extract the client id data.
     const OptionBuffer& client_id = opt_client_id->getData();
-    ASSERT_EQ(7, client_id.size());
+    ASSERT_EQ(7U, client_id.size());
 
     // Verify that the client identifier is generated correctly.
 
     // First byte is the HW type.
-    EXPECT_EQ(5, client_id[0]);
+    EXPECT_EQ(5U, client_id[0]);
     // The rest of the client identifier should be equal to the HW address.
     std::vector<uint8_t> sub(client_id.begin() + 1, client_id.end());
     EXPECT_TRUE(hwaddr == sub);
@@ -1227,7 +1229,7 @@ TEST_F(TestControlTest, GenerateDuid) {
     std::vector<uint8_t> generated_duid = tc.generateDuid(randomized);
 
     // Check that generated_duid is DUID_LL
-    ASSERT_EQ(10, generated_duid.size());
+    ASSERT_EQ(10U, generated_duid.size());
     DuidPtr duid(new DUID(generated_duid));
     ASSERT_EQ(duid->getType(), DUID::DUID_LL);
 
@@ -1264,7 +1266,7 @@ TEST_F(TestControlTest, GenerateMacAddress) {
     uint8_t randomized = 0;
     // Generate MAC address and sanity check its size.
     std::vector<uint8_t> mac = tc.generateMacAddress(randomized);
-    ASSERT_EQ(6, mac.size());
+    ASSERT_EQ(6U, mac.size());
     // Make sure that the generated MAC address belongs to the MAC addresses
     // read from a file.
     const CommandOptions::MacAddrsVector& macs = opt.getMacsFromFile();
@@ -1343,7 +1345,7 @@ TEST_F(TestControlTest, Options6) {
     // The default value of elapsed time is zero.
     uint16_t elapsed_time;
     elapsed_time = opt_elapsed_time->getUint16();
-    EXPECT_EQ(0, elapsed_time);
+    EXPECT_EQ(0U, elapsed_time);
 
     // With the factory function we may also specify the actual
     // value of elapsed time. Let's make use of std::vector
@@ -1371,7 +1373,7 @@ TEST_F(TestControlTest, Options6) {
     // buffer is shorter than 2 octets.
     elapsed_time = opt_elapsed_time2->getUint16();
     // Check the expected value of elapsed time.
-    EXPECT_EQ(0x0101, elapsed_time);
+    EXPECT_EQ(0x0101U, elapsed_time);
 
     // Validate the D6O_RAPID_COMMIT option.
     OptionPtr opt_rapid_commit(Option::factory(Option::V6, D6O_RAPID_COMMIT));
@@ -1401,7 +1403,7 @@ TEST_F(TestControlTest, Options6) {
     // Each option code in ORO is 2 bytes long. We calculate the number of
     // requested options by dividing the size of the buffer holding options
     // by the size of each individual option.
-    int requested_options_num = sizeof(requested_options) / sizeof(uint16_t);
+    size_t requested_options_num = sizeof(requested_options) / sizeof(uint16_t);
     OptionBuffer
         requested_options_ref(requested_options,
                               requested_options + sizeof(requested_options));
@@ -1445,10 +1447,10 @@ TEST_F(TestControlTest, Packet4) {
     tc.setDefaults4(pkt4);
     // Validate that packet has been setup correctly.
     EXPECT_EQ(tc.fake_sock_.iface_->getName(), pkt4->getIface());
-    EXPECT_EQ(tc.fake_sock_.ifindex_, pkt4->getIndex());
+    EXPECT_EQ(tc.fake_sock_.ifindex_, static_cast<unsigned>(pkt4->getIndex()));
     EXPECT_EQ(DHCP4_CLIENT_PORT, pkt4->getLocalPort());
     EXPECT_EQ(DHCP4_SERVER_PORT, pkt4->getRemotePort());
-    EXPECT_EQ(1, pkt4->getHops());
+    EXPECT_EQ(1U, pkt4->getHops());
     EXPECT_EQ(asiolink::IOAddress("255.255.255.255"),
               pkt4->getRemoteAddr());
     EXPECT_EQ(asiolink::IOAddress(tc.socket_.addr_), pkt4->getLocalAddr());
@@ -1465,7 +1467,7 @@ TEST_F(TestControlTest, Packet6) {
     tc.setDefaults6(pkt6);
     // Validate if parameters have been set correctly.
     EXPECT_EQ(tc.fake_sock_.iface_->getName(), pkt6->getIface());
-    EXPECT_EQ(tc.socket_.ifindex_, pkt6->getIndex());
+    EXPECT_EQ(tc.socket_.ifindex_, static_cast<unsigned>(pkt6->getIndex()));
     EXPECT_EQ(DHCP6_CLIENT_PORT, pkt6->getLocalPort());
     EXPECT_EQ(DHCP6_SERVER_PORT, pkt6->getRemotePort());
     EXPECT_EQ(tc.socket_.addr_, pkt6->getLocalAddr());
@@ -1484,14 +1486,14 @@ TEST_F(TestControlTest, Packet6Relayed) {
     tc.setDefaults6(pkt6);
     // Validate if parameters have been set correctly.
     EXPECT_EQ(tc.fake_sock_.iface_->getName(), pkt6->getIface());
-    EXPECT_EQ(tc.socket_.ifindex_, pkt6->getIndex());
+    EXPECT_EQ(tc.socket_.ifindex_, static_cast<unsigned>(pkt6->getIndex()));
     EXPECT_EQ(DHCP6_CLIENT_PORT, pkt6->getLocalPort());
     EXPECT_EQ(DHCP6_SERVER_PORT, pkt6->getRemotePort());
     EXPECT_EQ(tc.socket_.addr_, pkt6->getLocalAddr());
     EXPECT_EQ(asiolink::IOAddress("FF05::1:3"), pkt6->getRemoteAddr());
     // Packet should be relayed.
-    EXPECT_EQ(pkt6->relay_info_.size(), 1);
-    EXPECT_EQ(pkt6->relay_info_[0].hop_count_, 0);
+    EXPECT_EQ(pkt6->relay_info_.size(), 1U);
+    EXPECT_EQ(pkt6->relay_info_[0].hop_count_, 0U);
     EXPECT_EQ(pkt6->relay_info_[0].msg_type_, DHCPV6_RELAY_FORW);
     EXPECT_EQ(pkt6->relay_info_[0].linkaddr_, tc.socket_.addr_);
     EXPECT_EQ(pkt6->relay_info_[0].peeraddr_, tc.socket_.addr_);
@@ -1507,25 +1509,25 @@ TEST_F(TestControlTest, Packet6RelayedWithRelayOpts) {
     tc.setDefaults6(pkt6);
     // Validate if parameters have been set correctly.
     EXPECT_EQ(tc.fake_sock_.iface_->getName(), pkt6->getIface());
-    EXPECT_EQ(tc.socket_.ifindex_, pkt6->getIndex());
+    EXPECT_EQ(tc.socket_.ifindex_, static_cast<unsigned>(pkt6->getIndex()));
     EXPECT_EQ(DHCP6_CLIENT_PORT, pkt6->getLocalPort());
     EXPECT_EQ(DHCP6_SERVER_PORT, pkt6->getRemotePort());
     EXPECT_EQ(tc.socket_.addr_, pkt6->getLocalAddr());
     EXPECT_EQ(asiolink::IOAddress("FF05::1:3"), pkt6->getRemoteAddr());
     // Packet should be relayed.
-    EXPECT_EQ(pkt6->relay_info_.size(), 1);
-    EXPECT_EQ(pkt6->relay_info_[0].hop_count_, 0);
+    EXPECT_EQ(pkt6->relay_info_.size(), 1U);
+    EXPECT_EQ(pkt6->relay_info_[0].hop_count_, 0U);
     EXPECT_EQ(pkt6->relay_info_[0].msg_type_, DHCPV6_RELAY_FORW);
     EXPECT_EQ(pkt6->relay_info_[0].linkaddr_, tc.socket_.addr_);
     EXPECT_EQ(pkt6->relay_info_[0].peeraddr_, tc.socket_.addr_);
     // Checking if relayed option is there.
     OptionBuffer opt_data = pkt6->relay_info_[0].options_.find(32)->second->getData();
-    EXPECT_EQ(4, opt_data.size());
+    EXPECT_EQ(4U, opt_data.size());
     EXPECT_EQ("0x00000E10", pkt6->relay_info_[0].options_.find(32)->second->toHexString());
 }
 
 TEST_F(TestControlTest, Packet4Exchange) {
-    const int iterations_num = 100;
+    const size_t iterations_num = 100;
     CommandOptions opt;
     processCmdLine(opt, "perfdhcp -l fake -r 100 -n 10 -R 20 -L 10547 127.0.0.1");
     bool use_templates = false;
@@ -1536,18 +1538,18 @@ TEST_F(TestControlTest, Packet4Exchange) {
     EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::DO), iterations_num);
     EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::DO), iterations_num);
     EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::RA), iterations_num);
-    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RA), 0);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RA), 0U);
 }
 
 TEST_F(TestControlTest, Packet4ExchangeFromTemplate) {
-    const int iterations_num = 100;
+    const size_t iterations_num = 100;
     CommandOptions opt;
 
     processCmdLine(opt, "perfdhcp -l fake -r 100 -R 20 -n 20 -L 10547"
                    " -T " + getFullPath("discover-example.hex")
                    + " -T " + getFullPath("request4-example.hex")
                    + " 127.0.0.1");
-    const int received_num = 10;
+    const size_t received_num = 10;
     bool use_templates = true;
     NakedTestControl tc(opt);
     testPkt4Exchange(iterations_num, received_num, use_templates, tc);
@@ -1556,11 +1558,11 @@ TEST_F(TestControlTest, Packet4ExchangeFromTemplate) {
     EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::DO), iterations_num);
     EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::DO), received_num);
     EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::RA), received_num);
-    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RA), 0);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RA), 0U);
 }
 
 TEST_F(TestControlTest, Packet6Exchange) {
-    const int iterations_num = 100;
+    const size_t iterations_num = 100;
     CommandOptions opt;
     processCmdLine(opt, "perfdhcp -l fake -6 -r 100 -n 10 -R 20 -L 10547 ::1");
     bool use_templates = false;
@@ -1571,11 +1573,11 @@ TEST_F(TestControlTest, Packet6Exchange) {
     EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::SA), iterations_num);
     EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::SA), iterations_num);
     EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::RR), iterations_num);
-    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RR), 0);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RR), 0U);
 }
 
 TEST_F(TestControlTest, Packet6ExchangeFromTemplate) {
-    const int iterations_num = 100;
+    const size_t iterations_num = 100;
     CommandOptions opt;
     processCmdLine(opt, "perfdhcp -l fake -6 -r 100 -n 10 -R 20 -L 10547"
                    " -T " + getFullPath("solicit-example.hex")
@@ -1586,7 +1588,7 @@ TEST_F(TestControlTest, Packet6ExchangeFromTemplate) {
     // For other packets we don't so packet as 4,5,6 will be dropped and
     // then test should be interrupted and actual number of iterations will
     // be 6.
-    const int received_num = 3;
+    const size_t received_num = 3;
     // Simulate the number of Solicit-Advertise-Request-Reply (SARR) exchanges.
     // The test function generates server's responses and passes it to the
     // TestControl class methods for processing. All exchanged packets carry
@@ -1599,11 +1601,11 @@ TEST_F(TestControlTest, Packet6ExchangeFromTemplate) {
     EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::SA), iterations_num);
     EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::SA), received_num);
     EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::RR), received_num);
-    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RR), 0);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RR), 0U);
 }
 
 TEST_F(TestControlTest, Packet6ExchangeAddressOnly) {
-    const int iterations_num = 100;
+    const size_t iterations_num = 100;
     CommandOptions opt;
     processCmdLine(opt, "perfdhcp -l fake -e address-only"
                    " -6 -r 100 -n 10 -R 20 -L 10547 ::1");
@@ -1623,11 +1625,11 @@ TEST_F(TestControlTest, Packet6ExchangeAddressOnly) {
     EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::SA), iterations_num);
     EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::SA), iterations_num);
     EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::RR), iterations_num);
-    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RR), 0);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RR), 0U);
 }
 
 TEST_F(TestControlTest, Packet6ExchangePrefixDelegation) {
-    const int iterations_num = 100;
+    const size_t iterations_num = 100;
     CommandOptions opt;
     processCmdLine(opt, "perfdhcp -l fake -e prefix-only"
                    " -6 -r 100 -n 10 -R 20 -L 10547 ::1");
@@ -1647,11 +1649,11 @@ TEST_F(TestControlTest, Packet6ExchangePrefixDelegation) {
     EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::SA), iterations_num);
     EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::SA), iterations_num);
     EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::RR), iterations_num);
-    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RR), 0);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RR), 0U);
 }
 
 TEST_F(TestControlTest, Packet6ExchangeAddressAndPrefix) {
-    const int iterations_num = 100;
+    const size_t iterations_num = 100;
     CommandOptions opt;
     processCmdLine(opt, "perfdhcp -l fake -e address-and-prefix"
                    " -6 -r 100 -n 10 -R 20 -L 10547 ::1");
@@ -1671,7 +1673,7 @@ TEST_F(TestControlTest, Packet6ExchangeAddressAndPrefix) {
     EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::SA), iterations_num);
     EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::SA), iterations_num);
     EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::RR), iterations_num);
-    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RR), 0);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RR), 0U);
 }
 
 TEST_F(TestControlTest, PacketTemplates) {
@@ -1812,7 +1814,7 @@ TEST_F(TestControlTest, Packet4ExchangeExtraOpts) {
     // -xT - save first packet of each type for templates (useful for packet inspection)
     // -o 200,abcdef1234 - send option 200 with hex content: ab:cd:ef:12:34
     // -o 201,00 - send option 201 with hex content: 00
-    const int iterations_num = 1;
+    const size_t iterations_num = 1;
     CommandOptions opt;
     processCmdLine(opt, "perfdhcp -l fake -4 -o 200,abcdef1234 -o 201,00 "
                    "-r 100 -n 10 -R 20 -xT -L 10547 127.0.0.1");
@@ -1827,7 +1829,7 @@ TEST_F(TestControlTest, Packet4ExchangeExtraOpts) {
     EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::DO), iterations_num);
     EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::DO), iterations_num);
     EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::RA), iterations_num);
-    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RA), 0);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RA), 0U);
 
     // Check if Discover was recored and if it contains options 200 and 201.
     auto disc = tc.template_packets_v4_.find(DHCPDISCOVER);
@@ -1847,7 +1849,7 @@ TEST_F(TestControlTest, Packet6ExchangeExtraOpts) {
     // -xT - save first packet of each type for templates (useful for packet inspection)
     // -o 200,abcdef1234 - send option 200 with hex content: ab:cd:ef:12:34
     // -o 201,00 - send option 201 with hex content: 00
-    const int iterations_num = 1;
+    const size_t iterations_num = 1;
     CommandOptions opt;
     processCmdLine(opt, "perfdhcp -l fake"
                    " -6 -e address-only"
@@ -1866,7 +1868,7 @@ TEST_F(TestControlTest, Packet6ExchangeExtraOpts) {
     EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::SA), iterations_num);
     EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::SA), iterations_num);
     EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::RR), iterations_num);
-    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RR), 0);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RR), 0U);
 
     // Check if Solicit was recorded and if it contains options 200 and 201.
     auto sol = tc.template_packets_v6_.find(DHCPV6_SOLICIT);
@@ -1931,17 +1933,17 @@ TEST_F(TestControlTest, haFailure4) {
     sleep(1);          // wait a second...
     tc.sendPackets(1); // and send another packet. This should have secs set to 2.
 
-    EXPECT_EQ(tc.fake_sock_.sent_cnt_, 2); // Make sure the stats are up.
-    ASSERT_EQ(tc.fake_sock_.sent_pkts4_.size(), 2); // And the packets were captured.
+    EXPECT_EQ(tc.fake_sock_.sent_cnt_, 2U); // Make sure the stats are up.
+    ASSERT_EQ(tc.fake_sock_.sent_pkts4_.size(), 2U); // And the packets were captured.
     Pkt4Ptr dis1 = tc.fake_sock_.sent_pkts4_[0];
     Pkt4Ptr dis2 = tc.fake_sock_.sent_pkts4_[1];
     ASSERT_TRUE(dis1);
     ASSERT_TRUE(dis2);
 
-    EXPECT_EQ(dis1->getSecs(), 1); // Make sure it has secs set to 1.
-    EXPECT_GT(dis2->getSecs(), 1); // Should be 2, but we want to avoid rare cases when the test
-                                   // could fall exactly on the second boundary, so checking for
-                                   // greater than 1.
+    EXPECT_EQ(dis1->getSecs(), 1U); // Make sure it has secs set to 1.
+    EXPECT_GT(dis2->getSecs(), 1U); // Should be 2, but we want to avoid rare cases when the test
+                                    // could fall exactly on the second boundary, so checking for
+                                    // greater than 1.
 }
 
 // This test checks if HA failure can be simulated using -y and -Y options with DHCPv6.
@@ -1954,8 +1956,8 @@ TEST_F(TestControlTest, haFailure6) {
     sleep(1);          // wait a second...
     tc.sendPackets(1); // and send another packet. This should have secs set to 2.
 
-    EXPECT_EQ(tc.fake_sock_.sent_cnt_, 2); // Make sure the stats are up.
-    ASSERT_EQ(tc.fake_sock_.sent_pkts6_.size(), 2); // And the packets were captured.
+    EXPECT_EQ(tc.fake_sock_.sent_cnt_, 2U); // Make sure the stats are up.
+    ASSERT_EQ(tc.fake_sock_.sent_pkts6_.size(), 2U); // And the packets were captured.
     Pkt6Ptr sol1 = tc.fake_sock_.sent_pkts6_[0];
     Pkt6Ptr sol2 = tc.fake_sock_.sent_pkts6_[1];
     ASSERT_TRUE(sol1);
@@ -1965,6 +1967,6 @@ TEST_F(TestControlTest, haFailure6) {
     ASSERT_TRUE(elapsed1);
     ASSERT_TRUE(elapsed2);
 
-    EXPECT_EQ(elapsed1->getValue(), 100);
-    EXPECT_GT(elapsed2->getValue(), 100);
+    EXPECT_EQ(elapsed1->getValue(), 100U);
+    EXPECT_GT(elapsed2->getValue(), 100U);
 }

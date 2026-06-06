@@ -279,8 +279,8 @@ TEST_F(D2CfgMgrTest, validParamsEntry) {
 
     EXPECT_EQ(isc::asiolink::IOAddress("192.0.0.1"),
               d2_params_->getIpAddress());
-    EXPECT_EQ(777, d2_params_->getPort());
-    EXPECT_EQ(333, d2_params_->getDnsServerTimeout());
+    EXPECT_EQ(777U, d2_params_->getPort());
+    EXPECT_EQ(333U, d2_params_->getDnsServerTimeout());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_params_->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_params_->getNcrFormat());
 
@@ -339,7 +339,7 @@ TEST_F(D2CfgMgrTest, defaultValues) {
     RUN_CONFIG_OK(config);
     ASSERT_NO_THROW(deflt = defaults->get("port"));
     ASSERT_TRUE(deflt);
-    EXPECT_EQ(deflt->intValue(), d2_params_->getPort());
+    EXPECT_EQ(deflt->intValue(), static_cast<int>(d2_params_->getPort()));
 
     // Check that omitting timeout gets you its default
     config =
@@ -356,7 +356,7 @@ TEST_F(D2CfgMgrTest, defaultValues) {
     RUN_CONFIG_OK(config);
     ASSERT_NO_THROW(deflt = defaults->get("dns-server-timeout"));
     ASSERT_TRUE(deflt);
-    EXPECT_EQ(deflt->intValue(), d2_params_->getDnsServerTimeout());
+    EXPECT_EQ(deflt->intValue(), static_cast<int>(d2_params_->getDnsServerTimeout()));
 
     // Check that omitting protocol gets you its default
     config =
@@ -590,8 +590,8 @@ TEST_F(D2CfgMgrTest, fullConfig) {
 
     EXPECT_EQ(isc::asiolink::IOAddress("192.168.1.33"),
               d2_params->getIpAddress());
-    EXPECT_EQ(88, d2_params->getPort());
-    EXPECT_EQ(333, d2_params->getDnsServerTimeout());
+    EXPECT_EQ(88U, d2_params->getPort());
+    EXPECT_EQ(333U, d2_params->getDnsServerTimeout());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_params->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_params->getNcrFormat());
 
@@ -599,10 +599,10 @@ TEST_F(D2CfgMgrTest, fullConfig) {
     ConstElementPtr ctrl_sock = context->getUnixControlSocketInfo();
     ASSERT_TRUE(ctrl_sock);
     ASSERT_EQ(Element::list, ctrl_sock->getType());
-    ASSERT_EQ(ctrl_sock->size(), 1);
+    ASSERT_EQ(ctrl_sock->size(), 1U);
     ctrl_sock = ctrl_sock->get(0);
     ASSERT_EQ(Element::map, ctrl_sock->getType());
-    EXPECT_EQ(2, ctrl_sock->size());
+    EXPECT_EQ(2U, ctrl_sock->size());
     ASSERT_TRUE(ctrl_sock->get("socket-type"));
     EXPECT_EQ("\"unix\"", ctrl_sock->get("socket-type")->str());
     ASSERT_TRUE(ctrl_sock->get("socket-name"));
@@ -610,7 +610,7 @@ TEST_F(D2CfgMgrTest, fullConfig) {
 
     // Verify that the hooks libraries can be retrieved.
     const HookLibsCollection libs = context->getHooksConfig().get();
-    ASSERT_EQ(1, libs.size());
+    ASSERT_EQ(1U, libs.size());
     EXPECT_EQ(string(CALLOUT_LIBRARY), libs[0].libname_);
     ASSERT_TRUE(libs[0].parameters_);
     EXPECT_EQ("{ \"param1\": \"foo\" }", libs[0].parameters_->str());
@@ -1076,7 +1076,7 @@ TEST_F(D2CfgMgrTest, comments) {
     // Check global user context.
     ConstElementPtr ctx = d2_context->getContext();
     ASSERT_TRUE(ctx);
-    ASSERT_EQ(1, ctx->size());
+    ASSERT_EQ(1U, ctx->size());
     ASSERT_TRUE(ctx->get("comment"));
     EXPECT_EQ("\"D2 config\"", ctx->get("comment")->str());
 
@@ -1084,12 +1084,12 @@ TEST_F(D2CfgMgrTest, comments) {
     ConstElementPtr socket = d2_context->getUnixControlSocketInfo();
     ASSERT_TRUE(socket);
     ASSERT_EQ(Element::list, socket->getType());
-    ASSERT_EQ(socket->size(), 1);
+    ASSERT_EQ(socket->size(), 1U);
     socket = socket->get(0);
     ASSERT_TRUE(socket);
     ConstElementPtr ctx_socket = socket->get("user-context");
     ASSERT_TRUE(ctx_socket);
-    ASSERT_EQ(1, ctx_socket->size());
+    ASSERT_EQ(1U, ctx_socket->size());
     ASSERT_TRUE(ctx_socket->get("comment"));
     EXPECT_EQ("\"Indirect comment\"", ctx_socket->get("comment")->str());
 
@@ -1097,13 +1097,13 @@ TEST_F(D2CfgMgrTest, comments) {
     socket = d2_context->getHttpControlSocketInfo();
     ASSERT_TRUE(socket);
     ASSERT_EQ(Element::list, socket->getType());
-    ASSERT_EQ(socket->size(), 1);
+    ASSERT_EQ(socket->size(), 1U);
     socket = socket->get(0);
     ASSERT_TRUE(socket);
     /// @todo use the configuration object.
     ctx_socket = socket->get("user-context");
     ASSERT_TRUE(ctx_socket);
-    ASSERT_EQ(1, ctx_socket->size());
+    ASSERT_EQ(1U, ctx_socket->size());
     ASSERT_TRUE(ctx_socket->get("comment"));
     EXPECT_EQ("\"HTTP control socket\"", ctx_socket->get("comment")->str());
 
@@ -1112,27 +1112,27 @@ TEST_F(D2CfgMgrTest, comments) {
     ASSERT_TRUE(auth);
     ConstElementPtr ctx_auth = auth->get("user-context");
     ASSERT_TRUE(ctx_auth);
-    ASSERT_EQ(1, ctx_auth->size());
+    ASSERT_EQ(1U, ctx_auth->size());
     ASSERT_TRUE(ctx_auth->get("comment"));
     EXPECT_EQ("\"basic HTTP authentication\"", ctx_auth->get("comment")->str());
 
     // Authentication client.
     ConstElementPtr clients = auth->get("clients");
     ASSERT_TRUE(clients);
-    ASSERT_EQ(1, clients->size());
+    ASSERT_EQ(1U, clients->size());
     ConstElementPtr client;
     ASSERT_NO_THROW(client = clients->get(0));
     ASSERT_TRUE(client);
     ConstElementPtr ctx_client = client->get("user-context");
     ASSERT_TRUE(ctx_client);
-    ASSERT_EQ(1, ctx_client->size());
+    ASSERT_EQ(1U, ctx_client->size());
     ASSERT_TRUE(ctx_client->get("comment"));
     EXPECT_EQ("\"admin is authorized\"", ctx_client->get("comment")->str());
 
     // Check TSIG keys.
     TSIGKeyInfoMapPtr keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
-    ASSERT_EQ(1, keys->size());
+    ASSERT_EQ(1U, keys->size());
 
     // Check the TSIG key.
     TSIGKeyInfoMap::iterator gotkey = keys->find("d2_key.example.com");
@@ -1143,7 +1143,7 @@ TEST_F(D2CfgMgrTest, comments) {
     // Check the TSIG key user context.
     ConstElementPtr key_ctx = key->getContext();
     ASSERT_TRUE(key_ctx);
-    ASSERT_EQ(1, key_ctx->size());
+    ASSERT_EQ(1U, key_ctx->size());
     ASSERT_TRUE(key_ctx->get("comment"));
     EXPECT_EQ("\"Indirect comment\"", key_ctx->get("comment")->str());
 
@@ -1153,7 +1153,7 @@ TEST_F(D2CfgMgrTest, comments) {
     EXPECT_EQ("forward-ddns", mgr->getName());
     DdnsDomainMapPtr domains = mgr->getDomains();
     ASSERT_TRUE(domains);
-    ASSERT_EQ(1, domains->size());
+    ASSERT_EQ(1U, domains->size());
 
     // Check the DDNS domain.
     DdnsDomainMap::iterator gotdns = domains->find("example.com");
@@ -1164,14 +1164,14 @@ TEST_F(D2CfgMgrTest, comments) {
     // Check the DNS server.
     DnsServerInfoStoragePtr servers = domain->getServers();
     ASSERT_TRUE(servers);
-    ASSERT_EQ(1, servers->size());
+    ASSERT_EQ(1U, servers->size());
     DnsServerInfoPtr server = (*servers)[0];
     ASSERT_TRUE(server);
 
     // Check the DNS server user context.
     ConstElementPtr srv_ctx = server->getContext();
     ASSERT_TRUE(srv_ctx);
-    ASSERT_EQ(1, srv_ctx->size());
+    ASSERT_EQ(1U, srv_ctx->size());
     ASSERT_TRUE(srv_ctx->get("version"));
     EXPECT_EQ("1", srv_ctx->get("version")->str());
 }
@@ -1190,8 +1190,8 @@ TEST_F(D2CfgMgrTest, listenOnANYAddresses) {
     EXPECT_EQ("listening on 0.0.0.0, port 777, using UDP",
               d2_params_->getConfigSummary());
 
-    EXPECT_EQ(777, d2_params_->getPort());
-    EXPECT_EQ(333, d2_params_->getDnsServerTimeout());
+    EXPECT_EQ(777U, d2_params_->getPort());
+    EXPECT_EQ(333U, d2_params_->getDnsServerTimeout());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_params_->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_params_->getNcrFormat());
 

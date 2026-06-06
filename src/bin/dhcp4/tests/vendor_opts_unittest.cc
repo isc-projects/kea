@@ -260,12 +260,12 @@ public:
 
                         // Check that the provided addresses match the ones in configuration.
                         Option4AddrLst::AddressContainer addrs = tftp_srvs->getAddresses();
-                        ASSERT_EQ(2, addrs.size());
+                        ASSERT_EQ(2U, addrs.size());
                         EXPECT_EQ("192.0.2.1", addrs[0].toText());
                         EXPECT_EQ("192.0.2.2", addrs[1].toText());
                     }
 
-                    if (option == 22) {
+                    if (option == 22U) {
                         // Option 22 should be present.
                         OptionPtr custom = vendor_resp->getOption(22);
                         ASSERT_TRUE(custom);
@@ -531,7 +531,7 @@ public:
 
                         // Check that the provided addresses match the ones in configuration.
                         Option4AddrLst::AddressContainer addrs = tftp_srvs->getAddresses();
-                        ASSERT_EQ(2, addrs.size());
+                        ASSERT_EQ(2U, addrs.size());
                         if (vendor_resp->getVendorId() == VENDOR_ID_CABLE_LABS) {
                             EXPECT_EQ("192.0.2.1", addrs[0].toText());
                             EXPECT_EQ("192.0.2.2", addrs[1].toText());
@@ -780,7 +780,7 @@ public:
 
                         // Check that the provided addresses match the ones in configuration.
                         Option4AddrLst::AddressContainer addrs = tftp_srvs->getAddresses();
-                        ASSERT_EQ(2, addrs.size());
+                        ASSERT_EQ(2U, addrs.size());
                         if (vendor_resp->getVendorId() == VENDOR_ID_CABLE_LABS) {
                             EXPECT_EQ("192.0.2.1", addrs[0].toText());
                             EXPECT_EQ("192.0.2.2", addrs[1].toText());
@@ -880,7 +880,7 @@ TEST_F(VendorOptsTest, vendorOptionsDocsis) {
     srv_->run();
 
     // Check that the server did send a response
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
 
     // Make sure that we received a response
     Pkt4Ptr offer = srv_->fake_sent_.front();
@@ -906,7 +906,7 @@ TEST_F(VendorOptsTest, vendorOptionsDocsis) {
     ASSERT_TRUE(tftp_servers);
 
     Option4AddrLst::AddressContainer addrs = tftp_servers->getAddresses();
-    ASSERT_EQ(1, addrs.size());
+    ASSERT_EQ(1U, addrs.size());
     EXPECT_EQ("10.253.175.16", addrs[0].toText());
 }
 
@@ -1432,7 +1432,7 @@ TEST_F(VendorOptsTest, vendorCancelledOptions) {
     EXPECT_FALSE(vendor_resp->getOption(DOCSIS3_V4_TFTP_SERVERS));
 
     // But an option 100.
-    EXPECT_EQ(1, vendor_resp->getOptions().size());
+    EXPECT_EQ(1U, vendor_resp->getOptions().size());
     EXPECT_TRUE(vendor_resp->getOption(100));
 }
 
@@ -1582,7 +1582,7 @@ TEST_F(VendorOptsTest, vivsoInResponseOnly) {
     // Check that it includes vivso with vendor-id = 25167
     OptionVendorPtr rsp_vivso = boost::dynamic_pointer_cast<OptionVendor>(rsp);
     ASSERT_TRUE(rsp_vivso);
-    EXPECT_EQ(rsp_vivso->getVendorId(), 25167);
+    EXPECT_EQ(rsp_vivso->getVendorId(), 25167U);
 
     // Now check that it contains suboption 2 with appropriate content.
     OptionPtr subopt2 = rsp_vivso->getOption(2);
@@ -1709,7 +1709,7 @@ TEST_F(VendorOptsTest, vivsoInResponseOnlyComplex) {
     // Check that it includes vivso with vendor-id = 25167
     OptionVendorPtr rsp_vivso = boost::dynamic_pointer_cast<OptionVendor>(rsp);
     ASSERT_TRUE(rsp_vivso);
-    EXPECT_EQ(rsp_vivso->getVendorId(), 25167);
+    EXPECT_EQ(rsp_vivso->getVendorId(), 25167U);
 
     // Now check that it contains suboption 193 with appropriate content.
     OptionPtr subopt193 = rsp_vivso->getOption(193);
@@ -1812,10 +1812,10 @@ TEST_F(VendorOptsTest, option43LastResort) {
     opt = offer->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
     ASSERT_TRUE(opt);
     const OptionCollection& opts = opt->getOptions();
-    ASSERT_EQ(1, opts.size());
+    ASSERT_EQ(1U, opts.size());
     OptionPtr sopt = opts.begin()->second;
     ASSERT_TRUE(sopt);
-    EXPECT_EQ(1, sopt->getType());
+    EXPECT_EQ(1U, sopt->getType());
 }
 
 // Checks effect of raw not compatible option 43 (no failure)
@@ -2054,8 +2054,8 @@ TEST_F(VendorOptsTest, option43RawGlobal) {
     ASSERT_TRUE(opt);
     // Verifies the content
     ASSERT_EQ(2, opt->len() - opt->getHeaderLen());
-    EXPECT_EQ(0x01, opt->getData()[0]);
-    EXPECT_EQ(0x02, opt->getData()[1]);
+    EXPECT_EQ(0x01U, opt->getData()[0]);
+    EXPECT_EQ(0x02U, opt->getData()[1]);
 }
 
 // Verifies raw option 43 can be handled (catch-all class)
@@ -2144,8 +2144,8 @@ TEST_F(VendorOptsTest, option43RawClass) {
     ASSERT_TRUE(opt);
     // Verifies the content
     ASSERT_EQ(2, opt->len() - opt->getHeaderLen());
-    EXPECT_EQ(0x01, opt->getData()[0]);
-    EXPECT_EQ(0x02, opt->getData()[1]);
+    EXPECT_EQ(0x01U, opt->getData()[0]);
+    EXPECT_EQ(0x02U, opt->getData()[1]);
 }
 
 // Verifies option 43 deferred processing (one class)
@@ -2233,7 +2233,7 @@ TEST_F(VendorOptsTest, option43Class) {
     vopt = query->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
     OptionCustomPtr custom = boost::dynamic_pointer_cast<OptionCustom>(vopt);
     EXPECT_TRUE(custom);
-    EXPECT_EQ(1, vopt->getOptions().size());
+    EXPECT_EQ(1U, vopt->getOptions().size());
 
     // Pass it to the server and get a DHCPOFFER.
     Pkt4Ptr offer = srv_->processDiscover(query);
@@ -2251,13 +2251,13 @@ TEST_F(VendorOptsTest, option43Class) {
     ASSERT_TRUE(opt);
     // Verifies the content
     const OptionCollection& opts = opt->getOptions();
-    ASSERT_EQ(1, opts.size());
+    ASSERT_EQ(1U, opts.size());
     OptionPtr sopt = opts.begin()->second;
     ASSERT_TRUE(sopt);
-    EXPECT_EQ(1, sopt->getType());
+    EXPECT_EQ(1U, sopt->getType());
     OptionUint32Ptr sopt32 = boost::dynamic_pointer_cast<OptionUint32>(sopt);
     ASSERT_TRUE(sopt32);
-    EXPECT_EQ(12345678, sopt32->getValue());
+    EXPECT_EQ(12345678U, sopt32->getValue());
 }
 
 // Verifies option 43 priority
@@ -2362,7 +2362,7 @@ TEST_F(VendorOptsTest, option43ClassPriority) {
     vopt = query->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
     OptionCustomPtr custom = boost::dynamic_pointer_cast<OptionCustom>(vopt);
     EXPECT_TRUE(custom);
-    EXPECT_EQ(1, vopt->getOptions().size());
+    EXPECT_EQ(1U, vopt->getOptions().size());
 
     // Pass it to the server and get a DHCPOFFER.
     Pkt4Ptr offer = srv_->processDiscover(query);
@@ -2383,14 +2383,14 @@ TEST_F(VendorOptsTest, option43ClassPriority) {
     ASSERT_TRUE(opt);
     // Verifies the content
     const OptionCollection& opts = opt->getOptions();
-    ASSERT_EQ(1, opts.size());
+    ASSERT_EQ(1U, opts.size());
     OptionPtr sopt = opts.begin()->second;
     ASSERT_TRUE(sopt);
-    EXPECT_EQ(1, sopt->getType());
-    EXPECT_EQ(2 + 4, sopt->len());
+    EXPECT_EQ(1U, sopt->getType());
+    EXPECT_EQ(2 + 4U, sopt->len());
     OptionUint32Ptr sopt32 = boost::dynamic_pointer_cast<OptionUint32>(sopt);
     ASSERT_TRUE(sopt32);
-    EXPECT_EQ(12345678, sopt32->getValue());
+    EXPECT_EQ(12345678U, sopt32->getValue());
 }
 
 // Verifies option 43 deferred processing (two classes)
@@ -2497,7 +2497,7 @@ TEST_F(VendorOptsTest, option43Classes) {
     vopt = query->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
     OptionCustomPtr custom = boost::dynamic_pointer_cast<OptionCustom>(vopt);
     EXPECT_TRUE(custom);
-    EXPECT_EQ(1, vopt->getOptions().size());
+    EXPECT_EQ(1U, vopt->getOptions().size());
 
     // Pass it to the server and get a DHCPOFFER.
     Pkt4Ptr offer = srv_->processDiscover(query);
@@ -2518,14 +2518,14 @@ TEST_F(VendorOptsTest, option43Classes) {
     ASSERT_TRUE(opt);
     // Verifies the content
     const OptionCollection& opts = opt->getOptions();
-    ASSERT_EQ(1, opts.size());
+    ASSERT_EQ(1U, opts.size());
     OptionPtr sopt = opts.begin()->second;
     ASSERT_TRUE(sopt);
-    EXPECT_EQ(1, sopt->getType());
-    EXPECT_EQ(2 + 4, sopt->len());
+    EXPECT_EQ(1U, sopt->getType());
+    EXPECT_EQ(2 + 4U, sopt->len());
     OptionUint32Ptr sopt32 = boost::dynamic_pointer_cast<OptionUint32>(sopt);
     ASSERT_TRUE(sopt32);
-    EXPECT_EQ(12345678, sopt32->getValue());
+    EXPECT_EQ(12345678U, sopt32->getValue());
 }
 
 // Checks effect of raw not compatible option 43 sent by a client (failure)
@@ -2701,7 +2701,7 @@ TEST_F(VendorOptsTest, truncatedVIVSOOption) {
     srv_->run();
 
     // Check that the server did send a response
-    ASSERT_EQ(1, srv_->fake_sent_.size());
+    ASSERT_EQ(1U, srv_->fake_sent_.size());
 
     // Make sure that we received an response and it was a DHCPOFFER.
     Pkt4Ptr offer = srv_->fake_sent_.front();
@@ -2820,10 +2820,10 @@ TEST_F(VendorOptsTest, vendorOpsSubOption0) {
     OptionPtr opt = offer->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
     ASSERT_TRUE(opt);
     const OptionCollection& opts = opt->getOptions();
-    ASSERT_EQ(1, opts.size());
+    ASSERT_EQ(1U, opts.size());
     OptionPtr sopt = opts.begin()->second;
     ASSERT_TRUE(sopt);
-    EXPECT_EQ(0, sopt->getType());
+    EXPECT_EQ(0U, sopt->getType());
 
     // Check suboption 0 content.
     OptionStringPtr sopt0 =
@@ -2875,7 +2875,7 @@ TEST_F(VendorOptsTest, twoVivcos) {
     // Check whether there are vivco options.
     const OptionCollection& classes =
         client.getContext().response_->getOptions(DHO_VIVCO_SUBOPTIONS);
-    ASSERT_EQ(2, classes.size());
+    ASSERT_EQ(2U, classes.size());
     OptionVendorClassPtr opt_class1234;
     OptionVendorClassPtr opt_class5678;
     for (auto const& opt : classes) {
@@ -2889,18 +2889,18 @@ TEST_F(VendorOptsTest, twoVivcos) {
             opt_class1234 = opt_class;
             continue;
         }
-        ASSERT_EQ(5678, vendor_id);
+        ASSERT_EQ(5678U, vendor_id);
         ASSERT_FALSE(opt_class5678);
         opt_class5678 = opt_class;
     }
 
     // Verify first vivco option.
     ASSERT_TRUE(opt_class1234);
-    ASSERT_EQ(1, opt_class1234->getTuplesNum());
+    ASSERT_EQ(1U, opt_class1234->getTuplesNum());
     EXPECT_EQ("foo", opt_class1234->getTuple(0).getText());
 
     // Verify second vivco option.
     ASSERT_TRUE(opt_class5678);
-    ASSERT_EQ(1, opt_class5678->getTuplesNum());
+    ASSERT_EQ(1U, opt_class5678->getTuplesNum());
     EXPECT_EQ("bar", opt_class5678->getTuple(0).getText());
 }

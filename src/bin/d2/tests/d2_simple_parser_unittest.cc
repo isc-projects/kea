@@ -283,7 +283,7 @@ TEST_F(D2SimpleParserTest, globalD2Defaults) {
     EXPECT_NO_THROW(num = D2SimpleParser::setAllDefaults(empty));
 
     // We expect 5 parameters to be inserted.
-    EXPECT_EQ(num, 8);
+    EXPECT_EQ(num, 8U);
 
     // Let's go over all parameters we have defaults for.
     for (auto const& deflt : D2SimpleParser::D2_GLOBAL_DEFAULTS) {
@@ -1014,7 +1014,7 @@ TEST_F(DnsServerInfoListParserTest, validServerList) {
     PARSE_OK(config);
 
     // Verify that the server storage contains the correct number of servers.
-    ASSERT_EQ(3, servers_->size());
+    ASSERT_EQ(3U, servers_->size());
 
     // Verify the first server exists and has the correct values.
     DnsServerInfoPtr server = (*servers_)[0];
@@ -1106,7 +1106,7 @@ TEST_F(DdnsDomainParserTest, validDomain) {
     // servers.
     const DnsServerInfoStoragePtr& servers = domain_->getServers();
     ASSERT_TRUE(servers);
-    EXPECT_EQ(3, servers->size());
+    EXPECT_EQ(3U, servers->size());
 
     // Fetch each server and verify its contents.
     DnsServerInfoPtr server = (*servers)[0];
@@ -1182,7 +1182,7 @@ TEST_F(DdnsDomainListParserTest, validList) {
     // Verify that the domain list parses without error.
     PARSE_OK(config);
     ASSERT_TRUE(domains_);
-    EXPECT_EQ(2, domains_->size());
+    EXPECT_EQ(2U, domains_->size());
 
     // Verify that the first domain exists and can be retrieved.
     DdnsDomainMap::iterator gotit = domains_->find("example.com");
@@ -1196,7 +1196,7 @@ TEST_F(DdnsDomainListParserTest, validList) {
     // Verify the each of the first domain's servers
     DnsServerInfoStoragePtr servers = domain->getServers();
     ASSERT_TRUE(servers);
-    EXPECT_EQ(3, servers->size());
+    EXPECT_EQ(3U, servers->size());
 
     DnsServerInfoPtr server = (*servers)[0];
     ASSERT_TRUE(server);
@@ -1236,7 +1236,7 @@ TEST_F(DdnsDomainListParserTest, validList) {
     // Verify the each of second domain's servers
     servers = domain->getServers();
     ASSERT_TRUE(servers);
-    EXPECT_EQ(3, servers->size());
+    EXPECT_EQ(3U, servers->size());
 
     server = (*servers)[0];
     ASSERT_TRUE(server);
