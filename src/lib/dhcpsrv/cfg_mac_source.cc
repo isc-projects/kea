@@ -45,7 +45,7 @@ CfgMACSource::CfgMACSource() {
 }
 
 uint32_t CfgMACSource::MACSourceFromText(const std::string& name) {
-    for (unsigned i = 0; i < sizeof(sources)/sizeof(sources[0]); ++i) {
+    for (unsigned i = 0; i < sizeof(sources) / sizeof(sources[0]); ++i) {
         if (name.compare(sources[i].name) == 0) {
             return (sources[i].type);
         }
@@ -68,7 +68,7 @@ ElementPtr CfgMACSource::toElement() const {
     ElementPtr result = Element::createList();
     for (auto const& source : mac_sources_) {
         std::string name;
-        for (unsigned i = 0; i < sizeof(sources)/sizeof(sources[0]); ++i) {
+        for (unsigned i = 0; i < sizeof(sources) / sizeof(sources[0]); ++i) {
             if (sources[i].type == source) {
                 name = sources[i].name;
                 break;

@@ -63,7 +63,7 @@ const char *valid_msgs[] =
      "}"
 };
 
-static const  int VALID_MSG_CNT = sizeof(valid_msgs)/sizeof(char*);
+static const int VALID_MSG_CNT = sizeof(valid_msgs) / sizeof(char*);
 
 const char* TEST_ADDRESS = "127.0.0.1";
 const uint32_t LISTENER_PORT = 5301;

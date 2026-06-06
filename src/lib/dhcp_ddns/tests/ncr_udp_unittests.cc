@@ -249,7 +249,7 @@ TEST_F(NameChangeUDPListenerTest, basicReceiveTests) {
 
     // Iterate over a series of requests, sending and receiving one
     /// at time.
-    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    size_t num_msgs = sizeof(valid_msgs) / sizeof(char*);
     for (size_t i = 0; i < num_msgs; ++i) {
         // We are not verifying ability to send, so if we can't test is over.
         ASSERT_NO_THROW(sendNcr(valid_msgs[i]));
@@ -387,7 +387,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTests) {
     SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
-    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    size_t num_msgs = sizeof(valid_msgs) / sizeof(char*);
 
     // Create the sender, setting the queue max equal to the number of
     // messages we will have in the list.
@@ -515,7 +515,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTestsMultiThreading) {
     SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
-    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    size_t num_msgs = sizeof(valid_msgs) / sizeof(char*);
 
     // Create the sender, setting the queue max equal to the number of
     // messages we will have in the list.
@@ -641,7 +641,7 @@ TEST_F(NameChangeUDPSenderBasicTest, autoStart) {
     SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
-    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    size_t num_msgs = sizeof(valid_msgs) / sizeof(char*);
 
     // Create the sender, setting the queue max equal to the number of
     // messages we will have in the list.
@@ -696,7 +696,7 @@ TEST_F(NameChangeUDPSenderBasicTest, autoStartMultiThreading) {
     SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
-    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    size_t num_msgs = sizeof(valid_msgs) / sizeof(char*);
 
     // Create the sender, setting the queue max equal to the number of
     // messages we will have in the list.
@@ -748,7 +748,7 @@ TEST_F(NameChangeUDPSenderBasicTest, anyAddressSend) {
     SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
-    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    size_t num_msgs = sizeof(valid_msgs) / sizeof(char*);
 
     // Create the sender, setting the queue max equal to the number of
     // messages we will have in the list.
@@ -786,7 +786,7 @@ TEST_F(NameChangeUDPSenderBasicTest, anyAddressSendMultiThreading) {
     SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
 
     // Tests are based on a list of messages, get the count now.
-    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    size_t num_msgs = sizeof(valid_msgs) / sizeof(char*);
 
     // Create the sender, setting the queue max equal to the number of
     // messages we will have in the list.
@@ -822,7 +822,7 @@ TEST_F(NameChangeUDPSenderBasicTest, assumeQueue) {
     NameChangeRequestPtr ncr;
 
     // Tests are based on a list of messages, get the count now.
-    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    size_t num_msgs = sizeof(valid_msgs) / sizeof(char*);
 
     // Create two senders with queue max equal to the number of
     // messages we will have in the list.
@@ -894,7 +894,7 @@ TEST_F(NameChangeUDPSenderBasicTest, assumeQueueMultiThreading) {
     NameChangeRequestPtr ncr;
 
     // Tests are based on a list of messages, get the count now.
-    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    size_t num_msgs = sizeof(valid_msgs) / sizeof(char*);
 
     // Create two senders with queue max equal to the number of
     // messages we will have in the list.
@@ -1104,7 +1104,7 @@ TEST_F(NameChangeUDPTest, roundTripTest) {
     EXPECT_TRUE(listener_->amListening());
 
     // Get the number of messages in the list of test messages.
-    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    size_t num_msgs = sizeof(valid_msgs) / sizeof(char*);
 
     // Place the sender into sending state.
     ASSERT_NO_THROW(sender_->startSending(io_service_));
@@ -1158,7 +1158,7 @@ TEST_F(NameChangeUDPTest, roundTripTestMultiThreading) {
     EXPECT_TRUE(listener_->amListening());
 
     // Get the number of messages in the list of test messages.
-    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    size_t num_msgs = sizeof(valid_msgs) / sizeof(char*);
 
     // Place the sender into sending state.
     ASSERT_NO_THROW(sender_->startSending(io_service_));

@@ -583,7 +583,7 @@ TEST(NameChangeRequestTest, basicJsonTest) {
 TEST(NameChangeRequestTest, invalidMsgChecks) {
     // Iterate over the list of JSON strings, attempting to create a
     // NameChangeRequest. The attempt should throw a NcrMessageError.
-    int num_msgs = sizeof(invalid_msgs)/sizeof(char*);
+    int num_msgs = sizeof(invalid_msgs) / sizeof(char*);
     for (int i = 0; i < num_msgs; i++) {
         EXPECT_THROW(NameChangeRequest::fromJSON(invalid_msgs[i]),
                      NcrMessageError) << "Invalid message not caught idx: "
@@ -604,7 +604,7 @@ TEST(NameChangeRequestTest, invalidMsgChecks) {
 TEST(NameChangeRequestTest, validMsgChecks) {
     // Iterate over the list of JSON strings, attempting to create a
     // NameChangeRequest. The attempt should succeed.
-    int num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    int num_msgs = sizeof(valid_msgs) / sizeof(char*);
     for (int i = 0; i < num_msgs; i++) {
         EXPECT_NO_THROW(NameChangeRequest::fromJSON(valid_msgs[i]))
                         << "Valid message failed,  message idx: " << i

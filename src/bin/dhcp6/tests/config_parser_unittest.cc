@@ -2841,7 +2841,7 @@ TEST_F(Dhcp6ParserTest, invalidPdPools) {
         };
 
     ConstElementPtr json;
-    size_t num_msgs = sizeof(config)/sizeof(char*);
+    size_t num_msgs = sizeof(config) / sizeof(char*);
     for (size_t i = 0; i < num_msgs; i++) {
         // Convert JSON string to Elements.
         // The 3 first configs should fail to parse.

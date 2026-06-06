@@ -41,7 +41,7 @@ TEST(UserIdTest, hwAddress_type) {
 
     // Build a test address vector.
     uint8_t tmp[] = { 0x01, 0xFF, 0x02, 0xAC, 0x03, 0x0B, 0x07, 0x08 };
-    std::vector<uint8_t> bytes(tmp, tmp + (sizeof(tmp)/sizeof(uint8_t)));
+    std::vector<uint8_t> bytes(tmp, tmp + (sizeof(tmp) / sizeof(uint8_t)));
 
     // Verify construction from an HW_ADDRESS id type and address vector.
     UserIdPtr id;
@@ -89,7 +89,7 @@ TEST(UserIdTest, duid_type) {
 
     // Build a test DUID vector.
     uint8_t tmp[] = { 0x01, 0xFF, 0x02, 0xAC, 0x03, 0x0B, 0x07, 0x08 };
-    std::vector<uint8_t> bytes(tmp, tmp + (sizeof(tmp)/sizeof(uint8_t)));
+    std::vector<uint8_t> bytes(tmp, tmp + (sizeof(tmp) / sizeof(uint8_t)));
 
     // Verify construction from an DUID id type and address vector.
     UserIdPtr id;

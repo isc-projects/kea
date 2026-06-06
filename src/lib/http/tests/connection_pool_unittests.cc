@@ -148,12 +148,12 @@ public:
         // Start second connection and check that it also has been added.
         ASSERT_NO_THROW(pool.start(conn2));
         ASSERT_EQ(2U, pool.connections_.size());
-        ASSERT_TRUE( pool.hasConnection(conn2));
+        ASSERT_TRUE(pool.hasConnection(conn2));
 
         // Stop first connection.
         ASSERT_NO_THROW(pool.stop(conn1));
         ASSERT_EQ(1U, pool.connections_.size());
-        // Check thaUt it has been removed but the second connection is still
+        // Check that it has been removed but the second connection is still
         // there.
         ASSERT_FALSE(pool.hasConnection(conn1));
         ASSERT_TRUE(pool.hasConnection(conn2));
