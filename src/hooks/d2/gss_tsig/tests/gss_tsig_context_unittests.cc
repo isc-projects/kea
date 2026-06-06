@@ -732,7 +732,7 @@ TEST_F(GssTsigContextTest, badDirection) {
     EXPECT_EQ(TSIGError::BAD_SIG(), error);
     EXPECT_EQ(TSIGError::BAD_SIG(), ctx->getError());
     EXPECT_EQ(TSIGContext::RECEIVED_REQUEST, ctx->getState());
-    EXPECT_EQ(GSS_S_BAD_SIG, static_cast<OM_uint32>(key->getSecCtx().getLastError()));
+    EXPECT_EQ(static_cast<int>(GSS_S_BAD_SIG), key->getSecCtx().getLastError());
 }
 
 /// @brief Check that verify fail on bad direction instead ignored.
