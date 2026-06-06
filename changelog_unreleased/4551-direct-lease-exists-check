@@ -1,4 +1,6 @@
 [perf]		fdupont
 	Improved efficiency and correctness of the existence check
 	done before adding a new lease in the memory database.
+	Thank you to Qifan Zhang from Palo Alto Networks for
+	reporting the issue.
 	(Gitlab #4551)
