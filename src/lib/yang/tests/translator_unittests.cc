@@ -264,7 +264,7 @@ TEST_F(TranslatorTest, getItem) {
     EXPECT_NO_THROW_LOG(element = translator->getItemFromAbsoluteXpath(xpath));
     ASSERT_TRUE(element);
     ASSERT_EQ(Element::list, element->getType());
-    EXPECT_EQ(3, element->size());
+    EXPECT_EQ(3U, element->size());
     EXPECT_EQ("[ 1, 2, 3 ]", element->str());
     element.reset();
 
