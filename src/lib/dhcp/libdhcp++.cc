@@ -314,10 +314,18 @@ LibDHCP::optionFactory(Option::Universe u,
 }
 
 size_t
+LibDHCP::MAX_RECUSION_LEVEL = 10;
+
+size_t
 LibDHCP::unpackOptions6(const OptionBuffer& buf, const string& option_space,
                         OptionCollection& options,
                         size_t* relay_msg_offset /* = 0 */,
-                        size_t* relay_msg_len /* = 0 */) {
+                        size_t* relay_msg_len /* = 0 */,
+                        size_t rec_level /* = 0 */) {
+    ++rec_level;
+    if (rec_level >= MAX_RECUSION_LEVEL) {
+        isc_throw(isc::Unexpected, "Too deep recursion in unpacking options");
+    }
     size_t offset = 0;
     size_t length = buf.size();
     size_t last_offset = 0;
@@ -443,7 +451,8 @@ LibDHCP::unpackOptions6(const OptionBuffer& buf, const string& option_space,
                 isc_throw_assert(def);
                 opt = def->optionFactory(Option::V6, opt_type,
                                          buf.begin() + offset,
-                                         buf.begin() + offset + opt_len);
+                                         buf.begin() + offset + opt_len,
+                                         rec_level);
             } catch (const SkipThisOptionError&) {
                 opt.reset();
             } catch (const SkipRemainingOptionsError&) {

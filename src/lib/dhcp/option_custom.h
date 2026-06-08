@@ -80,6 +80,22 @@ public:
     OptionCustom(const OptionDefinition& def, Universe u,
                  OptionBufferConstIter first, OptionBufferConstIter last);
 
+    /// @brief Constructor, used for received options with limited recursion.
+    ///
+    /// @param def option definition.
+    /// @param u specifies universe (V4 or V6).
+    /// @param first iterator to the first element that should be copied.
+    /// @param last iterator to the next element after the last one
+    /// to be copied.
+    /// @param rec_level recursion level.
+    ///
+    /// @throw OutOfRange if option buffer is truncated.
+    ///
+    /// @todo list all exceptions thrown by ctor.
+    OptionCustom(const OptionDefinition& def, Universe u,
+                 OptionBufferConstIter first, OptionBufferConstIter last,
+                 size_t rec_level);
+
     /// @brief Copies this option and returns a pointer to the copy.
     virtual OptionPtr clone() const;
 
@@ -436,7 +452,8 @@ private:
     /// @brief Create collection of buffers representing data field values.
     ///
     /// @param data_buf a buffer to be parsed.
-    void createBuffers(const OptionBuffer& data_buf);
+    /// @param rec_level recursion level.
+    void createBuffers(const OptionBuffer& data_buf, size_t rec_level = 0);
 
     /// @brief Return a text representation of a data field.
     ///

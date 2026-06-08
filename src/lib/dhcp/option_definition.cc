@@ -187,7 +187,8 @@ OptionDefinition::optionFactory(Option::Universe u,
                                 uint16_t type,
                                 OptionBufferConstIter begin,
                                 OptionBufferConstIter end,
-                                bool convenient_notation) const {
+                                bool convenient_notation,
+                                size_t rec_level) const {
 
     try {
         // Some of the options are represented by the specialized classes derived
@@ -206,7 +207,8 @@ OptionDefinition::optionFactory(Option::Universe u,
             if (getEncapsulatedSpace().empty()) {
                 return (factoryEmpty(u, type));
             } else {
-                return (OptionPtr(new OptionCustom(*this, u, begin, end)));
+                return (OptionPtr(new OptionCustom(*this, u, begin, end,
+                                                   rec_level)));
             }
 
         case OPT_BINARY_TYPE:
@@ -285,7 +287,7 @@ OptionDefinition::optionFactory(Option::Universe u,
             // Do nothing. We will return generic option a few lines down.
             ;
         }
-        return (OptionPtr(new OptionCustom(*this, u, begin, end)));
+        return (OptionPtr(new OptionCustom(*this, u, begin, end, rec_level)));
     } catch (const SkipThisOptionError&) {
         // We need to throw this one as is.
         throw;

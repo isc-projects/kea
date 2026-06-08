@@ -549,12 +549,13 @@ protected:
     /// different exceptions when option assembly fails.
     ///
     /// @param buf buffer to be parsed.
+    /// @param rec_level recursion level.
     ///
     /// @todo The set of exceptions thrown by this function depend on
     /// exceptions thrown by unpack methods invoked on objects
     /// representing sub options. We should consider whether to aggregate
     /// those into one exception which can be documented here.
-    void unpackOptions(const OptionBuffer& buf);
+    void unpackOptions(const OptionBuffer& buf, size_t rec_level = 0);
 
     /// @brief Returns option header in the textual format.
     ///

@@ -285,6 +285,7 @@ public:
     ///        offset to beginning of relay_msg option will be stored in it.
     /// @param relay_msg_len reference to a size_t structure. If specified,
     ///        length of the relay_msg option will be stored in it.
+    /// @param rec_level recursion level.
     /// @return offset to the first byte after the last successfully
     /// parsed option
     ///
@@ -296,7 +297,8 @@ public:
                                  const std::string& option_space,
                                  isc::dhcp::OptionCollection& options,
                                  size_t* relay_msg_offset = 0,
-                                 size_t* relay_msg_len = 0);
+                                 size_t* relay_msg_len = 0,
+                                 size_t rec_level = 0);
 
     /// @brief Extend vendor options from fused options in multiple OptionVendor
     /// or OptionVendorClass options and add respective suboptions or values.
@@ -466,6 +468,13 @@ public:
 
     /// @brief Get definition of D6O_IAADDR option.
     static const OptionDefinition& D6O_IAADDR_DEF();
+
+    /// @brief Maximum level of recursion unpacking options.
+    ///
+    /// @note: avoid to blow the stack when unpacking recursive
+    /// embedded v6 space options from a thread (so not using
+    /// system stack) on a TCP (so possibly large) received packet.
+    static size_t MAX_RECUSION_LEVEL;
 
 private:
 

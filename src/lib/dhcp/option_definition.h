@@ -437,6 +437,7 @@ public:
     ///                            as a string formatted in user-friendly, convenient way.
     ///                            The flag is propagated to the option constructor, so that
     ///                            the data could be parsed properly. Defaults to false.
+    /// @param rec_level recursion level.
     ///
     /// @return instance of the DHCP option.
     /// @throw InvalidOptionValue if data for the option is invalid.
@@ -444,7 +445,8 @@ public:
                             uint16_t type,
                             OptionBufferConstIter begin,
                             OptionBufferConstIter end,
-                            bool convenient_notation = false) const;
+                            bool convenient_notation = false,
+                            size_t rec_level = 0) const;
 
     /// @brief Option factory.
     ///
