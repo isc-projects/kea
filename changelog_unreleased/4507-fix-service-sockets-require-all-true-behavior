@@ -1,6 +1,6 @@
 [func]		fdupont
-	Made reconfig commands which triggered a fatal error not to
-	return a success answer when the server is shutting down.
-	Fixed the logs emitted when open sockets failed: ERROR vs.
-	INFO, or FATAL when no retry is left.
+	Reconfigure commands that trigger fatal a error that leads
+	to server shutdown now return an error response. Changed
+	socket open failure log messages from INFO to either ERROR
+	or FATAL as appropriate. Applies to kea-dhcp4 and kea-dhcp6.
 	(Gitlab #4507)
