@@ -38,16 +38,6 @@ OptionCustom::OptionCustom(const OptionDefinition& def,
 OptionCustom::OptionCustom(const OptionDefinition& def,
                            Universe u,
                            OptionBufferConstIter first,
-                           OptionBufferConstIter last)
-    : Option(u, def.getCode(), first, last),
-      definition_(def) {
-    setEncapsulatedSpace(def.getEncapsulatedSpace());
-    createBuffers(getData());
-}
-
-OptionCustom::OptionCustom(const OptionDefinition& def,
-                           Universe u,
-                           OptionBufferConstIter first,
                            OptionBufferConstIter last,
                            size_t rec_level)
     : Option(u, def.getCode(), first, last),

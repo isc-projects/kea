@@ -543,12 +543,14 @@ public:
     /// @param type option type.
     /// @param begin iterator pointing to the beginning of the buffer.
     /// @param end iterator pointing to the end of the buffer.
+    /// @param rec_level recursion level.
     ///
     /// @throw isc::OutOfRange if provided option buffer is too short or
     /// too long. Expected size is 12 bytes.
     static OptionPtr factoryIA6(uint16_t type,
                                 OptionBufferConstIter begin,
-                                OptionBufferConstIter end);
+                                OptionBufferConstIter end,
+                                size_t rec_level = 0);
 
     /// @brief Factory for IAADDR-type of option.
     ///
@@ -682,6 +684,7 @@ private:
     ///                            as a string formatted in user-friendly, convenient way.
     ///                            The flag is propagated to the option constructor, so that
     ///                            the data could be parsed properly. Defaults to false.
+    /// @param rec_level recursion level.
     ///
     /// @return An instance of the option having special format or NULL if
     /// such an option can't be created because an option with the given
@@ -689,7 +692,8 @@ private:
     OptionPtr factorySpecialFormatOption(Option::Universe u,
                                          OptionBufferConstIter begin,
                                          OptionBufferConstIter end,
-                                         bool convenient_notation = false) const;
+                                         bool convenient_notation = false,
+                                         size_t rec_level = 0) const;
 
     /// @brief Check if specified type matches option definition type.
     ///

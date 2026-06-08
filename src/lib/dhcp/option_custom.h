@@ -59,7 +59,7 @@ public:
     /// @todo list all exceptions thrown by ctor.
     OptionCustom(const OptionDefinition& def, Universe u, const OptionBuffer& data);
 
-    /// @brief Constructor, used for received options.
+    /// @brief Constructor, used for received options with limited recursion.
     ///
     /// This constructor creates an instance an option from the portion
     /// of the buffer specified by iterators. This is mainly useful when
@@ -73,20 +73,6 @@ public:
     /// @param first iterator to the first element that should be copied.
     /// @param last iterator to the next element after the last one
     /// to be copied.
-    ///
-    /// @throw OutOfRange if option buffer is truncated.
-    ///
-    /// @todo list all exceptions thrown by ctor.
-    OptionCustom(const OptionDefinition& def, Universe u,
-                 OptionBufferConstIter first, OptionBufferConstIter last);
-
-    /// @brief Constructor, used for received options with limited recursion.
-    ///
-    /// @param def option definition.
-    /// @param u specifies universe (V4 or V6).
-    /// @param first iterator to the first element that should be copied.
-    /// @param last iterator to the next element after the last one
-    /// to be copied.
     /// @param rec_level recursion level.
     ///
     /// @throw OutOfRange if option buffer is truncated.
@@ -94,7 +80,7 @@ public:
     /// @todo list all exceptions thrown by ctor.
     OptionCustom(const OptionDefinition& def, Universe u,
                  OptionBufferConstIter first, OptionBufferConstIter last,
-                 size_t rec_level);
+                 size_t rec_level = 0);
 
     /// @brief Copies this option and returns a pointer to the copy.
     virtual OptionPtr clone() const;

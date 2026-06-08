@@ -35,7 +35,7 @@ Option6IA::Option6IA(uint16_t type, uint32_t iaid)
 }
 
 Option6IA::Option6IA(uint16_t type, OptionBufferConstIter begin,
-                     OptionBufferConstIter end)
+                     OptionBufferConstIter end, size_t rec_level)
     :Option(Option::V6, type) {
 
     // IA_TA has different layout than IA_NA and IA_PD. We can't use this class
@@ -46,7 +46,7 @@ Option6IA::Option6IA(uint16_t type, OptionBufferConstIter begin,
 
     setEncapsulatedSpace(DHCP6_OPTION_SPACE);
 
-    unpack(begin, end);
+    unpack(begin, end, rec_level);
 }
 
 OptionPtr
@@ -66,6 +66,12 @@ void Option6IA::pack(isc::util::OutputBuffer& buf, bool) const {
 
 void Option6IA::unpack(OptionBufferConstIter begin,
                        OptionBufferConstIter end) {
+    unpack(begin, end, 0);
+}
+
+void Option6IA::unpack(OptionBufferConstIter begin,
+                       OptionBufferConstIter end,
+                       size_t rec_level) {
     // IA_NA and IA_PD have 12 bytes content (iaid, t1, t2 fields)
     // followed by 0 or more sub-options.
     if (static_cast<size_t>(distance(begin, end)) < OPTION6_IA_LEN) {
@@ -79,7 +85,7 @@ void Option6IA::unpack(OptionBufferConstIter begin,
     t2_ = readUint32(&(*begin), distance(begin, end));
     begin += sizeof(uint32_t);
 
-    unpackOptions(OptionBuffer(begin, end));
+    unpackOptions(OptionBuffer(begin, end), rec_level);
 }
 
 std::string Option6IA::toText(int indent) const {
