@@ -1013,7 +1013,7 @@ AccessTest::testHostReservation6Prefix(uint32_t const test_id /* = 12345 */) {
     HostPtr host(new Host(&id[2], id.size() - 2, impl_.id_type6_,
                           SUBNET_ID_UNUSED, subnet->getID(), addr4));
     ASSERT_TRUE(host);
-    IOAddress pref = IOAddress("2001:db8:0:0:1::");
+    IOAddress pref = IOAddress("2001:db8::");
     ASSERT_NO_THROW(host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD, pref, 64)));
     ElementPtr map = Element::createMap();
     AttributesPtr attrs(new Attributes());
@@ -1061,7 +1061,7 @@ AccessTest::testHostReservation6Both(uint32_t const test_id /* = 12345 */) {
     ASSERT_TRUE(host);
     IOAddress addr6 = IOAddress("2001:db8::1235");
     ASSERT_NO_THROW(host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, addr6)));
-    IOAddress pref = IOAddress("2001:db8:0:0:1::");
+    IOAddress pref = IOAddress("2001:db8::");
     ASSERT_NO_THROW(host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD, pref, 64)));
     ElementPtr map = Element::createMap();
     AttributesPtr attrs(new Attributes());

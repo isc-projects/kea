@@ -645,7 +645,7 @@ GenericLeaseMgrTest::testGetLease4HWAddr2() {
 void
 GenericLeaseMgrTest::testAddGetDelete6() {
     const std::string addr234("2001:db8:1::234");
-    const std::string addr456("2001:db8:1::456");
+    const std::string addr456("2001:db8:1::");
     const std::string addr789("2001:db8:1::789");
     IOAddress addr(addr456);
 

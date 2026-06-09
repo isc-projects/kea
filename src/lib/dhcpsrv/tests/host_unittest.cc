@@ -9,6 +9,7 @@
 #include <dhcpsrv/host.h>
 #include <dhcp/option_space.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/log_utils.h>
 #include <util/encode/encode.h>
 #include <util/range_utilities.h>
 #include <boost/foreach.hpp>
@@ -21,6 +22,7 @@
 
 using namespace isc;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace std;
@@ -31,6 +33,11 @@ namespace {
 ///
 /// This value must be updated when new identifiers are added to the enum.
 const Host::IdentifierType LAST_IDENTIFIER_TYPE = Host::IDENT_CLIENT_ID;
+
+/// @brief Fixture used to test that invalid prefix/prefix-len pair is
+/// accepted and logged.
+class IPv6ResrvTestLog : public LogContentTest {
+};
 
 // This test verifies that it is possible to create IPv6 address
 // reservation.
@@ -89,6 +96,18 @@ TEST(IPv6ResrvTest, constructiorInvalidPrefixLength) {
                      isc::BadValue, expected);
 }
 
+// This test verifies that invalid prefix length is accepted and logs
+// a warning message.
+TEST_F(IPv6ResrvTestLog, constructiorInvalidPrefixLengthLogWarning) {
+    // Check for extra specified bits in prefix.
+    string expected = "Prefix address: 2001:db8:1:: exceeds prefix/prefix-len "
+            "pair: 2001:db8::/32. Using 2001:db8::/32 instead.";
+    addString(expected);
+    EXPECT_NO_THROW(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                              IOAddress("2001:db8:1::"), 32));
+    EXPECT_TRUE(checkFile());
+}
+
 // This test verifies that it is possible to modify prefix and its
 // length in an existing reservation.
 TEST(IPv6ResrvTest, setPrefix) {
@@ -117,6 +136,30 @@ TEST(IPv6ResrvTest, setPrefix) {
     EXPECT_THROW_MSG(resrv.set(IPv6Resrv::TYPE_PD,
                                IOAddress("2001:db8:1::"), 129),
                      isc::BadValue, expected);
+}
+
+// This test verifies that it is possible to modify prefix and its
+// length in an existing reservation with wrong prefix and logs
+// a warning message.
+TEST_F(IPv6ResrvTestLog, setPrefixLogWarning) {
+    // Create a reservation using an address and prefix length 128.
+    IPv6Resrv resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1"));
+    ASSERT_EQ("2001:db8:1::1", resrv.getPrefix().toText());
+    ASSERT_EQ(128U, resrv.getPrefixLen());
+    ASSERT_EQ(IPv6Resrv::TYPE_NA, resrv.getType());
+
+    // Modify the reservation to use a prefix having a length of 48.
+    ASSERT_NO_THROW(resrv.set(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::"), 48));
+    EXPECT_EQ("2001:db8::", resrv.getPrefix().toText());
+    EXPECT_EQ(48U, resrv.getPrefixLen());
+    EXPECT_EQ(IPv6Resrv::TYPE_PD, resrv.getType());
+    // Check for extra specified bits in prefix.
+    string expected = "Prefix address: 2001:db8:1:: exceeds prefix/prefix-len "
+            "pair: 2001:db8::/32. Using 2001:db8::/32 instead.";
+    addString(expected);
+    EXPECT_NO_THROW(resrv.set(IPv6Resrv::TYPE_PD,
+                              IOAddress("2001:db8:1::"), 32));
+    EXPECT_TRUE(checkFile());
 }
 
 // This test verifies that it is possible to manage prefix exclude option.

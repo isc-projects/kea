@@ -72,6 +72,9 @@ extern const isc::log::MessageID DHCPSRV_HOOK_LEASE6_EXTEND_SKIP = "DHCPSRV_HOOK
 extern const isc::log::MessageID DHCPSRV_HOOK_LEASE6_RECOVER_SKIP = "DHCPSRV_HOOK_LEASE6_RECOVER_SKIP";
 extern const isc::log::MessageID DHCPSRV_HOOK_LEASE6_SELECT_SKIP = "DHCPSRV_HOOK_LEASE6_SELECT_SKIP";
 extern const isc::log::MessageID DHCPSRV_HOST_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED = "DHCPSRV_HOST_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED";
+extern const isc::log::MessageID DHCPSRV_INVALID_HOST_PREFIX_PREFIX_LEN_PAIR = "DHCPSRV_INVALID_HOST_PREFIX_PREFIX_LEN_PAIR";
+extern const isc::log::MessageID DHCPSRV_INVALID_PD_LEASE6_PREFIX_PREFIX_LEN_PAIR = "DHCPSRV_INVALID_PD_LEASE6_PREFIX_PREFIX_LEN_PAIR";
+extern const isc::log::MessageID DHCPSRV_INVALID_PD_LEASE6_WITH_HOSTNAME_PREFIX_PREFIX_LEN_PAIR = "DHCPSRV_INVALID_PD_LEASE6_WITH_HOSTNAME_PREFIX_PREFIX_LEN_PAIR";
 extern const isc::log::MessageID DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL = "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL";
 extern const isc::log::MessageID DHCPSRV_LEASE4_EXTENDED_INFO_UPGRADED = "DHCPSRV_LEASE4_EXTENDED_INFO_UPGRADED";
 extern const isc::log::MessageID DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL = "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL";
@@ -255,6 +258,9 @@ const char* values[] = {
     "DHCPSRV_HOOK_LEASE6_RECOVER_SKIP", "DHCPv6 lease %1 was not recovered from declined state because a callout set the skip status.",
     "DHCPSRV_HOOK_LEASE6_SELECT_SKIP", "Lease6 (non-temporary) creation was skipped, because of callout skip flag.",
     "DHCPSRV_HOST_MGR_DB_OPEN_CONNECTION_WITH_RETRY_FAILED", "Failed to connect to database: %1 with error: %2",
+    "DHCPSRV_INVALID_HOST_PREFIX_PREFIX_LEN_PAIR", "Prefix address: %1 exceeds prefix/prefix-len pair: %2/%3. Using %4/%5 instead.",
+    "DHCPSRV_INVALID_PD_LEASE6_PREFIX_PREFIX_LEN_PAIR", "Prefix address: %1 exceeds prefix/prefix-len pair: %2/%3. Using %4/%5 instead.",
+    "DHCPSRV_INVALID_PD_LEASE6_WITH_HOSTNAME_PREFIX_PREFIX_LEN_PAIR", "Prefix address: %1 exceeds prefix/prefix-len pair: %2/%3. Using %4/%5 instead.",
     "DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL", "extended info for lease %1 failed checks (%2)",
     "DHCPSRV_LEASE4_EXTENDED_INFO_UPGRADED", "extended info for lease %1 was upgraded",
     "DHCPSRV_LEASE6_EXTENDED_INFO_SANITY_FAIL", "extended info for lease %1 failed checks (%2)",
