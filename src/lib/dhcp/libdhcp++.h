@@ -474,7 +474,7 @@ public:
     /// @note: avoid to blow the stack when unpacking recursive
     /// embedded v6 space options from a thread (so not using
     /// system stack) on a TCP (so possibly large) received packet.
-    static size_t MAX_RECUSION_LEVEL;
+    static size_t MAX_RECURSION_LEVEL;
 
 private:
 
