@@ -62,6 +62,7 @@ public:
     LibDhcpTest() {
         LibDHCP::clearRuntimeOptionDefs();
         Option::lenient_parsing_ = false;
+        LibDHCP::MAX_RECUSION_LEVEL = 10;
     }
 
     /// @brief Destructor.
@@ -70,6 +71,7 @@ public:
     virtual ~LibDhcpTest() {
         LibDHCP::clearRuntimeOptionDefs();
         Option::lenient_parsing_ = false;
+        LibDHCP::MAX_RECUSION_LEVEL = 10;
     }
 
     /// @brief Generic factory function to create any option.
@@ -3963,6 +3965,140 @@ TEST_F(LibDhcpTest, splitNtpServerOptions6) {
         output << opt.second->toText() << endl;
     }
     EXPECT_EQ(expected, output.str());
+}
+
+// Check that too deep recursion throws in unpackOptions6.
+TEST_F(LibDhcpTest, tooDeepRecursionUnpackOptions6) {
+    OptionBuffer buf;
+    string space;
+    OptionCollection options;
+    try {
+        LibDHCP::unpackOptions6(buf, space, options, 0, 0, 100);
+        FAIL() << "expected to throw";
+    } catch (const Unexpected& ex) {
+        string errmsg = ex.what();
+        EXPECT_EQ("Too deep recursion in unpacking options", errmsg);
+    } catch (...) {
+        FAIL() << "expected to throw Unexpected";
+    }
+}
+
+// Check that too deep recursion throws with client-data custom option.
+TEST_F(LibDhcpTest, tooDeepRecursionClientData) {
+    OptionDefContainerPtr options = LibDHCP::getOptionDefs(DHCP6_OPTION_SPACE);
+    ASSERT_TRUE(options);
+    const OptionDefContainerTypeIndex& idx = options->get<1>();
+    OptionDefContainerTypeRange range = idx.equal_range(D6O_CLIENT_DATA);
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    OptionDefinitionPtr def = *(range.first);
+    ASSERT_TRUE(def);
+    ASSERT_NO_THROW(def->validate());
+    EXPECT_EQ(DHCP6_OPTION_SPACE, def->getEncapsulatedSpace());
+    EXPECT_EQ(OPT_EMPTY_TYPE, def->getType());
+    std::vector<uint8_t> buf(48, 1);
+    try {
+        def->optionFactory(Option::V6, D6O_CLIENT_DATA, buf.begin(), buf.end(),
+                           false, 100);
+        FAIL() << "expected to throw";
+    } catch (const InvalidOptionValue& ex) {
+        string errmsg = ex.what();
+        EXPECT_EQ("Too deep recursion in unpacking options", errmsg);
+    } catch (...) {
+        FAIL() << "expected to throw InvalidOptionValue";
+    }
+}
+
+// Check that too deep recursion throws with ia-na special option.
+TEST_F(LibDhcpTest, tooDeepRecursionIaNa) {
+    OptionDefContainerPtr options = LibDHCP::getOptionDefs(DHCP6_OPTION_SPACE);
+    ASSERT_TRUE(options);
+    const OptionDefContainerTypeIndex& idx = options->get<1>();
+    OptionDefContainerTypeRange range = idx.equal_range(D6O_IA_NA);
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    OptionDefinitionPtr def = *(range.first);
+    ASSERT_TRUE(def);
+    ASSERT_NO_THROW(def->validate());
+    EXPECT_EQ(OPT_RECORD_TYPE, def->getType());
+    std::vector<uint8_t> buf(48, 1);
+    try {
+        def->optionFactory(Option::V6, D6O_IA_NA, buf.begin(), buf.end(),
+                           false, 100);
+        FAIL() << "expected to throw";
+    } catch (const InvalidOptionValue& ex) {
+        string errmsg = ex.what();
+        EXPECT_EQ("Too deep recursion in unpacking options", errmsg);
+    } catch (...) {
+        FAIL() << "expected to throw InvalidOptionValue";
+    }
+}
+
+// Check that too deep recursion throws with iaaddr special option.
+TEST_F(LibDhcpTest, tooDeepRecursionIaaddr) {
+    OptionDefContainerPtr options = LibDHCP::getOptionDefs(DHCP6_OPTION_SPACE);
+    ASSERT_TRUE(options);
+    const OptionDefContainerTypeIndex& idx = options->get<1>();
+    OptionDefContainerTypeRange range = idx.equal_range(D6O_IAADDR);
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    OptionDefinitionPtr def = *(range.first);
+    ASSERT_TRUE(def);
+    ASSERT_NO_THROW(def->validate());
+    EXPECT_EQ(OPT_RECORD_TYPE, def->getType());
+    std::vector<uint8_t> buf(48, 1);
+    try {
+        def->optionFactory(Option::V6, D6O_IAADDR, buf.begin(), buf.end(),
+                           false, 100);
+        FAIL() << "expected to throw";
+    } catch (const InvalidOptionValue& ex) {
+        string errmsg = ex.what();
+        EXPECT_EQ("Too deep recursion in unpacking options", errmsg);
+    } catch (...) {
+        FAIL() << "expected to throw InvalidOptionValue";
+    }
+}
+
+// Check that too deep recursion throws with iaprefix special option.
+TEST_F(LibDhcpTest, tooDeepRecursionIaprefix) {
+    OptionDefContainerPtr options = LibDHCP::getOptionDefs(DHCP6_OPTION_SPACE);
+    ASSERT_TRUE(options);
+    const OptionDefContainerTypeIndex& idx = options->get<1>();
+    OptionDefContainerTypeRange range = idx.equal_range(D6O_IAPREFIX);
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    OptionDefinitionPtr def = *(range.first);
+    ASSERT_TRUE(def);
+    ASSERT_NO_THROW(def->validate());
+    EXPECT_EQ(OPT_RECORD_TYPE, def->getType());
+    std::vector<uint8_t> buf(48, 1);
+    try {
+        def->optionFactory(Option::V6, D6O_IAPREFIX, buf.begin(), buf.end(),
+                           false, 100);
+        FAIL() << "expected to throw";
+    } catch (const InvalidOptionValue& ex) {
+        string errmsg = ex.what();
+        EXPECT_EQ("Too deep recursion in unpacking options", errmsg);
+    } catch (...) {
+        FAIL() << "expected to throw InvalidOptionValue";
+    }
+}
+
+// Check that too deep recursion throws with integer+container option.
+TEST_F(LibDhcpTest, tooDeepRecursionIntContainer) {
+    OptionDefinitionPtr def(new OptionDefinition("foo", 1024,
+                                                 DHCP6_OPTION_SPACE,
+                                                 "int32", false));
+    ASSERT_TRUE(def);
+    ASSERT_NO_THROW(def->validate());
+    EXPECT_EQ(OPT_INT32_TYPE, def->getType());
+    std::vector<uint8_t> buf(48, 1);
+    try {
+        def->optionFactory(Option::V6, 1024, buf.begin(), buf.end(),
+                           false, 100);
+        FAIL() << "expected to throw";
+    } catch (const InvalidOptionValue& ex) {
+        string errmsg = ex.what();
+        EXPECT_EQ("Too deep recursion in unpacking options", errmsg);
+    } catch (...) {
+        FAIL() << "expected to throw InvalidOptionValue";
+    }
 }
 
 }  // namespace
