@@ -45,11 +45,13 @@ Option6IAPrefix::Option6IAPrefix(uint16_t type, const isc::asiolink::IOAddress& 
     }
 }
 
-Option6IAPrefix::Option6IAPrefix(uint32_t type, OptionBuffer::const_iterator begin,
-                                 OptionBuffer::const_iterator end)
-    : Option6IAAddr(type, begin, end) {
+Option6IAPrefix::Option6IAPrefix(uint32_t type,
+                                 OptionBuffer::const_iterator begin,
+                                 OptionBuffer::const_iterator end,
+                                 size_t rec_level)
+    :Option6IAAddr(type, begin, end) {
     setEncapsulatedSpace(DHCP6_OPTION_SPACE);
-    unpack(begin, end);
+    unpack(begin, end, rec_level);
     // The unpack function always drops the extra bits in prefix so there
     // is no need to check if address matches the first address in prefix.
 }
@@ -82,6 +84,12 @@ void Option6IAPrefix::pack(isc::util::OutputBuffer& buf, bool) const {
 
 void Option6IAPrefix::unpack(OptionBuffer::const_iterator begin,
                       OptionBuffer::const_iterator end) {
+    unpack(begin, end, 0);
+}
+
+void Option6IAPrefix::unpack(OptionBuffer::const_iterator begin,
+                             OptionBuffer::const_iterator end,
+                             size_t rec_level) {
     if (static_cast<size_t>(distance(begin, end)) < OPTION6_IAPREFIX_LEN) {
         isc_throw(OutOfRange, "Option " << type_ << " truncated");
     }
@@ -102,7 +110,7 @@ void Option6IAPrefix::unpack(OptionBuffer::const_iterator begin,
     begin += V6ADDRESS_LEN;
 
     // unpack encapsulated options (the only defined so far is PD_EXCLUDE)
-    unpackOptions(OptionBuffer(begin, end));
+    unpackOptions(OptionBuffer(begin, end), rec_level);
 }
 
 std::string Option6IAPrefix::toText(int indent) const {

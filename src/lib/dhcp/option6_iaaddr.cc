@@ -37,10 +37,10 @@ Option6IAAddr::Option6IAAddr(uint16_t type, const isc::asiolink::IOAddress& addr
 }
 
 Option6IAAddr::Option6IAAddr(uint32_t type, OptionBuffer::const_iterator begin,
-                             OptionBuffer::const_iterator end)
+                             OptionBuffer::const_iterator end, size_t rec_level)
     :Option(V6, type), addr_("::") {
     setEncapsulatedSpace(DHCP6_OPTION_SPACE);
-    unpack(begin, end);
+    unpack(begin, end, rec_level);
 }
 
 OptionPtr
@@ -70,6 +70,12 @@ void Option6IAAddr::pack(isc::util::OutputBuffer& buf, bool) const {
 
 void Option6IAAddr::unpack(OptionBuffer::const_iterator begin,
                       OptionBuffer::const_iterator end) {
+    unpack(begin, end, 0);
+}
+
+void Option6IAAddr::unpack(OptionBuffer::const_iterator begin,
+                           OptionBuffer::const_iterator end,
+                           size_t rec_level) {
     if (static_cast<size_t>(distance(begin, end)) < OPTION6_IAADDR_LEN) {
         isc_throw(OutOfRange, "Option " << type_ << " truncated");
     }
@@ -84,7 +90,7 @@ void Option6IAAddr::unpack(OptionBuffer::const_iterator begin,
     valid_ = readUint32(&(*begin), distance(begin, end));
     begin += sizeof(uint32_t);
 
-    unpackOptions(OptionBuffer(begin, end));
+    unpackOptions(OptionBuffer(begin, end), rec_level);
 }
 
 std::string Option6IAAddr::toText(int indent) const {

@@ -80,19 +80,20 @@ public:
     /// @param type option type.
     /// @param begin iterator to first byte of option data.
     /// @param end iterator to end of option data (first byte after option end).
+    /// @param rec_level recursion level.
     ///
     /// @throw isc::OutOfRange if provided buffer is shorter than data size.
     /// @throw isc::dhcp::InvalidDataType if data field type provided
     /// as template parameter is not a supported integer type.
     /// @todo Extend constructor to set encapsulated option space name.
     OptionInt(Option::Universe u, uint16_t type, OptionBufferConstIter begin,
-               OptionBufferConstIter end)
+              OptionBufferConstIter end, size_t rec_level = 0)
         : Option(u, type) {
         if (!OptionDataTypeTraits<T>::integer_type) {
             isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
         setEncapsulatedSpace(u == Option::V4 ? DHCP4_OPTION_SPACE : DHCP6_OPTION_SPACE);
-        unpack(begin, end);
+        unpack(begin, end, rec_level);
     }
 
     /// @brief Copies this option and returns a pointer to the copy.
@@ -146,6 +147,25 @@ public:
     /// equal to 1, 2 or 4 bytes. The data type is not checked in this function
     /// because it is checked in a constructor.
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
+        unpack(begin, end, 0);
+    }
+
+    /// @brief Parses received buffer with limited recursion
+    ///
+    /// Parses received buffer and returns offset to the first unused byte after
+    /// parsed option.
+    ///
+    /// @param begin iterator to first byte of option data
+    /// @param end iterator to end of option data (first byte after option end)
+    /// @param rec_level recursion level
+    ///
+    /// @throw isc::OutOfRange if provided buffer is shorter than data size.
+    /// @throw isc::dhcp::InvalidDataType if size of a data field type is not
+    /// equal to 1, 2 or 4 bytes. The data type is not checked in this function
+    /// because it is checked in a constructor.
+    void unpack(OptionBufferConstIter begin, OptionBufferConstIter end,
+                size_t rec_level) {
+
         if (static_cast<size_t>(distance(begin, end)) < sizeof(T)) {
             isc_throw(OutOfRange, "OptionInt " << getType() << " truncated");
         }
@@ -177,7 +197,7 @@ public:
         // of clang complain about unresolved reference to
         // OptionDataTypeTraits structure during linking.
         begin += data_size_len;
-        unpackOptions(OptionBuffer(begin, end));
+        unpackOptions(OptionBuffer(begin, end), rec_level);
     }
 
     /// @brief Set option value.

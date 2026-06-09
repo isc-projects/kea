@@ -43,8 +43,9 @@ public:
     /// @param type option type
     /// @param begin iterator to first byte of option data
     /// @param end iterator to end of option data (first byte after option end)
+    /// @param rec_level recursion level.
     Option6IAAddr(uint32_t type, OptionBuffer::const_iterator begin,
-                  OptionBuffer::const_iterator end);
+                  OptionBuffer::const_iterator end, size_t rec_level = 0);
 
     /// @brief Copies this option and returns a pointer to the copy.
     virtual OptionPtr clone() const;
@@ -64,6 +65,15 @@ public:
     /// @param end iterator to end of option data (first byte after option end)
     virtual void unpack(OptionBufferConstIter begin,
                         OptionBufferConstIter end);
+
+    /// @brief Parses received buffer with limited recursion.
+    ///
+    /// @param begin iterator to first byte of option data
+    /// @param end iterator to end of option data (first byte after option end)
+    /// @param rec_level recursion level.
+    void unpack(OptionBufferConstIter begin,
+                OptionBufferConstIter end,
+                size_t rec_level);
 
     /// Returns string representation of the option.
     ///
