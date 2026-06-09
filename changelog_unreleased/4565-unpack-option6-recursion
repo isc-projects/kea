@@ -1,0 +1,5 @@
+[bug]		fdupont
+	Limited recursive unpacking of DHCPv6 options.
+	Thank you to Qifan Zhang from Palo Alto Networks for
+	reporting the issue.
+	(Gitlab #4565)
