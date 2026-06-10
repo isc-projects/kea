@@ -2380,4 +2380,54 @@ TEST_F(ClientClassDefParserTest, addtionalWithLifetimes6) {
     }
 }
 
+// Make sure negative values for lifetime parameters are caught for v4.
+TEST_F(ClientClassDefParserTest, negativeLifetimes4) {
+    CfgMgr::instance().setFamily(AF_INET);
+    boost::scoped_ptr<ClientClassDef> cclass;
+
+    std::list<std::string> names = {
+        "min-valid-lifetime",
+        "valid-lifetime",
+        "max-valid-lifetime"
+    };
+
+    for (auto const& name : names) {
+        std::string config = R"({"name": "boo", ")" +  name + R"(" : -100 })";
+
+        std::string expected = "The '" + name + "' value (-100)"
+                               " is not within expected range: (0 - 4294967295)";
+
+        // Parse the class definition.
+        ASSERT_THROW_MSG(parseClientClassDef(config, AF_INET), isc::OutOfRange,
+                                             expected);
+    }
+}
+
+// Make sure negative values for lifetime parameters are caught for v6.
+TEST_F(ClientClassDefParserTest, negativeLifetimes6) {
+    CfgMgr::instance().setFamily(AF_INET6);
+    boost::scoped_ptr<ClientClassDef> cclass;
+
+    std::list<std::string> names = {
+        "min-valid-lifetime",
+        "valid-lifetime",
+        "max-valid-lifetime",
+        "min-preferred-lifetime",
+        "preferred-lifetime",
+        "max-preferred-lifetime"
+    };
+
+    for (auto const& name : names) {
+        std::string config = R"({"name": "boo", ")" +  name + R"(" : -100 })";
+
+        std::string expected = "The '" + name + "' value (-100)"
+                               " is not within expected range: (0 - 4294967295)";
+
+        // Parse the class definition.
+        ASSERT_THROW_MSG(parseClientClassDef(config, AF_INET6), isc::OutOfRange,
+                                             expected);
+    }
+}
+
+
 } // end of anonymous namespace

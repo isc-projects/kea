@@ -4467,4 +4467,70 @@ TEST_F(DhcpParserTest, validDdnsParmatersPool6) {
         validPoolDdnsParameters<Pools6ListParser>("2001:db8:1::/64", "2001:db8:2::/64");
 }
 
+// This test verifies a negative values for (min/max) valid lieftimes are rejected (v4).
+TEST_F(ParseConfigTest, negativeLifetimes4) {
+    std::list<std::string> names = {
+        "min-valid-lifetime",
+        "valid-lifetime",
+        "max-valid-lifetime"
+    };
+
+    for (auto const& name : names) {
+        std::string config =
+            R"({"subnet4": [ {
+                    "subnet": "192.0.2.0/24",
+                    "id": 1, ")" +  name +
+            R"(" : -100 } ] })";
+
+        ElementPtr json = Element::fromJSON(config);
+        ASSERT_TRUE(json);
+        ConstElementPtr status = parseElementSet(json, false);
+        int rcode = 0;
+        ConstElementPtr comment = parseAnswer(rcode, status);
+        ASSERT_TRUE(comment);
+        ASSERT_EQ(comment->getType(), Element::string);
+        EXPECT_EQ(1, rcode);
+        std::string expected = "Configuration parsing failed: "
+                               "subnet configuration failed: "
+                               "The '" + name + "' value (-100)"
+                               " is not within expected range: (0 - 4294967295)";
+        ASSERT_EQ(expected, comment->stringValue());
+    }
+}
+
+// This test verifies a negative values for (min/max) valid and preferred
+// lieftimes are rejected (v6).
+TEST_F(ParseConfigTest, negativeLifetimes6) {
+    std::list<std::string> names = {
+        "min-valid-lifetime",
+        "valid-lifetime",
+        "max-valid-lifetime",
+        "min-preferred-lifetime",
+        "preferred-lifetime",
+        "max-preferred-lifetime"
+    };
+
+    for (auto const& name : names) {
+        std::string config =
+            R"({"subnet6": [ {
+                    "subnet": "3001::/64",
+                    "id": 1, ")" +  name +
+            R"(" : -100 } ] })";
+
+        ElementPtr json = Element::fromJSON(config);
+        ASSERT_TRUE(json);
+        ConstElementPtr status = parseElementSet(json, false);
+        int rcode = 0;
+        ConstElementPtr comment = parseAnswer(rcode, status);
+        ASSERT_TRUE(comment);
+        ASSERT_EQ(comment->getType(), Element::string);
+        EXPECT_EQ(1, rcode);
+        std::string expected = "Configuration parsing failed: "
+                               "subnet configuration failed: "
+                               "The '" + name + "' value (-100)"
+                               " is not within expected range: (0 - 4294967295)";
+        ASSERT_EQ(expected, comment->stringValue());
+    }
+}
+
 }  // Anonymous namespace

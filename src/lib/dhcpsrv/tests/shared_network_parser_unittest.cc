@@ -1392,4 +1392,55 @@ TEST_F(SharedNetwork6ParserTest, invalidDdnsTtlParmaters6) {
     invalidDdnsTtlParmatersTest<SharedNetwork6Parser>();
 }
 
+// This test verifies a negative values for (min/max) valid
+// lieftimes are rejected (v4).
+TEST_F(SharedNetwork4ParserTest, negativeLifetimes4) {
+    std::list<std::string> names = {
+        "min-valid-lifetime",
+        "valid-lifetime",
+        "max-valid-lifetime"
+    };
+
+    for (auto const& name : names) {
+        std::string config_str =
+            R"({ "name": "foo", ")" +  name + R"(" : -100 })";
+
+        ElementPtr config;
+        ASSERT_NO_THROW_LOG(config = Element::fromJSON(config_str));
+
+        SharedNetwork4Parser parser;
+        ASSERT_THROW_MSG(parser.parse(config),
+                         DhcpConfigError,
+                         "The '" + name + "' value (-100)"
+                         " is not within expected range: (0 - 4294967295) (<string>:1:2)");
+    }
+}
+
+// This test verifies a negative values for (min/max) valid and preferred
+// lieftimes are rejected (v6).
+TEST_F(SharedNetwork6ParserTest, negativeLifetimes6) {
+    std::list<std::string> names = {
+        "min-valid-lifetime",
+        "valid-lifetime",
+        "max-valid-lifetime",
+        "min-preferred-lifetime",
+        "preferred-lifetime",
+        "max-preferred-lifetime"
+    };
+
+    for (auto const& name : names) {
+        std::string config_str =
+            R"({ "name": "foo", ")" +  name + R"(" : -100 })";
+
+        ElementPtr config;
+        ASSERT_NO_THROW_LOG(config = Element::fromJSON(config_str));
+
+        SharedNetwork6Parser parser;
+        ASSERT_THROW_MSG(parser.parse(config),
+                         DhcpConfigError,
+                         "The '" + name + "' value (-100)"
+                         " is not within expected range: (0 - 4294967295) (<string>:1:2)");
+    }
+}
+
 } // end of anonymous namespace

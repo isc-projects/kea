@@ -293,15 +293,15 @@ SimpleParser::parseIntTriplet(const ConstElementPtr& scope,
     uint32_t max_value = 0;
     bool has_max = false;
     if (scope->contains(name)) {
-        value = getInteger(scope, name);
+        value = getInteger(scope, name, 0, UINT32_MAX);
         has_value = true;
     }
     if (scope->contains("min-" + name)) {
-        min_value = getInteger(scope, "min-" + name);
+        min_value = getInteger(scope, "min-" + name, 0, UINT32_MAX);
         has_min = true;
     }
     if (scope->contains("max-" + name)) {
-        max_value = getInteger(scope, "max-" + name);
+        max_value = getInteger(scope, "max-" + name, 0, UINT32_MAX);
         has_max = true;
     }
     if (!has_value && !has_min && !has_max) {

@@ -1,0 +1,6 @@
+[bug]		tmark
+	kea-dhcp4 and kea-dhcp6 now catch negative values of
+	lease lifetime parameters: min-valid-lifetime,
+	valid-lifetime, max-valid-lifetime, min-preferred-lifetime,
+	preferred-lifetime, max-preferred-lifetime.
+	(Gitlab #4498)

@@ -2236,6 +2236,78 @@ TEST_F(SrvConfigTest, sanityChecksLifetime) {
                                                    "preferred-lifetime"),
                          isc::BadValue, msg);
     }
+
+    {
+        SCOPED_TRACE("negative lifetimes");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("valid-lifetime", Element::create(-1000));
+        conf.addConfiguredGlobal("preferred-lifetime", Element::create(-500));
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime("valid-lifetime"), isc::BadValue,
+                         "'valid-lifetime' : -1000 is out of range, must be >= 0 and <= 4294967295");
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime("preferred-lifetime"), isc::BadValue,
+                         "'preferred-lifetime' : -500 is out of range, must be >= 0 and <= 4294967295");
+    }
+
+    {
+        SCOPED_TRACE("negative min lifetimes");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("min-valid-lifetime", Element::create(-1000));
+        conf.addConfiguredGlobal("min-preferred-lifetime", Element::create(-500));
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime("valid-lifetime"), isc::BadValue,
+                         "'min-valid-lifetime' : -1000 is out of range, must be >= 0 and <= 4294967295");
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime("preferred-lifetime"), isc::BadValue,
+                         "'min-preferred-lifetime' : -500 is out of range, must be >= 0 and <= 4294967295");
+    }
+
+    {
+        SCOPED_TRACE("negative max lifetimes");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("max-valid-lifetime", Element::create(-1000));
+        conf.addConfiguredGlobal("max-preferred-lifetime", Element::create(-500));
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime("valid-lifetime"), isc::BadValue,
+                         "'max-valid-lifetime' : -1000 is out of range, must be >= 0 and <= 4294967295");
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime("preferred-lifetime"), isc::BadValue,
+                         "'max-preferred-lifetime' : -500 is out of range, must be >= 0 and <= 4294967295");
+    }
+
+    {
+        SCOPED_TRACE("merge negative lifetimes");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("valid-lifetime", Element::create(-1000));
+        conf.addConfiguredGlobal("preferred-lifetime", Element::create(-500));
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime(target, "valid-lifetime"), isc::BadValue,
+                         "'valid-lifetime' : -1000 is out of range, must be >= 0 and <= 4294967295");
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime(target, "preferred-lifetime"), isc::BadValue,
+                         "'preferred-lifetime' : -500 is out of range, must be >= 0 and <= 4294967295");
+    }
+
+    {
+        SCOPED_TRACE("merge negative min lifetimes");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("min-valid-lifetime", Element::create(-1000));
+        conf.addConfiguredGlobal("min-preferred-lifetime", Element::create(-500));
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime(target, "valid-lifetime"), isc::BadValue,
+                         "'min-valid-lifetime' : -1000 is out of range, must be >= 0 and <= 4294967295");
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime(target, "preferred-lifetime"), isc::BadValue,
+                         "'min-preferred-lifetime' : -500 is out of range, must be >= 0 and <= 4294967295");
+    }
+
+    {
+        SCOPED_TRACE("merge negative max lifetimes");
+
+        SrvConfig conf(32);
+        conf.addConfiguredGlobal("max-valid-lifetime", Element::create(-1000));
+        conf.addConfiguredGlobal("max-preferred-lifetime", Element::create(-500));
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime(target, "valid-lifetime"), isc::BadValue,
+                         "'max-valid-lifetime' : -1000 is out of range, must be >= 0 and <= 4294967295");
+        EXPECT_THROW_MSG(conf.sanityChecksLifetime(target, "preferred-lifetime"), isc::BadValue,
+                         "'max-preferred-lifetime' : -500 is out of range, must be >= 0 and <= 4294967295");
+    }
 }
 
 // Verifies that sanityChecksDdnsTtlParameters works as expected.

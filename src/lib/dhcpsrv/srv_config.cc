@@ -522,25 +522,44 @@ SrvConfig::extractConfiguredGlobals(isc::data::ConstElementPtr config) {
     }
 }
 
+uint32_t SrvConfig::rangeCheck(data::ConstElementPtr elem, std::string name) {
+    if (!elem) {
+        isc_throw (BadValue, "Element cannot be empty " << name);
+    }
+
+    if (elem->getType() != Element::integer) {
+        isc_throw (BadValue, "Element is not an integer " << name);
+    }
+
+    auto ivalue = elem->intValue();
+    if (ivalue < 0 || ivalue > UINT32_MAX) {
+        isc_throw (BadValue, "'" << name << "' : " << ivalue << " is out of range,"
+                             << " must be >= 0 and <= " <<  UINT32_MAX);
+    }
+
+    return (static_cast<uint32_t>(ivalue));
+}
+
 void
 SrvConfig::sanityChecksLifetime(const std::string& name) const {
     // Initialize as some compilers complain otherwise.
+
     uint32_t value = 0;
     ConstElementPtr has_value = getConfiguredGlobal(name);
     if (has_value) {
-        value = has_value->intValue();
+        value = rangeCheck(has_value, name);
     }
 
     uint32_t min_value = 0;
     ConstElementPtr has_min = getConfiguredGlobal("min-" + name);
     if (has_min) {
-        min_value = has_min->intValue();
+        min_value = rangeCheck(has_min, "min-" + name);
     }
 
     uint32_t max_value = 0;
     ConstElementPtr has_max = getConfiguredGlobal("max-" + name);
     if (has_max) {
-        max_value = has_max->intValue();
+        max_value = rangeCheck(has_max, "max-" + name);
     }
 
     if (!has_value && !has_min && !has_max) {
@@ -614,7 +633,7 @@ SrvConfig::sanityChecksLifetime(const SrvConfig& target_config,
         new_value = false;
     }
     if (has_value) {
-        value = has_value->intValue();
+        value = rangeCheck(has_value, name);
     }
 
     uint32_t min_value = 0;
@@ -625,7 +644,7 @@ SrvConfig::sanityChecksLifetime(const SrvConfig& target_config,
         new_min = false;
     }
     if (has_min) {
-        min_value = has_min->intValue();
+        min_value = rangeCheck(has_min, "min-" + name);
     }
 
     uint32_t max_value = 0;
@@ -636,7 +655,7 @@ SrvConfig::sanityChecksLifetime(const SrvConfig& target_config,
         new_max = false;
     }
     if (has_max) {
-        max_value = has_max->intValue();
+        max_value = rangeCheck(has_max, "max-" + name);
     }
 
     if (!has_value && !has_min && !has_max) {
