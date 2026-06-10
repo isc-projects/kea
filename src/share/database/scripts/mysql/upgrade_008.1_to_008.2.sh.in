@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2019-2025 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2019-2026 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,11 +36,23 @@ fi
 
 # Get the schema name from database argument. We need this to
 # query information_schema for the right database.
-for arg in "${@}"
-do
-    if ! printf '%s' "${arg}" | grep -Eq -- '^--'
-    then
-        schema="$arg"
+next_word_is_schema=false
+for arg in "${@}"; do
+    if "${next_word_is_schema}"; then
+        schema="${arg}"
+        break
+    fi
+    if printf '%s' "${arg}" | grep -q -- '^-'; then
+        if printf '%s' "${arg}" | grep -q -- '-D' || printf '%s' "${arg}" | grep -q -- '--database'; then
+            if printf '%s' "${arg}" | grep -q -- '='; then
+                schema=$(printf '%s' "${arg}" | cut -d '=' -f 2)
+                break
+            else
+                next_word_is_schema=true
+            fi
+        fi
+    else
+        schema="${arg}"
         break
     fi
 done

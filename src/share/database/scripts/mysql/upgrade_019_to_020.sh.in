@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2023-2025 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2023-2026 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,24 +32,6 @@ if test "${version}" != "19.0"; then
     printf 'This script upgrades 19.0 to 20.0. '
     printf 'Reported version is %s. Skipping upgrade.\n' "${version}"
     exit 0
-fi
-
-# Get the schema name from database argument. We need this to
-# query information_schema for the right database.
-for arg in "${@}"
-do
-    if ! printf '%s' "${arg}" | grep -Eq -- '^--'
-    then
-        schema="$arg"
-        break
-    fi
-done
-
-# Make sure we have the schema.
-if [ -z "$schema" ]
-then
-    printf "Could not find database schema name in cmd line args: %s\n" "${*}"
-    exit 255
 fi
 
 mysql "$@" <<EOF
