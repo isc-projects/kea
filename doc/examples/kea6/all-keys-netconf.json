@@ -15,6 +15,10 @@
         // subnets.
         "allocator": "iterative",
 
+        // Global flag that enables or disables client address registration
+        // via ADDR-REG-INFORM packets (see RFC 9686). It defaults to true.
+        "allow-address-registration": true,
+
         // Global flag selecting a delegated prefix allocation strategy
         // for all subnets.
         "pd-allocator": "random",
@@ -502,7 +506,19 @@
 
                 // TCP user timeout while communicating with the database.
                 // It is specified in seconds.
-                "tcp-user-timeout": 100
+                "tcp-user-timeout": 100,
+
+                // Trust anchor aka certificate authority file or directory.
+                "trust-anchor": "my-ca",
+
+                // Client certificate file name.
+                "cert-file": "my-cert",
+
+                // Private key file name.
+                "key-file": "my-key",
+
+                // SSL mode.
+                "ssl-mode": "verify-ca"
             }
         ],
 
@@ -927,6 +943,9 @@
                 // lease is returned as it was "cached".
                 "cache-max-age": 1000,
 
+                // Adaptive lease time threshold (1.0 is disabled).
+                "adaptive-lease-time-threshold": 0.8,
+
                 // Specify whether the server should look up global reservations.
                 "reservations-global": false,
 
@@ -1258,6 +1277,9 @@
                         // Subnet-level cache maximum.
                         "cache-max-age": 1000,
 
+                        // Adaptive lease time threshold (1.0 is disabled).
+                        "adaptive-lease-time-threshold": 0.8,
+
                         // List of static IPv6 reservations assigned to clients belonging
                         // to this subnet. For a detailed example, see reservations.json.
                         "reservations": [
@@ -1395,6 +1417,9 @@
 
         // Global cache maximum.
         "cache-max-age": 1000,
+
+        // Adaptive lease time threshold (1.0 is disabled)
+        "adaptive-lease-time-threshold": 0.8,
 
         // String of zero or more characters with which to replace each
         // invalid character in the Client FQDN. The default

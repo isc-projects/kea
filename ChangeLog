@@ -1,3 +1,12 @@
+2486.	[func]		razvan
+	Updated yang modules: added 'ssl-mode' to database connection
+	parameters, added 'adaptive-lease-time-threshold', removed
+	'consistency', 'serial-consistency', 'request-timeout',
+	'tcp-keepalive', 'tcp-nodelay' from to database connection
+	parameters, added 'allow-address-registration' to the
+	kea-dhcp6 model.
+	(Gitlab #4461)
+
 2485.	[doc]		sanua356, razvan
 	Added documentation about internal type of option 121
 	(classless-static-route). Thank you sanua356 (GitHub nickname)

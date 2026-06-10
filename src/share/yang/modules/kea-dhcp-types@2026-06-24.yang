@@ -17,6 +17,13 @@ module kea-dhcp-types {
   description "This file defines some commonly used Kea DHCP types and
                groupings.";
 
+  revision 2026-06-24 {
+    description "Added ssl-mode to database connection parameters. Added
+    adaptive-lease-time-threshold. Removed consistency, serial-consistency,
+    request-timeout, tcp-keepalive, tcp-nodelay from to database connection
+    parameters.";
+  }
+
   revision 2025-06-25 {
     description "Added only-in-additional-list, evaluate-additional-classes,
                  client-classes list, ddns-ttl, ddns-ttl-min and ddns-ttl-max.
@@ -216,6 +223,17 @@ module kea-dhcp-types {
     }
   }
 
+  grouping adaptive-lease-time-threshold {
+    leaf adaptive-lease-time-threshold {
+      type decimal64 {
+        fraction-digits 18;
+        range "0 .. 1";
+      }
+      description
+        "adaptive lease time threshold.";
+    }
+  }
+
   grouping t1-percent {
     description "T1 timer grouping.";
     leaf t1-percent {
@@ -306,12 +324,12 @@ module kea-dhcp-types {
     leaf read-timeout {
       type uint32;
       units "seconds";
-      description "timeout for database read operations";
+      description "timeout for database read operations.";
     }
     leaf write-timeout {
       type uint32;
       units "seconds";
-      description "timeout for database write operations";
+      description "timeout for database write operations.";
     }
     leaf max-reconnect-tries {
       type uint32;
@@ -322,40 +340,22 @@ module kea-dhcp-types {
       units "milliseconds";
       description "Waiting delay between two recovery attempts.";
     }
-    leaf request-timeout {
-      type uint32;
-      units "milliseconds";
-      description "Timeout waiting for a response.";
-    }
-    leaf tcp-keepalive {
-      type uint32;
-      units "seconds";
-      description "TCP keepalive for the database connection.";
-    }
-    leaf tcp-nodelay {
-      type boolean;
-      description "TCP nodelay for the database connection.";
-    }
     leaf tcp-user-timeout {
       type uint32;
       units "seconds";
       description "TCP user timeout while communicating with the database";
     }
-    leaf consistency {
-      type string;
-      description "Consistency level.";
-    }
-    leaf serial-consistency {
-      type string;
-      description "Serial consistency level.";
-    }
     leaf max-row-errors {
       type uint32;
       description "Maximum row errors (0 means unlimited).";
     }
+    leaf ssl-mode {
+      type string;
+      description "The strictness of the TLS/SSL handshake.";
+    }
     leaf on-fail {
       type string;
-      description "action to take when connection recovery fails";
+      description "action to take when connection recovery fails.";
     }
     leaf retry-on-startup {
       type boolean;

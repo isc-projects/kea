@@ -93,18 +93,11 @@ LegalLogMgr::parseDatabase(const ConstElementPtr& parameters, DatabaseConnection
         }
     }
 
-    string param_name = "tcp-nodelay";
-    ConstElementPtr param = parameters->get(param_name);
-    if (param) {
-        db_parameters.emplace(param_name,
-                              param->boolValue() ? "true" : "false");
-    }
-
     // Always set "on-fail" to "serve-retry-continue" if not explicitly
     // configured.
     string on_fail_action = ReconnectCtl::onFailActionToText(OnFailAction::SERVE_RETRY_CONTINUE);
-    param_name = "on-fail";
-    param = parameters->get(param_name);
+    string param_name = "on-fail";
+    ConstElementPtr param = parameters->get(param_name);
     if (param) {
         on_fail_action = param->stringValue();
         ReconnectCtl::onFailActionFromText(on_fail_action);

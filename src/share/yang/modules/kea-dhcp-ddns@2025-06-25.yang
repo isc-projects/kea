@@ -12,7 +12,7 @@ module kea-dhcp-ddns {
   }
   import kea-dhcp-types {
     prefix dhcp;
-    revision-date 2025-06-25;
+    revision-date 2026-06-24;
   }
 
   organization "Internet Systems Consortium";

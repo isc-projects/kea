@@ -132,6 +132,7 @@ namespace yang {
 /// +--rw reservations-out-of-pool?         boolean
 /// +--rw statistic-default-sample-age?     uint32
 /// +--rw statistic-default-sample-count?   uint32
+/// +--rw adaptive-lease-time-threshold?    decimal64
 /// +--rw store-extended-info?              boolean
 /// @endcode
 ///
@@ -197,6 +198,7 @@ namespace yang {
 ///     "valid-lifetime": <valid lifetime>,
 ///     "min-valid-lifetime": <minimum valid lifetime>,
 ///     "max-valid-lifetime": <maximum valid lifetime>,
+///     "allow-address-registration": <allow address registration flag>,
 ///     "renew-timer": <renew timer>,
 ///     "rebind-timer": <rebind timer>,
 ///     "calculate-tee-times": <calculate T1/T2 times>,
@@ -244,6 +246,7 @@ namespace yang {
 /// +--rw valid-lifetime?                   uint32
 /// +--rw min-valid-lifetime?               uint32
 /// +--rw max-valid-lifetime?               uint32
+/// +--rw allow-address-registration?       boolean
 /// +--rw renew-timer?                      uint32
 /// +--rw rebind-timer?                     uint32
 /// +--rw calculate-tee-times?              boolean
@@ -299,6 +302,7 @@ namespace yang {
 /// +--rw reservations-out-of-pool?         boolean
 /// +--rw statistic-default-sample-age?     uint32
 /// +--rw statistic-default-sample-count?   uint32
+/// +--rw adaptive-lease-time-threshold?    decimal64
 /// +--rw store-extended-info?              boolean
 /// @endcode
 ///

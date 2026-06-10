@@ -104,6 +104,7 @@ namespace yang {
 ///    +--rw ddns-update-on-renew?           boolean
 ///    +--rw ddns-use-conflict-resolution?   boolean
 ///    +--rw ddns-conflict-resolution-mode?  conflict-resolution-mode
+///    +--rw adaptive-lease-time-threshold?  decimal64
 ///    +--rw store-extended-info?            boolean
 ///    +--rw hostname-char-replacement?      string
 ///    +--rw hostname-char-set?              string

@@ -220,6 +220,7 @@ TranslatorConfig::getServerKeaDhcpCommon(DataNode const& data_node) {
     checkAndGetLeaf(result, data_node, "t1-percent");
     checkAndGetLeaf(result, data_node, "t2-percent");
     checkAndGetLeaf(result, data_node, "valid-lifetime");
+    checkAndGetLeaf(result, data_node, "adaptive-lease-time-threshold");
 
     checkAndGetAndJsonifyLeaf(result, data_node, "dhcp-queue-control");
     checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
@@ -395,6 +396,7 @@ TranslatorConfig::getServerKeaDhcp6() {
     checkAndGetLeaf(result, config, "pd-allocator");
     checkAndGetLeaf(result, config, "preferred-lifetime");
     checkAndGetLeaf(result, config, "relay-supplied-options");
+    checkAndGetLeaf(result, config, "allow-address-registration");
 
     // Handle interfaces.
     ElementPtr interfaces_config(getInterfacesKea(config));
@@ -547,6 +549,7 @@ TranslatorConfig::setServerKeaDhcpCommon(string const& xpath,
     checkAndSetLeaf(elem, xpath, "t1-percent", LeafBaseType::Dec64);
     checkAndSetLeaf(elem, xpath, "t2-percent", LeafBaseType::Dec64);
     checkAndSetLeaf(elem, xpath, "valid-lifetime", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "adaptive-lease-time-threshold", LeafBaseType::Dec64);
 
     checkAndSetLeafList(elem, xpath, "host-reservation-identifiers", LeafBaseType::Enum);
 
@@ -726,7 +729,7 @@ TranslatorConfig::setServerKeaDhcp6(ConstElementPtr elem) {
     checkAndSetLeaf(elem, xpath, "min-preferred-lifetime", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "pd-allocator", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "preferred-lifetime", LeafBaseType::Uint32);
-
+    checkAndSetLeaf(elem, xpath, "allow-address-registration", LeafBaseType::Bool);
     checkAndSetLeafList(elem, xpath, "mac-sources", LeafBaseType::String);
     checkAndSetLeafList(elem, xpath, "relay-supplied-options", LeafBaseType::String);
 

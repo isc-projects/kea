@@ -73,6 +73,7 @@ TranslatorDatabase::getDatabaseKea(DataNode const& data_node) {
     checkAndGetLeaf(result, data_node, "trust-anchor");
     checkAndGetLeaf(result, data_node, "user");
     checkAndGetLeaf(result, data_node, "write-timeout");
+    checkAndGetLeaf(result, data_node, "ssl-mode");
 
     checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
 
@@ -131,6 +132,7 @@ TranslatorDatabase::setDatabaseKea(string const& xpath, ConstElementPtr elem, bo
     checkAndSetLeaf(elem, xpath, "trust-anchor", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "user", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "write-timeout", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "ssl-mode", LeafBaseType::String);
 
     checkAndSetUserContext(elem, xpath);
 }

@@ -102,6 +102,7 @@ TranslatorSharedNetwork::getSharedNetworkKea(DataNode const& data_node,
     checkAndGetLeaf(result, data_node, "t1-percent");
     checkAndGetLeaf(result, data_node, "t2-percent");
     checkAndGetLeaf(result, data_node, "valid-lifetime");
+    checkAndGetLeaf(result, data_node, "adaptive-lease-time-threshold");
 
     checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
 
@@ -203,6 +204,7 @@ TranslatorSharedNetwork::setSharedNetworkKea(string const& xpath,
     checkAndSetLeaf(elem, xpath, "t1-percent", LeafBaseType::Dec64);
     checkAndSetLeaf(elem, xpath, "t2-percent", LeafBaseType::Dec64);
     checkAndSetLeaf(elem, xpath, "valid-lifetime", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "adaptive-lease-time-threshold", LeafBaseType::Dec64);
     checkAndSetLeafList(elem, xpath, "client-classes", LeafBaseType::String);
     checkAndSetLeafList(elem, xpath, "require-client-classes", LeafBaseType::String);
     checkAndSetLeafList(elem, xpath, "evaluate-additional-classes", LeafBaseType::String);

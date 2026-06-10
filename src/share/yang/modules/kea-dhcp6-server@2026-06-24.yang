@@ -12,13 +12,17 @@ module kea-dhcp6-server {
   }
   import kea-dhcp-types {
     prefix dhcp;
-    revision-date 2025-06-25;
+    revision-date 2026-06-24;
   }
 
   organization "Internet Systems Consortium";
   contact "kea-dev@lists.isc.org";
   description "This model defines a YANG data model that can be
                used to configure and manage a Kea DHCPv6 server.";
+
+  revision 2026-06-24 {
+    description "Added allow-address-registration and adaptive-lease-time-threshold.";
+  }
 
   revision 2025-06-25 {
     description "Added only-in-additional-list, evaluate-additional-classes,
@@ -152,6 +156,15 @@ module kea-dhcp6-server {
       units "seconds";
       description "Maximum preferred lifetime.";
     }
+  }
+
+  grouping allow-address-registration {
+    description "Allow address registration.";
+    leaf allow-address-registration {
+      type boolean;
+      description "Flag which enables or disables client
+                   address registration via ADDR-REG-INFORM packets.";
+      }
   }
 
   grouping interface-id {
@@ -389,6 +402,7 @@ module kea-dhcp6-server {
       uses dhcp:reservations-global;
       uses dhcp:reservations-in-subnet;
       uses dhcp:reservations-out-of-pool;
+      uses dhcp:adaptive-lease-time-threshold;
       uses dhcp:store-extended-info;
       uses dhcp:subnet-user-context;
     }
@@ -472,6 +486,7 @@ module kea-dhcp6-server {
     description "Contains DHCPv6 server configuration.";
 
     uses dhcp:allocator;
+    uses allow-address-registration;
     uses dhcp:pd-allocator;
     uses data-directory;
     uses preferred-lifetime;
@@ -546,6 +561,7 @@ module kea-dhcp6-server {
       uses dhcp:reservations-global;
       uses dhcp:reservations-in-subnet;
       uses dhcp:reservations-out-of-pool;
+      uses dhcp:adaptive-lease-time-threshold;
       uses dhcp:store-extended-info;
       uses dhcp:network-user-context;
     }
@@ -680,6 +696,7 @@ module kea-dhcp6-server {
     uses dhcp:reservations-out-of-pool;
     uses dhcp:statistic-default-sample-age;
     uses dhcp:statistic-default-sample-count;
+    uses dhcp:adaptive-lease-time-threshold;
     uses dhcp:store-extended-info;
   }
 
@@ -731,9 +748,6 @@ module kea-dhcp6-server {
           type enumeration {
             enum "IA_NA" {
               description "Identity association for non-temporary addresses.";
-            }
-            enum "IA_TA" {
-              description "Identity association for temporary addresses.";
             }
             enum "IA_PD" {
               description "Identity association for prefix delegation.";

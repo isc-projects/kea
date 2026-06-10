@@ -12,13 +12,17 @@ module kea-dhcp4-server {
   }
   import kea-dhcp-types {
     prefix dhcp;
-    revision-date 2025-06-25;
+    revision-date 2026-06-24;
   }
 
   organization "Internet Systems Consortium";
   contact "kea-dev@lists.isc.org";
   description "This model defines a YANG data model that can be
                used to configure and manage a Kea DHCPv4 server.";
+
+  revision 2026-06-24 {
+    description "Added adaptive-lease-time-threshold.";
+  }
 
   revision 2025-06-25 {
     description "Added only-in-additional-list, evaluate-additional-classes,
@@ -322,6 +326,7 @@ module kea-dhcp4-server {
       uses dhcp:reservations-global;
       uses dhcp:reservations-in-subnet;
       uses dhcp:reservations-out-of-pool;
+      uses dhcp:adaptive-lease-time-threshold;
       uses dhcp:store-extended-info;
       uses dhcp:subnet-user-context;
     }
@@ -469,6 +474,7 @@ module kea-dhcp4-server {
       uses dhcp:reservations-global;
       uses dhcp:reservations-in-subnet;
       uses dhcp:reservations-out-of-pool;
+      uses dhcp:adaptive-lease-time-threshold;
       uses dhcp:store-extended-info;
       uses dhcp:network-user-context;
     }
@@ -586,6 +592,7 @@ module kea-dhcp4-server {
     uses dhcp:reservations-out-of-pool;
     uses dhcp:statistic-default-sample-age;
     uses dhcp:statistic-default-sample-count;
+    uses dhcp:adaptive-lease-time-threshold;
     uses dhcp:store-extended-info;
 
     leaf stash-agent-options {

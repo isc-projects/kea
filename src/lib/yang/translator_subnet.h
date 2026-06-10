@@ -135,6 +135,7 @@ namespace yang {
 ///    +--rw reservations-global?            boolean
 ///    +--rw reservations-in-subnet?         boolean
 ///    +--rw reservations-out-of-pool?       boolean
+///    +--rw adaptive-lease-time-threshold?  decimal64
 ///    +--rw store-extended-info?            boolean
 ///    +--rw user-context?                   user-context
 ///

@@ -22,9 +22,9 @@ static const std::unordered_map<std::string, std::string> YANG_REVISIONS = {
     { "ietf-dhcpv6-options", "2018-09-04" },
     { "ietf-dhcpv6-server", "2018-09-04" },
     { "kea-types", "2025-06-25" },
-    { "kea-dhcp-types", "2025-06-25" },
-    { "kea-dhcp4-server", "2025-06-25" },
-    { "kea-dhcp6-server", "2025-06-25" },
+    { "kea-dhcp-types", "2026-06-24" },
+    { "kea-dhcp4-server", "2026-06-24" },
+    { "kea-dhcp6-server", "2026-06-24" },
     { "kea-dhcp-ddns", "2025-06-25" }
 };  // YANG_REVISIONS
 

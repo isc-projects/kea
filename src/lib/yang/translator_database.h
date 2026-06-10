@@ -34,6 +34,9 @@ namespace yang {
 ///     "max-reconnect-tries": <maximum reconnect tries>,
 ///     "reconnect-wait-time": <reconnect wait time>,
 ///     "max-row-errors": <maximum row errors>,
+///     "ssl-mode": <ssl mode>,
+///     "on-fail": <on fail action>,
+///     "retry-on-startup": <retry on startup flag>,
 ///     "user-context": { <json map> },
 ///     "comment": <comment>
 /// }
@@ -59,6 +62,7 @@ namespace yang {
 ///    +--rw max-reconnect-tries?   uint32
 ///    +--rw reconnect-wait-time?   uint32
 ///    +--rw max-row-errors?        uint32
+///    +--rw ssl-mode?              string
 ///    +--rw on-fail?               string
 ///    +--rw retry-on-startup?      boolean
 ///    +--rw user-context?          user-context
