@@ -2266,6 +2266,13 @@ what values are accepted for them.
    |                 | 2147483647.                                                   |
    +-----------------+---------------------------------------------------------------+
 
+.. note::
+
+  Option ``classless-static-route`` has its own data type "internal" and accepts a string with the following mask
+  as its value: subnet1/prefix_len1 - router1, subnetN/prefix_lenN - routerN.
+
+  For example: 10.229.0.128/25 - 10.229.0.1, 10.198.122.47/32 - 10.198.122.1
+
 Kea also supports the Relay Agent Information (RAI, defined in
 `RFC 3046 <https://datatracker.ietf.org/doc/html/rfc3046>`_) option, sometimes referred to as the relay option, agent
 option, or simply option 82. The option itself is just a container and does not convey any information

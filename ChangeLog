@@ -1,3 +1,9 @@
+2485.	[doc]		sanua356, razvan
+	Added documentation about internal type of option 121
+	(classless-static-route). Thank you sanua356 (GitHub nickname)
+	for reporting this issue and providing a patch.
+	(Gitlab #4149)
+
 2484.	[bug]		razvan
 	Do not allow invalid prefix/prefix-length pair for IPv6 PD
 	leases. Thank you to Qifan Zhang from Palo Alto Networks for

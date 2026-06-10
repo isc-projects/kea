@@ -326,3 +326,9 @@ We have received the following contributions:
             hooks library.
    2025-10: Reported and tested a data race issue in ping-check hooks library.
    2026-02: Corrected spelling and grammatical errors in message files.
+
+ - sanua356
+   2026-06: Contributed a patch that updates ARM documentation about internal
+            option type.
+
+
