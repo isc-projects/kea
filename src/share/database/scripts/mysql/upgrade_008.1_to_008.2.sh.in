@@ -58,8 +58,7 @@ for arg in "${@}"; do
 done
 
 # Make sure we can id the schema
-if [ -z "$schema" ]
-then
+if [ -z "${schema-}" ]; then
     printf "Could not find database schema name in cmd line args: %s\n" "${*}"
     exit 255
 fi
@@ -78,6 +77,11 @@ change_column() {
     if ! count=$(mysql -N -B "${@}" -e "${sql}")
     then
         printf 'change_column: schema query failed [%s]\n' "${sql}"
+        exit 255
+    fi
+
+    if [ -z "${count-}" ]; then
+        printf "Could not determine number of records in schema '%s', table '%s'.\n" "${schema}" "${table}"
         exit 255
     fi
 

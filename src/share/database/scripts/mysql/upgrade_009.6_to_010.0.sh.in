@@ -58,8 +58,7 @@ for arg in "${@}"; do
 done
 
 # Make sure we have the schema.
-if [ -z "$schema" ]
-then
+if [ -z "${schema-}" ]; then
     printf "Could not find database schema name in cmd line args: %s\n" "${*}"
     exit 255
 fi
@@ -76,6 +75,11 @@ shrink_tag_column() {
         exit 255
     fi
 
+    if [ -z "${taglen-}" ]; then
+        printf "Could not determine tag length in schema '%s', table '%s'.\n" "${schema}" "${table}"
+        exit 255
+    fi
+
     # We aim for the length of 64 characters.
     if [ "$taglen" -ne 64 ]
     then
@@ -86,6 +90,12 @@ shrink_tag_column() {
             printf 'shrink_tag_column: select query failed [%s]\n' "${sql}"
             exit 255
         fi
+
+        if [ -z "${longtag-}" ]; then
+            printf "Could not determine how many tags exceed length of 64 in existing rows in schema '%s', table '%s'.\n" "${schema}" "${table}"
+            exit 255
+        fi
+
         # Report an error if there are any server tags exceeding 64 characters.
         # A user should fix the tags and rerun this migration.
         if [ "$longtag" -eq 1 ]
