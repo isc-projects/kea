@@ -177,8 +177,16 @@ PgSqlConnection::ensureSchemaVersion(const ParameterMap& parameters,
     try {
         schema_version = getVersion(parameters, ac, cb, retry ? timer_name : string());
     } catch (DbOpenError const& exception) {
+        // Stop here. Initializing the schema won't work if we cannot create a connection to the
+        // database.
         throw;
     } catch (DbOpenErrorWithRetry const& exception) {
+        // Stop here. Initializing the schema won't work if we cannot create a connection to the
+        // database even as we are retrying.
+        throw;
+    } catch (DefaultCredential const& exception) {
+        // Stop here. Initializing the schema won't work if we cannot create a connection to the
+        // database due to default credentials being used.
         throw;
     } catch (exception const& exception) {
         // Disable the recovery mechanism in test mode.
