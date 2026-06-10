@@ -8,7 +8,6 @@
 
 #include <asiolink/io_address.h>
 #include <asiolink/addr_utilities.h>
-#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease.h>
 #include <util/pointer_util.h>
 #include <util/str.h>
@@ -472,13 +471,9 @@ Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
         } else {
             IOAddress first_address = firstAddrInPrefix(addr, prefixlen);
             if (first_address != addr) {
-                LOG_WARN(dhcpsrv_logger, DHCPSRV_INVALID_PD_LEASE6_PREFIX_PREFIX_LEN_PAIR)
-                    .arg(addr.toText())
-                    .arg(first_address.toText())
-                    .arg(static_cast<uint32_t>(prefixlen))
-                    .arg(first_address.toText())
-                    .arg(static_cast<uint32_t>(prefixlen));
-                addr_ = first_address;
+                isc_throw(BadValue, "Prefix address: " << addr
+                          << " exceeds prefix/prefix-len pair: " << first_address
+                          << "/" << static_cast<uint32_t>(prefixlen));
             }
         }
     }
@@ -508,13 +503,9 @@ Lease6::Lease6(Lease::Type type, const isc::asiolink::IOAddress& addr,
         } else {
             IOAddress first_address = firstAddrInPrefix(addr, prefixlen);
             if (first_address != addr) {
-                LOG_WARN(dhcpsrv_logger, DHCPSRV_INVALID_PD_LEASE6_WITH_HOSTNAME_PREFIX_PREFIX_LEN_PAIR)
-                    .arg(addr.toText())
-                    .arg(first_address.toText())
-                    .arg(static_cast<uint32_t>(prefixlen))
-                    .arg(first_address.toText())
-                    .arg(static_cast<uint32_t>(prefixlen));
-                addr_ = first_address;
+                isc_throw(BadValue, "Prefix address: " << addr
+                          << " exceeds prefix/prefix-len pair: " << first_address
+                          << "/" << static_cast<uint32_t>(prefixlen));
             }
         }
     }

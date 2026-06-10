@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <asiolink/addr_utilities.h>
 #include <database/db_exceptions.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
@@ -820,7 +821,7 @@ Lease6Ptr
 AllocEngine::allocateBestMatch(ClientContext6& ctx,
                                Lease6Ptr& hint_lease,
                                bool& search_hint_lease,
-                               const isc::asiolink::IOAddress& hint,
+                               const isc::asiolink::IOAddress& hint_addr,
                                uint8_t hint_prefix_length,
                                ConstSubnet6Ptr original_subnet,
                                SharedNetwork6Ptr& network,
@@ -847,7 +848,7 @@ AllocEngine::allocateBestMatch(ClientContext6& ctx,
         // check if the hint is in pool and is available
         // This is equivalent of subnet->inPool(hint), but returns the pool
         pool = boost::dynamic_pointer_cast<Pool6>
-            (subnet->getPool(ctx.currentIA().type_, classes, hint));
+            (subnet->getPool(ctx.currentIA().type_, classes, hint_addr));
 
         // check if the pool is allowed
         if (!pool || !pool->clientSupported(classes)) {
@@ -858,6 +859,15 @@ AllocEngine::allocateBestMatch(ClientContext6& ctx,
             !Allocator::isValidPrefixPool(prefix_length_match, pool,
                                           hint_prefix_length)) {
             continue;
+        }
+
+        isc::asiolink::IOAddress hint = hint_addr;
+
+        // Adjust the hint to current pool. The client might have a different idea
+        // of the prefix length. The configuration might have changed since the lease
+        // has been used.
+        if (ctx.currentIA().type_ == Lease::TYPE_PD) {
+            hint = asiolink::firstAddrInPrefix(hint_addr, pool->getLength());
         }
 
         bool in_subnet = subnet->getReservationsInSubnet();
@@ -1040,13 +1050,13 @@ AllocEngine::allocateBestMatch(ClientContext6& ctx,
             uint8_t prefix_len = 128;
             if (ctx.currentIA().type_ == Lease::TYPE_PD) {
                 candidate = allocator->pickPrefix(classes, pool, ctx.duid_,
-                                                  prefix_length_match, hint,
+                                                  prefix_length_match, hint_addr,
                                                   hint_prefix_length);
                 if (pool) {
                     prefix_len = pool->getLength();
                 }
             } else {
-                candidate = allocator->pickAddress(classes, ctx.duid_, hint);
+                candidate = allocator->pickAddress(classes, ctx.duid_, hint_addr);
             }
 
             // An allocator may return zero address when it has pools exhausted.

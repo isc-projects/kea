@@ -412,21 +412,6 @@ the host database. The operation started a retry to connect procedure.
 The database access string with password redacted is logged, along with the
 error and details for the reconnect procedure.
 
-% DHCPSRV_INVALID_HOST_PREFIX_PREFIX_LEN_PAIR Prefix address: %1 exceeds prefix/prefix-len pair: %2/%3. Using %4/%5 instead.
-This warning message is logged when a host reservation is created with invalid
-prefix/prefix length pair. The address is automatically changed to canonical
-form. Both the initial address and the new address are logged.
-
-% DHCPSRV_INVALID_PD_LEASE6_PREFIX_PREFIX_LEN_PAIR Prefix address: %1 exceeds prefix/prefix-len pair: %2/%3. Using %4/%5 instead.
-This warning message is logged when a PD IPV6 lease is created with invalid
-prefix/prefix length pair. The address is automatically changed to canonical
-form. Both the initial address and the new address are logged.
-
-% DHCPSRV_INVALID_PD_LEASE6_WITH_HOSTNAME_PREFIX_PREFIX_LEN_PAIR Prefix address: %1 exceeds prefix/prefix-len pair: %2/%3. Using %4/%5 instead.
-This warning message is logged when a PD IPV6 lease is created with invalid
-prefix/prefix length pair. The address is automatically changed to canonical
-form. Both the initial address and the new address are logged.
-
 % DHCPSRV_LEASE4_EXTENDED_INFO_SANITY_FAIL extended info for lease %1 failed checks (%2)
 This error message is printed when a lease extended info failed to
 pass sanity checks. The detail of the found problem was displayed and

@@ -10,7 +10,6 @@
 #include <asiolink/addr_utilities.h>
 #include <cryptolink/crypto_rng.h>
 #include <dhcp/pkt4.h>
-#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/host.h>
 #include <exceptions/exceptions.h>
 
@@ -96,7 +95,6 @@ IPv6Resrv::IPv6Resrv(const Type& type,
 void
 IPv6Resrv::set(const Type& type, const asiolink::IOAddress& prefix,
                const uint8_t prefix_len) {
-    IOAddress first_address = prefix;
     if (!prefix.isV6() || prefix.isV6Multicast()) {
         isc_throw(isc::BadValue, "invalid prefix '" << prefix
                   << "' for new IPv6 reservation");
@@ -111,19 +109,16 @@ IPv6Resrv::set(const Type& type, const asiolink::IOAddress& prefix,
                   << static_cast<int>(prefix_len)
                   << "' for reserved IPv6 address, expected 128");
     } else if ((type == TYPE_PD) && (prefix_len != 128)) {
-        first_address = firstAddrInPrefix(prefix, prefix_len);
+        IOAddress first_address = firstAddrInPrefix(prefix, prefix_len);
         if (first_address != prefix) {
-            LOG_WARN(dhcpsrv_logger, DHCPSRV_INVALID_HOST_PREFIX_PREFIX_LEN_PAIR)
-                .arg(prefix.toText())
-                .arg(first_address.toText())
-                .arg(static_cast<uint32_t>(prefix_len))
-                .arg(first_address.toText())
-                .arg(static_cast<uint32_t>(prefix_len));
+            isc_throw(BadValue, "Prefix address: " << prefix
+                      << " exceeds prefix/prefix-len pair: " << first_address
+                      << "/" << static_cast<uint32_t>(prefix_len));
         }
     }
 
     type_ = type;
-    prefix_ = first_address;
+    prefix_ = prefix;
     prefix_len_ = prefix_len;
     pd_exclude_option_.reset();
 }

@@ -10,7 +10,6 @@
 #include <dhcpsrv/lease.h>
 #include <util/pointer_util.h>
 #include <testutils/gtest_utils.h>
-#include <testutils/log_utils.h>
 #include <testutils/test_to_element.h>
 #include <cc/data.h>
 #include <gtest/gtest.h>
@@ -20,16 +19,10 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
-using namespace isc::dhcp::test;
 using namespace isc::data;
 using namespace isc::test;
 
 namespace {
-
-/// @brief Fixture used to test that invalid prefix/prefix-len pair is
-/// accepted and logged.
-class Lease6TestLog : public LogContentTest {
-};
 
 /// Hardware address used by different tests.
 const uint8_t HWADDR[] = {0x08, 0x00, 0x2b, 0x02, 0x3f, 0x4e};
@@ -696,6 +689,20 @@ TEST(Lease6Test, constructorDefault) {
                                              subnet_id, true, true, "", HWAddrPtr())),
                      BadValue, "DUID is mandatory for an IPv6 lease");
 
+    // Lease6 must have a valid prefix and prefix length.
+    addr = IOAddress(ADDRESS[5]);
+    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_PD, addr,
+                                             duid, iaid, 100, 200,
+                                             subnet_id, HWAddrPtr(), 16)),
+                     BadValue, "Prefix address: 8000::1 exceeds "
+                               "prefix/prefix-len pair: 8000::/16");
+
+    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_PD, addr,
+                                             duid, iaid, 100, 200,
+                                             subnet_id, true, true, "", HWAddrPtr(), 16)),
+                     BadValue, "Prefix address: 8000::1 exceeds "
+                               "prefix/prefix-len pair: 8000::/16");
+
     // Lease6 must have a prefixlen set to 128 for non prefix type.
     addr = IOAddress(ADDRESS[4]);
     EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
@@ -707,50 +714,6 @@ TEST(Lease6Test, constructorDefault) {
                                              duid, iaid, 100, 200,
                                              subnet_id, true, true, "", HWAddrPtr(), 96)),
                      BadValue, "prefixlen must be 128 for non prefix type");
-}
-
-// Lease6 is also defined in lease_mgr.h, so is tested in this file as well.
-// This test checks if the Lease6 structure can be instantiated correctly
-TEST_F(Lease6TestLog, constructorDefaultLogWarning) {
-    // Lease6 must have a valid prefix and prefix length.
-    IOAddress addr("8000::1");
-    Lease6Ptr lease;
-
-    // Other values
-    uint8_t llt[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
-    DuidPtr duid(new DUID(llt, sizeof(llt)));
-    uint32_t iaid = IAID;   // Just a number
-    SubnetID subnet_id = 8; // Just another number
-    string expected = "Prefix address: 8000::1 exceeds prefix/prefix-len pair: ";
-    expected += "8000::/16. Using 8000::/16 instead.";
-    addString(expected);
-    EXPECT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_PD, addr,
-                                           duid, iaid, 100, 200,
-                                           subnet_id, HWAddrPtr(), 16)));
-    EXPECT_TRUE(checkFile());
-    EXPECT_EQ(lease->addr_.toText(), "8000::");
-}
-
-// Lease6 is also defined in lease_mgr.h, so is tested in this file as well.
-// This test checks if the Lease6 structure can be instantiated correctly
-TEST_F(Lease6TestLog, constructorDefaultWithHostnameLogWarning) {
-    // Lease6 must have a valid prefix and prefix length.
-    IOAddress addr("8000::1");
-    Lease6Ptr lease;
-
-    // Other values
-    uint8_t llt[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
-    DuidPtr duid(new DUID(llt, sizeof(llt)));
-    uint32_t iaid = IAID;   // Just a number
-    SubnetID subnet_id = 8; // Just another number
-    string expected = "Prefix address: 8000::1 exceeds prefix/prefix-len pair: ";
-    expected += "8000::/16. Using 8000::/16 instead.";
-    addString(expected);
-    EXPECT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_PD, addr,
-                                           duid, iaid, 100, 200,
-                                           subnet_id, true, true, "", HWAddrPtr(), 16)));
-    EXPECT_TRUE(checkFile());
-    EXPECT_EQ(lease->addr_.toText(), "8000::");
 }
 
 // This test verifies that the Lease6 constructor which accepts FQDN data,
