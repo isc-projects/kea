@@ -721,13 +721,14 @@ TEST_F(Lease6TestLog, constructorDefaultLogWarning) {
     DuidPtr duid(new DUID(llt, sizeof(llt)));
     uint32_t iaid = IAID;   // Just a number
     SubnetID subnet_id = 8; // Just another number
-    string expected = "Prefix address: 8000::1 exceeds prefix/prefix-len pair: 8000::/16. "
-            "Using 8000::/16 instead.";
+    string expected = "Prefix address: 8000::1 exceeds prefix/prefix-len pair: ";
+    expected += "8000::/16. Using 8000::/16 instead.";
     addString(expected);
     EXPECT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_PD, addr,
                                            duid, iaid, 100, 200,
                                            subnet_id, HWAddrPtr(), 16)));
     EXPECT_TRUE(checkFile());
+    EXPECT_EQ(lease->addr_.toText(), "8000::");
 }
 
 // Lease6 is also defined in lease_mgr.h, so is tested in this file as well.
@@ -742,13 +743,14 @@ TEST_F(Lease6TestLog, constructorDefaultWithHostnameLogWarning) {
     DuidPtr duid(new DUID(llt, sizeof(llt)));
     uint32_t iaid = IAID;   // Just a number
     SubnetID subnet_id = 8; // Just another number
-    string expected = "Prefix address: 8000::1 exceeds prefix/prefix-len pair: 8000::/16. "
-            "Using 8000::/16 instead.";
+    string expected = "Prefix address: 8000::1 exceeds prefix/prefix-len pair: ";
+    expected += "8000::/16. Using 8000::/16 instead.";
     addString(expected);
     EXPECT_NO_THROW(lease.reset(new Lease6(Lease::TYPE_PD, addr,
                                            duid, iaid, 100, 200,
                                            subnet_id, true, true, "", HWAddrPtr(), 16)));
     EXPECT_TRUE(checkFile());
+    EXPECT_EQ(lease->addr_.toText(), "8000::");
 }
 
 // This test verifies that the Lease6 constructor which accepts FQDN data,

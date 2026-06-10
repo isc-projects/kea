@@ -100,12 +100,14 @@ TEST(IPv6ResrvTest, constructiorInvalidPrefixLength) {
 // a warning message.
 TEST_F(IPv6ResrvTestLog, constructiorInvalidPrefixLengthLogWarning) {
     // Check for extra specified bits in prefix.
-    string expected = "Prefix address: 2001:db8:1:: exceeds prefix/prefix-len "
-            "pair: 2001:db8::/32. Using 2001:db8::/32 instead.";
+    string expected = "Prefix address: 2001:db8:1:: exceeds prefix/prefix-len ";
+    expected += "pair: 2001:db8::/32. Using 2001:db8::/32 instead.";
     addString(expected);
-    EXPECT_NO_THROW(IPv6Resrv(IPv6Resrv::TYPE_PD,
-                              IOAddress("2001:db8:1::"), 32));
+    std::shared_ptr<IPv6Resrv> resrv;
+    EXPECT_NO_THROW(resrv.reset(new IPv6Resrv(IPv6Resrv::TYPE_PD,
+                                              IOAddress("2001:db8:1::"), 32)));
     EXPECT_TRUE(checkFile());
+    EXPECT_EQ(resrv->getPrefix().toText(), "2001:db8::");
 }
 
 // This test verifies that it is possible to modify prefix and its
@@ -154,12 +156,13 @@ TEST_F(IPv6ResrvTestLog, setPrefixLogWarning) {
     EXPECT_EQ(48U, resrv.getPrefixLen());
     EXPECT_EQ(IPv6Resrv::TYPE_PD, resrv.getType());
     // Check for extra specified bits in prefix.
-    string expected = "Prefix address: 2001:db8:1:: exceeds prefix/prefix-len "
-            "pair: 2001:db8::/32. Using 2001:db8::/32 instead.";
+    string expected = "Prefix address: 2001:db8:1:: exceeds prefix/prefix-len ";
+    expected += "pair: 2001:db8::/32. Using 2001:db8::/32 instead.";
     addString(expected);
     EXPECT_NO_THROW(resrv.set(IPv6Resrv::TYPE_PD,
                               IOAddress("2001:db8:1::"), 32));
     EXPECT_TRUE(checkFile());
+    EXPECT_EQ(resrv.getPrefix().toText(), "2001:db8::");
 }
 
 // This test verifies that it is possible to manage prefix exclude option.

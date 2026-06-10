@@ -1,3 +1,9 @@
+2484.	[bug]		razvan
+	Do not allow invalid prefix/prefix-length pair for IPv6 PD
+	leases. Thank you to Qifan Zhang from Palo Alto Networks for
+	reporting the issue.
+	(Gitlab #4518)
+
 2483.	[bug]		razvan
 	Fixed a bug which was causing the dhcpv4 server to crash when
 	reusing expired reservations and hook libraries set the SKIP
