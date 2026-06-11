@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -51,7 +51,10 @@ extern isc::log::Logger database_logger;
 enum DbMessageID {
     DB_INVALID_ACCESS,
 
+    PGSQL_INITIAL_CONNECTION_FAIL,
     PGSQL_INITIALIZE_SCHEMA,
+    PGSQL_NO_INIT_NO_ADMIN,
+    PGSQL_NO_INIT_READONLY,
     PGSQL_DEALLOC_ERROR,
     PGSQL_FATAL_ERROR,
     PGSQL_START_TRANSACTION,
@@ -61,7 +64,10 @@ enum DbMessageID {
     PGSQL_ROLLBACK_SAVEPOINT,
     PGSQL_TCP_USER_TIMEOUT_UNSUPPORTED,
 
+    MYSQL_INITIAL_CONNECTION_FAIL,
     MYSQL_INITIALIZE_SCHEMA,
+    MYSQL_NO_INIT_NO_ADMIN,
+    MYSQL_NO_INIT_READONLY,
     MYSQL_FATAL_ERROR,
     MYSQL_START_TRANSACTION,
     MYSQL_COMMIT,

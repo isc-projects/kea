@@ -3016,6 +3016,35 @@ DATABASE_MYSQL_INITIALIZE_SCHEMA
 This is logged before running the kea-admin command to automatically initialize the schema from Kea
 after getting the schema version initially failed. The full kea-admin command is shown.
 
+DATABASE_MYSQL_INITIAL_CONNECTION_FAIL
+======================================
+
+.. code-block:: text
+
+    The connection to the MySQL server is not yet established. Reason: %1
+
+A warning message logged when the initial attempt to connect to MySQL was unsuccessful.
+If the reason for the unsuccessful attempt was the lack of a schema, there may still be a chance
+for the connection to succeed after the Kea DHCP server runs kea-admin db-init.
+
+DATABASE_MYSQL_NO_INIT_NO_ADMIN
+===============================
+
+.. code-block:: text
+
+    Not attempting to initialize the MySQL schema. kea-admin seems to be missing.
+
+A warning message indicating that kea-admin is not available which makes db-init not possible.
+
+DATABASE_MYSQL_NO_INIT_READONLY
+===============================
+
+.. code-block:: text
+
+    Not attempting to initialize the MySQL schema. Kea has the database configured as readonly.
+
+A warning message indicating that the database is configured in Kea as readonly so db-init will not be attempted.
+
 DATABASE_MYSQL_ROLLBACK
 =======================
 
@@ -3099,6 +3128,35 @@ DATABASE_PGSQL_INITIALIZE_SCHEMA
 
 This is logged before running the kea-admin command to automatically initialize the schema from Kea
 after getting the schema version initially failed. The full kea-admin command is shown.
+
+DATABASE_PGSQL_INITIAL_CONNECTION_FAIL
+======================================
+
+.. code-block:: text
+
+    The connection to the PostgreSQL server is not yet established. Reason: %1
+
+A warning message logged when the initial attempt to connect to PostgreSQL was unsuccessful.
+If the reason for the unsuccessful attempt was the lack of a schema, there may still be a chance
+for the connection to succeed after the Kea DHCP server runs kea-admin db-init.
+
+DATABASE_PGSQL_NO_INIT_NO_ADMIN
+===============================
+
+.. code-block:: text
+
+    Not attempting to initialize the PostgreSQL schema. kea-admin seems to be missing.
+
+A warning message indicating that kea-admin is not available which makes db-init not possible.
+
+DATABASE_PGSQL_NO_INIT_READONLY
+===============================
+
+.. code-block:: text
+
+    Not attempting to initialize the PostgreSQL schema. Kea has the database configured as readonly.
+
+A warning message indicating that the database is configured in Kea as readonly so db-init will not be attempted.
 
 DATABASE_PGSQL_ROLLBACK
 =======================
@@ -4460,6 +4518,17 @@ from a client. Server does not process empty Hostname options and therefore
 option is skipped. The argument holds the client and transaction identification
 information.
 
+DHCP4_FATAL_OPEN_SOCKETS_FAILED
+===============================
+
+.. code-block:: text
+
+    maximum number of open service sockets attempts: %1, has been exhausted without success
+
+This error indicates that the server failed to bind service sockets after making
+the maximum configured number of open attempts. This causes the server
+to shut down as specified in the configuration.
+
 DHCP4_FLEX_ID
 =============
 
@@ -4993,8 +5062,7 @@ DHCP4_OPEN_SOCKETS_FAILED
     maximum number of open service sockets attempts: %1, has been exhausted without success
 
 This error indicates that the server failed to bind service sockets after making
-the maximum configured number of reconnect attempts. This might cause the server
-to shut down as specified in the configuration.
+the maximum configured number of open attempts.
 
 DHCP4_OPEN_SOCKETS_NO_RECONNECT_CTL
 ===================================
@@ -5249,6 +5317,18 @@ reason. The first argument contains the client and the transaction
 identification information. The second argument contains the IPv4 address
 in the ciaddr field. The third argument contains the IPv4 address in the
 requested-ip-address option (if present).
+
+DHCP4_PACKET_NAK_0005
+=====================
+
+.. code-block:: text
+
+    nacked as member of the special class 'REJECT': %1, %2
+
+Logged at debug log level 15.
+This message indicates that the server returned a DHCPNAK because the
+incoming query was classified into the special class 'REJECT'. The packet
+details are displayed.
 
 DHCP4_PACKET_OPTIONS_SKIPPED
 ============================
@@ -6763,6 +6843,17 @@ DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS
 This is info message logged when the dynamic reconfiguration of the DHCP server
 succeeded.
 
+DHCP6_FATAL_OPEN_SOCKETS_FAILED
+===============================
+
+.. code-block:: text
+
+    maximum number of open service sockets attempts: %1, has been exhausted without success
+
+This error indicates that the server failed to bind service sockets after making
+the maximum configured number of open attempts. This causes the server
+to shut down as specified in the configuration.
+
 DHCP6_FLEX_ID
 =============
 
@@ -7345,8 +7436,7 @@ DHCP6_OPEN_SOCKETS_FAILED
     maximum number of open service sockets attempts: %1, has been exhausted without success
 
 This error indicates that the server failed to bind service sockets after making
-the maximum configured number of reconnect attempts. This might cause the server
-to shut down as specified in the configuration.
+the maximum configured number of open attempts.
 
 DHCP6_OPEN_SOCKETS_NO_RECONNECT_CTL
 ===================================
@@ -7565,6 +7655,18 @@ DHCP6_PACKET_RECEIVE_FAIL
 The IPv6 DHCP server tried to receive a packet but an error
 occurred during this attempt. The reason for the error is included in
 the message.
+
+DHCP6_PACKET_REJECT_CLASS
+=========================
+
+.. code-block:: text
+
+    assignment rejected as member of the special class 'REJECT': %1 %2
+
+Logged at debug log level 15.
+This debug message is emitted when an incoming packet was classified
+into the special class 'REJECT' and no resource was assigned.
+The packet details are displayed.
 
 DHCP6_PACKET_SEND
 =================
@@ -11597,6 +11699,17 @@ DHCP_DELETE_EXTERNAL_SOCKET_NOT_FOUND
 
 This warning message indicates that an external socket was deleted but
 it can't be found i.e. adds and deletes are not correctly balanced.
+
+DHCP_IFACE_OPEN_SOCKET
+======================
+
+.. code-block:: text
+
+    Opened socket on the interface %1 with address %2 and port %3
+
+Logged at debug log level 40.
+This debug message indicates that a socket has been opened for a
+specific interface. The interface name, address and port are logged.
 
 DHCP_IFACE_SOCKET_ERROR
 =======================

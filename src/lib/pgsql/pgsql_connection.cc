@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -189,6 +189,8 @@ PgSqlConnection::ensureSchemaVersion(const ParameterMap& parameters,
         // database due to default credentials being used.
         throw;
     } catch (exception const& exception) {
+        DB_LOG_WARN(PGSQL_INITIAL_CONNECTION_FAIL).arg(exception.what());
+
         // Disable the recovery mechanism in test mode.
         if (DatabaseConnection::test_mode_) {
             throw;
@@ -223,12 +225,14 @@ PgSqlConnection::initializeSchema(const ParameterMap& parameters) {
     if (parameters.count("readonly") && parameters.at("readonly") == "true") {
         // The readonly flag is historically used for host backends. Still, if
         // enabled, it is a strong indication that we should not meDDLe with it.
+        DB_LOG_WARN(PGSQL_NO_INIT_READONLY).arg();
         return;
     }
 
     if (!isc::util::file::isFile(KEA_ADMIN_)) {
         // It can happen for kea-admin to not exist, especially with
         // packages that install it in a separate package.
+        DB_LOG_WARN(PGSQL_NO_INIT_NO_ADMIN).arg();
         return;
     }
 

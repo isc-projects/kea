@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,7 +24,10 @@ const int DB_DBG_TRACE_DETAIL = isc::log::DBGLVL_TRACE_DETAIL;
 const DbLogger::MessageMap db_message_map = {
     { DB_INVALID_ACCESS,                  DATABASE_INVALID_ACCESS },
 
+    { PGSQL_INITIAL_CONNECTION_FAIL,      DATABASE_PGSQL_INITIAL_CONNECTION_FAIL },
     { PGSQL_INITIALIZE_SCHEMA,            DATABASE_PGSQL_INITIALIZE_SCHEMA },
+    { PGSQL_NO_INIT_NO_ADMIN,             DATABASE_PGSQL_NO_INIT_NO_ADMIN },
+    { PGSQL_NO_INIT_READONLY,             DATABASE_PGSQL_NO_INIT_READONLY },
     { PGSQL_DEALLOC_ERROR,                DATABASE_PGSQL_DEALLOC_ERROR },
     { PGSQL_FATAL_ERROR,                  DATABASE_PGSQL_FATAL_ERROR },
     { PGSQL_START_TRANSACTION,            DATABASE_PGSQL_START_TRANSACTION },
@@ -34,7 +37,10 @@ const DbLogger::MessageMap db_message_map = {
     { PGSQL_ROLLBACK_SAVEPOINT,           DATABASE_PGSQL_ROLLBACK_SAVEPOINT },
     { PGSQL_TCP_USER_TIMEOUT_UNSUPPORTED, DATABASE_PGSQL_TCP_USER_TIMEOUT_UNSUPPORTED },
 
+    { MYSQL_INITIAL_CONNECTION_FAIL,      DATABASE_MYSQL_INITIAL_CONNECTION_FAIL },
     { MYSQL_INITIALIZE_SCHEMA,            DATABASE_MYSQL_INITIALIZE_SCHEMA },
+    { MYSQL_NO_INIT_NO_ADMIN,             DATABASE_MYSQL_NO_INIT_NO_ADMIN },
+    { MYSQL_NO_INIT_READONLY,             DATABASE_MYSQL_NO_INIT_READONLY },
     { MYSQL_FATAL_ERROR,                  DATABASE_MYSQL_FATAL_ERROR },
     { MYSQL_START_TRANSACTION,            DATABASE_MYSQL_START_TRANSACTION },
     { MYSQL_COMMIT,                       DATABASE_MYSQL_COMMIT },
