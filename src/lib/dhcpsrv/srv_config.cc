@@ -532,9 +532,10 @@ uint32_t SrvConfig::rangeCheck(data::ConstElementPtr elem, std::string name) {
     }
 
     auto ivalue = elem->intValue();
-    if (ivalue < 0 || ivalue > UINT32_MAX) {
+    if (ivalue < 0 || ivalue > std::numeric_limits<uint32_t>::max()) {
         isc_throw (BadValue, "'" << name << "' : " << ivalue << " is out of range,"
-                             << " must be >= 0 and <= " <<  UINT32_MAX);
+                             << " must be >= 0 and <= "
+                             << std::numeric_limits<uint32_t>::max());
     }
 
     return (static_cast<uint32_t>(ivalue));

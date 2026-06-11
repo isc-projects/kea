@@ -171,6 +171,31 @@ public:
     static int64_t getInteger(isc::data::ConstElementPtr scope,
                               const std::string& name);
 
+    /// @brief Fetches a range-checked integer parameter from a scope
+    ///
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
+    /// @param[out] output_value  integer variable to receive the  fetched value
+    /// @throw DhcpConfigError if the parameter is not there or is not of
+    /// appropriate type, or is out of range.
+    ///
+    /// @tparam T integer type to fetch (e.g.e int16_t, uint32_t)  and which
+    /// dictates the valid range.
+    template<typename T>
+    static void rangeCheckedInteger(isc::data::ConstElementPtr scope,
+                                 const std::string& name, T& output_value) {
+        auto min = std::numeric_limits<T>::min();
+        auto max = std::numeric_limits<T>::max();
+        int64_t ivalue = getInteger(scope, name);
+
+        if (ivalue < min || ivalue > max) {
+            isc_throw (DhcpConfigError, "'" << name << "' : " << ivalue << " is out of range,"
+                                       << " must be >= " << min << " and <= " <<  max);
+        }
+
+        output_value = static_cast<T>(ivalue);
+    }
+
     /// @brief Returns an integer parameter from a scope and checks its range
     ///
     /// Unconditionally returns a parameter. Checks that the value specified

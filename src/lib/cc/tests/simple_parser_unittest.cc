@@ -9,6 +9,9 @@
 #include <stdint.h>
 #include <cc/simple_parser.h>
 #include <gtest/gtest.h>
+#include <testutils/gtest_utils.h>
+
+#include <list>
 
 using namespace isc;
 using namespace isc::data;
@@ -361,4 +364,35 @@ TEST_F(SimpleParserTest, getDouble) {
 
     EXPECT_NO_THROW(value = parser.getDouble(elems, "positive"));
     EXPECT_EQ(346.7, value);
+}
+
+TEST_F(SimpleParserTest, rangeCheckedIntegerUint32) {
+    struct Scenario {
+        int64_t input_value_;
+        bool should_throw_;
+    };
+
+    std::list<Scenario> scenarios = {
+        { (static_cast<int64_t>(std::numeric_limits<uint32_t>::min()) - 1), true },
+        { std::numeric_limits<uint32_t>::min(), false },
+        { std::numeric_limits<uint32_t>::max(), false },
+        { (static_cast<int64_t>(std::numeric_limits<uint32_t>::max()) + 1), true }
+    };
+
+    for (auto const& scenario : scenarios) {
+        ElementPtr scope =  Element::createMap();
+        scope->set("some-number", Element::create(scenario.input_value_));
+        uint32_t  output_value;
+        if (scenario.should_throw_) {
+            std::stringstream os;
+            os <<  "'some-number' : " << scenario.input_value_
+               << " is out of range, must be >= "
+               << std::numeric_limits<uint32_t>::min() <<  " and <= "
+               << std::numeric_limits<uint32_t>::max();
+            ASSERT_THROW_MSG(SimpleParser::rangeCheckedInteger(scope, "some-number", output_value),
+                             OutOfRange, os.str());
+        } else {
+            ASSERT_NO_THROW(SimpleParser::rangeCheckedInteger(scope, "some-number", output_value));
+        }
+    }
 }
