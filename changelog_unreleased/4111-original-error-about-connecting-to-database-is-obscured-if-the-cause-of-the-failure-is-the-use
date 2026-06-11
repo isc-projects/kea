@@ -1,0 +1,5 @@
+[bug]		andrei
+	Errors about failed attempts to connect to the database are no
+	longer shadowed by kea-admin trying to initialize the schema.
+	Some log messages were added.
+	(Gitlab #4111, #4500)
