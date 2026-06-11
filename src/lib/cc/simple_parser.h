@@ -189,8 +189,9 @@ public:
         int64_t ivalue = getInteger(scope, name);
 
         if (ivalue < min || ivalue > max) {
-            isc_throw (DhcpConfigError, "'" << name << "' : " << ivalue << " is out of range,"
-                                       << " must be >= " << min << " and <= " <<  max);
+            isc_throw (isc::dhcp::DhcpConfigError,
+                       "'" << name << "' : " << ivalue << " is out of range,"
+                       << " must be >= " << min << " and <= " <<  max);
         }
 
         output_value = static_cast<T>(ivalue);

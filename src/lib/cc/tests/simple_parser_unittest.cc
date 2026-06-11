@@ -390,7 +390,7 @@ TEST_F(SimpleParserTest, rangeCheckedIntegerUint32) {
                << std::numeric_limits<uint32_t>::min() <<  " and <= "
                << std::numeric_limits<uint32_t>::max();
             ASSERT_THROW_MSG(SimpleParser::rangeCheckedInteger(scope, "some-number", output_value),
-                             OutOfRange, os.str());
+                             DhcpConfigError, os.str());
         } else {
             ASSERT_NO_THROW(SimpleParser::rangeCheckedInteger(scope, "some-number", output_value));
         }
