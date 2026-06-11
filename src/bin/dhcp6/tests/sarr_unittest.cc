@@ -509,7 +509,7 @@ SARRTest::directClientPrefixHint() {
         getCfgSubnets6()->getAll();
     ASSERT_EQ(1U, subnets->size());
     // Append IAPREFIX option to the client's message.
-    ASSERT_NO_THROW(client.requestPrefix(5678, 64, asiolink::IOAddress("2001:db8:3:33::33")));
+    ASSERT_NO_THROW(client.requestPrefix(5678, 64, asiolink::IOAddress("2001:db8:3:33::")));
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
     // Server should have assigned a prefix.
@@ -534,7 +534,7 @@ SARRTest::directClientPrefixHint() {
 
     // Use the hint with some least significant bytes set.
     client.clearRequestedIAs();
-    ASSERT_NO_THROW(client.requestPrefix(5678, 64, IOAddress("2001:db8:3:33::34")));
+    ASSERT_NO_THROW(client.requestPrefix(5678, 64, IOAddress("2001:db8:3:33::")));
     ASSERT_NO_THROW(client.doSARR());
     // Server should assign a lease.
     ASSERT_EQ(1U, client.getLeaseNum());
@@ -1383,7 +1383,7 @@ SARRTest::leaseCaching() {
 
     // Append IAADDR and IAPREFIX options to the client's message.
     ASSERT_NO_THROW(client.requestAddress(1234, asiolink::IOAddress("2001:db8::10")));
-    ASSERT_NO_THROW(client.requestPrefix(5678, 32, asiolink::IOAddress("2001:db8:1::")));
+    ASSERT_NO_THROW(client.requestPrefix(5678, 32, asiolink::IOAddress("2001:db8::")));
 
     // Include FQDN to trigger generation of name change requests.
     ASSERT_NO_THROW(client.useFQDN(Option6ClientFqdn::FLAG_S,

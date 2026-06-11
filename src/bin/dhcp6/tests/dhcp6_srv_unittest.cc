@@ -1563,7 +1563,7 @@ TEST_F(Dhcpv6SrvTest, pdRequestBasic) {
     boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_PD, 234, 1500, 3000);
 
     // with a valid hint
-    IOAddress hint("2001:db8:1:2:f::");
+    IOAddress hint("2001:db8:1:2::");
     ASSERT_TRUE(subnet_->inPool(Lease::TYPE_PD, hint));
     OptionPtr hint_opt(new Option6IAPrefix(D6O_IAPREFIX, hint, 64, 300, 500));
     ia->addOption(hint_opt);

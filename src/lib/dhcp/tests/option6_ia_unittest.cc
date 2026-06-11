@@ -200,7 +200,7 @@ TEST_F(Option6IATest, pdSuboptionsPack) {
 
     // Put a valid IAPREFIX option in it
     boost::shared_ptr<Option6IAPrefix> addr1(
-        new Option6IAPrefix(D6O_IAPREFIX, IOAddress("2001:db8:1234:5678::abcd"),
+        new Option6IAPrefix(D6O_IAPREFIX, IOAddress("2001:db8:1234:5678::"),
                             91, 0x5000, 0x7000));
 
     ia->addOption(sub1);
@@ -224,7 +224,7 @@ TEST_F(Option6IATest, pdSuboptionsPack) {
         0, 0, 0x70, 0, // valid-lifetime
         91, // prefix length
         0x20, 0x01, 0xd, 0xb8, 0x12,0x34, 0x56, 0x78,
-        0, 0, 0, 0, 0, 0, 0xab, 0xcd, // IP address
+        0, 0, 0, 0, 0, 0, 0, 0, // IP address
 
         // suboption
         0xca, 0xfe, // type

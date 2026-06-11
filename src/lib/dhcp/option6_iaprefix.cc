@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <asiolink/addr_utilities.h>
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
@@ -28,7 +29,7 @@ namespace dhcp {
 
 Option6IAPrefix::Option6IAPrefix(uint16_t type, const isc::asiolink::IOAddress& prefix,
                                  uint8_t prefix_len, uint32_t pref, uint32_t valid)
-    :Option6IAAddr(type, prefix, pref, valid), prefix_len_(prefix_len) {
+    : Option6IAAddr(type, prefix, pref, valid), prefix_len_(prefix_len) {
     setEncapsulatedSpace(DHCP6_OPTION_SPACE);
     // Option6IAAddr will check if prefix is IPv6 and will throw if it is not
     if (prefix_len > 128) {
@@ -36,13 +37,21 @@ Option6IAPrefix::Option6IAPrefix(uint16_t type, const isc::asiolink::IOAddress& 
                   << " is not a valid prefix length. "
                   << "Allowed range is 0..128");
     }
+    IOAddress first_address = firstAddrInPrefix(addr_, prefix_len_);
+    if (first_address != addr_) {
+        isc_throw(BadValue, "Prefix address: " << addr_
+            << " exceeds prefix/prefix-len pair: " << first_address
+            << "/" << static_cast<uint32_t>(prefix_len_));
+    }
 }
 
 Option6IAPrefix::Option6IAPrefix(uint32_t type, OptionBuffer::const_iterator begin,
-                             OptionBuffer::const_iterator end)
-    :Option6IAAddr(type, begin, end) {
+                                 OptionBuffer::const_iterator end)
+    : Option6IAAddr(type, begin, end) {
     setEncapsulatedSpace(DHCP6_OPTION_SPACE);
     unpack(begin, end);
+    // The unpack function always drops the extra bits in prefix so there
+    // is no need to check if address matches the first address in prefix.
 }
 
 OptionPtr

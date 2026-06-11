@@ -82,6 +82,7 @@ test(
     protocol: 'gtest',
     is_parallel: false,
     priority: -1,
+    timeout: 60,
 )
 
 if PASSWORDLESS_SUDO_SET_UP
@@ -92,6 +93,7 @@ if PASSWORDLESS_SUDO_SET_UP
         protocol: 'gtest',
         is_parallel: false,
         priority: -1,
+        timeout: 60,
         suite: 'sudo-tests',
     )
 endif
