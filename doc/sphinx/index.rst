@@ -55,6 +55,7 @@ Other useful Kea information can be found in our
    api
    manpages
    kea-messages
+   config-examples
    arm/config-templates.rst
    umls
    grammar/grammar
