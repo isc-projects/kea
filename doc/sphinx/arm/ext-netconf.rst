@@ -714,7 +714,7 @@ DHCPv6 server:
     }
 
 In order to launch the Kea DHCPv6 server using the configuration
-contained within the ``boot.json`` file, run:
+contained within the :ref:`config-example-netconf-kea-dhcp6-operations-boot-json` file, run:
 
 .. code-block:: console
 
@@ -727,7 +727,7 @@ socket by running:
 
     # echo '{ "command": "config-get" }' | socat UNIX:/opt/kea/var/run/kea/kea-dhcp6-ctrl.sock '-,ignoreeof'
 
-The following is the example ``netconf.json`` configuration for
+The following is the example :ref:`config-example-netconf-kea-dhcp6-operations-netconf-json` configuration for:
 :iscman:`kea-netconf`, to manage the Kea DHCPv6 server:
 
 .. code-block:: json

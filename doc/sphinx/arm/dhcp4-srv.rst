@@ -2105,6 +2105,8 @@ types are given in :ref:`dhcp-types`.
    | v4-access-domain                       | 213  | fqdn                      | false       | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
 
+You can see example of how these options are configured at :ref:`config-example-kea4-all-options-json`.
+
 .. note::
 
   The ``default-url`` option was replaced with ``v4-captive-portal`` in Kea 2.1.2, as introduced by
@@ -2953,8 +2955,8 @@ for the suboptions that will be included in the ``vivso-suboptions`` option (cod
 Another possibility is to redefine the option; see :ref:`dhcp4-private-opts`.
 
 Kea comes with several example configuration files. Some of them showcase
-how to configure options 60 and 43. See ``doc/examples/kea4/vendor-specific.json``
-and ``doc/examples/kea4/vivso.json`` in the Kea sources.
+how to configure options 60 and 43. See :ref:`config-example-kea4-vendor-specific-json`
+and :ref:`config-example-kea4-vivso-json`.
 
 .. note::
 
@@ -5011,8 +5013,8 @@ Example usage:
    protocol, to separate them. The "pipe" (``0x7C``) character can be used in the ``dohpath`` service parameter,
    as it is allowed in a URI.
 
-Examples for DNR DHCPv4 options are provided in the Kea sources, in
-`all-options.json` in the `doc/examples/kea4` directory.
+Examples for DNR DHCPv4 options are provided in the Kea sources can be found
+at :ref:`config-example-kea4-all-options-json`.
 
 
 .. _host-reservation-v4:

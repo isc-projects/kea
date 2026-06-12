@@ -123,8 +123,7 @@ takes many parameters. For example, this configuration can be used:
 RADIUS is a complicated environment. As such, it is not feasible
 to provide a default configuration that works for everyone.
 However, we do have an example that showcases some of the more common
-features; please see ``doc/examples/kea4/hooks-radius.json`` in the Kea
-sources.
+features; please see :ref:`config-example-kea4-hooks-radius-json`.
 
 The RADIUS hook library supports the following global configuration
 flags:

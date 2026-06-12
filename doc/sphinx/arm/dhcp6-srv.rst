@@ -1906,6 +1906,8 @@ types are given in :ref:`dhcp-types`.
    | addr-reg-enable          | 148             | empty           | false           |
    +--------------------------+-----------------+-----------------+-----------------+
 
+You can see example of how these options can be configured at :ref:`config-example-kea6-all-options-json`.
+
 The unicast option was deprecated by the `RFC 9915
 <https://datatracker.ietf.org/doc/html/rfc9915>`__, it is still
 supported but not be used and will be removed in a further Kea release.
@@ -2292,9 +2294,8 @@ Kea currently supports the following service parameters:
 The other currently defined service parameters mandatory (0), no-default-alpn (2), ipv4hint (4), ech (5),
 ipv6hint (6), and ohttp (8) are not usable in the DNR option.
 
-Further examples are provided in Kea sources in the ``all-options.json`` file
-in the ``doc/examples/kea6`` directory. The DHCPv4 option is nearly identical, and is described
-in :ref:`dnr4-options`.
+Further examples can be found at :ref:`config-example-kea6-all-options-json`.
+The DHCPv4 option is nearly identical, and is described in :ref:`dnr4-options`.
 
 .. _ntp-server-suboptions:
 
