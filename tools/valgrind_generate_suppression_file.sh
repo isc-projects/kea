@@ -70,14 +70,7 @@ for i in ${partial_suppression_files}; do
     csplit -s -z -f "${i}-txt.supp-part." "${i}-txt.supp" '/\{/' '{*}'
 done
 
-for file in ${partial_suppression_files}; do
-    grep '# detected in' "${file}" | sort -V | awk '{printf "%s\\n", $0}' | sed 's/\\n$//' > "${file}.data"
-    cat "${file}" | grep -v '# detected in' > "${file}.tmp"
-    mv "${file}.tmp" "${file}"
-    sed -i "2r ${file}.data" "${file}"
-    rm "${file}.data"
-done
-
+# generate unique labels using only useful data
 echo "" >build/valgrind_suppression.supp
 for i in $(find build -type f -name '*txt.supp-part.*'); do
     # compute md5sum
@@ -92,22 +85,32 @@ for i in $(find build -type f -name '*txt.supp-part.*'); do
     else
         # extract the binary path and name
         found_in_path=$(grep " # detected in " "${i}" || true)
-        # check if comment is present
-        match=$(grep -c "${found_in_path}" build/valgrind_suppression.supp || true)
-        if [ "${match}" -eq 0 ]; then
-            # update comment with binary path and name if hash is present
-            sed -i'' "s|valgrind_hash_${label}|valgrind_hash_${label}\n${found_in_path}|g" build/valgrind_suppression.supp
-        fi
+        # update comment with binary path and name if hash is present
+        sed -i'' "s|valgrind_hash_${label}|valgrind_hash_${label}\n${found_in_path}|g" build/valgrind_suppression.supp
     fi
 done
+# split each block in a separate file
 csplit -s -z -f build/valgrind_suppression.supp.part. build/valgrind_suppression.supp '/\{/' '{*}'
 for i in $(find build -type f -name '*valgrind_suppression.supp.part.*'); do
     name=$(grep "valgrind_hash_" "${i}" | tr -d " ")
     if [ -z "${name}" ]; then
         continue
     fi
+    # rename the file to include binary path
     mv "${i}" "build/${name}"
 done
+# sort comments
+for i in $(find build -type f -name '*valgrind_hash_*' | sort -V); do
+    # extract and sort the data
+    data="$(grep "# detected in " "${i}" | sort -u | sort -V | awk '{printf "%s\\n", $0}' | sed 's/\\n$//')"
+    # add header
+    head -n 2 "${i}" >"${i}.data"
+    # add sorted data
+    echo "${data}" >>"${i}.data"
+    # add the rest of the data
+    grep -v "# detected in " "${i}" | sed '1,2d' >>"${i}.data"
+done
+# add file header
 cat <<EOF >build/valgrind_suppression.supp
 # Valgrind suppressions file. Place permanent suppressions that we never
 # want to reconsider again into this file. For temporary suppressions
@@ -121,14 +124,17 @@ cat <<EOF >build/valgrind_suppression.supp
 # In case you want to make sense of the following symbols, demangle them
 # with a command like: c++filt < valgrind-suppressions
 EOF
-for i in $(find build -type f -name '*valgrind_hash_*' | sort -V); do
+# merge the files
+for i in $(find build -type f -name '*valgrind_hash_*data' | sort -V); do
     cat "${i}" >>build/valgrind_suppression.supp
 done
 # remove files
 find build -type f -name '*valgrind_hash_*' -exec rm -rf {} ';'
 find build -type f -name '*txt.supp-part.*' -exec rm -rf {} ';'
 find build -type f -name '*valgrind_suppression.supp.part.*' -exec rm -rf {} ';'
+find build -type f -name '*valgrind-supp-*txt*' -exec rm -rf {} ';'
 if [ "${keep_files}" = 'false' ]; then
     find build -type f -name '*valgrind-supp-*' -exec rm -rf {} ';'
 fi
+# update the suppression file
 mv build/valgrind_suppression.supp src/valgrind.supp

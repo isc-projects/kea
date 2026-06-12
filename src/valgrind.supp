@@ -262,57 +262,6 @@
    fun:main
 }
 {
-   valgrind_hash_2ba624b4542793eb03a1859292beae82
-   # detected in src/hooks/dhcp/mysql/tests/dhcp-mysql-lib-tests
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:malloc
-   fun:strdup
-   fun:_dl_load_cache_lookup
-   fun:_dl_map_object
-   fun:dl_open_worker_begin
-   fun:_dl_catch_exception
-   fun:dl_open_worker
-   fun:_dl_catch_exception
-   fun:_dl_open
-   fun:do_dlopen
-   fun:_dl_catch_exception
-   fun:_dl_catch_error
-   fun:dlerror_run
-   fun:__libc_dlopen_mode
-   fun:module_load
-   fun:__nss_module_load
-   fun:__nss_module_get_function
-   fun:get_nss_addresses
-   fun:gaih_inet
-   fun:getaddrinfo
-   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.45
-   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.45
-   fun:mysql_real_connect
-   fun:_ZN3isc2db15MySqlConnection12openDatabaseEv
-   fun:_ZN3isc2db15MySqlConnection10getVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKN5boost10shared_ptrISt8functionIFNSJ_INS_8asiolink9IOServiceEEEvEEEERKSK_IFbNSJ_INS_4util12ReconnectCtlEEEEERSC_j
-   fun:_ZN3isc2db15MySqlConnection19ensureSchemaVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKSt8functionIFbN5boost10shared_ptrINS_4util12ReconnectCtlEEEEERSC_
-   fun:_ZN3isc4dhcp23MySqlHostDataSourceImplC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
-   fun:_ZN3isc4dhcp19MySqlHostDataSourceC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
-   fun:_ZN3isc4dhcp19MySqlHostDataSource7factoryERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
-   fun:__invoke_impl<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
-   fun:__invoke_r<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
-   fun:_ZNSt17_Function_handlerIFN5boost10shared_ptrIN3isc4dhcp18BaseHostDataSourceEEERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESC_St4lessISC_ESaISt4pairIKSC_SC_EEEEPSM_E9_M_invokeERKSt9_Any_dataSL_
-   fun:operator()
-   fun:_ZN3isc4dhcp21HostDataSourceFactory3addERSt6vectorIN5boost10shared_ptrINS0_18BaseHostDataSourceEEESaIS6_EERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
-   fun:_ZN12_GLOBAL__N_137MySqlHostDataSource_OpenDatabase_Test8TestBodyEv
-   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
-   fun:_ZN7testing4Test3RunEv
-   fun:_ZN7testing8TestInfo3RunEv
-   fun:_ZN7testing9TestSuite3RunEv
-   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
-   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
-   fun:_ZN7testing8UnitTest3RunEv
-   fun:RUN_ALL_TESTS
-   fun:main
-}
-{
    valgrind_hash_2d629cfe68c2303b7c4333f90c46cfe7
    # detected in src/hooks/dhcp/radius/libloadtests/dhcp-radius-libload-tests
    Memcheck:Leak
@@ -367,6 +316,57 @@
    fun:_ZN3isc8gss_tsig12GssApiSecCtx6verifyERNS0_12GssApiBufferES3_
    fun:_ZN3isc8gss_tsig14GssTsigContext6verifyEPKNS_3dns10TSIGRecordEPKvm
    fun:_ZN12_GLOBAL__N_134GssTsigContextTest_signVerify_Test8TestBodyEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8TestInfo3RunEv
+   fun:_ZN7testing9TestSuite3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8UnitTest3RunEv
+   fun:RUN_ALL_TESTS
+   fun:main
+}
+{
+   valgrind_hash_2f0ccc0db98dde48ebdf3ad146b3bea0
+   # detected in src/hooks/dhcp/mysql/tests/dhcp-mysql-lib-tests
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:malloc
+   fun:_dl_new_object
+   fun:_dl_map_object_from_fd
+   fun:_dl_map_object
+   fun:dl_open_worker_begin
+   fun:_dl_catch_exception
+   fun:dl_open_worker
+   fun:_dl_catch_exception
+   fun:_dl_open
+   fun:do_dlopen
+   fun:_dl_catch_exception
+   fun:_dl_catch_error
+   fun:dlerror_run
+   fun:__libc_dlopen_mode
+   fun:module_load
+   fun:__nss_module_load
+   fun:__nss_module_get_function
+   fun:get_nss_addresses
+   fun:gaih_inet
+   fun:getaddrinfo
+   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.46
+   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.46
+   fun:mysql_real_connect
+   fun:_ZN3isc2db15MySqlConnection12openDatabaseEv
+   fun:_ZN3isc2db15MySqlConnection10getVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKN5boost10shared_ptrISt8functionIFNSJ_INS_8asiolink9IOServiceEEEvEEEERKSK_IFbNSJ_INS_4util12ReconnectCtlEEEEERSC_j
+   fun:_ZN3isc2db15MySqlConnection19ensureSchemaVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKSt8functionIFbN5boost10shared_ptrINS_4util12ReconnectCtlEEEEERSC_
+   fun:_ZN3isc4dhcp23MySqlHostDataSourceImplC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
+   fun:_ZN3isc4dhcp19MySqlHostDataSourceC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
+   fun:_ZN3isc4dhcp19MySqlHostDataSource7factoryERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
+   fun:__invoke_impl<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
+   fun:__invoke_r<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
+   fun:_ZNSt17_Function_handlerIFN5boost10shared_ptrIN3isc4dhcp18BaseHostDataSourceEEERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESC_St4lessISC_ESaISt4pairIKSC_SC_EEEEPSM_E9_M_invokeERKSt9_Any_dataSL_
+   fun:operator()
+   fun:_ZN3isc4dhcp21HostDataSourceFactory3addERSt6vectorIN5boost10shared_ptrINS0_18BaseHostDataSourceEEESaIS6_EERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN12_GLOBAL__N_137MySqlHostDataSource_OpenDatabase_Test8TestBodyEv
    fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
    fun:_ZN7testing4Test3RunEv
    fun:_ZN7testing8TestInfo3RunEv
@@ -488,57 +488,6 @@
    fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
    fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
    fun:_ZN7testing8UnitTest3RunEv
-   fun:main
-}
-{
-   valgrind_hash_3da2c294487d39c48a0c2866de89f599
-   # detected in src/hooks/dhcp/mysql/tests/dhcp-mysql-lib-tests
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:calloc
-   fun:calloc
-   fun:_dl_new_object
-   fun:_dl_map_object_from_fd
-   fun:_dl_map_object
-   fun:dl_open_worker_begin
-   fun:_dl_catch_exception
-   fun:dl_open_worker
-   fun:_dl_catch_exception
-   fun:_dl_open
-   fun:do_dlopen
-   fun:_dl_catch_exception
-   fun:_dl_catch_error
-   fun:dlerror_run
-   fun:__libc_dlopen_mode
-   fun:module_load
-   fun:__nss_module_load
-   fun:__nss_module_get_function
-   fun:get_nss_addresses
-   fun:gaih_inet
-   fun:getaddrinfo
-   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.45
-   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.45
-   fun:mysql_real_connect
-   fun:_ZN3isc2db15MySqlConnection12openDatabaseEv
-   fun:_ZN3isc2db15MySqlConnection10getVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKN5boost10shared_ptrISt8functionIFNSJ_INS_8asiolink9IOServiceEEEvEEEERKSK_IFbNSJ_INS_4util12ReconnectCtlEEEEERSC_j
-   fun:_ZN3isc2db15MySqlConnection19ensureSchemaVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKSt8functionIFbN5boost10shared_ptrINS_4util12ReconnectCtlEEEEERSC_
-   fun:_ZN3isc4dhcp23MySqlHostDataSourceImplC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
-   fun:_ZN3isc4dhcp19MySqlHostDataSourceC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
-   fun:_ZN3isc4dhcp19MySqlHostDataSource7factoryERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
-   fun:__invoke_impl<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
-   fun:__invoke_r<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
-   fun:_ZNSt17_Function_handlerIFN5boost10shared_ptrIN3isc4dhcp18BaseHostDataSourceEEERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESC_St4lessISC_ESaISt4pairIKSC_SC_EEEEPSM_E9_M_invokeERKSt9_Any_dataSL_
-   fun:operator()
-   fun:_ZN3isc4dhcp21HostDataSourceFactory3addERSt6vectorIN5boost10shared_ptrINS0_18BaseHostDataSourceEEESaIS6_EERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
-   fun:_ZN12_GLOBAL__N_137MySqlHostDataSource_OpenDatabase_Test8TestBodyEv
-   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
-   fun:_ZN7testing4Test3RunEv
-   fun:_ZN7testing8TestInfo3RunEv
-   fun:_ZN7testing9TestSuite3RunEv
-   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
-   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
-   fun:_ZN7testing8UnitTest3RunEv
-   fun:RUN_ALL_TESTS
    fun:main
 }
 {
@@ -668,57 +617,6 @@
    fun:_ZN3isc4test11LibLoadTest13loadLibrariesEv
    fun:_ZN3isc4test11LibLoadTest15validDaemonTestERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEtRKN5boost10shared_ptrINS_4data7ElementEEE
    fun:_ZN12_GLOBAL__N_132PgSqlLibLoadTest_validLoad4_Test8TestBodyEv
-   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
-   fun:_ZN7testing4Test3RunEv
-   fun:_ZN7testing8TestInfo3RunEv
-   fun:_ZN7testing9TestSuite3RunEv
-   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
-   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
-   fun:_ZN7testing8UnitTest3RunEv
-   fun:RUN_ALL_TESTS
-   fun:main
-}
-{
-   valgrind_hash_5b3a2b355f8533f678ea1f323ea77386
-   # detected in src/hooks/dhcp/mysql/tests/dhcp-mysql-lib-tests
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:malloc
-   fun:_dl_new_object
-   fun:_dl_map_object_from_fd
-   fun:_dl_map_object
-   fun:dl_open_worker_begin
-   fun:_dl_catch_exception
-   fun:dl_open_worker
-   fun:_dl_catch_exception
-   fun:_dl_open
-   fun:do_dlopen
-   fun:_dl_catch_exception
-   fun:_dl_catch_error
-   fun:dlerror_run
-   fun:__libc_dlopen_mode
-   fun:module_load
-   fun:__nss_module_load
-   fun:__nss_module_get_function
-   fun:get_nss_addresses
-   fun:gaih_inet
-   fun:getaddrinfo
-   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.45
-   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.45
-   fun:mysql_real_connect
-   fun:_ZN3isc2db15MySqlConnection12openDatabaseEv
-   fun:_ZN3isc2db15MySqlConnection10getVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKN5boost10shared_ptrISt8functionIFNSJ_INS_8asiolink9IOServiceEEEvEEEERKSK_IFbNSJ_INS_4util12ReconnectCtlEEEEERSC_j
-   fun:_ZN3isc2db15MySqlConnection19ensureSchemaVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKSt8functionIFbN5boost10shared_ptrINS_4util12ReconnectCtlEEEEERSC_
-   fun:_ZN3isc4dhcp23MySqlHostDataSourceImplC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
-   fun:_ZN3isc4dhcp19MySqlHostDataSourceC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
-   fun:_ZN3isc4dhcp19MySqlHostDataSource7factoryERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
-   fun:__invoke_impl<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
-   fun:__invoke_r<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
-   fun:_ZNSt17_Function_handlerIFN5boost10shared_ptrIN3isc4dhcp18BaseHostDataSourceEEERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESC_St4lessISC_ESaISt4pairIKSC_SC_EEEEPSM_E9_M_invokeERKSt9_Any_dataSL_
-   fun:operator()
-   fun:_ZN3isc4dhcp21HostDataSourceFactory3addERSt6vectorIN5boost10shared_ptrINS0_18BaseHostDataSourceEEESaIS6_EERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
-   fun:_ZN12_GLOBAL__N_137MySqlHostDataSource_OpenDatabase_Test8TestBodyEv
    fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
    fun:_ZN7testing4Test3RunEv
    fun:_ZN7testing8TestInfo3RunEv
@@ -1180,6 +1078,30 @@
    fun:main
 }
 {
+   valgrind_hash_9ee151848fea6605ad4aa0a0cc3c4791
+   # detected in src/hooks/d2/gss_tsig/tests/ddns-gss-tsig-tests
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   obj:/usr/lib/x86_64-linux-gnu/libgssapi_krb5.so.2.2
+   obj:/usr/lib/x86_64-linux-gnu/libgssapi_krb5.so.2.2
+   obj:/usr/lib/x86_64-linux-gnu/libgssapi_krb5.so.2.2
+   fun:gss_verify_mic
+   fun:gss_verify_mic
+   fun:_ZN3isc8gss_tsig12GssApiSecCtx6verifyERNS0_12GssApiBufferES3_
+   fun:_ZN3isc8gss_tsig14GssTsigContext6verifyEPKNS_3dns10TSIGRecordEPKvm
+   fun:_ZN12_GLOBAL__N_136GssTsigContextTest_badDirection_Test8TestBodyEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8TestInfo3RunEv
+   fun:_ZN7testing9TestSuite3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8UnitTest3RunEv
+   fun:RUN_ALL_TESTS
+   fun:main
+}
+{
    valgrind_hash_9f308b7bd26e5b69f8b165c756764688
    # detected in src/hooks/d2/gss_tsig/tests/ddns-gss-tsig-tests
    Memcheck:Leak
@@ -1401,9 +1323,8 @@
 }
 {
    valgrind_hash_40f847627ced5c06de1c1e2af6d000fc
-   # detected in src/hooks/dhcp/flex_option/libloadtests/dhcp-flex-option-libload-tests
-   # detected in src/lib/d2srv/tests/kea-d2srv-tests
    # detected in src/hooks/dhcp/bootp/tests/dhcp-bootp-lib-tests
+   # detected in src/hooks/dhcp/ddns_tuning/tests/dhcp-ddns-tuning-tests
    Memcheck:Leak
    match-leak-kinds: reachable
    fun:_Znwm
@@ -1516,60 +1437,6 @@
    fun:_ZN3isc4test11LibLoadTest13loadLibrariesEv
    fun:_ZN3isc4test11LibLoadTest15validDaemonTestERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEtRKN5boost10shared_ptrINS_4data7ElementEEE
    fun:_ZN12_GLOBAL__N_141PgSqlLegalLibLoadTest_PgSqlValidLoad_Test8TestBodyEv
-   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
-   fun:_ZN7testing4Test3RunEv
-   fun:_ZN7testing8TestInfo3RunEv
-   fun:_ZN7testing9TestSuite3RunEv
-   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
-   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
-   fun:_ZN7testing8UnitTest3RunEv
-   fun:RUN_ALL_TESTS
-   fun:main
-}
-{
-   valgrind_hash_60eb35b1ccd07187b1f2f4cedc7b7172
-   # detected in src/hooks/dhcp/mysql/tests/dhcp-mysql-lib-tests
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:malloc
-   fun:_dl_new_object
-   fun:_dl_map_object_from_fd
-   fun:_dl_map_object
-   fun:openaux
-   fun:_dl_catch_exception
-   fun:_dl_map_object_deps
-   fun:dl_open_worker_begin
-   fun:_dl_catch_exception
-   fun:dl_open_worker
-   fun:_dl_catch_exception
-   fun:_dl_open
-   fun:do_dlopen
-   fun:_dl_catch_exception
-   fun:_dl_catch_error
-   fun:dlerror_run
-   fun:__libc_dlopen_mode
-   fun:module_load
-   fun:__nss_module_load
-   fun:__nss_module_get_function
-   fun:get_nss_addresses
-   fun:gaih_inet
-   fun:getaddrinfo
-   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.45
-   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.45
-   fun:mysql_real_connect
-   fun:_ZN3isc2db15MySqlConnection12openDatabaseEv
-   fun:_ZN3isc2db15MySqlConnection10getVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKN5boost10shared_ptrISt8functionIFNSJ_INS_8asiolink9IOServiceEEEvEEEERKSK_IFbNSJ_INS_4util12ReconnectCtlEEEEERSC_j
-   fun:_ZN3isc2db15MySqlConnection19ensureSchemaVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKSt8functionIFbN5boost10shared_ptrINS_4util12ReconnectCtlEEEEERSC_
-   fun:_ZN3isc4dhcp23MySqlHostDataSourceImplC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
-   fun:_ZN3isc4dhcp19MySqlHostDataSourceC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
-   fun:_ZN3isc4dhcp19MySqlHostDataSource7factoryERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
-   fun:__invoke_impl<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
-   fun:__invoke_r<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
-   fun:_ZNSt17_Function_handlerIFN5boost10shared_ptrIN3isc4dhcp18BaseHostDataSourceEEERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESC_St4lessISC_ESaISt4pairIKSC_SC_EEEEPSM_E9_M_invokeERKSt9_Any_dataSL_
-   fun:operator()
-   fun:_ZN3isc4dhcp21HostDataSourceFactory3addERSt6vectorIN5boost10shared_ptrINS0_18BaseHostDataSourceEEESaIS6_EERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
-   fun:_ZN12_GLOBAL__N_137MySqlHostDataSource_OpenDatabase_Test8TestBodyEv
    fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
    fun:_ZN7testing4Test3RunEv
    fun:_ZN7testing8TestInfo3RunEv
@@ -2226,6 +2093,57 @@
    fun:main
 }
 {
+   valgrind_hash_956b5304c01a9967a060bd3548e84e75
+   # detected in src/hooks/dhcp/mysql/tests/dhcp-mysql-lib-tests
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:malloc
+   fun:strdup
+   fun:_dl_load_cache_lookup
+   fun:_dl_map_object
+   fun:dl_open_worker_begin
+   fun:_dl_catch_exception
+   fun:dl_open_worker
+   fun:_dl_catch_exception
+   fun:_dl_open
+   fun:do_dlopen
+   fun:_dl_catch_exception
+   fun:_dl_catch_error
+   fun:dlerror_run
+   fun:__libc_dlopen_mode
+   fun:module_load
+   fun:__nss_module_load
+   fun:__nss_module_get_function
+   fun:get_nss_addresses
+   fun:gaih_inet
+   fun:getaddrinfo
+   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.46
+   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.46
+   fun:mysql_real_connect
+   fun:_ZN3isc2db15MySqlConnection12openDatabaseEv
+   fun:_ZN3isc2db15MySqlConnection10getVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKN5boost10shared_ptrISt8functionIFNSJ_INS_8asiolink9IOServiceEEEvEEEERKSK_IFbNSJ_INS_4util12ReconnectCtlEEEEERSC_j
+   fun:_ZN3isc2db15MySqlConnection19ensureSchemaVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKSt8functionIFbN5boost10shared_ptrINS_4util12ReconnectCtlEEEEERSC_
+   fun:_ZN3isc4dhcp23MySqlHostDataSourceImplC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
+   fun:_ZN3isc4dhcp19MySqlHostDataSourceC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
+   fun:_ZN3isc4dhcp19MySqlHostDataSource7factoryERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
+   fun:__invoke_impl<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
+   fun:__invoke_r<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
+   fun:_ZNSt17_Function_handlerIFN5boost10shared_ptrIN3isc4dhcp18BaseHostDataSourceEEERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESC_St4lessISC_ESaISt4pairIKSC_SC_EEEEPSM_E9_M_invokeERKSt9_Any_dataSL_
+   fun:operator()
+   fun:_ZN3isc4dhcp21HostDataSourceFactory3addERSt6vectorIN5boost10shared_ptrINS0_18BaseHostDataSourceEEESaIS6_EERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN12_GLOBAL__N_137MySqlHostDataSource_OpenDatabase_Test8TestBodyEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8TestInfo3RunEv
+   fun:_ZN7testing9TestSuite3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8UnitTest3RunEv
+   fun:RUN_ALL_TESTS
+   fun:main
+}
+{
    valgrind_hash_966b0705d6548406c503f04de4040dda
    # detected in src/hooks/d2/gss_tsig/tests/ddns-gss-tsig-tests
    Memcheck:Leak
@@ -2324,6 +2242,55 @@
    fun:main
 }
 {
+   valgrind_hash_1461a9d21da40880f7de49701cf8ca6d
+   # detected in src/hooks/dhcp/mysql/tests/dhcp-mysql-lib-tests
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:calloc
+   fun:calloc
+   fun:_dl_check_map_versions
+   fun:dl_open_worker_begin
+   fun:_dl_catch_exception
+   fun:dl_open_worker
+   fun:_dl_catch_exception
+   fun:_dl_open
+   fun:do_dlopen
+   fun:_dl_catch_exception
+   fun:_dl_catch_error
+   fun:dlerror_run
+   fun:__libc_dlopen_mode
+   fun:module_load
+   fun:__nss_module_load
+   fun:__nss_module_get_function
+   fun:get_nss_addresses
+   fun:gaih_inet
+   fun:getaddrinfo
+   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.46
+   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.46
+   fun:mysql_real_connect
+   fun:_ZN3isc2db15MySqlConnection12openDatabaseEv
+   fun:_ZN3isc2db15MySqlConnection10getVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKN5boost10shared_ptrISt8functionIFNSJ_INS_8asiolink9IOServiceEEEvEEEERKSK_IFbNSJ_INS_4util12ReconnectCtlEEEEERSC_j
+   fun:_ZN3isc2db15MySqlConnection19ensureSchemaVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKSt8functionIFbN5boost10shared_ptrINS_4util12ReconnectCtlEEEEERSC_
+   fun:_ZN3isc4dhcp23MySqlHostDataSourceImplC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
+   fun:_ZN3isc4dhcp19MySqlHostDataSourceC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
+   fun:_ZN3isc4dhcp19MySqlHostDataSource7factoryERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
+   fun:__invoke_impl<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
+   fun:__invoke_r<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
+   fun:_ZNSt17_Function_handlerIFN5boost10shared_ptrIN3isc4dhcp18BaseHostDataSourceEEERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESC_St4lessISC_ESaISt4pairIKSC_SC_EEEEPSM_E9_M_invokeERKSt9_Any_dataSL_
+   fun:operator()
+   fun:_ZN3isc4dhcp21HostDataSourceFactory3addERSt6vectorIN5boost10shared_ptrINS0_18BaseHostDataSourceEEESaIS6_EERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN12_GLOBAL__N_137MySqlHostDataSource_OpenDatabase_Test8TestBodyEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8TestInfo3RunEv
+   fun:_ZN7testing9TestSuite3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8UnitTest3RunEv
+   fun:RUN_ALL_TESTS
+   fun:main
+}
+{
    valgrind_hash_1485a646b3d28bbf75069ef4e7466a9a
    # detected in src/hooks/dhcp/perfmon/libloadtests/dhcp-perfmon-libload-tests
    Memcheck:Leak
@@ -2377,6 +2344,31 @@
    fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
    fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
    fun:_ZN7testing8UnitTest3RunEv
+   fun:main
+}
+{
+   valgrind_hash_3137e9c4020e18cdbc95c3f49dcd25e1
+   # detected in src/hooks/d2/gss_tsig/tests/ddns-gss-tsig-tests
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:strdup
+   obj:/usr/lib/x86_64-linux-gnu/libgssapi_krb5.so.2.2
+   obj:/usr/lib/x86_64-linux-gnu/libgssapi_krb5.so.2.2
+   obj:/usr/lib/x86_64-linux-gnu/libgssapi_krb5.so.2.2
+   fun:gss_verify_mic
+   fun:gss_verify_mic
+   fun:_ZN3isc8gss_tsig12GssApiSecCtx6verifyERNS0_12GssApiBufferES3_
+   fun:_ZN3isc8gss_tsig14GssTsigContext6verifyEPKNS_3dns10TSIGRecordEPKvm
+   fun:_ZN12_GLOBAL__N_142GssTsigContextTest_ignoreBadDirection_Test8TestBodyEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8TestInfo3RunEv
+   fun:_ZN7testing9TestSuite3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8UnitTest3RunEv
+   fun:RUN_ALL_TESTS
    fun:main
 }
 {
@@ -2484,7 +2476,7 @@
 }
 {
    valgrind_hash_3840c90ae24439528929ba7735eb596b
-   # detected in src/hooks/dhcp/cb_cmds/tests/dhcp-cb-cmds-tests
+   # detected in premium/src/hooks/dhcp/cb_cmds/tests/dhcp-cb-cmds-tests
    Memcheck:Leak
    match-leak-kinds: reachable
    fun:realloc
@@ -2532,6 +2524,60 @@
    fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
    fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
    fun:_ZN7testing8UnitTest3RunEv
+   fun:main
+}
+{
+   valgrind_hash_5760efb027006543f44c94e86ece7137
+   # detected in src/hooks/dhcp/mysql/tests/dhcp-mysql-lib-tests
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:malloc
+   fun:_dl_new_object
+   fun:_dl_map_object_from_fd
+   fun:_dl_map_object
+   fun:openaux
+   fun:_dl_catch_exception
+   fun:_dl_map_object_deps
+   fun:dl_open_worker_begin
+   fun:_dl_catch_exception
+   fun:dl_open_worker
+   fun:_dl_catch_exception
+   fun:_dl_open
+   fun:do_dlopen
+   fun:_dl_catch_exception
+   fun:_dl_catch_error
+   fun:dlerror_run
+   fun:__libc_dlopen_mode
+   fun:module_load
+   fun:__nss_module_load
+   fun:__nss_module_get_function
+   fun:get_nss_addresses
+   fun:gaih_inet
+   fun:getaddrinfo
+   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.46
+   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.46
+   fun:mysql_real_connect
+   fun:_ZN3isc2db15MySqlConnection12openDatabaseEv
+   fun:_ZN3isc2db15MySqlConnection10getVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKN5boost10shared_ptrISt8functionIFNSJ_INS_8asiolink9IOServiceEEEvEEEERKSK_IFbNSJ_INS_4util12ReconnectCtlEEEEERSC_j
+   fun:_ZN3isc2db15MySqlConnection19ensureSchemaVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKSt8functionIFbN5boost10shared_ptrINS_4util12ReconnectCtlEEEEERSC_
+   fun:_ZN3isc4dhcp23MySqlHostDataSourceImplC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
+   fun:_ZN3isc4dhcp19MySqlHostDataSourceC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
+   fun:_ZN3isc4dhcp19MySqlHostDataSource7factoryERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
+   fun:__invoke_impl<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
+   fun:__invoke_r<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
+   fun:_ZNSt17_Function_handlerIFN5boost10shared_ptrIN3isc4dhcp18BaseHostDataSourceEEERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESC_St4lessISC_ESaISt4pairIKSC_SC_EEEEPSM_E9_M_invokeERKSt9_Any_dataSL_
+   fun:operator()
+   fun:_ZN3isc4dhcp21HostDataSourceFactory3addERSt6vectorIN5boost10shared_ptrINS0_18BaseHostDataSourceEEESaIS6_EERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN12_GLOBAL__N_137MySqlHostDataSource_OpenDatabase_Test8TestBodyEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8TestInfo3RunEv
+   fun:_ZN7testing9TestSuite3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8UnitTest3RunEv
+   fun:RUN_ALL_TESTS
    fun:main
 }
 {
@@ -3258,6 +3304,60 @@
    fun:main
 }
 {
+   valgrind_hash_a2b33b9fdc0d52e55a86497d36c04004
+   # detected in src/hooks/dhcp/mysql/tests/dhcp-mysql-lib-tests
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:calloc
+   fun:calloc
+   fun:_dl_new_object
+   fun:_dl_map_object_from_fd
+   fun:_dl_map_object
+   fun:openaux
+   fun:_dl_catch_exception
+   fun:_dl_map_object_deps
+   fun:dl_open_worker_begin
+   fun:_dl_catch_exception
+   fun:dl_open_worker
+   fun:_dl_catch_exception
+   fun:_dl_open
+   fun:do_dlopen
+   fun:_dl_catch_exception
+   fun:_dl_catch_error
+   fun:dlerror_run
+   fun:__libc_dlopen_mode
+   fun:module_load
+   fun:__nss_module_load
+   fun:__nss_module_get_function
+   fun:get_nss_addresses
+   fun:gaih_inet
+   fun:getaddrinfo
+   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.46
+   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.46
+   fun:mysql_real_connect
+   fun:_ZN3isc2db15MySqlConnection12openDatabaseEv
+   fun:_ZN3isc2db15MySqlConnection10getVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKN5boost10shared_ptrISt8functionIFNSJ_INS_8asiolink9IOServiceEEEvEEEERKSK_IFbNSJ_INS_4util12ReconnectCtlEEEEERSC_j
+   fun:_ZN3isc2db15MySqlConnection19ensureSchemaVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKSt8functionIFbN5boost10shared_ptrINS_4util12ReconnectCtlEEEEERSC_
+   fun:_ZN3isc4dhcp23MySqlHostDataSourceImplC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
+   fun:_ZN3isc4dhcp19MySqlHostDataSourceC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
+   fun:_ZN3isc4dhcp19MySqlHostDataSource7factoryERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
+   fun:__invoke_impl<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
+   fun:__invoke_r<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
+   fun:_ZNSt17_Function_handlerIFN5boost10shared_ptrIN3isc4dhcp18BaseHostDataSourceEEERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESC_St4lessISC_ESaISt4pairIKSC_SC_EEEEPSM_E9_M_invokeERKSt9_Any_dataSL_
+   fun:operator()
+   fun:_ZN3isc4dhcp21HostDataSourceFactory3addERSt6vectorIN5boost10shared_ptrINS0_18BaseHostDataSourceEEESaIS6_EERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN12_GLOBAL__N_137MySqlHostDataSource_OpenDatabase_Test8TestBodyEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8TestInfo3RunEv
+   fun:_ZN7testing9TestSuite3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8UnitTest3RunEv
+   fun:RUN_ALL_TESTS
+   fun:main
+}
+{
    valgrind_hash_a3b5e1ea4a842ae67aed2511acf3e7d5
    # detected in src/hooks/dhcp/forensic_log/libloadtests/dhcp-forensic-log-libload-tests
    Memcheck:Leak
@@ -3455,60 +3555,6 @@
    fun:main
 }
 {
-   valgrind_hash_a8d15993122e248008cbfb7abc1874b2
-   # detected in src/hooks/dhcp/mysql/tests/dhcp-mysql-lib-tests
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:calloc
-   fun:calloc
-   fun:_dl_new_object
-   fun:_dl_map_object_from_fd
-   fun:_dl_map_object
-   fun:openaux
-   fun:_dl_catch_exception
-   fun:_dl_map_object_deps
-   fun:dl_open_worker_begin
-   fun:_dl_catch_exception
-   fun:dl_open_worker
-   fun:_dl_catch_exception
-   fun:_dl_open
-   fun:do_dlopen
-   fun:_dl_catch_exception
-   fun:_dl_catch_error
-   fun:dlerror_run
-   fun:__libc_dlopen_mode
-   fun:module_load
-   fun:__nss_module_load
-   fun:__nss_module_get_function
-   fun:get_nss_addresses
-   fun:gaih_inet
-   fun:getaddrinfo
-   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.45
-   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.45
-   fun:mysql_real_connect
-   fun:_ZN3isc2db15MySqlConnection12openDatabaseEv
-   fun:_ZN3isc2db15MySqlConnection10getVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKN5boost10shared_ptrISt8functionIFNSJ_INS_8asiolink9IOServiceEEEvEEEERKSK_IFbNSJ_INS_4util12ReconnectCtlEEEEERSC_j
-   fun:_ZN3isc2db15MySqlConnection19ensureSchemaVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKSt8functionIFbN5boost10shared_ptrINS_4util12ReconnectCtlEEEEERSC_
-   fun:_ZN3isc4dhcp23MySqlHostDataSourceImplC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
-   fun:_ZN3isc4dhcp19MySqlHostDataSourceC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
-   fun:_ZN3isc4dhcp19MySqlHostDataSource7factoryERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
-   fun:__invoke_impl<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
-   fun:__invoke_r<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
-   fun:_ZNSt17_Function_handlerIFN5boost10shared_ptrIN3isc4dhcp18BaseHostDataSourceEEERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESC_St4lessISC_ESaISt4pairIKSC_SC_EEEEPSM_E9_M_invokeERKSt9_Any_dataSL_
-   fun:operator()
-   fun:_ZN3isc4dhcp21HostDataSourceFactory3addERSt6vectorIN5boost10shared_ptrINS0_18BaseHostDataSourceEEESaIS6_EERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
-   fun:_ZN12_GLOBAL__N_137MySqlHostDataSource_OpenDatabase_Test8TestBodyEv
-   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
-   fun:_ZN7testing4Test3RunEv
-   fun:_ZN7testing8TestInfo3RunEv
-   fun:_ZN7testing9TestSuite3RunEv
-   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
-   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
-   fun:_ZN7testing8UnitTest3RunEv
-   fun:RUN_ALL_TESTS
-   fun:main
-}
-{
    valgrind_hash_a9b20032cfed09708ecad043b4e22d16
    # detected in src/hooks/dhcp/lease_query/tests/dhcp-lease-query-tests
    Memcheck:Leak
@@ -3531,55 +3577,6 @@
    fun:operator()
    fun:_ZN3isc4dhcp15LeaseMgrFactory6createERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
    fun:_ZN12_GLOBAL__N_130BaseBulkLeaseQuery4ProcessTestI17PgSQLTestLeaseMgrE5SetUpEv
-   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
-   fun:_ZN7testing4Test3RunEv
-   fun:_ZN7testing8TestInfo3RunEv
-   fun:_ZN7testing9TestSuite3RunEv
-   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
-   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
-   fun:_ZN7testing8UnitTest3RunEv
-   fun:RUN_ALL_TESTS
-   fun:main
-}
-{
-   valgrind_hash_a9c485a2ac86321faa9e899271a4d8d6
-   # detected in src/hooks/dhcp/mysql/tests/dhcp-mysql-lib-tests
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:calloc
-   fun:calloc
-   fun:_dl_check_map_versions
-   fun:dl_open_worker_begin
-   fun:_dl_catch_exception
-   fun:dl_open_worker
-   fun:_dl_catch_exception
-   fun:_dl_open
-   fun:do_dlopen
-   fun:_dl_catch_exception
-   fun:_dl_catch_error
-   fun:dlerror_run
-   fun:__libc_dlopen_mode
-   fun:module_load
-   fun:__nss_module_load
-   fun:__nss_module_get_function
-   fun:get_nss_addresses
-   fun:gaih_inet
-   fun:getaddrinfo
-   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.45
-   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.45
-   fun:mysql_real_connect
-   fun:_ZN3isc2db15MySqlConnection12openDatabaseEv
-   fun:_ZN3isc2db15MySqlConnection10getVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKN5boost10shared_ptrISt8functionIFNSJ_INS_8asiolink9IOServiceEEEvEEEERKSK_IFbNSJ_INS_4util12ReconnectCtlEEEEERSC_j
-   fun:_ZN3isc2db15MySqlConnection19ensureSchemaVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKSt8functionIFbN5boost10shared_ptrINS_4util12ReconnectCtlEEEEERSC_
-   fun:_ZN3isc4dhcp23MySqlHostDataSourceImplC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
-   fun:_ZN3isc4dhcp19MySqlHostDataSourceC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
-   fun:_ZN3isc4dhcp19MySqlHostDataSource7factoryERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
-   fun:__invoke_impl<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
-   fun:__invoke_r<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
-   fun:_ZNSt17_Function_handlerIFN5boost10shared_ptrIN3isc4dhcp18BaseHostDataSourceEEERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESC_St4lessISC_ESaISt4pairIKSC_SC_EEEEPSM_E9_M_invokeERKSt9_Any_dataSL_
-   fun:operator()
-   fun:_ZN3isc4dhcp21HostDataSourceFactory3addERSt6vectorIN5boost10shared_ptrINS0_18BaseHostDataSourceEEESaIS6_EERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
-   fun:_ZN12_GLOBAL__N_137MySqlHostDataSource_OpenDatabase_Test8TestBodyEv
    fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
    fun:_ZN7testing4Test3RunEv
    fun:_ZN7testing8TestInfo3RunEv
@@ -3952,60 +3949,6 @@
    fun:_ZN3isc11ddns_tuning14DdnsTuningImpl9configureEN5boost10shared_ptrIKNS_4data7ElementEEE
    fun:_ZN12_GLOBAL__N_118DdnsTuningImplTest18testInvalidConfigsEv.cold
    fun:_ZN12_GLOBAL__N_153DdnsTuningImplTest4_invalidConfigsMultiThreading_Test8TestBodyEv
-   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
-   fun:_ZN7testing4Test3RunEv
-   fun:_ZN7testing8TestInfo3RunEv
-   fun:_ZN7testing9TestSuite3RunEv
-   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
-   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
-   fun:_ZN7testing8UnitTest3RunEv
-   fun:RUN_ALL_TESTS
-   fun:main
-}
-{
-   valgrind_hash_b2b08ae4dff4018cd2d6b5593fdeb72d
-   # detected in src/hooks/dhcp/mysql/tests/dhcp-mysql-lib-tests
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:malloc
-   fun:strdup
-   fun:_dl_load_cache_lookup
-   fun:_dl_map_object
-   fun:openaux
-   fun:_dl_catch_exception
-   fun:_dl_map_object_deps
-   fun:dl_open_worker_begin
-   fun:_dl_catch_exception
-   fun:dl_open_worker
-   fun:_dl_catch_exception
-   fun:_dl_open
-   fun:do_dlopen
-   fun:_dl_catch_exception
-   fun:_dl_catch_error
-   fun:dlerror_run
-   fun:__libc_dlopen_mode
-   fun:module_load
-   fun:__nss_module_load
-   fun:__nss_module_get_function
-   fun:get_nss_addresses
-   fun:gaih_inet
-   fun:getaddrinfo
-   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.45
-   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.45
-   fun:mysql_real_connect
-   fun:_ZN3isc2db15MySqlConnection12openDatabaseEv
-   fun:_ZN3isc2db15MySqlConnection10getVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKN5boost10shared_ptrISt8functionIFNSJ_INS_8asiolink9IOServiceEEEvEEEERKSK_IFbNSJ_INS_4util12ReconnectCtlEEEEERSC_j
-   fun:_ZN3isc2db15MySqlConnection19ensureSchemaVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKSt8functionIFbN5boost10shared_ptrINS_4util12ReconnectCtlEEEEERSC_
-   fun:_ZN3isc4dhcp23MySqlHostDataSourceImplC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
-   fun:_ZN3isc4dhcp19MySqlHostDataSourceC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
-   fun:_ZN3isc4dhcp19MySqlHostDataSource7factoryERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
-   fun:__invoke_impl<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
-   fun:__invoke_r<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
-   fun:_ZNSt17_Function_handlerIFN5boost10shared_ptrIN3isc4dhcp18BaseHostDataSourceEEERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESC_St4lessISC_ESaISt4pairIKSC_SC_EEEEPSM_E9_M_invokeERKSt9_Any_dataSL_
-   fun:operator()
-   fun:_ZN3isc4dhcp21HostDataSourceFactory3addERSt6vectorIN5boost10shared_ptrINS0_18BaseHostDataSourceEEESaIS6_EERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
-   fun:_ZN12_GLOBAL__N_137MySqlHostDataSource_OpenDatabase_Test8TestBodyEv
    fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
    fun:_ZN7testing4Test3RunEv
    fun:_ZN7testing8TestInfo3RunEv
@@ -4434,6 +4377,60 @@
    fun:main
 }
 {
+   valgrind_hash_c7e2832821299f8bb338f7243ff1536b
+   # detected in src/hooks/dhcp/mysql/tests/dhcp-mysql-lib-tests
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:malloc
+   fun:strdup
+   fun:_dl_load_cache_lookup
+   fun:_dl_map_object
+   fun:openaux
+   fun:_dl_catch_exception
+   fun:_dl_map_object_deps
+   fun:dl_open_worker_begin
+   fun:_dl_catch_exception
+   fun:dl_open_worker
+   fun:_dl_catch_exception
+   fun:_dl_open
+   fun:do_dlopen
+   fun:_dl_catch_exception
+   fun:_dl_catch_error
+   fun:dlerror_run
+   fun:__libc_dlopen_mode
+   fun:module_load
+   fun:__nss_module_load
+   fun:__nss_module_get_function
+   fun:get_nss_addresses
+   fun:gaih_inet
+   fun:getaddrinfo
+   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.46
+   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.46
+   fun:mysql_real_connect
+   fun:_ZN3isc2db15MySqlConnection12openDatabaseEv
+   fun:_ZN3isc2db15MySqlConnection10getVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKN5boost10shared_ptrISt8functionIFNSJ_INS_8asiolink9IOServiceEEEvEEEERKSK_IFbNSJ_INS_4util12ReconnectCtlEEEEERSC_j
+   fun:_ZN3isc2db15MySqlConnection19ensureSchemaVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKSt8functionIFbN5boost10shared_ptrINS_4util12ReconnectCtlEEEEERSC_
+   fun:_ZN3isc4dhcp23MySqlHostDataSourceImplC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
+   fun:_ZN3isc4dhcp19MySqlHostDataSourceC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
+   fun:_ZN3isc4dhcp19MySqlHostDataSource7factoryERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
+   fun:__invoke_impl<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
+   fun:__invoke_r<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
+   fun:_ZNSt17_Function_handlerIFN5boost10shared_ptrIN3isc4dhcp18BaseHostDataSourceEEERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESC_St4lessISC_ESaISt4pairIKSC_SC_EEEEPSM_E9_M_invokeERKSt9_Any_dataSL_
+   fun:operator()
+   fun:_ZN3isc4dhcp21HostDataSourceFactory3addERSt6vectorIN5boost10shared_ptrINS0_18BaseHostDataSourceEEESaIS6_EERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN12_GLOBAL__N_137MySqlHostDataSource_OpenDatabase_Test8TestBodyEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8TestInfo3RunEv
+   fun:_ZN7testing9TestSuite3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8UnitTest3RunEv
+   fun:RUN_ALL_TESTS
+   fun:main
+}
+{
    valgrind_hash_c9c4bdf70b0ebc5cd7be1cfd5b71b7ec
    # detected in src/hooks/dhcp/pgsql/tests/dhcp-pgsql-lib-tests
    Memcheck:Leak
@@ -4564,37 +4561,39 @@
 }
 {
    valgrind_hash_c305d72282a7ea5ff0866907a0132ed4
-   # detected in src/lib/asiodns/tests/kea-asiodns-tests
-   # detected in src/hooks/dhcp/class_cmds/libloadtests/dhcp-class-cmds-libload-tests
-   # detected in src/lib/hooks/tests/kea-hooks-tests
-   # detected in src/hooks/dhcp/stat_cmds/libloadtests/dhcp-stat-cmds-libload-tests
-   # detected in src/hooks/dhcp/limits/libloadtests/dhcp-limits-libload-tests
-   # detected in src/lib/tcp/tests/kea-tcp-tests
-   # detected in src/hooks/dhcp/subnet_cmds/libloadtests/dhcp-subnet-cmds-libload-tests
-   # detected in src/lib/dhcp/tests/kea-dhcp-tests
-   # detected in src/hooks/dhcp/run_script/libloadtests/dhcp-run-script-libload-tests
-   # detected in src/lib/http/tests/kea-http-tests
-   # detected in src/lib/stats/tests/kea-stats-tests
-   # detected in src/hooks/dhcp/subnet_cmds/tests/dhcp-subnet-cmds-tests
-   # detected in src/hooks/dhcp/limits/tests/dhcp-limits-tests
-   # detected in src/hooks/dhcp/host_cmds/libloadtests/dhcp-host-cmds-libload-tests
-   # detected in src/hooks/dhcp/flex_option/tests/dhcp-flex-option-lib-tests
-   # detected in src/hooks/dhcp/perfmon/libloadtests/dhcp-perfmon-libload-tests
-   # detected in src/lib/yang/tests/kea-yang-tests
-   # detected in src/lib/log/tests/kea-log-tests
-   # detected in src/hooks/dhcp/rbac/tests/dhcp-rbac-tests
-   # detected in src/bin/lfc/tests/kea-lfc-tests
+   # detected in premium/src/hooks/dhcp/cb_cmds/libloadtests/dhcp-cb-cmds-libload-tests
+   # detected in premium/src/hooks/dhcp/rbac/libloadtests/dhcp-rbac-libload-tests
+   # detected in src/bin/netconf/tests/kea-netconf-tests
+   # detected in src/hooks/dhcp/bootp/libloadtests/dhcp-bootp-libload-tests
+   # detected in src/hooks/dhcp/class_cmds/tests/dhcp-class-cmds-tests
    # detected in src/hooks/dhcp/forensic_log/libloadtests/dhcp-forensic-log-libload-tests
    # detected in src/hooks/dhcp/high_availability/tests/dhcp-ha-lib-tests
-   # detected in src/hooks/dhcp/rbac/libloadtests/dhcp-rbac-libload-tests
-   # detected in src/hooks/dhcp/ping_check/tests/dhcp-ping-check-tests
-   # detected in src/hooks/dhcp/user_chk/tests/dhcp-user-chk-lib-tests
    # detected in src/hooks/dhcp/host_cache/tests/dhcp-host-cache-tests
-   # detected in src/hooks/dhcp/pgsql/libloadtests/dhcp-pgsql-libload-tests
-   # detected in src/lib/dhcpsrv/tests/kea-dhcpsrv-tests
-   # detected in src/lib/mysql/tests/kea-mysql-tests
-   # detected in src/hooks/dhcp/host_cache/libloadtests/dhcp-host-cache-libload-tests
+   # detected in src/hooks/dhcp/host_cmds/tests/dhcp-cmds-tests
+   # detected in src/hooks/dhcp/limits/libloadtests/dhcp-limits-libload-tests
+   # detected in src/hooks/dhcp/limits/tests/dhcp-limits-tests
+   # detected in src/hooks/dhcp/ping_check/tests/dhcp-ping-check-tests
+   # detected in src/hooks/dhcp/radius/libloadtests/dhcp-radius-libload-tests
+   # detected in src/hooks/dhcp/run_script/libloadtests/dhcp-run-script-libload-tests
+   # detected in src/hooks/dhcp/run_script/tests/dhcp-run-script-lib-tests
+   # detected in src/hooks/dhcp/stat_cmds/libloadtests/dhcp-stat-cmds-libload-tests
+   # detected in src/hooks/dhcp/stat_cmds/tests/dhcp-stat-cmds-lib-tests
+   # detected in src/hooks/dhcp/subnet_cmds/libloadtests/dhcp-subnet-cmds-libload-tests
+   # detected in src/hooks/dhcp/subnet_cmds/tests/dhcp-subnet-cmds-tests
+   # detected in src/hooks/dhcp/user_chk/tests/dhcp-user-chk-lib-tests
+   # detected in src/lib/asiodns/tests/kea-asiodns-tests
    # detected in src/lib/config/tests/kea-config-tests
+   # detected in src/lib/config_backend/tests/kea-config_backend-tests
+   # detected in src/lib/d2srv/tests/kea-d2srv-tests
+   # detected in src/lib/database/tests/kea-database-tests
+   # detected in src/lib/dhcp_ddns/tests/kea-dhcp_ddns-tests
+   # detected in src/lib/hooks/tests/kea-hooks-tests
+   # detected in src/lib/http/tests/kea-http-tests
+   # detected in src/lib/mysql/tests/kea-mysql-tests
+   # detected in src/lib/process/cfgrpt/tests/kea-process-cfgrpt-tests
+   # detected in src/lib/process/tests/kea-process-tests
+   # detected in src/lib/tcp/tests/kea-tcp-tests
+   # detected in src/lib/yang/tests/kea-yang-tests
    Memcheck:Leak
    match-leak-kinds: possible
    fun:calloc
@@ -4807,6 +4806,57 @@
    fun:_ZN8AddrInfoC1ERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
    fun:_ZN3isc6radius6Server10getAddressERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
    fun:_ZN12_GLOBAL__N_131ServerClassTest_getAddress_Test8TestBodyEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8TestInfo3RunEv
+   fun:_ZN7testing9TestSuite3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8UnitTest3RunEv
+   fun:RUN_ALL_TESTS
+   fun:main
+}
+{
+   valgrind_hash_dba875e3795a5997792eb28234482264
+   # detected in src/hooks/dhcp/mysql/tests/dhcp-mysql-lib-tests
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:calloc
+   fun:calloc
+   fun:_dl_new_object
+   fun:_dl_map_object_from_fd
+   fun:_dl_map_object
+   fun:dl_open_worker_begin
+   fun:_dl_catch_exception
+   fun:dl_open_worker
+   fun:_dl_catch_exception
+   fun:_dl_open
+   fun:do_dlopen
+   fun:_dl_catch_exception
+   fun:_dl_catch_error
+   fun:dlerror_run
+   fun:__libc_dlopen_mode
+   fun:module_load
+   fun:__nss_module_load
+   fun:__nss_module_get_function
+   fun:get_nss_addresses
+   fun:gaih_inet
+   fun:getaddrinfo
+   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.46
+   obj:/usr/lib/x86_64-linux-gnu/libmysqlclient.so.21.2.46
+   fun:mysql_real_connect
+   fun:_ZN3isc2db15MySqlConnection12openDatabaseEv
+   fun:_ZN3isc2db15MySqlConnection10getVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKN5boost10shared_ptrISt8functionIFNSJ_INS_8asiolink9IOServiceEEEvEEEERKSK_IFbNSJ_INS_4util12ReconnectCtlEEEEERSC_j
+   fun:_ZN3isc2db15MySqlConnection19ensureSchemaVersionERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEERKSt8functionIFbN5boost10shared_ptrINS_4util12ReconnectCtlEEEEERSC_
+   fun:_ZN3isc4dhcp23MySqlHostDataSourceImplC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
+   fun:_ZN3isc4dhcp19MySqlHostDataSourceC1ERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
+   fun:_ZN3isc4dhcp19MySqlHostDataSource7factoryERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEES8_St4lessIS8_ESaISt4pairIKS8_S8_EEE
+   fun:__invoke_impl<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
+   fun:__invoke_r<boost::shared_ptr<isc::dhcp::BaseHostDataSource>, boost::shared_ptr<isc::dhcp::BaseHostDataSource> (*&)(const std::map<std::__cxx11::basic_string<char>, std::__cxx11::basic_string<char> >&), const std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<const std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > > >&>
+   fun:_ZNSt17_Function_handlerIFN5boost10shared_ptrIN3isc4dhcp18BaseHostDataSourceEEERKSt3mapINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESC_St4lessISC_ESaISt4pairIKSC_SC_EEEEPSM_E9_M_invokeERKSt9_Any_dataSL_
+   fun:operator()
+   fun:_ZN3isc4dhcp21HostDataSourceFactory3addERSt6vectorIN5boost10shared_ptrINS0_18BaseHostDataSourceEEESaIS6_EERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN12_GLOBAL__N_137MySqlHostDataSource_OpenDatabase_Test8TestBodyEv
    fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
    fun:_ZN7testing4Test3RunEv
    fun:_ZN7testing8TestInfo3RunEv
@@ -5669,13 +5719,12 @@
 }
 {
    valgrind_hash_fde24afed0906d2cd8a8c36bb4d8446d
-   # detected in /home/razvan/isc/git/kea-work/build/fuzz/fuzz_http_endpoint_kea_dhcp6
-   # detected in /home/razvan/isc/git/kea-work/build/fuzz/fuzz_unix_socket_kea_dhcp6
-   # detected in /home/razvan/isc/git/kea-work/build/fuzz/fuzz_unix_socket_kea_dhcp4
-   # detected in /home/razvan/isc/git/kea-work/build/fuzz/fuzz_http_endpoint_kea_dhcp4
-   # detected in /home/razvan/isc/git/kea-work/build/fuzz/fuzz_packets_kea_dhcp6
-   # detected in /home/razvan/isc/git/kea-work/build/fuzz/fuzz_packets_kea_dhcp4
-   # detected in /home/razvan/isc/git/kea-work/build/fuzz/fuzz_config_kea_dhcp4
+   # detected in fuzz/fuzz_config_kea_dhcp6
+   # detected in fuzz/fuzz_http_endpoint_kea_dhcp6
+   # detected in fuzz/fuzz_packets_kea_dhcp4
+   # detected in fuzz/fuzz_packets_kea_dhcp6
+   # detected in fuzz/fuzz_unix_socket_kea_dhcp4
+   # detected in fuzz/fuzz_unix_socket_kea_dhcp6
    Memcheck:Leak
    match-leak-kinds: possible
    fun:calloc
