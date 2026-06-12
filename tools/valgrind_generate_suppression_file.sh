@@ -63,23 +63,20 @@ for i in ${partial_suppression_files}; do
     xmlstarlet sel -t -v "/valgrindoutput/error/suppression/rawtext" "${i}" | grep "\S" | sed 's/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g; s/&quot;/"/g; s/&apos;/'"'"'/g' >"${i}-txt.supp"
     # extract the binary path and name
     found_in_path=$(xmlstarlet sel -t -v "/valgrindoutput/args/argv/exe" "${i}" | sed "s|.*build/||")
+    echo "${i}: ${found_in_path}"
     # insert a comment with the binary path and name
     sed -i'' "s|<insert_a_suppression_name_here>|<insert_a_suppression_name_here>\n   # detected in ${found_in_path}|g" "${i}-txt.supp"
     # split the file
     csplit -s -z -f "${i}-txt.supp-part." "${i}-txt.supp" '/\{/' '{*}'
 done
 
-for file in ${partial_suppression_files}: do
-    python3 -c "
-with open('${file}', 'r', encoding='utf-8') as file:
-    lines = file.readlines()
-idxs = [i for i, l in enumerate(lines) if '# detected in' in l]
-sorted_matches = sorted(lines[i] for i in idxs)
-for i, s in zip(idxs, sorted_matches):
-    lines[i] = s
-with open('${file}', 'w', encoding='utf-8') as file:
-    file.writelines(lines)
-"
+for file in ${partial_suppression_files}; do
+    grep '# detected in' "${file}" | sort -V | awk '{printf "%s\\n", $0}' | sed 's/\\n$//' > "${file}.data"
+    cat "${file}" | grep -v '# detected in' > "${file}.tmp"
+    mv "${file}.tmp" "${file}"
+    sed -i "2r ${file}.data" "${file}"
+    rm "${file}.data"
+done
 
 echo "" >build/valgrind_suppression.supp
 for i in $(find build -type f -name '*txt.supp-part.*'); do
@@ -95,7 +92,6 @@ for i in $(find build -type f -name '*txt.supp-part.*'); do
     else
         # extract the binary path and name
         found_in_path=$(grep " # detected in " "${i}" || true)
-        echo "${i}: ${found_in_path}"
         # check if comment is present
         match=$(grep -c "${found_in_path}" build/valgrind_suppression.supp || true)
         if [ "${match}" -eq 0 ]; then
