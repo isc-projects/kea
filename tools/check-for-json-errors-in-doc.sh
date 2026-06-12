@@ -69,7 +69,7 @@ for file in ${files}; do
       # ignore any map name before top level map
       line=$(printf '%s' "${line}" | sed 's/.*{/{/g')
       echo > "${work_file}"
-    elif [ $comment -eq 0 ] && [ $json -eq 1 ] && [ "$(echo "$line" | grep -c "^\s*[A-Za-z]\|^\s*\`")" -eq 1 ]; then
+    elif [ $comment -eq 0 ] && [ $json -eq 1 ] && [ "$(echo "$line" | grep -c "^\s*[A-Za-z*]\|^\s*\`")" -eq 1 ]; then
       # if the line is not a comment and the line starts with spaces followed by 'A-Za-z' or followed by "`" and the parser is processing a json structure
       json=0
       if ! jq . "${work_file}" > /dev/null; then
