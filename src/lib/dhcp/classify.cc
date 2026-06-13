@@ -14,8 +14,6 @@
 #include <boost/algorithm/string/constants.hpp>
 #include <boost/algorithm/string/split.hpp>
 
-#include <sstream>
-
 namespace isc {
 namespace dhcp {
 
@@ -164,20 +162,20 @@ const std::vector<bool> ClientClasses::CLIENT_CLASS_VALID_CHARACTERS = {
 
 std::string
 ClientClasses::escape(const std::string& name) {
-    std::stringstream ss;
+    std::string output;
     for (char const& c : name) {
-        unsigned u = static_cast<unsigned>(c);
+        uint8_t u = static_cast<uint8_t>(c);
         if ((u < 128) && CLIENT_CLASS_VALID_CHARACTERS[u]) {
-            ss << c;
+            output.push_back(c);
             if (c == CLIENT_CLASS_ESCAPE) {
-                ss << c;
+                output.push_back(CLIENT_CLASS_ESCAPE);
             }
         } else {
-            ss << CLIENT_CLASS_ESCAPE
-               << std::hex << std::setfill('0') << std::setw(2) << u;
+            output.push_back(CLIENT_CLASS_ESCAPE);
+            output.append(util::str::byteToHex(u));
         }
     }
-    return (ss.str());
+    return (output);
 }
 
 } // end of namespace dhcp

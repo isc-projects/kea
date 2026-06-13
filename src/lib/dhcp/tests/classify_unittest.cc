@@ -399,6 +399,9 @@ TEST(ClassifyTest, escape) {
         },
         {
             "\"foo\", \"bar\"", "%22foo%22%2c%20%22bar%22"
+        },
+        {
+            "\xeaoo\xe2" "ar", "%eaoo%e2ar"
         }
     };
 
