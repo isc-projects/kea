@@ -522,7 +522,7 @@ DHCP and DDNS servers exposes a RESTful API over HTTP or HTTPS (HTTP over TLS).
 These control channels are optional features that are disabled by default, but it is very popular. When enabled, it listens on the
 loopback address (127.0.0.1 or ::1) by default, unless configured otherwise. See :ref:`tls`
 for information about protecting the TLS traffic. Limiting the incoming connections with a firewall, such as
-iptables, is generally a good idea.
+iptables, is strongly recommended.
 
 Note that in High Availability (HA) deployments, a multi-threaded dedicated
 listener can be configured to serve the HA protocol using the RESTful API
