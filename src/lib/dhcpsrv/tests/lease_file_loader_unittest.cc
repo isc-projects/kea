@@ -532,20 +532,20 @@ TEST_F(LeaseFileLoaderTest, loadWrite6) {
                       "{ \"foobar\": true },,,0\n";
 
     std::string b_1 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                      "300,300,6,150,0,8,0,0,0,,,1,,,,0\n";
+                      "300,300,6,150,0,8,0,0,0,,,1,,0,0,0\n";
     std::string b_2 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                      "300,800,6,150,0,8,0,0,0,,,1,,,,0\n";
+                      "300,800,6,150,0,8,0,0,0,,,1,,0,0,0\n";
 
     std::string c_1 = "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                      "100,200,8,0,2,16,64,0,0,,,1,,,,0\n";
+                      "100,200,8,0,2,16,64,0,0,,,1,,0,0,0\n";
 
     // new files have 128 prefixlen for non PD type
     std::string a_3_n = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
                         "200,400,8,100,0,7,128,1,1,host.example.com,,1,"
-                        "{ \"foobar\": true },,,0\n";
+                        "{ \"foobar\": true },0,0,0\n";
 
     std::string b_2_n = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                        "300,800,6,150,0,8,128,0,0,,,1,,,,0\n";
+                        "300,800,6,150,0,8,128,0,0,,,1,,0,0,0\n";
 
     // Create a lease file with three valid leases: 2001:db8:1::1,
     // 3000:1:: and 2001:db8:2::10.
@@ -623,7 +623,7 @@ TEST_F(LeaseFileLoaderTest, loadWrite6LeaseRemove) {
 
     // new files have 128 prefixlen for non PD type
     std::string b_2_n = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                        "300,800,6,150,0,8,128,0,0,,,1,,,,0\n";
+                        "300,800,6,150,0,8,128,0,0,,,1,,0,0,0\n";
 
     // Create lease file in which one of the entries for the 2001:db8:1::1
     // has valid lifetime set to 0, in which case the lease should be

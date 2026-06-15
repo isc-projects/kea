@@ -889,7 +889,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
 
     std::string update_file_contents = new_file_contents +
         "3000::1,00:00:00:00:00:00:00:00:00:00:00:00:00,400,"
-        "400,2,300,0,123,128,0,0,,,0,,,,0\n";
+        "400,2,300,0,123,128,0,0,,,0,,0,0,0\n";
     EXPECT_EQ(update_file_contents, current_file.readFile());
 
     // This string contains the contents of the lease file we
@@ -897,9 +897,9 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
     // entry each.
     std::string result_file_contents = new_file_contents +
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
-        "8,100,0,7,128,1,1,,,1,{ \"foo\": true },,,0\n"
+        "8,100,0,7,128,1,1,,,1,{ \"foo\": true },0,0,0\n"
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
-        "8,100,0,7,128,1,1,,,1,,,,0\n";
+        "8,100,0,7,128,1,1,,,1,,0,0,0\n";
 
     // The LFC should have created a file with the two leases and moved it
     // to leasefile6_0.csv.2
@@ -1031,7 +1031,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
     // the same.
     std::string input_file_contents = new_file_contents +
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
-        "8,100,0,7,128,1,1,,,1,{ \"foo\": true },,,0\n";
+        "8,100,0,7,128,1,1,,,1,{ \"foo\": true },0,0,0\n";
     LeaseFileIO input_file(getLeaseFilePath("leasefile6_0.csv.1"));
     input_file.writeFile(input_file_contents);
 
@@ -2268,7 +2268,7 @@ TEST_F(MemfileLeaseMgrTest, leaseUpgrade6) {
     // Verify cleaned, converted contents
     std::string result_file_contents = header_5_0 +
         "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,200,800,"
-        "8,100,0,7,128,1,1,,,0,,,,0\n"
+        "8,100,0,7,128,1,1,,,0,,0,0,0\n"
         "2001:db8:1::2,01:01:01:01:01:01:01:01:01:01:01:01:01,200,800,"
         "8,100,0,7,128,1,1,,11:22:33:44:55,0,,1,0,0\n";
     EXPECT_EQ(result_file_contents, input_file.readFile());
