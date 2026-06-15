@@ -2394,11 +2394,11 @@ TEST_F(ClientClassDefParserTest, negativeLifetimes4) {
     for (auto const& name : names) {
         std::string config = R"({"name": "boo", ")" + name + R"(" : -100 })";
 
-        std::string expected = "The '" + name + "' value (-100)"
-                               " is not within expected range: (0 - 4294967295)";
+        std::string expected = "'" + name + "' : -100 is out of range,"
+                               " must be >= 0 and <= 4294967295";
 
         // Parse the class definition.
-        ASSERT_THROW_MSG(parseClientClassDef(config, AF_INET), isc::OutOfRange,
+        ASSERT_THROW_MSG(parseClientClassDef(config, AF_INET), DhcpConfigError,
                                              expected);
     }
 }
@@ -2420,11 +2420,11 @@ TEST_F(ClientClassDefParserTest, negativeLifetimes6) {
     for (auto const& name : names) {
         std::string config = R"({"name": "boo", ")" + name + R"(" : -100 })";
 
-        std::string expected = "The '" + name + "' value (-100)"
-                               " is not within expected range: (0 - 4294967295)";
+        std::string expected = "'" + name + "' : -100 is out of range,"
+                               " must be >= 0 and <= 4294967295";
 
         // Parse the class definition.
-        ASSERT_THROW_MSG(parseClientClassDef(config, AF_INET6), isc::OutOfRange,
+        ASSERT_THROW_MSG(parseClientClassDef(config, AF_INET6), DhcpConfigError,
                                              expected);
     }
 }

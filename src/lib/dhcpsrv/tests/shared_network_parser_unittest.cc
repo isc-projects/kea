@@ -1411,8 +1411,8 @@ TEST_F(SharedNetwork4ParserTest, negativeLifetimes4) {
         SharedNetwork4Parser parser;
         ASSERT_THROW_MSG(parser.parse(config),
                          DhcpConfigError,
-                         "The '" + name + "' value (-100)"
-                         " is not within expected range: (0 - 4294967295) (<string>:1:2)");
+                         "'" + name + "' : -100 is out of range, "
+                         "must be >= 0 and <= 4294967295 (<string>:1:2)");
     }
 }
 
@@ -1438,8 +1438,8 @@ TEST_F(SharedNetwork6ParserTest, negativeLifetimes6) {
         SharedNetwork6Parser parser;
         ASSERT_THROW_MSG(parser.parse(config),
                          DhcpConfigError,
-                         "The '" + name + "' value (-100)"
-                         " is not within expected range: (0 - 4294967295) (<string>:1:2)");
+                         "'" + name + "' : -100 is out of range, "
+                         "must be >= 0 and <= 4294967295 (<string>:1:2)");
     }
 }
 

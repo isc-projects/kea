@@ -4492,8 +4492,8 @@ TEST_F(ParseConfigTest, negativeLifetimes4) {
         EXPECT_EQ(1, rcode);
         std::string expected = "Configuration parsing failed: "
                                "subnet configuration failed: "
-                               "The '" + name + "' value (-100)"
-                               " is not within expected range: (0 - 4294967295)";
+                               "'" + name + "' : -100 is out of range"
+                               ", must be >= 0 and <= 4294967295";
         ASSERT_EQ(expected, comment->stringValue());
     }
 }
@@ -4527,8 +4527,8 @@ TEST_F(ParseConfigTest, negativeLifetimes6) {
         EXPECT_EQ(1, rcode);
         std::string expected = "Configuration parsing failed: "
                                "subnet configuration failed: "
-                               "The '" + name + "' value (-100)"
-                               " is not within expected range: (0 - 4294967295)";
+                               "'" + name + "' : -100 is out of range"
+                               ", must be >= 0 and <= 4294967295";
         ASSERT_EQ(expected, comment->stringValue());
     }
 }
