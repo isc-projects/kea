@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -37,7 +37,7 @@ namespace test {
 /// provides functions for executing SQL statements, executing prepared
 /// statements, fetching all rows in the table, and deleting all the rows in
 /// the table.
-class PgSqlBasicsTest : public ::testing::Test {
+class PgSqlBasicsTest : public virtual ::testing::Test {
 public:
 
     /// @brief Column index for each column

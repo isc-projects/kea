@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,7 +33,7 @@ namespace test {
 /// the strings they expect in the output in the order they
 /// will be emitted.
 
-class LogContentTest : public ::testing::Test {
+class LogContentTest : public virtual ::testing::Test {
 public:
 
     /// @brief Initializes the logger setup for using

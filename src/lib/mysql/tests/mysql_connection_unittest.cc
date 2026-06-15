@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,15 +12,18 @@
 #include <mysql/mysql_connection.h>
 #include <mysql/testutils/mysql_schema.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/log_utils.h>
 
 #include <array>
 
-#include <gtest/gtest.h>
-
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include <gtest/gtest.h>
+
+using namespace isc::data;
 using namespace isc::db;
 using namespace isc::db::test;
+using namespace isc::dhcp::test;
 
 using namespace std;
 
@@ -40,7 +43,7 @@ struct MySqlResult {
 };
 
 /// @brief Test fixture class for @c MySqlConnection class.
-class MySqlConnectionTest : public ::testing::Test {
+class MySqlConnectionTest : public LogContentTest {
 public:
 
     /// @brief Indexes of prepared statements used within the tests.
@@ -626,6 +629,14 @@ TEST_F(MySqlConnectionTest, portInvalid) {
                      "port parameter (65536) must be an integer between 0 and 65535");
 }
 
+// Tests that default password causes an error.
+TEST_F(MySqlConnectionTest, defaultPassword) {
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_USER, DEFAULT_PASSWORD);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+    EXPECT_THROW(conn.openDatabase(), DefaultCredential);
+}
+
 // Tests that invalid timeout value type causes an error.
 TEST_F(MySqlConnectionTest, connectionTimeoutInvalid) {
     std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
@@ -1043,6 +1054,12 @@ TEST_F(MySqlConnectionTest, ensureSchemaVersionNoSchema) {
     EXPECT_NO_THROW_LOG(version = MySqlConnection::getVersion(parameters));
     EXPECT_EQ(MYSQL_SCHEMA_VERSION_MAJOR, version.first);
     EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
+
+    addString("DATABASE_MYSQL_INITIAL_CONNECTION_FAIL The connection to the MySQL server is not "
+              "yet established. Reason: unable to prepare MySQL statement <SELECT version, minor "
+              "FROM schema_version>, reason: Table 'keatest.schema_version' doesn't exist");
+    addString("DATABASE_MYSQL_INITIALIZE_SCHEMA Initializing the MySQL schema with command:");
+    EXPECT_TRUE(checkFile());
 }
 
 /// @brief Check ensureSchemaVersion when schema is created.
@@ -1079,6 +1096,17 @@ TEST_F(MySqlConnectionTest, initializeSchemaNoSchema) {
     EXPECT_NO_THROW_LOG(version = MySqlConnection::getVersion(parameters));
     EXPECT_EQ(MYSQL_SCHEMA_VERSION_MAJOR, version.first);
     EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
+
+    addString("DATABASE_MYSQL_INITIALIZE_SCHEMA Initializing the MySQL schema with command:");
+    EXPECT_TRUE(checkFile());
+}
+
+/// @brief Check ensureSchemaVersion when weak credentials are used.
+TEST_F(MySqlConnectionTest, ensureSchemaVersionWeakCredentials) {
+    DatabaseConnection::ParameterMap const parameters(DatabaseConnection::parse(
+        connectionString(MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, "password=1234")));
+    EXPECT_THROW_MSG(MySqlConnection::ensureSchemaVersion(parameters), DefaultCredential,
+                     "illegal use of a default value as credential");
 }
 
 /// @brief Check initializeSchema when schema is created.
@@ -1097,6 +1125,27 @@ TEST_F(MySqlConnectionTest, initializeSchema) {
     EXPECT_NO_THROW_LOG(version = MySqlConnection::getVersion(parameters));
     EXPECT_EQ(MYSQL_SCHEMA_VERSION_MAJOR, version.first);
     EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
+}
+
+/// @brief Check initializeSchema when readonly is configured.
+TEST_F(MySqlConnectionTest, initializeSchemaReadonly) {
+    DatabaseConnection::ParameterMap const parameters(DatabaseConnection::parse(
+        connectionString(MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
+                         VALID_TIMEOUT, VALID_READONLY_DB)));
+    EXPECT_NO_THROW_LOG(MySqlConnection::initializeSchema(parameters));
+    addString("DATABASE_MYSQL_NO_INIT_READONLY Not attempting to initialize the MySQL schema. Kea has "
+              "the database configured as readonly.");
+    EXPECT_TRUE(checkFile());
+}
+
+/// @brief Check initializeSchema when kea-admin does not exist.
+TEST_F(MySqlConnectionTest, initializeSchemaNoAdmin) {
+    MySqlConnection::KEA_ADMIN_ = "invalid_path_to_kea_admin";
+    DatabaseConnection::ParameterMap const parameters(DatabaseConnection::parse(validMySQLConnectionString()));
+    EXPECT_NO_THROW_LOG(MySqlConnection::initializeSchema(parameters));
+    addString("DATABASE_MYSQL_NO_INIT_NO_ADMIN Not attempting to initialize the MySQL schema. "
+              "kea-admin seems to be missing.");
+    EXPECT_TRUE(checkFile());
 }
 
 /// @brief Check toKeaAdminParameters.

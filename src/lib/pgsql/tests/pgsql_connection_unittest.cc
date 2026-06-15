@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,20 +10,22 @@
 #include <database/db_exceptions.h>
 #include <pgsql/pgsql_connection.h>
 #include <pgsql/pgsql_exchange.h>
-#include <pgsql/testutils/pgsql_schema.h>
 #include <pgsql/tests/pgsql_basics.h>
+#include <pgsql/testutils/pgsql_schema.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/log_utils.h>
+
+#include <vector>
 
 #include <boost/lexical_cast.hpp>
 
 #include <gtest/gtest.h>
 
-#include <sstream>
-#include <vector>
-
 using namespace isc;
+using namespace isc::data;
 using namespace isc::db;
 using namespace isc::db::test;
+using namespace isc::dhcp::test;
 using namespace isc::util;
 
 using namespace std;
@@ -81,7 +83,7 @@ TEST_F(PgSqlSchemaTest, schemaVersion) {
 /// the columns in the BASICS table: int_col and text_col.  Inserting rows with
 /// varying types and values are tested above.  These tests focus on the higher
 /// order function mechanics.
-class PgSqlConnectionTest : public PgSqlBasicsTest {
+class PgSqlConnectionTest : public PgSqlBasicsTest, public LogContentTest {
 public:
 
     /// @brief Indexes of prepared statements used within the tests.
@@ -596,7 +598,7 @@ TEST_F(PgSqlConnectionTest, defaultPassword) {
     std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
                                             VALID_USER, DEFAULT_PASSWORD);
     PgSqlConnection conn(DatabaseConnection::parse(conn_str));
-    EXPECT_THROW(conn.getConnParameters(), isc::data::DefaultCredential);
+    EXPECT_THROW(conn.getConnParameters(), DefaultCredential);
 }
 
 // Tests that valid connection timeout is accepted.
@@ -727,7 +729,7 @@ TEST_F(PgSqlSecureConnectionTest, TlsDefaultPassword) {
 
     try {
         conn.openDatabase();
-    } catch (isc::data::DefaultCredential const& exception) {
+    } catch (DefaultCredential const& exception) {
         string const message(exception.what());
         if (message == "illegal use of a default value as credential") {
             return;
@@ -748,7 +750,7 @@ TEST_F(PgSqlSecureConnectionTest, noTlsDefaultPassword) {
 
     try {
         conn.openDatabase();
-    } catch (isc::data::DefaultCredential const& exception) {
+    } catch (DefaultCredential const& exception) {
         string const message(exception.what());
         if (message == "illegal use of a default value as credential") {
             return;
@@ -849,6 +851,16 @@ TEST_F(PgSqlConnectionTest, ensureSchemaVersionNoSchema) {
     EXPECT_NO_THROW_LOG(version = PgSqlConnection::getVersion(parameters));
     EXPECT_EQ(PGSQL_SCHEMA_VERSION_MAJOR, version.first);
     EXPECT_EQ(PGSQL_SCHEMA_VERSION_MINOR, version.second);
+
+    addString("DATABASE_PGSQL_INITIAL_CONNECTION_FAIL The connection to the PostgreSQL server is "
+              "not yet established. Reason: unable to execute PostgreSQL statement <SELECT "
+              "version, minor FROM schema_version;, reason: ERROR:  relation \"schema_version\" "
+              "does not exist");
+    addString("LINE 1: SELECT version, minor FROM schema_version;");
+    addString("                                   ^");
+    addString("");
+    addString("DATABASE_PGSQL_INITIALIZE_SCHEMA Initializing the PostgreSQL schema with command:");
+    EXPECT_TRUE(checkFile());
 }
 
 /// @brief Check ensureSchemaVersion when schema is created.
@@ -866,6 +878,14 @@ TEST_F(PgSqlConnectionTest, ensureSchemaVersion) {
     EXPECT_NO_THROW_LOG(version = PgSqlConnection::getVersion(parameters));
     EXPECT_EQ(PGSQL_SCHEMA_VERSION_MAJOR, version.first);
     EXPECT_EQ(PGSQL_SCHEMA_VERSION_MINOR, version.second);
+}
+
+/// @brief Check ensureSchemaVersion when weak credentials are used.
+TEST_F(PgSqlConnectionTest, ensureSchemaVersionWeakCredentials) {
+    DatabaseConnection::ParameterMap const parameters(DatabaseConnection::parse(
+        connectionString(PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, "password=1234")));
+    EXPECT_THROW_MSG(PgSqlConnection::ensureSchemaVersion(parameters), DefaultCredential,
+                     "illegal use of a default value as credential");
 }
 
 /// @brief Check initializeSchema when schema is not created.
@@ -887,6 +907,9 @@ TEST_F(PgSqlConnectionTest, initializeSchemaNoSchema) {
     EXPECT_NO_THROW_LOG(version = PgSqlConnection::getVersion(parameters));
     EXPECT_EQ(PGSQL_SCHEMA_VERSION_MAJOR, version.first);
     EXPECT_EQ(PGSQL_SCHEMA_VERSION_MINOR, version.second);
+
+    addString("DATABASE_PGSQL_INITIALIZE_SCHEMA Initializing the PostgreSQL schema with command:");
+    EXPECT_TRUE(checkFile());
 }
 
 /// @brief Check initializeSchema when schema is created.
@@ -905,6 +928,27 @@ TEST_F(PgSqlConnectionTest, initializeSchema) {
     EXPECT_NO_THROW_LOG(version = PgSqlConnection::getVersion(parameters));
     EXPECT_EQ(PGSQL_SCHEMA_VERSION_MAJOR, version.first);
     EXPECT_EQ(PGSQL_SCHEMA_VERSION_MINOR, version.second);
+}
+
+/// @brief Check initializeSchema when readonly is configured.
+TEST_F(PgSqlConnectionTest, initializeSchemaReadonly) {
+    DatabaseConnection::ParameterMap const parameters(DatabaseConnection::parse(
+        connectionString(PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
+                         VALID_TIMEOUT, VALID_READONLY_DB)));
+    EXPECT_NO_THROW_LOG(PgSqlConnection::initializeSchema(parameters));
+    addString("DATABASE_PGSQL_NO_INIT_READONLY Not attempting to initialize the PostgreSQL schema. Kea has "
+              "the database configured as readonly.");
+    EXPECT_TRUE(checkFile());
+}
+
+/// @brief Check initializeSchema when kea-admin does not exist.
+TEST_F(PgSqlConnectionTest, initializeSchemaNoAdmin) {
+    PgSqlConnection::KEA_ADMIN_ = "invalid_path_to_kea_admin";
+    DatabaseConnection::ParameterMap const parameters(DatabaseConnection::parse(validPgSQLConnectionString()));
+    EXPECT_NO_THROW_LOG(PgSqlConnection::initializeSchema(parameters));
+    addString("DATABASE_PGSQL_NO_INIT_NO_ADMIN Not attempting to initialize the PostgreSQL schema. "
+              "kea-admin seems to be missing.");
+    EXPECT_TRUE(checkFile());
 }
 
 /// @brief Check toKeaAdminParameters.
