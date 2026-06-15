@@ -1,0 +1,6 @@
+[bug]		andrei
+	kea-lfc no longer removes values on the hwtype and hwaddr_source
+	columns from v6 lease files when the lease is not identified
+	through a hardware address (hwaddr column). This change allows
+	"kea-admin lease-upload" which calls kea-lfc, to work.
+	(Gitlab #4589)
