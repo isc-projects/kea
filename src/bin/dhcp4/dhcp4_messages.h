@@ -69,6 +69,7 @@ extern const isc::log::MessageID DHCP4_DHCP4O6_SUBNET_SELECTION_FAILED;
 extern const isc::log::MessageID DHCP4_DISCOVER;
 extern const isc::log::MessageID DHCP4_DYNAMIC_RECONFIGURATION;
 extern const isc::log::MessageID DHCP4_DYNAMIC_RECONFIGURATION_FAIL;
+extern const isc::log::MessageID DHCP4_DYNAMIC_RECONFIGURATION_FAIL_FATAL_ERROR;
 extern const isc::log::MessageID DHCP4_DYNAMIC_RECONFIGURATION_SUCCESS;
 extern const isc::log::MessageID DHCP4_EMPTY_HOSTNAME;
 extern const isc::log::MessageID DHCP4_FATAL_OPEN_SOCKETS_FAILED;

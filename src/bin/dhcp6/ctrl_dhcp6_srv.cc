@@ -180,8 +180,14 @@ ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
         if (rcode != CONTROL_RESULT_SUCCESS) {
             string reason = comment ? comment->stringValue() :
                 "no details available";
-            isc_throw(isc::BadValue, reason);
+            if (rcode == CONTROL_RESULT_FATAL_ERROR) {
+                isc_throw(isc::FatalException, reason);
+            } else {
+                isc_throw(isc::BadValue, reason);
+            }
         }
+    } catch (const isc::FatalException&) {
+        throw;
     } catch (const std::exception& ex) {
         // If configuration failed at any stage, we drop the staging
         // configuration and continue to use the previous one.
@@ -249,14 +255,19 @@ ControlledDhcpv6Srv::commandConfigReloadHandler(const string&,
         auto result = loadConfigFile(file);
         LOG_INFO(dhcp6_logger, DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS).arg(file);
         return (result);
+    } catch (const FatalException& ex) {
+        shutdownServer(EXIT_FAILURE);
+        LOG_FATAL(dhcp6_logger, DHCP6_DYNAMIC_RECONFIGURATION_FAIL_FATAL_ERROR)
+            .arg(file);
+        return (createAnswer(CONTROL_RESULT_FATAL_ERROR,
+                             "Config reload failed: " + string(ex.what())));
     } catch (const std::exception& ex) {
         // Log the unsuccessful reconfiguration. The reason for failure
         // should be already logged. Don't rethrow an exception so as
         // the server keeps working.
-        LOG_FATAL(dhcp6_logger, DHCP6_DYNAMIC_RECONFIGURATION_FAIL)
+        LOG_ERROR(dhcp6_logger, DHCP6_DYNAMIC_RECONFIGURATION_FAIL)
             .arg(file);
-        shutdownServer(EXIT_FAILURE);
-        return (createAnswer(CONTROL_RESULT_FATAL_ERROR,
+        return (createAnswer(CONTROL_RESULT_ERROR,
                              "Config reload failed: " + string(ex.what())));
     }
 }

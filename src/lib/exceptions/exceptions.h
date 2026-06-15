@@ -135,6 +135,14 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// \brief A generic exception that is thrown if the configuration
+/// can not be recovered.
+class FatalException : public Exception {
+public:
+    FatalException(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 /// \brief A generic exception that is thrown if a function is called
 /// in a prohibited way.
 ///

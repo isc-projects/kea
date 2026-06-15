@@ -68,6 +68,7 @@ extern const isc::log::MessageID DHCP4_DHCP4O6_SUBNET_SELECTION_FAILED = "DHCP4_
 extern const isc::log::MessageID DHCP4_DISCOVER = "DHCP4_DISCOVER";
 extern const isc::log::MessageID DHCP4_DYNAMIC_RECONFIGURATION = "DHCP4_DYNAMIC_RECONFIGURATION";
 extern const isc::log::MessageID DHCP4_DYNAMIC_RECONFIGURATION_FAIL = "DHCP4_DYNAMIC_RECONFIGURATION_FAIL";
+extern const isc::log::MessageID DHCP4_DYNAMIC_RECONFIGURATION_FAIL_FATAL_ERROR = "DHCP4_DYNAMIC_RECONFIGURATION_FAIL_FATAL_ERROR";
 extern const isc::log::MessageID DHCP4_DYNAMIC_RECONFIGURATION_SUCCESS = "DHCP4_DYNAMIC_RECONFIGURATION_SUCCESS";
 extern const isc::log::MessageID DHCP4_EMPTY_HOSTNAME = "DHCP4_EMPTY_HOSTNAME";
 extern const isc::log::MessageID DHCP4_FATAL_OPEN_SOCKETS_FAILED = "DHCP4_FATAL_OPEN_SOCKETS_FAILED";
@@ -253,6 +254,7 @@ const char* values[] = {
     "DHCP4_DISCOVER", "%1: server is processing DHCPDISCOVER with hint=%2",
     "DHCP4_DYNAMIC_RECONFIGURATION", "initiate server reconfiguration using file: %1, after receiving SIGHUP signal or config-reload command",
     "DHCP4_DYNAMIC_RECONFIGURATION_FAIL", "dynamic server reconfiguration failed with file: %1",
+    "DHCP4_DYNAMIC_RECONFIGURATION_FAIL_FATAL_ERROR", "dynamic server reconfiguration failed with file: %1",
     "DHCP4_DYNAMIC_RECONFIGURATION_SUCCESS", "dynamic server reconfiguration succeeded with file: %1",
     "DHCP4_EMPTY_HOSTNAME", "%1: received empty hostname from the client, skipping processing of this option",
     "DHCP4_FATAL_OPEN_SOCKETS_FAILED", "maximum number of open service sockets attempts: %1, has been exhausted without success",
