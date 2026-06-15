@@ -592,6 +592,9 @@ public:
     /// @brief test many PD pools.
     void testManyPdPools();
 
+    /// @brief test no PD pools.
+    void testNoPdPools();
+
     /// @brief test many PD pools / prefer lower.
     void testManyPdPoolsPreferLower();
 
@@ -684,6 +687,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, populateFreeAddressLeasesMultiThreading) {
 void
 FreeLeaseQueueAllocatorTest6::testSinglePool() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_NA, subnet_);
+
     ASSERT_NO_THROW(alloc.initAfterConfigure());
 
     // Remember returned addresses, so we can verify that unique addresses
@@ -714,6 +718,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolMultiThreading) {
 void
 FreeLeaseQueueAllocatorTest6::testSinglePoolWithAllocations() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_NA, subnet_);
+
     ASSERT_NO_THROW(alloc.initAfterConfigure());
 
     auto& lease_mgr = LeaseMgrFactory::instance();
@@ -770,6 +775,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolWithAllocationsMultiThreading) {
 void
 FreeLeaseQueueAllocatorTest6::testSinglePoolWithReclamations() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_NA, subnet_);
+
     ASSERT_NO_THROW(alloc.initAfterConfigure());
 
     auto& lease_mgr = LeaseMgrFactory::instance();
@@ -1309,6 +1315,29 @@ TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPools) {
 TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsMultiThreading) {
     MultiThreadingTest mt(true);
     testManyPdPools();
+}
+
+// Test that the allocator returns a zero address when there are no pools
+// in a subnet.
+void
+FreeLeaseQueueAllocatorTest6::testNoPdPools() {
+   FreeLeaseQueueAllocator alloc(Lease::TYPE_PD, subnet_);
+
+   subnet_->delPools(Lease::TYPE_NA);
+
+   Pool6Ptr pool;
+
+   IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0);
+   EXPECT_TRUE(candidate.isV6Zero());
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, noPdPools) {
+    testNoPdPools();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, noPdPoolsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testNoPdPools();
 }
 
 // Test allocating delegated prefixes from multiple pools / prefer lower.
