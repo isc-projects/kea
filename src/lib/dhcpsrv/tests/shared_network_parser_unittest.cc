@@ -110,7 +110,7 @@ public:
     // Verifies valid permutations of ddns-ttl-percent, ddns-ttl,
     // ddns-ttl-min, and ddns-ttl-max values for SharedNetwork4.
     template<typename NetworkTypePtr, typename ParserType>
-    void validDdnsTtlParmatersTest() {
+    void validDdnsTtlParametersTest() {
         struct Scenario {
             size_t line_no_;
             std::string json_;
@@ -200,7 +200,7 @@ public:
     // Verifies invalid permutations of ddns-ttl-percent, ddns-ttl,
     // ddns-ttl-min, and ddns-ttl-max values for SharedNetwork.
     template<typename ParserType>
-    void invalidDdnsTtlParmatersTest() {
+    void invalidDdnsTtlParametersTest() {
         struct Scenario {
             size_t line_no_;
             std::string json_;
@@ -1370,30 +1370,30 @@ TEST_F(SharedNetwork6ParserTest, deprecatedClientClass) {
 
 // Verifies valid permutations of ddns-ttl-percent, ddns-ttl,
 // ddns-ttl-min, and ddns-ttl-max values for SharedNetwork4.
-TEST_F(SharedNetwork4ParserTest, validDdnsTtlParmaters4) {
-    validDdnsTtlParmatersTest<SharedNetwork4Ptr, SharedNetwork4Parser>();
+TEST_F(SharedNetwork4ParserTest, validDdnsTtlParameters4) {
+    validDdnsTtlParametersTest<SharedNetwork4Ptr, SharedNetwork4Parser>();
 }
 
 // Verifies valid permutations of ddns-ttl-percent, ddns-ttl,
 // ddns-ttl-min, and ddns-ttl-max values for SharedNetwork6.
-TEST_F(SharedNetwork6ParserTest, validDdnsTtlParmaters6) {
-    validDdnsTtlParmatersTest<SharedNetwork6Ptr, SharedNetwork6Parser>();
+TEST_F(SharedNetwork6ParserTest, validDdnsTtlParameters6) {
+    validDdnsTtlParametersTest<SharedNetwork6Ptr, SharedNetwork6Parser>();
 }
 
 // Verifies invalid permutations of ddns-ttl-percent, ddns-ttl,
 // ddns-ttl-min, and ddns-ttl-max values for Subnet4.
-TEST_F(SharedNetwork4ParserTest, invalidDdnsTtlParmaters4) {
-    invalidDdnsTtlParmatersTest<SharedNetwork4Parser>();
+TEST_F(SharedNetwork4ParserTest, invalidDdnsTtlParameters4) {
+    invalidDdnsTtlParametersTest<SharedNetwork4Parser>();
 }
 
 // Verifies invalid permutations of ddns-ttl-percent, ddns-ttl,
 // ddns-ttl-min, and ddns-ttl-max values for Subnet6.
-TEST_F(SharedNetwork6ParserTest, invalidDdnsTtlParmaters6) {
-    invalidDdnsTtlParmatersTest<SharedNetwork6Parser>();
+TEST_F(SharedNetwork6ParserTest, invalidDdnsTtlParameters6) {
+    invalidDdnsTtlParametersTest<SharedNetwork6Parser>();
 }
 
 // This test verifies a negative values for (min/max) valid
-// lieftimes are rejected (v4).
+// lifetimes are rejected (v4).
 TEST_F(SharedNetwork4ParserTest, negativeLifetimes4) {
     std::list<std::string> names = {
         "min-valid-lifetime",
@@ -1403,7 +1403,7 @@ TEST_F(SharedNetwork4ParserTest, negativeLifetimes4) {
 
     for (auto const& name : names) {
         std::string config_str =
-            R"({ "name": "foo", ")" +  name + R"(" : -100 })";
+            R"({ "name": "foo", ")" + name + R"(" : -100 })";
 
         ElementPtr config;
         ASSERT_NO_THROW_LOG(config = Element::fromJSON(config_str));
@@ -1417,7 +1417,7 @@ TEST_F(SharedNetwork4ParserTest, negativeLifetimes4) {
 }
 
 // This test verifies a negative values for (min/max) valid and preferred
-// lieftimes are rejected (v6).
+// lifetimes are rejected (v6).
 TEST_F(SharedNetwork6ParserTest, negativeLifetimes6) {
     std::list<std::string> names = {
         "min-valid-lifetime",
@@ -1430,7 +1430,7 @@ TEST_F(SharedNetwork6ParserTest, negativeLifetimes6) {
 
     for (auto const& name : names) {
         std::string config_str =
-            R"({ "name": "foo", ")" +  name + R"(" : -100 })";
+            R"({ "name": "foo", ")" + name + R"(" : -100 })";
 
         ElementPtr config;
         ASSERT_NO_THROW_LOG(config = Element::fromJSON(config_str));

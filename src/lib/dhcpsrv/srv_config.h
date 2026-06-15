@@ -1007,7 +1007,7 @@ private:
 
     /// @brief Fetch and range check uint32_t parameter values
     ///
-    /// @param elem JSON integer element containg the desired value
+    /// @param elem JSON integer element containing the desired value
     /// @param name name of parameter for use in exception text
     static uint32_t rangeCheck(data::ConstElementPtr elem, std::string name);
 

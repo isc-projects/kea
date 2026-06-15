@@ -78,7 +78,7 @@ public:
     // Verifies valid permutations of ddns-ttl-percent, ddns-ttl,
     // ddns-ttl-min, and ddns-ttl-max values for SubnetX.
     template<typename ParserType, typename NetworkPtrType>
-        void validDdnsTtlParmatersSubnet(int family) {
+        void validDdnsTtlParametersSubnet(int family) {
             struct Scenario {
                 size_t line_no_;
                 std::string json_;
@@ -172,7 +172,7 @@ public:
         // Verifies invalid permutations of ddns-ttl-percent, ddns-ttl,
         // ddns-ttl-min, and ddns-ttl-max values for SubnetX.
     template<typename ParserType>
-        void invalidDdnsTtlParmatersSubnet(int family) {
+        void invalidDdnsTtlParametersSubnet(int family) {
             struct Scenario {
                 size_t line_no_;
                 std::string json_;
@@ -277,7 +277,7 @@ public:
         ASSERT_EQ(pools->size(), 2U);
 
         // First pool specifies all but ddns-ttl.
-        PoolPtr pool  = (*pools)[0];
+        PoolPtr pool = (*pools)[0];
         ASSERT_TRUE(pool);
 
         ASSERT_FALSE(pool->getDdnsSendUpdates().unspecified());
@@ -4435,39 +4435,39 @@ TEST_F(DhcpParserTest, deprecatedClientClassPool6) {
 
 // Verifies valid permutations of ddns-ttl-percent, ddns-ttl,
 // ddns-ttl-min, and ddns-ttl-max values for Subnet4.
-TEST_F(DhcpParserTest, validDdnsTtlParmatersSubnet4) {
-    validDdnsTtlParmatersSubnet<Subnet4ConfigParser, Subnet4Ptr>(AF_INET);
+TEST_F(DhcpParserTest, validDdnsTtlParametersSubnet4) {
+    validDdnsTtlParametersSubnet<Subnet4ConfigParser, Subnet4Ptr>(AF_INET);
 }
 
 // Verifies invalid permutations of ddns-ttl-percent, ddns-ttl,
 // ddns-ttl-min, and ddns-ttl-max values for Subnet4.
-TEST_F(DhcpParserTest, invalidDdnsTtlParmatersSubnet4) {
-    invalidDdnsTtlParmatersSubnet<Subnet4ConfigParser>(AF_INET);
+TEST_F(DhcpParserTest, invalidDdnsTtlParametersSubnet4) {
+    invalidDdnsTtlParametersSubnet<Subnet4ConfigParser>(AF_INET);
 }
 
 // Verifies valid permutations of ddns-ttl-percent, ddns-ttl,
 // ddns-ttl-min, and ddns-ttl-max values for Subnet6.
-TEST_F(DhcpParserTest, validDdnsTtlParmatersSubnet6) {
-    validDdnsTtlParmatersSubnet<Subnet6ConfigParser, Subnet6Ptr>(AF_INET6);
+TEST_F(DhcpParserTest, validDdnsTtlParametersSubnet6) {
+    validDdnsTtlParametersSubnet<Subnet6ConfigParser, Subnet6Ptr>(AF_INET6);
 }
 
 // Verifies invalid permutations of ddns-ttl-percent, ddns-ttl,
 // ddns-ttl-min, and ddns-ttl-max values for Subnet6.
-TEST_F(DhcpParserTest, invalidDdnsTtlParmatersSubnet6) {
-    invalidDdnsTtlParmatersSubnet<Subnet6ConfigParser>(AF_INET6);
+TEST_F(DhcpParserTest, invalidDdnsTtlParametersSubnet6) {
+    invalidDdnsTtlParametersSubnet<Subnet6ConfigParser>(AF_INET6);
 }
 
 // Verifies valid DDNS parameters in v4 pools.
-TEST_F(DhcpParserTest, validDdnsParmatersPool4) {
+TEST_F(DhcpParserTest, validDdnsParametersPool4) {
         validPoolDdnsParameters<Pools4ListParser>("192.0.1.0/24", "192.0.2.0/24");
 }
 
 // Verifies valid DDNS parameters in v6 pools.
-TEST_F(DhcpParserTest, validDdnsParmatersPool6) {
+TEST_F(DhcpParserTest, validDdnsParametersPool6) {
         validPoolDdnsParameters<Pools6ListParser>("2001:db8:1::/64", "2001:db8:2::/64");
 }
 
-// This test verifies a negative values for (min/max) valid lieftimes are rejected (v4).
+// This test verifies a negative values for (min/max) valid lifetimes are rejected (v4).
 TEST_F(ParseConfigTest, negativeLifetimes4) {
     std::list<std::string> names = {
         "min-valid-lifetime",
@@ -4479,7 +4479,7 @@ TEST_F(ParseConfigTest, negativeLifetimes4) {
         std::string config =
             R"({"subnet4": [ {
                     "subnet": "192.0.2.0/24",
-                    "id": 1, ")" +  name +
+                    "id": 1, ")" + name +
             R"(" : -100 } ] })";
 
         ElementPtr json = Element::fromJSON(config);
@@ -4499,7 +4499,7 @@ TEST_F(ParseConfigTest, negativeLifetimes4) {
 }
 
 // This test verifies a negative values for (min/max) valid and preferred
-// lieftimes are rejected (v6).
+// lifetimes are rejected (v6).
 TEST_F(ParseConfigTest, negativeLifetimes6) {
     std::list<std::string> names = {
         "min-valid-lifetime",
@@ -4514,7 +4514,7 @@ TEST_F(ParseConfigTest, negativeLifetimes6) {
         std::string config =
             R"({"subnet6": [ {
                     "subnet": "3001::/64",
-                    "id": 1, ")" +  name +
+                    "id": 1, ")" + name +
             R"(" : -100 } ] })";
 
         ElementPtr json = Element::fromJSON(config);

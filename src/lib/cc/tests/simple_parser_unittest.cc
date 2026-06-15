@@ -380,14 +380,14 @@ TEST_F(SimpleParserTest, rangeCheckedIntegerUint32) {
     };
 
     for (auto const& scenario : scenarios) {
-        ElementPtr scope =  Element::createMap();
+        ElementPtr scope = Element::createMap();
         scope->set("some-number", Element::create(scenario.input_value_));
-        uint32_t  output_value;
+        uint32_t output_value;
         if (scenario.should_throw_) {
             std::stringstream os;
-            os <<  "'some-number' : " << scenario.input_value_
+            os << "'some-number' : " << scenario.input_value_
                << " is out of range, must be >= "
-               << std::numeric_limits<uint32_t>::min() <<  " and <= "
+               << std::numeric_limits<uint32_t>::min() << " and <= "
                << std::numeric_limits<uint32_t>::max();
             ASSERT_THROW_MSG(SimpleParser::rangeCheckedInteger(scope, "some-number", output_value),
                              DhcpConfigError, os.str());

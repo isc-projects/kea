@@ -2392,7 +2392,7 @@ TEST_F(ClientClassDefParserTest, negativeLifetimes4) {
     };
 
     for (auto const& name : names) {
-        std::string config = R"({"name": "boo", ")" +  name + R"(" : -100 })";
+        std::string config = R"({"name": "boo", ")" + name + R"(" : -100 })";
 
         std::string expected = "The '" + name + "' value (-100)"
                                " is not within expected range: (0 - 4294967295)";
@@ -2418,7 +2418,7 @@ TEST_F(ClientClassDefParserTest, negativeLifetimes6) {
     };
 
     for (auto const& name : names) {
-        std::string config = R"({"name": "boo", ")" +  name + R"(" : -100 })";
+        std::string config = R"({"name": "boo", ")" + name + R"(" : -100 })";
 
         std::string expected = "The '" + name + "' value (-100)"
                                " is not within expected range: (0 - 4294967295)";
