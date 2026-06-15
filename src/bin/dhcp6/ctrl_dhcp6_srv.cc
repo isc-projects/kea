@@ -255,7 +255,8 @@ ControlledDhcpv6Srv::commandConfigReloadHandler(const string&,
         // the server keeps working.
         LOG_FATAL(dhcp6_logger, DHCP6_DYNAMIC_RECONFIGURATION_FAIL)
             .arg(file);
-        return (createAnswer(CONTROL_RESULT_ERROR,
+        shutdownServer(EXIT_FAILURE);
+        return (createAnswer(CONTROL_RESULT_FATAL_ERROR,
                              "Config reload failed: " + string(ex.what())));
     }
 }
@@ -463,6 +464,7 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
         IOServiceMgr::instance().pollIOServices();
     } catch (const std::exception& ex) {
         if (rcode == CONTROL_RESULT_FATAL_ERROR) {
+            shutdownServer(EXIT_FAILURE);
             return (result);
         }
         std::ostringstream err;

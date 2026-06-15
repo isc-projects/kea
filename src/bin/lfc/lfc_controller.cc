@@ -147,7 +147,7 @@ LFCController::launch(int argc, char* argv[], const bool test_mode) {
         try {
             fileRotate();
         } catch (const RunTimeFail& run_ex) {
-          LOG_FATAL(lfc_logger, LFC_FAIL_ROTATE).arg(run_ex.what());
+            LOG_FATAL(lfc_logger, LFC_FAIL_ROTATE).arg(run_ex.what());
         }
     }
 
