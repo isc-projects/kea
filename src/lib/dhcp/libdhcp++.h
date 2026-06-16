@@ -288,6 +288,9 @@ public:
     /// @param rec_level recursion level.
     /// @return offset to the first byte after the last successfully
     /// parsed option
+    /// @throw Unexpected on too deep recursion and multiple definitions,
+    /// OptionParseError on optionFactory failure not SkipThisOptionError
+    /// which is ignore and SkipRemainingOptionsError which is rethrown.
     ///
     /// @note This function throws when an option type is defined more
     /// than once, and it calls option building routines which can throw.

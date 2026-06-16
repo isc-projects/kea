@@ -27,6 +27,7 @@
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
+#include <testutils/gtest_utils.h>
 #include <util/buffer.h>
 #include <util/encode/encode.h>
 #include <util/thread_pool.h>
@@ -3972,15 +3973,10 @@ TEST_F(LibDhcpTest, tooDeepRecursionUnpackOptions6) {
     OptionBuffer buf;
     string space;
     OptionCollection options;
-    try {
-        LibDHCP::unpackOptions6(buf, space, options, 0, 0, 100);
-        FAIL() << "expected to throw";
-    } catch (const Unexpected& ex) {
-        string errmsg = ex.what();
-        EXPECT_EQ("Too deep recursion in unpacking options", errmsg);
-    } catch (...) {
-        FAIL() << "expected to throw Unexpected";
-    }
+    ASSERT_THROW_MSG(
+        LibDHCP::unpackOptions6(buf, space, options, 0, 0,
+                                LibDHCP::MAX_RECURSION_LEVEL - 1),
+        Unexpected, "Too deep recursion in unpacking options");
 }
 
 // Check that too deep recursion throws with client-data custom option.
@@ -3998,16 +3994,10 @@ TEST_F(LibDhcpTest, tooDeepRecursionClientData) {
     EXPECT_EQ(OPT_EMPTY_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
     std::vector<uint8_t> buf(48, 1);
-    try {
+    ASSERT_THROW_MSG(
         def->optionFactory(Option::V6, D6O_CLIENT_DATA, buf.begin(), buf.end(),
-                           false, 100);
-        FAIL() << "expected to throw";
-    } catch (const InvalidOptionValue& ex) {
-        string errmsg = ex.what();
-        EXPECT_EQ("Too deep recursion in unpacking options", errmsg);
-    } catch (...) {
-        FAIL() << "expected to throw InvalidOptionValue";
-    }
+                           false, LibDHCP::MAX_RECURSION_LEVEL - 1),
+        InvalidOptionValue, "Too deep recursion in unpacking options");
 }
 
 // Check that too deep recursion throws with s46-rule custom option.
@@ -4025,16 +4015,10 @@ TEST_F(LibDhcpTest, tooDeepRecursionS46Rule) {
     EXPECT_EQ(OPT_RECORD_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
     std::vector<uint8_t> buf(48, 1);
-    try {
+    ASSERT_THROW_MSG(
         def->optionFactory(Option::V6, D6O_S46_RULE, buf.begin(), buf.end(),
-                           false, 100);
-        FAIL() << "expected to throw";
-    } catch (const InvalidOptionValue& ex) {
-        string errmsg = ex.what();
-        EXPECT_EQ("Too deep recursion in unpacking options", errmsg);
-    } catch (...) {
-        FAIL() << "expected to throw InvalidOptionValue";
-    }
+                           false, LibDHCP::MAX_RECURSION_LEVEL - 1),
+        InvalidOptionValue, "Too deep recursion in unpacking options");
 }
 
 // Check that too deep recursion throws with address+container custom option.
@@ -4050,16 +4034,10 @@ TEST_F(LibDhcpTest, tooDeepRecursionCustom) {
     EXPECT_EQ(OPT_IPV6_ADDRESS_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
     std::vector<uint8_t> buf(48, 1);
-    try {
+    ASSERT_THROW_MSG(
         def->optionFactory(Option::V6, 1024, buf.begin(), buf.end(),
-                           false, 100);
-        FAIL() << "expected to throw";
-    } catch (const InvalidOptionValue& ex) {
-        string errmsg = ex.what();
-        EXPECT_EQ("Too deep recursion in unpacking options", errmsg);
-    } catch (...) {
-        FAIL() << "expected to throw InvalidOptionValue";
-    }
+                           false, LibDHCP::MAX_RECURSION_LEVEL - 1),
+        InvalidOptionValue, "Too deep recursion in unpacking options");
 }
 
 // Check that too deep recursion throws with ia-na special option.
@@ -4075,16 +4053,10 @@ TEST_F(LibDhcpTest, tooDeepRecursionIaNa) {
     EXPECT_EQ(OPT_RECORD_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
     std::vector<uint8_t> buf(48, 1);
-    try {
+    ASSERT_THROW_MSG(
         def->optionFactory(Option::V6, D6O_IA_NA, buf.begin(), buf.end(),
-                           false, 100);
-        FAIL() << "expected to throw";
-    } catch (const InvalidOptionValue& ex) {
-        string errmsg = ex.what();
-        EXPECT_EQ("Too deep recursion in unpacking options", errmsg);
-    } catch (...) {
-        FAIL() << "expected to throw InvalidOptionValue";
-    }
+                           false, LibDHCP::MAX_RECURSION_LEVEL - 1),
+        InvalidOptionValue, "Too deep recursion in unpacking options");
 }
 
 // Check that too deep recursion throws with iaaddr special option.
@@ -4100,16 +4072,10 @@ TEST_F(LibDhcpTest, tooDeepRecursionIaaddr) {
     EXPECT_EQ(OPT_RECORD_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
     std::vector<uint8_t> buf(48, 1);
-    try {
+    ASSERT_THROW_MSG(
         def->optionFactory(Option::V6, D6O_IAADDR, buf.begin(), buf.end(),
-                           false, 100);
-        FAIL() << "expected to throw";
-    } catch (const InvalidOptionValue& ex) {
-        string errmsg = ex.what();
-        EXPECT_EQ("Too deep recursion in unpacking options", errmsg);
-    } catch (...) {
-        FAIL() << "expected to throw InvalidOptionValue";
-    }
+                           false, LibDHCP::MAX_RECURSION_LEVEL - 1),
+        InvalidOptionValue, "Too deep recursion in unpacking options");
 }
 
 // Check that too deep recursion throws with iaprefix special option.
@@ -4125,16 +4091,10 @@ TEST_F(LibDhcpTest, tooDeepRecursionIaprefix) {
     EXPECT_EQ(OPT_RECORD_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
     std::vector<uint8_t> buf(48, 1);
-    try {
+    ASSERT_THROW_MSG(
         def->optionFactory(Option::V6, D6O_IAPREFIX, buf.begin(), buf.end(),
-                           false, 100);
-        FAIL() << "expected to throw";
-    } catch (const InvalidOptionValue& ex) {
-        string errmsg = ex.what();
-        EXPECT_EQ("Too deep recursion in unpacking options", errmsg);
-    } catch (...) {
-        FAIL() << "expected to throw InvalidOptionValue";
-    }
+                           false, LibDHCP::MAX_RECURSION_LEVEL - 1),
+        InvalidOptionValue, "Too deep recursion in unpacking options");
 }
 
 // Check that too deep recursion throws with integer+container option.
@@ -4147,16 +4107,10 @@ TEST_F(LibDhcpTest, tooDeepRecursionIntContainer) {
     EXPECT_EQ(OPT_INT32_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
     std::vector<uint8_t> buf(48, 1);
-    try {
+    ASSERT_THROW_MSG(
         def->optionFactory(Option::V6, 1024, buf.begin(), buf.end(),
-                           false, 100);
-        FAIL() << "expected to throw";
-    } catch (const InvalidOptionValue& ex) {
-        string errmsg = ex.what();
-        EXPECT_EQ("Too deep recursion in unpacking options", errmsg);
-    } catch (...) {
-        FAIL() << "expected to throw InvalidOptionValue";
-    }
+                           false, LibDHCP::MAX_RECURSION_LEVEL - 1),
+        InvalidOptionValue, "Too deep recursion in unpacking options");
 }
 
 // Check that too deep recursion throws using the whole call sequence.
@@ -4172,18 +4126,12 @@ TEST_F(LibDhcpTest, tooDeepRecursionSequence) {
     string space = DHCP6_OPTION_SPACE;
     OptionCollection options;
     LibDHCP::MAX_RECURSION_LEVEL = 3;
-    try {
-        LibDHCP::unpackOptions6(buf, space, options);
-        FAIL() << "expected to throw";
-    } catch (const OptionParseError& ex) {
-        string errmsg = ex.what();
         string expected = "opt_type: 45, opt_len 8, error: ";
         expected += "opt_type: 45, opt_len 4, error: ";
         expected += "Too deep recursion in unpacking options";
-        EXPECT_EQ(expected, errmsg);
-    } catch (...) {
-        FAIL() << "expected to throw OptionParseError";
-    }
+    ASSERT_THROW_MSG(
+        LibDHCP::unpackOptions6(buf, space, options),
+        OptionParseError, expected);
     options.clear();
     LibDHCP::MAX_RECURSION_LEVEL = 4;
     EXPECT_NO_THROW(LibDHCP::unpackOptions6(buf, space, options));
