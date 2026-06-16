@@ -256,9 +256,9 @@ ControlledDhcpv6Srv::commandConfigReloadHandler(const string&,
         LOG_INFO(dhcp6_logger, DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS).arg(file);
         return (result);
     } catch (const FatalException& ex) {
-        shutdownServer(EXIT_FAILURE);
-        LOG_FATAL(dhcp6_logger, DHCP6_DYNAMIC_RECONFIGURATION_FAIL_FATAL_ERROR)
+        LOG_FATAL(dhcp6_logger, DHCP6_FATAL_DYNAMIC_RECONFIGURATION_FAIL)
             .arg(file);
+        shutdownServer(EXIT_FAILURE);
         return (createAnswer(CONTROL_RESULT_FATAL_ERROR,
                              "Config reload failed: " + string(ex.what())));
     } catch (const std::exception& ex) {
@@ -1681,13 +1681,19 @@ ControlledDhcpv6Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
     // return false.
     if (!db_reconnect_ctl->retriesLeft() ||
         !db_reconnect_ctl->retryInterval()) {
-        LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_DISABLED)
-            .arg(db_reconnect_ctl->retriesLeft())
-            .arg(db_reconnect_ctl->retryInterval())
-            .arg(db_reconnect_ctl->id())
-            .arg(db_reconnect_ctl->timerName());
         if (db_reconnect_ctl->exitOnFailure()) {
+            LOG_FATAL(dhcp6_logger, DHCP6_FATAL_DB_RECONNECT_DISABLED)
+                .arg(db_reconnect_ctl->retriesLeft())
+                .arg(db_reconnect_ctl->retryInterval())
+                .arg(db_reconnect_ctl->id())
+                .arg(db_reconnect_ctl->timerName());
             shutdownServer(EXIT_FAILURE);
+        } else {
+            LOG_ERROR(dhcp6_logger, DHCP6_DB_RECONNECT_DISABLED)
+                .arg(db_reconnect_ctl->retriesLeft())
+                .arg(db_reconnect_ctl->retryInterval())
+                .arg(db_reconnect_ctl->id())
+                .arg(db_reconnect_ctl->timerName());
         }
         return (false);
     }
@@ -1726,15 +1732,18 @@ ControlledDhcpv6Srv::dbFailedCallback(ReconnectCtlPtr db_reconnect_ctl) {
         return (false);
     }
 
-    LOG_INFO(dhcp6_logger, DHCP6_DB_RECONNECT_FAILED)
-        .arg(db_reconnect_ctl->maxRetries())
-        .arg(db_reconnect_ctl->id())
-        .arg(db_reconnect_ctl->timerName());
-
     if (db_reconnect_ctl->exitOnFailure()) {
+        LOG_FATAL(dhcp6_logger, DHCP6_FATAL_DB_RECONNECT_FAILED)
+            .arg(db_reconnect_ctl->maxRetries())
+            .arg(db_reconnect_ctl->id())
+            .arg(db_reconnect_ctl->timerName());
         shutdownServer(EXIT_FAILURE);
+    } else {
+        LOG_ERROR(dhcp6_logger, DHCP6_DB_RECONNECT_FAILED)
+            .arg(db_reconnect_ctl->maxRetries())
+            .arg(db_reconnect_ctl->id())
+            .arg(db_reconnect_ctl->timerName());
     }
-
     return (true);
 }
 

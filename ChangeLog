@@ -1,8 +1,19 @@
-2498.	[func]		razvan
+2499.	[func]		razvan
 	Kea daemons now exit when a critical failure is detected when
 	issuing "config-reload", "config-set" and "interface-add"
-	commands.
+	commands. Changed database reconnect disabled and failed
+	log messages from info to either ERROR or FATAL as
+	appropriate in kea-dhcp4 and kea-dhcp6.
 	(Gitlab #4415)
+
+2488.	[func]		razvan
+	Updated yang modules: added 'ssl-mode' to database connection
+	parameters, added 'adaptive-lease-time-threshold', removed
+	'consistency', 'serial-consistency', 'request-timeout',
+	'tcp-keepalive', 'tcp-nodelay' from to database connection
+	parameters, added 'allow-address-registration' to the
+	kea-dhcp6 model.
+	(Gitlab #4461)
 
 Kea 3.2.0 (stable) released on June 24, 2026
 
@@ -79,14 +90,12 @@ Kea 3.2.0 (stable) released on June 24, 2026
 	options to fix options with bad flags.
 	(Gitlab #4443)
 
-2486.	[func]		razvan
-	Updated yang modules: added 'ssl-mode' to database connection
-	parameters, added 'adaptive-lease-time-threshold', removed
-	'consistency', 'serial-consistency', 'request-timeout',
-	'tcp-keepalive', 'tcp-nodelay' from to database connection
-	parameters, added 'allow-address-registration' to the
-	kea-dhcp6 model.
-	(Gitlab #4461)
+2486.	[func]		fdupont
+	Reconfigure commands that trigger fatal a error that leads
+	to server shutdown now return an error response. Changed
+	socket open failure log messages from INFO to either ERROR
+	or FATAL as appropriate. Applies to kea-dhcp4 and kea-dhcp6.
+	(Gitlab #4507)
 
 2485.	[doc]		sanua356, razvan
 	Added documentation about internal type of option 121

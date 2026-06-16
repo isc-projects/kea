@@ -215,14 +215,15 @@ may be overridden at runtime by setting the environment variable
 'KEA_DHCP_DATA_DIR'.
 
 % DHCP6_DB_RECONNECT_DISABLED database reconnect is disabled: retries left: %1, reconnect wait time: %2, manager ID: %3, timer: %4
-This is an informational message indicating that connectivity to either the
-lease or host database or both and that automatic reconnect is not enabled.
+This is an error message indicating that connectivity to either the
+lease or host database or both was lost and that automatic reconnect is
+not enabled. Loss of connectivity is typically a network or database server
+issue.
 
 % DHCP6_DB_RECONNECT_FAILED maximum number of database reconnect attempts: %1, has been exhausted without success, manager ID: %2, timer: %3
 This error indicates that the server failed to reconnect to the lease and/or
 host database(s) after making the maximum configured number of reconnect
-attempts. This might cause the server to shut down as specified in the
-configuration. Loss of connectivity is typically a network or database server
+attempts. Loss of connectivity is typically a network or database server
 issue.
 
 % DHCP6_DB_RECONNECT_LOST_CONNECTION database connection lost: manager ID: %1, timer: %2.
@@ -393,13 +394,27 @@ as a result of receiving SIGHUP signal or config-reload command.
 This is an error message logged when the dynamic reconfiguration of the
 DHCP server failed.
 
-% DHCP6_DYNAMIC_RECONFIGURATION_FAIL_FATAL_ERROR dynamic server reconfiguration failed with file: %1
-This is a fatal error message logged when the dynamic reconfiguration of the
-DHCP server failed.
-
 % DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS dynamic server reconfiguration succeeded with file: %1
 This is info message logged when the dynamic reconfiguration of the DHCP server
 succeeded.
+
+% DHCP6_FATAL_DB_RECONNECT_DISABLED database reconnect is disabled: retries left: %1, reconnect wait time: %2, manager ID: %3, timer: %4
+This is an error message indicating that connectivity to either the
+lease or host database or both was lost and that automatic reconnect is
+not enabled. This causes the server to shut down as specified in the
+configuration. Loss of connectivity is typically a network or database server
+issue.
+
+% DHCP6_FATAL_DB_RECONNECT_FAILED maximum number of database reconnect attempts: %1, has been exhausted without success, manager ID: %2, timer: %3
+This error indicates that the server failed to reconnect to the lease and/or
+host database(s) after making the maximum configured number of reconnect
+attempts. This causes the server to shut down as specified in the
+configuration. Loss of connectivity is typically a network or database server
+issue.
+
+% DHCP6_FATAL_DYNAMIC_RECONFIGURATION_FAIL dynamic server reconfiguration failed with file: %1
+This is a fatal error message logged when the dynamic reconfiguration of the
+DHCP server failed.
 
 % DHCP6_FATAL_OPEN_SOCKETS_FAILED maximum number of open service sockets attempts: %1, has been exhausted without success
 This error indicates that the server failed to bind service sockets after making
