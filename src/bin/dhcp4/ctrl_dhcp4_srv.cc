@@ -1853,7 +1853,7 @@ ControlledDhcpv4Srv::reclaimExpiredLeases(const size_t max_leases,
         } else {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_RECLAIM_EXPIRED_LEASES_SKIPPED)
                 .arg(CfgMgr::instance().getCurrentCfg()->
-                 getCfgExpiration()->getReclaimTimerWaitTime());
+                     getCfgExpiration()->getReclaimTimerWaitTime());
         }
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_RECLAIM_EXPIRED_LEASES_FAIL)
@@ -1896,19 +1896,19 @@ ControlledDhcpv4Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
     if (!db_reconnect_ctl->retriesLeft() ||
         !db_reconnect_ctl->retryInterval()) {
         if (db_reconnect_ctl->exitOnFailure()) {
-	    LOG_FATAL(dhcp4_logger, DHCP4_FATAL_DB_RECONNECT_DISABLED)
-		.arg(db_reconnect_ctl->retriesLeft())
-		.arg(db_reconnect_ctl->retryInterval())
-		.arg(db_reconnect_ctl->id())
-		.arg(db_reconnect_ctl->timerName());
+            LOG_FATAL(dhcp4_logger, DHCP4_FATAL_DB_RECONNECT_DISABLED)
+                .arg(db_reconnect_ctl->retriesLeft())
+                .arg(db_reconnect_ctl->retryInterval())
+                .arg(db_reconnect_ctl->id())
+                .arg(db_reconnect_ctl->timerName());
             shutdownServer(EXIT_FAILURE);
         } else {
-	    LOG_ERROR(dhcp4_logger, DHCP4_DB_RECONNECT_DISABLED)
-		.arg(db_reconnect_ctl->retriesLeft())
-		.arg(db_reconnect_ctl->retryInterval())
-		.arg(db_reconnect_ctl->id())
-		.arg(db_reconnect_ctl->timerName());
-	}
+            LOG_ERROR(dhcp4_logger, DHCP4_DB_RECONNECT_DISABLED)
+                .arg(db_reconnect_ctl->retriesLeft())
+                .arg(db_reconnect_ctl->retryInterval())
+                .arg(db_reconnect_ctl->id())
+                .arg(db_reconnect_ctl->timerName());
+        }
         return (false);
     }
 
@@ -1947,16 +1947,16 @@ ControlledDhcpv4Srv::dbFailedCallback(ReconnectCtlPtr db_reconnect_ctl) {
     }
 
     if (db_reconnect_ctl->exitOnFailure()) {
-	LOG_FATAL(dhcp4_logger, DHCP4_FATAL_DB_RECONNECT_FAILED)
-	    .arg(db_reconnect_ctl->maxRetries())
-	    .arg(db_reconnect_ctl->id())
-	    .arg(db_reconnect_ctl->timerName());
+        LOG_FATAL(dhcp4_logger, DHCP4_FATAL_DB_RECONNECT_FAILED)
+            .arg(db_reconnect_ctl->maxRetries())
+            .arg(db_reconnect_ctl->id())
+            .arg(db_reconnect_ctl->timerName());
         shutdownServer(EXIT_FAILURE);
     } else {
-	LOG_ERROR(dhcp4_logger, DHCP4_DB_RECONNECT_FAILED)
-	    .arg(db_reconnect_ctl->maxRetries())
-	    .arg(db_reconnect_ctl->id())
-	    .arg(db_reconnect_ctl->timerName());
+        LOG_ERROR(dhcp4_logger, DHCP4_DB_RECONNECT_FAILED)
+            .arg(db_reconnect_ctl->maxRetries())
+            .arg(db_reconnect_ctl->id())
+            .arg(db_reconnect_ctl->timerName());
     }
 
     return (true);

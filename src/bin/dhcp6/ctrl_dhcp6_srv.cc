@@ -1744,6 +1744,7 @@ ControlledDhcpv6Srv::dbFailedCallback(ReconnectCtlPtr db_reconnect_ctl) {
             .arg(db_reconnect_ctl->id())
             .arg(db_reconnect_ctl->timerName());
     }
+
     return (true);
 }
 

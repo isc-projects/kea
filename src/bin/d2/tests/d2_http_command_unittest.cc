@@ -2327,6 +2327,9 @@ TEST_F(HttpCtrlChannelD2Test, handleHttpToHttpsSwitch) {
     config_set_txt += d2_st.str();
     config_set_txt += "}} \n";
 
+    EXPECT_EQ(EXIT_SUCCESS, server_->getExitValue());
+    EXPECT_FALSE(d2Controller()->getProcess()->shouldShutdown());
+
     // Send the config-set command.
     string response;
     sendHttpCommand(config_set_txt, response);
@@ -2345,6 +2348,9 @@ TEST_F(HttpCtrlChannelD2Test, handleHttpToHttpsSwitch) {
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
     EXPECT_EQ(1U, keys->size());
+
+    EXPECT_EQ(EXIT_FAILURE, server_->getExitValue());
+    EXPECT_TRUE(d2Controller()->getProcess()->shouldShutdown());
 }
 
 // Verify that the "config-set" command will exit with an error
@@ -2433,6 +2439,9 @@ TEST_F(HttpsCtrlChannelD2Test, handleHttpsToHttpSwitch) {
     config_set_txt += d2_cfg_txt;
     config_set_txt += "}} \n";
 
+    EXPECT_EQ(EXIT_SUCCESS, server_->getExitValue());
+    EXPECT_FALSE(d2Controller()->getProcess()->shouldShutdown());
+
     // Send the config-set command.
     string response;
     sendHttpCommand(config_set_txt, response);
@@ -2452,6 +2461,9 @@ TEST_F(HttpsCtrlChannelD2Test, handleHttpsToHttpSwitch) {
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
     EXPECT_EQ(1U, keys->size());
+
+    EXPECT_EQ(EXIT_FAILURE, server_->getExitValue());
+    EXPECT_TRUE(d2Controller()->getProcess()->shouldShutdown());
 }
 
 } // end of anonymous namespace

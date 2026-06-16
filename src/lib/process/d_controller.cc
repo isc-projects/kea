@@ -684,6 +684,11 @@ DControllerBase::configSetHandler(const std::string&, ConstElementPtr args) {
         ConstElementPtr answer = updateConfig(module_config);
         int rcode = 0;
         parseAnswer(rcode, answer);
+
+        if (rcode == CONTROL_RESULT_FATAL_ERROR) {
+            setExitValue(EXIT_FAILURE);
+            shutdownProcess(ElementPtr());
+        }
         // In all cases the right logging configuration is in the context.
         process_->getCfgMgr()->getContext()->applyLoggingCfg();
         return (answer);

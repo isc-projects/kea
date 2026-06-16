@@ -425,7 +425,7 @@ information.
 % DHCP4_FATAL_DB_RECONNECT_DISABLED database reconnect is disabled: retries left: %1, reconnect wait time: %2, manager ID: %3, timer: %4
 This is an error message indicating that connectivity to either the
 lease or host database or both was lost and that automatic reconnect is
-ot enabled. This causes the server to shut down as specified in the
+not enabled. This causes the server to shut down as specified in the
 configuration. Loss of connectivity is typically a network or database server
 issue.
 
