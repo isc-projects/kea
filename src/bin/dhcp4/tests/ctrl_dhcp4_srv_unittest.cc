@@ -2655,11 +2655,13 @@ TEST_F(CtrlChannelDhcpv4SrvTest, interfaceAddFatal) {
 
     std::string command = "{ \"command\": \"interface-add\", \"arguments\": { \"interfaces\": [ \"eth0\" ] } }";
 
+    EXPECT_EQ(EXIT_SUCCESS, server_->getExitValue());
     EXPECT_FALSE(server_->getShutdown());
 
     sendUnixCommand(command, response);
     EXPECT_EQ(response, "{ \"result\": 5, \"text\": \"Interface configuration update triggered a fatal error: shutting down.\" }");
 
+    EXPECT_EQ(EXIT_FAILURE, server_->getExitValue());
     EXPECT_TRUE(server_->getShutdown());
 }
 
