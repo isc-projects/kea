@@ -1,3 +1,9 @@
+2498.	[func]		razvan
+	Kea daemons now exit when a critical failure is detected when
+	issuing "config-reload", "config-set" and "interface-add"
+	commands.
+	(Gitlab #4415)
+
 Kea 3.2.0 (stable) released on June 24, 2026
 
 2497.	[build]		andrei
