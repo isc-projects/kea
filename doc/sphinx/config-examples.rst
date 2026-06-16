@@ -4,30 +4,28 @@
 
 .. _config-examples:
 
-###############
-Config Examples
-###############
+######################
+Configuration Examples
+######################
 
-Kea is an open source implementation of the Dynamic Host Configuration
-Protocol (DHCP) servers, developed and maintained by Internet Systems
-Consortium (ISC).
+This is the set of configuration examples included in ``doc/examples`` in the
+sources of Kea version |release|.
 
-This is a set of configuration examples for Kea version |release|.
 
-.. toctree::
-    :numbered:
-    :maxdepth: 5
+.. _config-example-ddns:
 
-****
+====
 ddns
-****
+====
 
 .. _config-example-ddns-all-keys-netconf-json:
 
-all-keys-netconf.json
-=====================
+--------------------------
+ddns/all-keys-netconf.json
+--------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // WARNING: This example configuration is not meant for production use.
     // The Kea Kea's DHCP-DDNS server can refuse this configuration because
@@ -214,10 +212,12 @@ all-keys-netconf.json
 
 .. _config-example-ddns-all-keys-json:
 
-all-keys.json
-=============
+------------------
+ddns/all-keys.json
+------------------
 
 .. code-block:: json5
+    :linenos:
 
     // WARNING: This example configuration is not meant for production use.
     // The Kea Kea's DHCP-DDNS server can refuse this configuration because
@@ -495,10 +495,12 @@ all-keys.json
 
 .. _config-example-ddns-comments-json:
 
-comments.json
-=============
+------------------
+ddns/comments.json
+------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for D2, Kea's DHCP-DDNS processor.
     // It uses embedded comments which will be included in configuration objects
@@ -586,10 +588,12 @@ comments.json
 
 .. _config-example-ddns-gss-tsig-json:
 
-gss-tsig.json
-=============
+------------------
+ddns/gss-tsig.json
+------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for D2, Kea's DHCP-DDNS processor.
     // It uses the GSS-TSIG hook library.
@@ -721,10 +725,12 @@ gss-tsig.json
 
 .. _config-example-ddns-sample1-json:
 
-sample1.json
-============
+-----------------
+ddns/sample1.json
+-----------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for D2, Kea's DHCP-DDNS processor.
     // It supports updating two Forward DNS zones "four.example.com" and
@@ -906,10 +912,12 @@ sample1.json
 
 .. _config-example-ddns-template-json:
 
-template.json
-=============
+------------------
+ddns/template.json
+------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This file may be used a template for constructing DHCP-DDNS JSON
     // configuration.
@@ -1025,16 +1033,20 @@ template.json
     // It must end with an right-curly-bracket.
     }
 
-****
+.. _config-example-kea4:
+
+====
 kea4
-****
+====
 
 .. _config-example-kea4-advanced-json:
 
-advanced.json
-=============
+------------------
+kea4/advanced.json
+------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for DHCPv4 server in Kea.
     // It covers some of the more advanced features. This file may not be coherent
@@ -1247,10 +1259,12 @@ advanced.json
 
 .. _config-example-kea4-all-keys-netconf-json:
 
-all-keys-netconf.json
-=====================
+--------------------------
+kea4/all-keys-netconf.json
+--------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // WARNING: This example configuration is not meant for production use.
     // The Kea DHCPv4 server will refuse this configuration because it contains
@@ -2717,10 +2731,12 @@ all-keys-netconf.json
 
 .. _config-example-kea4-all-keys-json:
 
-all-keys.json
-=============
+------------------
+kea4/all-keys.json
+------------------
 
 .. code-block:: json5
+    :linenos:
 
     // WARNING: This example configuration is not meant for production use.
     // The Kea DHCPv4 server will refuse this configuration because it contains
@@ -4208,10 +4224,12 @@ all-keys.json
 
 .. _config-example-kea4-all-options-json:
 
-all-options.json
-================
+---------------------
+kea4/all-options.json
+---------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This example configuration file for DHCPv4 server in Kea contains:
     //
@@ -6105,10 +6123,12 @@ all-options.json
 
 .. _config-example-kea4-backends-json:
 
-backends.json
-=============
+------------------
+kea4/backends.json
+------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
     // It is a basic scenario with one IPv4 subnet configured. It demonstrates
@@ -6234,10 +6254,12 @@ backends.json
 
 .. _config-example-kea4-classify-json:
 
-classify.json
-=============
+------------------
+kea4/classify.json
+------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
     // The purpose of this example is to showcase how clients can be classified.
@@ -6389,10 +6411,12 @@ classify.json
 
 .. _config-example-kea4-classify2-json:
 
-classify2.json
-==============
+-------------------
+kea4/classify2.json
+-------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
     // The purpose of this example is to showcase how clients can be classified
@@ -6578,10 +6602,12 @@ classify2.json
 
 .. _config-example-kea4-comments-json:
 
-comments.json
-=============
+------------------
+kea4/comments.json
+------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
     // It uses embedded (i.e., which will be included in configuration objects
@@ -6718,10 +6744,12 @@ comments.json
 
 .. _config-example-kea4-config-backend-json:
 
-config-backend.json
-===================
+------------------------
+kea4/config-backend.json
+------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
     // It demonstrates how to enable Kea Configuration Backend using MySQL.
@@ -6825,10 +6853,12 @@ config-backend.json
 
 .. _config-example-kea4-dhcpv4-over-dhcpv6-json:
 
-dhcpv4-over-dhcpv6.json
-=======================
+----------------------------
+kea4/dhcpv4-over-dhcpv6.json
+----------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv4 server of
     // DHCPv4-over-DHCPv6 tests in Kea.
@@ -6881,10 +6911,12 @@ dhcpv4-over-dhcpv6.json
 
 .. _config-example-kea4-global-reservations-json:
 
-global-reservations.json
-========================
+-----------------------------
+kea4/global-reservations.json
+-----------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
     // It demonstrates how global host reservations can be configured.
@@ -7064,10 +7096,12 @@ global-reservations.json
 
 .. _config-example-kea4-ha-load-balancing-server1-mt-with-tls-json:
 
-ha-load-balancing-server1-mt-with-tls.json
-==========================================
+-----------------------------------------------
+kea4/ha-load-balancing-server1-mt-with-tls.json
+-----------------------------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration of the Kea DHCPv4 server. It uses High
     // Availability hook library and Lease Commands hook library to enable
@@ -7339,10 +7373,12 @@ ha-load-balancing-server1-mt-with-tls.json
 
 .. _config-example-kea4-ha-load-balancing-server2-mt-json:
 
-ha-load-balancing-server2-mt.json
-=================================
+--------------------------------------
+kea4/ha-load-balancing-server2-mt.json
+--------------------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration of the Kea DHCPv4 server. It uses High
     // Availability hook library and Lease Commands hook library to enable
@@ -7597,10 +7633,12 @@ ha-load-balancing-server2-mt.json
 
 .. _config-example-kea4-hooks-radius-json:
 
-hooks-radius.json
-=================
+----------------------
+kea4/hooks-radius.json
+----------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea
     // illustrating the configuration of the RADIUS and Host Cache hook libraries.
@@ -7829,10 +7867,12 @@ hooks-radius.json
 
 .. _config-example-kea4-hooks-rbac-json:
 
-hooks-rbac.json
-===============
+--------------------
+kea4/hooks-rbac.json
+--------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea using
     // the Role Based Access Control (RBAC) hook library. It uses a basic scenario
@@ -7940,10 +7980,12 @@ hooks-rbac.json
 
 .. _config-example-kea4-hooks-json:
 
-hooks.json
-==========
+---------------
+kea4/hooks.json
+---------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea
     // illustrating the configuration of hook libraries.  It uses a basic scenario
@@ -7998,10 +8040,12 @@ hooks.json
 
 .. _config-example-kea4-leases-expiration-json:
 
-leases-expiration.json
-======================
+---------------------------
+kea4/leases-expiration.json
+---------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
     // It provides parameters controlling processing of expired leases,
@@ -8082,10 +8126,12 @@ leases-expiration.json
 
 .. _config-example-kea4-multiple-options-json:
 
-multiple-options.json
-=====================
+--------------------------
+kea4/multiple-options.json
+--------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
     // It demonstrates simple configuration of the options for a subnet.
@@ -8277,10 +8323,12 @@ multiple-options.json
 
 .. _config-example-kea4-mysql-reservations-json:
 
-mysql-reservations.json
-=======================
+----------------------------
+kea4/mysql-reservations.json
+----------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
     // It contains configuration of the MySQL host database backend, used
@@ -8397,10 +8445,12 @@ mysql-reservations.json
 
 .. _config-example-kea4-pgsql-reservations-json:
 
-pgsql-reservations.json
-=======================
+----------------------------
+kea4/pgsql-reservations.json
+----------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
     // It contains configuration of the PostgreSQL host database backend, used
@@ -8515,10 +8565,12 @@ pgsql-reservations.json
 
 .. _config-example-kea4-reservations-json:
 
-reservations.json
-=================
+----------------------
+kea4/reservations.json
+----------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
     // It contains one subnet in which there are two static address reservations
@@ -8704,10 +8756,12 @@ reservations.json
 
 .. _config-example-kea4-several-subnets-json:
 
-several-subnets.json
-====================
+-------------------------
+kea4/several-subnets.json
+-------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for DHCPv4 server in Kea.
     // It's a basic scenario with three IPv4 subnets configured. In each
@@ -8798,10 +8852,12 @@ several-subnets.json
 
 .. _config-example-kea4-shared-network-json:
 
-shared-network.json
-===================
+------------------------
+kea4/shared-network.json
+------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for DHCPv4 server in Kea.
     // It demonstrates an advanced feature called shared network. Typically, for
@@ -8957,10 +9013,12 @@ shared-network.json
 
 .. _config-example-kea4-single-subnet-json:
 
-single-subnet.json
-==================
+-----------------------
+kea4/single-subnet.json
+-----------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
     // It is a basic scenario with one IPv4 subnet configured. The subnet
@@ -9025,10 +9083,12 @@ single-subnet.json
 
 .. _config-example-kea4-vendor-specific-json:
 
-vendor-specific.json
-====================
+-------------------------
+kea4/vendor-specific.json
+-------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
     // The purpose of this example is to showcase how configure
@@ -9129,10 +9189,12 @@ vendor-specific.json
 
 .. _config-example-kea4-vivso-json:
 
-vivso.json
-==========
+---------------
+kea4/vivso.json
+---------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
     // The purpose of this example is to showcase how configure
@@ -9227,10 +9289,12 @@ vivso.json
 
 .. _config-example-kea4-with-ddns-json:
 
-with-ddns.json
-==============
+-------------------
+kea4/with-ddns.json
+-------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
     // It is a basic scenario with one IPv4 subnet configured and with DDNS
@@ -9318,16 +9382,20 @@ with-ddns.json
 
     }
 
-****
+.. _config-example-kea6:
+
+====
 kea6
-****
+====
 
 .. _config-example-kea6-advanced-json:
 
-advanced.json
-=============
+------------------
+kea6/advanced.json
+------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea.
     // It attempts to showcase some of the more advanced features.
@@ -9521,10 +9589,12 @@ advanced.json
 
 .. _config-example-kea6-all-keys-netconf-json:
 
-all-keys-netconf.json
-=====================
+--------------------------
+kea6/all-keys-netconf.json
+--------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // WARNING: This example configuration is not meant for production use.
     // The Kea DHCPv6 server will refuse this configuration because it contains
@@ -10976,10 +11046,12 @@ all-keys-netconf.json
 
 .. _config-example-kea6-all-keys-json:
 
-all-keys.json
-=============
+------------------
+kea6/all-keys.json
+------------------
 
 .. code-block:: json5
+    :linenos:
 
     // WARNING: This example configuration is not meant for production use.
     // The Kea DHCPv6 server will refuse this configuration because it contains
@@ -12456,10 +12528,12 @@ all-keys.json
 
 .. _config-example-kea6-all-options-json:
 
-all-options.json
-================
+---------------------
+kea6/all-options.json
+---------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This example configuration file for DHCPv6 server in Kea contains:
     //
@@ -14645,10 +14719,12 @@ all-options.json
 
 .. _config-example-kea6-backends-json:
 
-backends.json
-=============
+------------------
+kea6/backends.json
+------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv6 server in Kea.
     // It is a basic scenario with one IPv6 subnet configured. It demonstrates
@@ -14776,10 +14852,12 @@ backends.json
 
 .. _config-example-kea6-classify-json:
 
-classify.json
-=============
+------------------
+kea6/classify.json
+------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv6 server in Kea.
     // The purpose of this example is to showcase how clients can be classified.
@@ -14897,10 +14975,12 @@ classify.json
 
 .. _config-example-kea6-classify2-json:
 
-classify2.json
-==============
+-------------------
+kea6/classify2.json
+-------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv6 server in Kea.
     // The purpose of this example is to showcase how clients can be classified.
@@ -15056,10 +15136,12 @@ classify2.json
 
 .. _config-example-kea6-comments-json:
 
-comments.json
-=============
+------------------
+kea6/comments.json
+------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv6 server in Kea.
     // It uses embedded (i.e., which will be included in configuration objects
@@ -15206,10 +15288,12 @@ comments.json
 
 .. _config-example-kea6-config-backend-json:
 
-config-backend.json
-===================
+------------------------
+kea6/config-backend.json
+------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
     // It demonstrates how to enable Kea Configuration Backend using MySQL.
@@ -15314,10 +15398,12 @@ config-backend.json
 
 .. _config-example-kea6-dhcpv4-over-dhcpv6-json:
 
-dhcpv4-over-dhcpv6.json
-=======================
+----------------------------
+kea6/dhcpv4-over-dhcpv6.json
+----------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv6 server of
     // DHCPv4-over-DHCPv6 tests in Kea.
@@ -15380,10 +15466,12 @@ dhcpv4-over-dhcpv6.json
 
 .. _config-example-kea6-duid-json:
 
-duid.json
-=========
+--------------
+kea6/duid.json
+--------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea.
     // It demonstrates how to configure Kea to use DUID-LLT with some
@@ -15468,10 +15556,12 @@ duid.json
 
 .. _config-example-kea6-global-reservations-json:
 
-global-reservations.json
-========================
+-----------------------------
+kea6/global-reservations.json
+-----------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv6 server in Kea.
     // It demonstrates how global host reservations can be configured.
@@ -15647,10 +15737,12 @@ global-reservations.json
 
 .. _config-example-kea6-ha-hot-standby-server1-with-tls-json:
 
-ha-hot-standby-server1-with-tls.json
-====================================
+-----------------------------------------
+kea6/ha-hot-standby-server1-with-tls.json
+-----------------------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration of the Kea DHCPv6 server. It uses High
     // Availability hook library and Lease Commands hook library to enable
@@ -15810,10 +15902,12 @@ ha-hot-standby-server1-with-tls.json
 
 .. _config-example-kea6-ha-hot-standby-server2-json:
 
-ha-hot-standby-server2.json
-===========================
+--------------------------------
+kea6/ha-hot-standby-server2.json
+--------------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration of the Kea DHCPv6 server. It uses High
     // Availability hook library and Lease Commands hook library to enable
@@ -15964,10 +16058,12 @@ ha-hot-standby-server2.json
 
 .. _config-example-kea6-hooks-rbac-json:
 
-hooks-rbac.json
-===============
+--------------------
+kea6/hooks-rbac.json
+--------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv6 server in Kea using
     // the Role Based Access Control (RBAC) hook library. It uses a basic scenario
@@ -16083,10 +16179,12 @@ hooks-rbac.json
 
 .. _config-example-kea6-hooks-json:
 
-hooks.json
-==========
+---------------
+kea6/hooks.json
+---------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv6 server in Kea
     // illustrating the configuration of hook libraries.  It uses a basic scenario
@@ -16149,10 +16247,12 @@ hooks.json
 
 .. _config-example-kea6-iPXE-json:
 
-iPXE.json
-=========
+--------------
+kea6/iPXE.json
+--------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration for iPXE boot in Kea6.
 
@@ -16225,10 +16325,12 @@ iPXE.json
 
 .. _config-example-kea6-leases-expiration-json:
 
-leases-expiration.json
-======================
+---------------------------
+kea6/leases-expiration.json
+---------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea.
     // It provides parameters controlling processing of expired leases,
@@ -16318,10 +16420,12 @@ leases-expiration.json
 
 .. _config-example-kea6-multiple-options-json:
 
-multiple-options.json
-=====================
+--------------------------
+kea6/multiple-options.json
+--------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea.
     // It demonstrates simple configuration of the options for a subnet.
@@ -16510,10 +16614,12 @@ multiple-options.json
 
 .. _config-example-kea6-mysql-reservations-json:
 
-mysql-reservations.json
-=======================
+----------------------------
+kea6/mysql-reservations.json
+----------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv6 server in Kea.
     // It contains configuration of the MySQL host database backend, used
@@ -16628,10 +16734,12 @@ mysql-reservations.json
 
 .. _config-example-kea6-pgsql-reservations-json:
 
-pgsql-reservations.json
-=======================
+----------------------------
+kea6/pgsql-reservations.json
+----------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for the DHCPv6 server in Kea.
     // It contains configuration of the PostgreSQL host database backend, used
@@ -16743,10 +16851,12 @@ pgsql-reservations.json
 
 .. _config-example-kea6-reservations-json:
 
-reservations.json
-=================
+----------------------
+kea6/reservations.json
+----------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea
     // that showcases how to do host reservations. It is
@@ -16921,10 +17031,12 @@ reservations.json
 
 .. _config-example-kea6-several-subnets-json:
 
-several-subnets.json
-====================
+-------------------------
+kea6/several-subnets.json
+-------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea.
     // It's a basic scenario with four IPv6 subnets configured. In each
@@ -16990,10 +17102,12 @@ several-subnets.json
 
 .. _config-example-kea6-shared-network-json:
 
-shared-network.json
-===================
+------------------------
+kea6/shared-network.json
+------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea.
     // It demonstrates an advanced feature called shared network. Typically, for
@@ -17138,10 +17252,12 @@ shared-network.json
 
 .. _config-example-kea6-simple-json:
 
-simple.json
-===========
+----------------
+kea6/simple.json
+----------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea.
     // It's a basic scenario with one IPv6 subnet configured. It is
@@ -17209,10 +17325,12 @@ simple.json
 
 .. _config-example-kea6-softwire46-json:
 
-softwire46.json
-===============
+--------------------
+kea6/softwire46.json
+--------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea.
     // It demonstrates how user can specify values for Softwire options
@@ -17307,10 +17425,12 @@ softwire46.json
 
 .. _config-example-kea6-stateless-json:
 
-stateless.json
-==============
+-------------------
+kea6/stateless.json
+-------------------
 
 .. code-block:: json5
+    :linenos:
 
     // A very simply stateless configuration that provides information about DNS
     // servers to all clients, regardless of their point of attachment.
@@ -17344,10 +17464,12 @@ stateless.json
 
 .. _config-example-kea6-tee-times-json:
 
-tee-times.json
-==============
+-------------------
+kea6/tee-times.json
+-------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea.
     // It's a basic scenario with three IPv6 subnets use different
@@ -17425,10 +17547,12 @@ tee-times.json
 
 .. _config-example-kea6-with-ddns-json:
 
-with-ddns.json
-==============
+-------------------
+kea6/with-ddns.json
+-------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea.
     // It's a basic scenario with one IPv6 subnet configured. It is
@@ -17520,16 +17644,20 @@ with-ddns.json
 
     }
 
-*******
+.. _config-example-netconf:
+
+=======
 netconf
-*******
+=======
 
 .. _config-example-netconf-comments-json:
 
-comments.json
-=============
+---------------------
+netconf/comments.json
+---------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is a example of a configuration for Netconf.
     // It uses embedded (i.e., which will be included in configuration objects
@@ -17568,15 +17696,20 @@ comments.json
         }
     }
 
-kea-dhcp6-operations
-====================
+.. _config-example-netconf-kea-dhcp6-operations:
+
+----------------------------
+netconf/kea-dhcp6-operations
+----------------------------
 
 .. _config-example-netconf-kea-dhcp6-operations-boot-json:
 
-boot.json
-~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+netconf/kea-dhcp6-operations/boot.json
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: json5
+    :linenos:
 
     {
         "Dhcp6": {
@@ -17589,10 +17722,12 @@ boot.json
 
 .. _config-example-netconf-kea-dhcp6-operations-netconf-json:
 
-netconf.json
-~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+netconf/kea-dhcp6-operations/netconf.json
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: json5
+    :linenos:
 
     {
         "Netconf":
@@ -17628,10 +17763,12 @@ netconf.json
 
 .. _config-example-netconf-simple-dhcp4-json:
 
-simple-dhcp4.json
-=================
+-------------------------
+netconf/simple-dhcp4.json
+-------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is a simple example of a configuration for Netconf that handles
     // DHCPv4 configuration. This example provides YANG interface for
@@ -17754,10 +17891,12 @@ simple-dhcp4.json
 
 .. _config-example-netconf-simple-dhcp6-json:
 
-simple-dhcp6.json
-=================
+-------------------------
+netconf/simple-dhcp6.json
+-------------------------
 
 .. code-block:: json5
+    :linenos:
 
     // This is a simple example of a configuration for Netconf that handles
     // DHCPv6 configuration. This example provides YANG interface for

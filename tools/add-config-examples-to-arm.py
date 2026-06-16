@@ -21,53 +21,38 @@ def main():
 
 .. _config-examples:
 
-###############
-Config Examples
-###############
+######################
+Configuration Examples
+######################
 
-Kea is an open source implementation of the Dynamic Host Configuration
-Protocol (DHCP) servers, developed and maintained by Internet Systems
-Consortium (ISC).
+This is the set of configuration examples included in ``doc/examples`` in the
+sources of Kea version |release|.
 
-This is a set of configuration examples for Kea version |release|.
-
-.. toctree::
-    :numbered:
-    :maxdepth: 5
 
 """
-    last_relative_part_0 = None
-    last_relative_part_1 = None
+    # Up to 7 nested levels are supported.
+    adornment_characters = ['=', '-', '~', '*', '#', '^', '"']
+    subdirs = 7 * [None]
     for json in all_jsons:
         relative = json.relative_to(pathlib.Path(root_dir) / 'doc' / 'examples')
-        anchor = '-'.join(relative.parts)
-        anchor = '.. _config-example-' + anchor.replace('.', '-') + ':\n\n'
-        if len(relative.parts) > 0:
-            part = relative.parts[0]
-            if len(relative.parts) == 1:
+        for i, part in enumerate(relative.parts):
+            if subdirs[i] != part:
+                up_to_current = relative.parts[0:i+1]
+                anchor = '.. _config-example-' + '-'.join(up_to_current).replace('.', '-') + ':\n\n'
+                subtitle = '/'.join(up_to_current)
+
                 content += anchor
-            if part != last_relative_part_0:
-                content += len(part) * '*' + '\n'
-                content += part + '\n'
-                content += len(part) * '*' + '\n'
+                content += len(subtitle) * adornment_characters[i] + '\n'
+                content += subtitle + '\n'
+                content += len(subtitle) * adornment_characters[i] + '\n'
                 content += '\n'
-                last_relative_part_0 = part
-        if len(relative.parts) > 1:
-            part = relative.parts[1]
-            if len(relative.parts) == 2:
-                content += anchor
-            if part != last_relative_part_1:
-                content += part + '\n'
-                content += len(part) * '=' + '\n'
-                content += '\n'
-                last_relative_part_1 = part
-        if len(relative.parts) > 2:
-            part = '/'.join(relative.parts[2:])
-            content += anchor
-            content += part + '\n'
-            content += len(part) * '~' + '\n'
-            content += '\n'
+
+                subdirs[i] = part
+                # We've just changed subdirectory, so reset all the subdirectories and files that follow.
+                for j in range(i + 1, len(relative.parts)):
+                    subdirs[j] = None
         content += '.. code-block:: json5\n'
+        content += '    :linenos:\n'
         content += '\n'
         with open(json, 'r', encoding='utf-8') as f:
             indented = '\n'.join('    ' + line for line in f.read().splitlines())
