@@ -484,6 +484,10 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
         return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
+    if (rcode == CONTROL_RESULT_FATAL_ERROR) {
+        shutdownServer(EXIT_FAILURE);
+    }
+
     return (result);
 }
 

@@ -5110,6 +5110,8 @@ TEST_F(HttpCtrlChannelDhcpv6Test, handleHttpToHttpsSwitch) {
         << "}\n"                      // close dhcp6
         << "}}";
 
+    EXPECT_FALSE(server_->getShutdown());
+
     // Send the config-set command.
     sendHttpCommand(second_config_os.str(), response);
 
@@ -5124,6 +5126,8 @@ TEST_F(HttpCtrlChannelDhcpv6Test, handleHttpToHttpsSwitch) {
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
     EXPECT_EQ(1U, subnets->size());
+
+    EXPECT_TRUE(server_->getShutdown());
 
     // Clean up after the test.
     CfgMgr::instance().clear();
@@ -5265,6 +5269,8 @@ TEST_F(HttpsCtrlChannelDhcpv6Test, handleHttpsToHttpSwitch) {
         << "}\n"                      // close dhcp6
         << "}}";
 
+    EXPECT_FALSE(server_->getShutdown());
+
     // Send the config-set command.
     sendHttpCommand(second_config_os.str(), response);
 
@@ -5280,6 +5286,8 @@ TEST_F(HttpsCtrlChannelDhcpv6Test, handleHttpsToHttpSwitch) {
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
     EXPECT_EQ(1U, subnets->size());
+
+    EXPECT_TRUE(server_->getShutdown());
 
     // Clean up after the test.
     CfgMgr::instance().clear();

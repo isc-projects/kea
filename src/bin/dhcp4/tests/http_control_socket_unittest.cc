@@ -5115,6 +5115,8 @@ TEST_F(HttpCtrlChannelDhcpv4Test, handleHttpToHttpsSwitch) {
         << "}\n"                      // close dhcp4
         << "}}";
 
+    EXPECT_FALSE(server_->getShutdown());
+
     // Send the config-set command.
     sendHttpCommand(second_config_os.str(), response);
 
@@ -5129,6 +5131,8 @@ TEST_F(HttpCtrlChannelDhcpv4Test, handleHttpToHttpsSwitch) {
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     EXPECT_EQ(1U, subnets->size());
+
+    EXPECT_TRUE(server_->getShutdown());
 
     // Clean up after the test.
     CfgMgr::instance().clear();
@@ -5269,6 +5273,8 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, handleHttpsToHttpSwitch) {
         << "}\n"                      // close dhcp4
         << "}}";
 
+    EXPECT_FALSE(server_->getShutdown());
+
     // Send the config-set command.
     sendHttpCommand(second_config_os.str(), response);
 
@@ -5284,6 +5290,8 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, handleHttpsToHttpSwitch) {
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     EXPECT_EQ(1U, subnets->size());
+
+    EXPECT_TRUE(server_->getShutdown());
 
     // Clean up after the test.
     CfgMgr::instance().clear();
