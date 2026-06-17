@@ -2463,10 +2463,6 @@ can be any of the peer names in the relationship. For example, if a relationship
 ``server1`` and ``server2``, it does not matter whether the ``ha-server-name`` is ``server1`` or
 ``server2``. In both cases, it associates a subnet with that relationship.
 
-It is important to note that each relationship on a given Kea server must use a unique
-listener IP.port combination as the relationships do not share listener pools between them.
-If the same IP and port are defined for multiple relationships, the Kea service will fail to start with an error something like: DHCP4_INIT_FAIL failed to initialize Kea server: configuration error using file 'kea-dhcp4.conf': Error initializing hooks: CmdHttpListener::run failed: unable to setup TCP acceptor for listening to the incoming HTTP requests: bind: Address already in use
-
 .. note::
 
     It is important to note that each peer on a given Kea server must use a unique a listener
