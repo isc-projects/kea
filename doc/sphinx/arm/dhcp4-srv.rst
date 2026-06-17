@@ -5476,6 +5476,14 @@ to them.
        ]
     }
 
+.. note::
+
+    Classes listed in a reservation's ``client-classes`` list are unconditionally
+    assigned to the reservation's client whether those classes contain a test
+    expression or not. In order to avoid confusion, it is suggested that
+    client classes that are only assigned via host reservations omit test
+    expressions.
+
 In some cases the host reservations can be used in conjunction with client
 classes specified within the Kea configuration. In particular, when a
 host reservation exists for a client within a given subnet, the "KNOWN"
