@@ -51,7 +51,7 @@ sources of Kea version |release|.
                 # We've just changed subdirectory, so reset all the subdirectories and files that follow.
                 for j in range(i + 1, len(relative.parts)):
                     subdirs[j] = None
-        content += '.. code-block:: json5\n'
+        content += '.. code-block::\n'
         content += '    :linenos:\n'
         content += '\n'
         with open(json, 'r', encoding='utf-8') as f:

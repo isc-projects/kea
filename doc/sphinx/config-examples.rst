@@ -24,7 +24,7 @@ ddns
 ddns/all-keys-netconf.json
 --------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // WARNING: This example configuration is not meant for production use.
@@ -216,7 +216,7 @@ ddns/all-keys-netconf.json
 ddns/all-keys.json
 ------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // WARNING: This example configuration is not meant for production use.
@@ -499,7 +499,7 @@ ddns/all-keys.json
 ddns/comments.json
 ------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for D2, Kea's DHCP-DDNS processor.
@@ -592,7 +592,7 @@ ddns/comments.json
 ddns/gss-tsig.json
 ------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for D2, Kea's DHCP-DDNS processor.
@@ -729,7 +729,7 @@ ddns/gss-tsig.json
 ddns/sample1.json
 -----------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for D2, Kea's DHCP-DDNS processor.
@@ -916,7 +916,7 @@ ddns/sample1.json
 ddns/template.json
 ------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This file may be used a template for constructing DHCP-DDNS JSON
@@ -1045,7 +1045,7 @@ kea4
 kea4/advanced.json
 ------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for DHCPv4 server in Kea.
@@ -1263,7 +1263,7 @@ kea4/advanced.json
 kea4/all-keys-netconf.json
 --------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // WARNING: This example configuration is not meant for production use.
@@ -1828,7 +1828,19 @@ kea4/all-keys-netconf.json
 
                     // TCP user timeout while communicating with the database.
                     // It is specified in seconds.
-                    "tcp-user-timeout": 100
+                    "tcp-user-timeout": 100,
+
+                    // Trust anchor aka certificate authority file or directory.
+                    "trust-anchor": "my-ca",
+
+                    // Client certificate file name.
+                    "cert-file": "my-cert",
+
+                    // Private key file name.
+                    "key-file": "my-key",
+
+                    // SSL mode.
+                    "ssl-mode": "verify-ca"
                 }
             ],
 
@@ -2245,6 +2257,9 @@ kea4/all-keys-netconf.json
                     // lease is returned as it was "cached".
                     "cache-max-age": 1000,
 
+                    // Adaptive lease time threshold (1.0 is disabled).
+                    "adaptive-lease-time-threshold": 0.8,
+
                     // Specify whether the server should look up global reservations.
                     "reservations-global": false,
 
@@ -2533,6 +2548,9 @@ kea4/all-keys-netconf.json
                             // Subnet-level cache maximum.
                             "cache-max-age": 1000,
 
+                            // Adaptive lease time threshold (1.0 is disabled).
+                            "adaptive-lease-time-threshold": 0.8,
+
                             // List of static IPv4 reservations assigned to clients belonging
                             // to this subnet. For a detailed example, see reservations.json.
                             "reservations": [
@@ -2675,6 +2693,9 @@ kea4/all-keys-netconf.json
             // Global cache maximum.
             "cache-max-age": 1000,
 
+            // Adaptive lease time threshold (1.0 is disabled).
+            "adaptive-lease-time-threshold": 0.8,
+
             // String of zero or more characters with which to replace each
             // invalid character in the hostname or Client FQDN. The default
             // value is an empty string, which will cause invalid characters
@@ -2735,7 +2756,7 @@ kea4/all-keys-netconf.json
 kea4/all-keys.json
 ------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // WARNING: This example configuration is not meant for production use.
@@ -4228,7 +4249,7 @@ kea4/all-keys.json
 kea4/all-options.json
 ---------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This example configuration file for DHCPv4 server in Kea contains:
@@ -6127,7 +6148,7 @@ kea4/all-options.json
 kea4/backends.json
 ------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
@@ -6258,7 +6279,7 @@ kea4/backends.json
 kea4/classify.json
 ------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
@@ -6415,7 +6436,7 @@ kea4/classify.json
 kea4/classify2.json
 -------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
@@ -6606,7 +6627,7 @@ kea4/classify2.json
 kea4/comments.json
 ------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
@@ -6748,7 +6769,7 @@ kea4/comments.json
 kea4/config-backend.json
 ------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
@@ -6857,7 +6878,7 @@ kea4/config-backend.json
 kea4/dhcpv4-over-dhcpv6.json
 ----------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv4 server of
@@ -6915,7 +6936,7 @@ kea4/dhcpv4-over-dhcpv6.json
 kea4/global-reservations.json
 -----------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
@@ -7100,7 +7121,7 @@ kea4/global-reservations.json
 kea4/ha-load-balancing-server1-mt-with-tls.json
 -----------------------------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration of the Kea DHCPv4 server. It uses High
@@ -7377,7 +7398,7 @@ kea4/ha-load-balancing-server1-mt-with-tls.json
 kea4/ha-load-balancing-server2-mt.json
 --------------------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration of the Kea DHCPv4 server. It uses High
@@ -7637,7 +7658,7 @@ kea4/ha-load-balancing-server2-mt.json
 kea4/hooks-radius.json
 ----------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea
@@ -7871,7 +7892,7 @@ kea4/hooks-radius.json
 kea4/hooks-rbac.json
 --------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea using
@@ -7984,7 +8005,7 @@ kea4/hooks-rbac.json
 kea4/hooks.json
 ---------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea
@@ -8044,7 +8065,7 @@ kea4/hooks.json
 kea4/leases-expiration.json
 ---------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
@@ -8130,7 +8151,7 @@ kea4/leases-expiration.json
 kea4/multiple-options.json
 --------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
@@ -8327,7 +8348,7 @@ kea4/multiple-options.json
 kea4/mysql-reservations.json
 ----------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
@@ -8449,7 +8470,7 @@ kea4/mysql-reservations.json
 kea4/pgsql-reservations.json
 ----------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
@@ -8569,7 +8590,7 @@ kea4/pgsql-reservations.json
 kea4/reservations.json
 ----------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
@@ -8760,7 +8781,7 @@ kea4/reservations.json
 kea4/several-subnets.json
 -------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for DHCPv4 server in Kea.
@@ -8856,7 +8877,7 @@ kea4/several-subnets.json
 kea4/shared-network.json
 ------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for DHCPv4 server in Kea.
@@ -9017,7 +9038,7 @@ kea4/shared-network.json
 kea4/single-subnet.json
 -----------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
@@ -9087,7 +9108,7 @@ kea4/single-subnet.json
 kea4/vendor-specific.json
 -------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
@@ -9193,7 +9214,7 @@ kea4/vendor-specific.json
 kea4/vivso.json
 ---------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
@@ -9293,7 +9314,7 @@ kea4/vivso.json
 kea4/with-ddns.json
 -------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
@@ -9394,7 +9415,7 @@ kea6
 kea6/advanced.json
 ------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea.
@@ -9593,7 +9614,7 @@ kea6/advanced.json
 kea6/all-keys-netconf.json
 --------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // WARNING: This example configuration is not meant for production use.
@@ -9612,6 +9633,10 @@ kea6/all-keys-netconf.json
             // Global flag selecting an IP address allocation strategy for all
             // subnets.
             "allocator": "iterative",
+
+            // Global flag that enables or disables client address registration
+            // via ADDR-REG-INFORM packets (see RFC 9686). It defaults to true.
+            "allow-address-registration": true,
 
             // Global flag selecting a delegated prefix allocation strategy
             // for all subnets.
@@ -10100,7 +10125,19 @@ kea6/all-keys-netconf.json
 
                     // TCP user timeout while communicating with the database.
                     // It is specified in seconds.
-                    "tcp-user-timeout": 100
+                    "tcp-user-timeout": 100,
+
+                    // Trust anchor aka certificate authority file or directory.
+                    "trust-anchor": "my-ca",
+
+                    // Client certificate file name.
+                    "cert-file": "my-cert",
+
+                    // Private key file name.
+                    "key-file": "my-key",
+
+                    // SSL mode.
+                    "ssl-mode": "verify-ca"
                 }
             ],
 
@@ -10525,6 +10562,9 @@ kea6/all-keys-netconf.json
                     // lease is returned as it was "cached".
                     "cache-max-age": 1000,
 
+                    // Adaptive lease time threshold (1.0 is disabled).
+                    "adaptive-lease-time-threshold": 0.8,
+
                     // Specify whether the server should look up global reservations.
                     "reservations-global": false,
 
@@ -10856,6 +10896,9 @@ kea6/all-keys-netconf.json
                             // Subnet-level cache maximum.
                             "cache-max-age": 1000,
 
+                            // Adaptive lease time threshold (1.0 is disabled).
+                            "adaptive-lease-time-threshold": 0.8,
+
                             // List of static IPv6 reservations assigned to clients belonging
                             // to this subnet. For a detailed example, see reservations.json.
                             "reservations": [
@@ -10994,6 +11037,9 @@ kea6/all-keys-netconf.json
             // Global cache maximum.
             "cache-max-age": 1000,
 
+            // Adaptive lease time threshold (1.0 is disabled)
+            "adaptive-lease-time-threshold": 0.8,
+
             // String of zero or more characters with which to replace each
             // invalid character in the Client FQDN. The default
             // value is an empty string, which will cause invalid characters
@@ -11050,7 +11096,7 @@ kea6/all-keys-netconf.json
 kea6/all-keys.json
 ------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // WARNING: This example configuration is not meant for production use.
@@ -12532,7 +12578,7 @@ kea6/all-keys.json
 kea6/all-options.json
 ---------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This example configuration file for DHCPv6 server in Kea contains:
@@ -14723,7 +14769,7 @@ kea6/all-options.json
 kea6/backends.json
 ------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv6 server in Kea.
@@ -14856,7 +14902,7 @@ kea6/backends.json
 kea6/classify.json
 ------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv6 server in Kea.
@@ -14979,7 +15025,7 @@ kea6/classify.json
 kea6/classify2.json
 -------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv6 server in Kea.
@@ -15140,7 +15186,7 @@ kea6/classify2.json
 kea6/comments.json
 ------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv6 server in Kea.
@@ -15292,7 +15338,7 @@ kea6/comments.json
 kea6/config-backend.json
 ------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv4 server in Kea.
@@ -15402,7 +15448,7 @@ kea6/config-backend.json
 kea6/dhcpv4-over-dhcpv6.json
 ----------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv6 server of
@@ -15470,7 +15516,7 @@ kea6/dhcpv4-over-dhcpv6.json
 kea6/duid.json
 --------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea.
@@ -15560,7 +15606,7 @@ kea6/duid.json
 kea6/global-reservations.json
 -----------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv6 server in Kea.
@@ -15741,7 +15787,7 @@ kea6/global-reservations.json
 kea6/ha-hot-standby-server1-with-tls.json
 -----------------------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration of the Kea DHCPv6 server. It uses High
@@ -15906,7 +15952,7 @@ kea6/ha-hot-standby-server1-with-tls.json
 kea6/ha-hot-standby-server2.json
 --------------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration of the Kea DHCPv6 server. It uses High
@@ -16062,7 +16108,7 @@ kea6/ha-hot-standby-server2.json
 kea6/hooks-rbac.json
 --------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv6 server in Kea using
@@ -16183,7 +16229,7 @@ kea6/hooks-rbac.json
 kea6/hooks.json
 ---------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv6 server in Kea
@@ -16251,7 +16297,7 @@ kea6/hooks.json
 kea6/iPXE.json
 --------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration for iPXE boot in Kea6.
@@ -16329,7 +16375,7 @@ kea6/iPXE.json
 kea6/leases-expiration.json
 ---------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea.
@@ -16424,7 +16470,7 @@ kea6/leases-expiration.json
 kea6/multiple-options.json
 --------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea.
@@ -16618,7 +16664,7 @@ kea6/multiple-options.json
 kea6/mysql-reservations.json
 ----------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv6 server in Kea.
@@ -16738,7 +16784,7 @@ kea6/mysql-reservations.json
 kea6/pgsql-reservations.json
 ----------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for the DHCPv6 server in Kea.
@@ -16855,7 +16901,7 @@ kea6/pgsql-reservations.json
 kea6/reservations.json
 ----------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea
@@ -17035,7 +17081,7 @@ kea6/reservations.json
 kea6/several-subnets.json
 -------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea.
@@ -17106,7 +17152,7 @@ kea6/several-subnets.json
 kea6/shared-network.json
 ------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea.
@@ -17256,7 +17302,7 @@ kea6/shared-network.json
 kea6/simple.json
 ----------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea.
@@ -17329,7 +17375,7 @@ kea6/simple.json
 kea6/softwire46.json
 --------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea.
@@ -17429,7 +17475,7 @@ kea6/softwire46.json
 kea6/stateless.json
 -------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // A very simply stateless configuration that provides information about DNS
@@ -17468,7 +17514,7 @@ kea6/stateless.json
 kea6/tee-times.json
 -------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea.
@@ -17551,7 +17597,7 @@ kea6/tee-times.json
 kea6/with-ddns.json
 -------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is an example configuration file for DHCPv6 server in Kea.
@@ -17656,7 +17702,7 @@ netconf
 netconf/comments.json
 ---------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is a example of a configuration for Netconf.
@@ -17708,7 +17754,7 @@ netconf/kea-dhcp6-operations
 netconf/kea-dhcp6-operations/boot.json
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     {
@@ -17726,7 +17772,7 @@ netconf/kea-dhcp6-operations/boot.json
 netconf/kea-dhcp6-operations/netconf.json
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     {
@@ -17767,7 +17813,7 @@ netconf/kea-dhcp6-operations/netconf.json
 netconf/simple-dhcp4.json
 -------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is a simple example of a configuration for Netconf that handles
@@ -17895,7 +17941,7 @@ netconf/simple-dhcp4.json
 netconf/simple-dhcp6.json
 -------------------------
 
-.. code-block:: json5
+.. code-block::
     :linenos:
 
     // This is a simple example of a configuration for Netconf that handles
