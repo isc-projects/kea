@@ -9,7 +9,9 @@
 import os
 import re
 import sys
+
 from shutil import copyfile
+
 
 # -- Path setup --------------------------------------------------------------
 
@@ -202,19 +204,18 @@ latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',
-
     # The font size ('10pt', '11pt' or '12pt').
     #
     # 'pointsize': '10pt',
-
     # Additional stuff for the LaTeX preamble.
     #
-    # 'preamble': '',
-
+    'preamble': '' if os.getenv('KEA_NO_FVEXTRA_IN_SPHINX') else r'\usepackage{fvextra} \fvset{fontsize=\tiny}'
     # Latex figure (float) alignment
     #
     # 'figure_align': 'htbp',
 }
+print(f'latex_elements: {latex_elements}')
+
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
@@ -262,6 +263,7 @@ rst_prolog = """
 
 
 # -- Functions ---------------------------------------------------------------
+
 
 # Do generation of api.rst and kea-messages.rst here in conf.py instead of meson.build
 # so they are available on ReadTheDocs as there makefiles are not used for building docs.

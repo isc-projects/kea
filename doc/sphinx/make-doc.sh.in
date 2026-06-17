@@ -31,6 +31,7 @@ cp '@TOP_SOURCE_DIR@/platforms.rst' '@srcdir@/arm/platforms.rst'
 if test '@HAVE_PDFLATEX@' != 'no'; then
     @SPHINXBUILD@ -M latex @srcdir@ @sphinxbuilddir@ @sphinxopts@
     cd '@abs_sphinxbuilddir@/latex'
+    echo PDFLATEX_AND_OPTS: @PDFLATEX_AND_OPTS@
     @PDFLATEX_AND_OPTS@ kea-arm.tex
     makeindex -s python.ist kea-arm.idx
     @PDFLATEX_AND_OPTS@ kea-arm.tex

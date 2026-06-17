@@ -79,7 +79,10 @@ else
     doc_conf.set('HAVE_PDFLATEX', 'no')
     pdflatex = 'false'
 endif
-doc_conf.set('PDFLATEX_AND_OPTS', pdflatex + ' -interaction nonstopmode')
+doc_conf.set(
+    'PDFLATEX_AND_OPTS',
+    pdflatex + ' -interaction nonstopmode -cnf-line=extra_mem_bot=10000000',
+)
 if SPHINX.found()
     doc_conf.set('SPHINXBUILD', SPHINX.full_path())
 else

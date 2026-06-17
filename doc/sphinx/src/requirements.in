@@ -1,2 +1,7 @@
 sphinx
 sphinx-rtd-theme
+sphinxcontrib.applehelp
+sphinxcontrib.devhelp
+sphinxcontrib.htmlhelp
+sphinxcontrib.qthelp
+sphinxcontrib.serializinghtml

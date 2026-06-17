@@ -544,8 +544,7 @@ def install_sphinx(python_v: str = 'python3'):
     execute(f'{python_v} -m venv .venv')
     execute('.venv/bin/pip install --upgrade pip')
     execute('.venv/bin/pip install pyinstaller')
-    execute('.venv/bin/pip install sphinx')
-    execute('.venv/bin/pip install sphinx_rtd_theme')
+    execute('.venv/bin/pip install -r doc/sphinx/src/requirements.in')
     execute('.venv/bin/pyinstaller --clean --collect-all sphinx_rtd_theme --collect-all sphinxcontrib --clean '
             '--onefile .venv/bin/sphinx-build')
     execute('sudo cp dist/sphinx-build /usr/local/bin')
@@ -2084,8 +2083,20 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['gcovr', 'lcov'])
 
         if 'docs' in features:
-            packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme',
-                             'texlive', 'texlive-latex-extra', 'tex-gyre'])
+            packages.extend(
+                [
+                    'python3-sphinx',
+                    'python3-sphinx-rtd-theme',
+                    'python3-sphinxcontrib.applehelp',
+                    'python3-sphinxcontrib.devhelp',
+                    'python3-sphinxcontrib.htmlhelp',
+                    'python3-sphinxcontrib.qthelp',
+                    'python3-sphinxcontrib.serializinghtml',
+                    'texlive',
+                    'texlive-latex-extra',
+                    'tex-gyre',
+                ]
+            )
 
         if 'unittest' in features:
             packages.append('googletest')
@@ -2139,8 +2150,26 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['gcovr', 'lcov'])
 
         if 'docs' in features:
-            packages.extend(['graphviz', 'python3-sphinx', 'python3-sphinx-rtd-theme', 'tex-gyre',
-                             'texlive', 'texlive-latex-extra'])
+            packages.extend(
+                [
+                    'graphviz',
+                    'python3-sphinx',
+                    'python3-sphinx-rtd-theme',
+                    'tex-gyre',
+                    'texlive',
+                    'texlive-latex-extra',
+                ]
+            )
+            if int(revision) >= 12:
+                packages.extend(
+                    [
+                        'python3-sphinxcontrib.applehelp',
+                        'python3-sphinxcontrib.devhelp',
+                        'python3-sphinxcontrib.htmlhelp',
+                        'python3-sphinxcontrib.qthelp',
+                        'python3-sphinxcontrib.serializinghtml',
+                    ]
+                )
 
         if 'unittest' in features:
             packages.append('googletest')
