@@ -209,12 +209,12 @@ latex_elements = {
     # 'pointsize': '10pt',
     # Additional stuff for the LaTeX preamble.
     #
-    'preamble': '' if os.getenv('KEA_NO_FVEXTRA_IN_SPHINX') else r'\usepackage{fvextra} \fvset{fontsize=\tiny}'
+    # fontsize=\tiny fixes "LaTeX Warning: Float too large for page" when generating PDFs.
+    'preamble': r'\usepackage{fancyvrb} \fvset{fontsize=\tiny}'
     # Latex figure (float) alignment
     #
     # 'figure_align': 'htbp',
 }
-print(f'latex_elements: {latex_elements}')
 
 
 # Grouping the document tree into LaTeX files. List of tuples
