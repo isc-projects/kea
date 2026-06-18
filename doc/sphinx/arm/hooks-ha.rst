@@ -2465,15 +2465,17 @@ can be any of the peer names in the relationship. For example, if a relationship
 
 .. note::
 
-    It is important to note that each peer on a given Kea server must use a unique a listener
-    IP/port combination.  If the same IP and port are defined for multiple peers, the Kea service
-    will fail to start with an error similar to the following:
+    It is important to note that each peer on a given Kea server must use a
+    unique listener address/port combination.  If the same address and port are
+    defined for multiple peers, the Kea service will fail to start with an
+    error similar to the following:
 
     .. code::
 
-        DHCP4_INIT_FAIL failed to initialize Kea server: configuration error using file 'kea-dhcp4.conf':
-        Error initializing hooks: CmdHttpListener::run failed: unable to setup TCP acceptor for listening
-        to the incoming HTTP requests: bind: Address already in use
+        DHCP4_INIT_FAIL failed to initialize Kea server: configuration error using
+        file 'kea-dhcp4.conf': Error initializing hooks: CmdHttpListener::run failed:
+        unable to setup TCP acceptor for listening to the incoming HTTP requests:
+        bind: Address already in use
 
 It is not required to specify the ``ha-server-name`` in the branch servers, assuming that the
 branch servers only contain the subnets they serve. Consider the following configuration for
