@@ -2,6 +2,8 @@ variables:
   # Locale settings do not affect the build, but might affect tests.
   LC_ALL: C
 
+  CI_REGISTRY_IMAGE: registry.gitlab.isc.org/isc-projects/kea
+
   # Fuzzing
   CFL_ARTIFACTS_DIR: '/tmp/cfl-artifacts'
   CFL_CACHE_DIR: '/ccache/cfl-cache'
@@ -20,7 +22,7 @@ variables:
   SAST_EXCLUDED_ANALYZERS: "eslint, spotbugs"
 
 default:
-  image: 'registry.gitlab.isc.org/isc-projects/kea:latest'
+  image: "${CI_REGISTRY_IMAGE}:v3_2"
   tags:
     - linux
     - aws

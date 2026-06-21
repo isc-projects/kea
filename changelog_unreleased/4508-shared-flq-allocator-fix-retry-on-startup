@@ -1,8 +1,0 @@
-[bug]		tmark
-	Treat allocator initializition failures caused
-	by database connectivity issues as a recoverable
-	condition. Prior to this the server would exit
-	with a fatal error even when configured to retry.
-	Applies to both kea-dhcp4 and kea-dhcp6 when
-	using either the FLQ or SLFQ allocators.
-	(Gitlab #4508)

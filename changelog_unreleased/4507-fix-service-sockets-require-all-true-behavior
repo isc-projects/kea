@@ -1,6 +1,0 @@
-[func]		fdupont
-	Reconfigure commands that trigger fatal a error that leads
-	to server shutdown now return an error response. Changed
-	socket open failure log messages from INFO to either ERROR
-	or FATAL as appropriate. Applies to kea-dhcp4 and kea-dhcp6.
-	(Gitlab #4507)

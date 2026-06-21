@@ -1,3 +1,78 @@
+Kea 3.2.0 (stable) released on June 24, 2026
+
+2497.	[build]		andrei
+	The library version numbers have been bumped up for the Kea 3.2.0
+	stable release.
+	(Gitlab #4601)
+
+2496.	[doc]		andrei
+	All the configuration examples from doc/examples are now included
+	in the ARM.
+	(Gitlab #3232)
+
+2495.	[bug]		fdupont
+	Limited recursive unpacking of DHCPv6 options.
+	Thank you to Qifan Zhang from Palo Alto Networks for
+	reporting the issue.
+	(Gitlab #4565)
+
+2494.	[bug]		andrei
+	Errors about failed attempts to connect to the database are no
+	longer shadowed by kea-admin trying to initialize the schema.
+	Some log messages were added.
+	(Gitlab #4111, #4500)
+
+2493.	[bug]		tmark
+	kea-dhcp4 and kea-dhcp6 now catch negative values of
+	lease lifetime parameters: min-valid-lifetime,
+	valid-lifetime, max-valid-lifetime, min-preferred-lifetime,
+	preferred-lifetime, max-preferred-lifetime.
+	(Gitlab #4498)
+
+2492.	[func]		fdupont
+	Reconfigure commands that trigger fatal a error that leads
+	to server shutdown now return an error response. Changed
+	socket open failure log messages from INFO to either ERROR
+	or FATAL as appropriate. Applies to kea-dhcp4 and kea-dhcp6.
+	(Gitlab #4507)
+
+2491.	[func]		fdupont
+	Added a new special client class "REJECT" which makes
+	incoming requests in this class to skip the resource
+	allocation part in processing and return DHCPNAK on
+	DHCPREQUEST by the DHCPv4 server, or put status code
+	NoAddrsAvail in all ia-na options by the DHCPv6 server.
+	Proposed by Philip Prindeville.
+	(Gitlab #4110)
+
+2490.	[perf]		fdupont
+	Improved efficiency and correctness of the existence check
+	done before adding a new lease in the memory database.
+	Thank you to Qifan Zhang from Palo Alto Networks for
+	reporting the issue.
+	(Gitlab #4551)
+
+2489.	[bug]		tmark
+	Treat allocator initializition failures caused
+	by database connectivity issues as a recoverable
+	condition. Prior to this the server would exit
+	with a fatal error even when configured to retry.
+	Applies to both kea-dhcp4 and kea-dhcp6 when
+	using either the FLQ or SLFQ allocators.
+	(Gitlab #4508)
+
+2488.	[bug]		fdupont
+	Extended DHCPv6 relayed query processing to consider
+	the 'interface-id' option (18) in subnet selection
+	even when no relay sets its link-address to a global
+	unicast address, e.g. is a layer-2 relay.
+	(Gitlab #4358)
+
+2487.	[func]		fdupont
+	Extended lenient parsing of v4 "fqdn" and v6 "client-fqdn"
+	options to fix options with bad flags.
+	(Gitlab #4443)
+
 2486.	[func]		razvan
 	Updated yang modules: added 'ssl-mode' to database connection
 	parameters, added 'adaptive-lease-time-threshold', removed
