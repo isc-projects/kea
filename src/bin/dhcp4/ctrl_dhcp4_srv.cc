@@ -828,7 +828,7 @@ ControlledDhcpv4Srv::commandInterfaceAddHandler(const std::string&,
     ostringstream msg;
     if (!error) {
         if (getShutdown()) {
-            return (isc::config::createAnswer(CONTROL_RESULT_FATAL_ERROR, "Interface configuration uodate triggered a fatal error: shutting down."));
+            return (isc::config::createAnswer(CONTROL_RESULT_FATAL_ERROR, "Interface configuration update triggered a fatal error: shutting down."));
         }
         return (isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Interface configuration successfully updated."));
     } else {

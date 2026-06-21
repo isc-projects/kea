@@ -93,7 +93,7 @@ public:
     /// template specialization similar to the one provided for
     /// @c std::string below.
     ///
-    /// @todo: when C++17 will be required can be solved using "if contexpr"
+    /// @todo: when C++17 will be required can be solved using "if constexpr"
     /// for type convertible from int or default constructible.
     /// This will fix complains from code checkers e.g. cppcheck CWE 476.
     // cppcheck-suppress nullPointer
@@ -118,7 +118,7 @@ public:
     ///
     /// @return the encapsulated value
     ///
-    /// @note Reference types are explicitely excluded.
+    /// @note Reference types are explicitly excluded.
     // cppcheck-suppress returnByReference
     T get() const {
         return (default_);

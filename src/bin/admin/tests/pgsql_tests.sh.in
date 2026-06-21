@@ -1244,7 +1244,7 @@ pgsql_upgrade_33_to_34_test() {
     run_statement "Check lease6_types" "${qry}" "0"
 
     qry="DELETE from lease6; DELETE from flq_pool6; DELETE from free_lease6"
-    run_statement "Postrtest deletes" "${qry}"
+    run_statement "Post-test deletes" "${qry}"
 }
 
 pgsql_upgrade_test() {

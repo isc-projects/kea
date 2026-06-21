@@ -293,7 +293,7 @@ public:
     ///
     /// @note: when true (default is false) verify accepts
     /// messages sent in the wrong direction as Microsoft servers
-    /// sending DNS update responses when prerequisities fail.
+    /// sending DNS update responses when prerequisites fail.
     static bool ignore_bad_direction_;
 
     /// @brief Constructor.

@@ -2650,7 +2650,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, interfaceAddFatal) {
     std::string command = "{ \"command\": \"interface-add\", \"arguments\": { \"interfaces\": [ \"eth0\" ] } }";
 
     sendUnixCommand(command, response);
-    EXPECT_EQ(response, "{ \"result\": 5, \"text\": \"Interface configuration uodate triggered a fatal error: shutting down.\" }");
+    EXPECT_EQ(response, "{ \"result\": 5, \"text\": \"Interface configuration update triggered a fatal error: shutting down.\" }");
 }
 
 // This test verifies that disable DHCP service command performs sanity check on

@@ -209,7 +209,7 @@ TEST(Element, toAndFromJson) {
     EXPECT_EQ("\"\"", Element::fromJSON("  \n \t \r \f \b \"\" \n \f \t \r \b")->str());
     EXPECT_EQ("{  }", Element::fromJSON("{  \n  \r \t  \b \f }")->str());
     EXPECT_EQ("[  ]", Element::fromJSON("[  \n  \r \f \t  \b  ]")->str());
-    // Illegal according to the stardard but still accepted.
+    // Illegal according to the standard but still accepted.
     EXPECT_EQ("0.1", Element::fromJSON(".1")->str());
     EXPECT_EQ("1.0", Element::fromJSON("1.")->str());
 

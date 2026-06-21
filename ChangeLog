@@ -41,7 +41,7 @@ Kea 3.2.0 (stable) released on June 24, 2026
 	incoming requests in this class to skip the resource
 	allocation part in processing and return DHCPNAK on
 	DHCPREQUEST by the DHCPv4 server, or put status code
-	NoAddrsAvail in all ia-na options by the DHCPv6 server.
+	NoAddrsAvail in all IA_NA options by the DHCPv6 server.
 	Proposed by Philip Prindeville.
 	(Gitlab #4110)
 
@@ -53,7 +53,7 @@ Kea 3.2.0 (stable) released on June 24, 2026
 	(Gitlab #4551)
 
 2489.	[bug]		tmark
-	Treat allocator initializition failures caused
+	Treat allocator initialization failures caused
 	by database connectivity issues as a recoverable
 	condition. Prior to this the server would exit
 	with a fatal error even when configured to retry.
@@ -130,7 +130,7 @@ Kea 3.2.0 (stable) released on June 24, 2026
 
 2478.	[bug]		razvan
 	Fixed an issue that caused kea-dhcp6 to incorrectly emit a
-	DDNS_TUNINT6_PROCESS_ERROR when subnet selection has failed.
+	DDNS_TUNING6_PROCESS_ERROR when subnet selection has failed.
 	(Gitlab #4499)
 
 Kea 3.1.9 (development) released on May 27, 2026

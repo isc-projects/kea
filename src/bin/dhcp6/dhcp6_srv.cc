@@ -2844,7 +2844,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query,
     // (compare to the same status code, but different wording below)
     if (!subnet) {
 
-        // Insert status code NoProfixAvail.
+        // Insert status code NoPrefixAvail.
         ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_NoPrefixAvail,
                                            "Sorry, no subnet available."));
         return (ia_rsp);
