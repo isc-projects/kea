@@ -4,29 +4,31 @@
 
 The following versions are supported:
 
-| Version | Supported          | End-Of-Life                      |
-| ------- | ------------------ | -------------------------------- |
-| 3.1.x   | :white_check_mark: | summer 2026, on release of 3.2.0 |
-| 3.0.x   | :white_check_mark: | LTS, summer 2028                 |
-| 2.7.x   | :x:                | June 2025, on release of 3.0.0   |
-| 2.6.x   | :white_check_mark: | summer 2026, on release of 3.2.0 |
-| 2.5.x   | :x:                | June 2024                        |
-| 2.4.x   | :x:                | June 2025, on release of 3.0.0   |
-| 2.3.x   | :x:                | July 2023                        |
-| 2.2.x   | :x:                | August 2024, on release of 2.6.0 |
-| 2.1.x   | :x:                | July 2022                        |
-| 2.0.x   | :x:                | August 2023, on release of 2.4.0 |
-| 1.9.0   | :x:                | September 2021                   |
-| 1.8.0   | :x:                | July 2022                        |
-| 1.7.0   | :x:                | August 2020                      |
-| 1.6.0   | :x:                | September 2021                   |
-| 1.5.0   | :x:                | August 2020                      |
-| 1.3.0   | :x:                | December 2018                    |
-| 1.2.0   | :x:                | June 2018                        |
-| 1.1.0   | :x:                | December 2017                    |
-| 1.0.0   | :x:                | June 2017                        |
-| 0.9.2-P1| :x:                | March 2017                       |
-| 0.9.1   | :x:                | June 2016                        |
+| Version | Supported          | End-Of-Life                            |
+| ------- | ------------------ | -------------------------------------- |
+| 3.3.x   | :white_check_mark: | summer 2027, on release of 3.4.0       |
+| 3.2.x   | :white_check_mark: | summer 2028, on release of 3.6.0       |
+| 3.1.x   | :x:                | June 2026, on release of 3.2.0       |
+| 3.0.x   | :white_check_mark: | LTS, summer 2028, on release of 3.6.0  |
+| 2.7.x   | :x:                | June 2025, on release of 3.0.0         |
+| 2.6.x   | :x:                | June 2026, on release of 3.2.0         |
+| 2.5.x   | :x:                | June 2024                              |
+| 2.4.x   | :x:                | June 2025, on release of 3.0.0         |
+| 2.3.x   | :x:                | July 2023                              |
+| 2.2.x   | :x:                | August 2024, on release of 2.6.0       |
+| 2.1.x   | :x:                | July 2022                              |
+| 2.0.x   | :x:                | August 2023, on release of 2.4.0       |
+| 1.9.0   | :x:                | September 2021                         |
+| 1.8.0   | :x:                | July 2022                              |
+| 1.7.0   | :x:                | August 2020                            |
+| 1.6.0   | :x:                | September 2021                         |
+| 1.5.0   | :x:                | August 2020                            |
+| 1.3.0   | :x:                | December 2018                          |
+| 1.2.0   | :x:                | June 2018                              |
+| 1.1.0   | :x:                | December 2017                          |
+| 1.0.0   | :x:                | June 2017                              |
+| 0.9.2-P1| :x:                | March 2017                             |
+| 0.9.1   | :x:                | June 2016                              |
 
 Starting with the Kea 1.7 release, all Kea versions with an odd minor
 version number are development releases, and become EOL as soon as the
