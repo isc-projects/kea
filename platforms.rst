@@ -52,11 +52,11 @@ These include platforms past their respective EOL dates, such as:
 
 * Alpine — 3.20 (EOL 1 Apr 2026) and older
 * Debian — 10 (EOL 30 Jun 2024) and older
-* EL — 7 (EOL 30 Jun 2024) and older
 * Fedora — 43 (EOL 9 Dec 2026) and older
 * FreeBSD — 14 (EOL 31 Dec 2026) and older
-* macOS — 13 (EOL 15 Sep 2025) and older
+* RHEL — 7 (EOL 30 Jun 2024) and older
 * Ubuntu — 20.04 (EOL 31 May 2025) and older
+* macOS — 13 (EOL 15 Sep 2025) and older
 
 Unsupported Platforms
 ---------------------
