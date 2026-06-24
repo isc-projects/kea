@@ -6,7 +6,6 @@
 
 #include <config.h>
 #include <util/csv_file.h>
-#include <util/str.h>
 
 #include <algorithm>
 #include <iostream>
@@ -89,7 +88,7 @@ CSVRow::writeAt(const size_t at, const char* value) {
 
 void
 CSVRow::writeAtEscaped(const size_t at, const std::string& value) {
-    writeAt(at, escapeCharacters(value, separator_.at(0)));
+    writeAt(at, escapeCharacters(value, separator_));
 }
 
 void
@@ -447,38 +446,47 @@ CSVFile::validateHeader(const CSVRow& header) {
 const std::string CSVRow::escape_tag("&#x");
 
 std::string
-CSVRow::escapeCharacters(const std::string& orig_str, const char separator) {
-    auto escape_it = [](char c, char s, char e) -> bool {
-        return ((c < 0x20) || (c > 0x7e) || c == s || c == e);
+CSVRow::escapeCharacters(const std::string& orig_str, const std::string& characters) {
+    size_t char_pos = 0;
+    size_t prev_pos = 0;
+
+    // We add the first character of the escape tag to the list of
+    // characters to escape.  This ensures input which happens to
+    // be valid escape sequences will be escaped.
+    std::string escape_chars(characters + escape_tag[0]);
+
+    // Check for a first occurrence. If none, just return a
+    // copy of the original.
+    char_pos = orig_str.find_first_of(escape_chars, prev_pos);
+    if (char_pos == std::string::npos) {
+        return(orig_str);
+    }
+
+    std::stringstream ss;
+    while (char_pos < orig_str.size()) {
+        // Copy everything upto the character to escape.
+        ss << orig_str.substr(prev_pos, char_pos - prev_pos);
+
+        // Copy the escape tag followed by the hex digits of the character.
+        ss << escape_tag << std::hex << std::setw(2)
+           << static_cast<uint16_t>(orig_str[char_pos]);
+
+        ++char_pos;
+        prev_pos = char_pos;
+
+        // Find the next character to escape.
+        char_pos = orig_str.find_first_of(escape_chars, prev_pos);
+
+        // If no more, copy the remainder of the string.
+        if (char_pos == std::string::npos) {
+            ss << orig_str.substr(prev_pos, char_pos - prev_pos);
+            break;
+        }
+
     };
 
-    // Count the number of needed escapes.
-    size_t escapes = 0;
-    for (char c : orig_str) {
-        if (escape_it(c, separator, escape_tag[0])) {
-            ++escapes;
-         }
-     }
-
-    if (escapes == 0) {
-         // Nothing to escape, return the original.
-         return (orig_str);
-     }
-
-    // Make the result large enough to avoid reallocations.
-    std::string esc_str;
-    esc_str.reserve(orig_str.size() + escapes * (escape_tag.size() + 1));
-    // Iterate over the original string, escaped chars that need it.
-    for (char c : orig_str) {
-        if (escape_it(c, separator, escape_tag[0])) {
-             esc_str.append(escape_tag);
-            esc_str.append(str::byteToHex(c));
-         } else {
-            esc_str.push_back(c);
-         }
-     }
-
-    return (esc_str);
+    // Return the escaped string.
+    return(ss.str());
 }
 
 std::string
@@ -507,13 +515,13 @@ CSVRow::unescapeCharacters(const std::string& escaped_str) {
         if (dig_pos <= escaped_str.size() - 2) {
             for (int i = 0; i < 2; ++i) {
                 uint8_t digit = escaped_str[dig_pos];
-                if (digit >= '0' && digit <= '9') {
-                    digit -= '0';
-                }
-                else if (digit >= 'a' && digit <= 'f') {
+
+                if (digit >= 'a' && digit <= 'f') {
                     digit = digit - 'a' + 10;
                 } else if (digit >= 'A' && digit <= 'F') {
                     digit = digit - 'A' + 10;
+                } else if (digit >= '0' && digit <= '9') {
+                    digit -= '0';
                 } else {
                     converted = false;
                     break;
@@ -557,6 +565,7 @@ CSVRow::unescapeCharacters(const std::string& escaped_str) {
 
     return(ss.str());
 }
+
 
 } // end of isc::util namespace
 } // end of isc namespace
