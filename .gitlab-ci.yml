@@ -22,7 +22,7 @@ variables:
   SAST_EXCLUDED_ANALYZERS: "eslint, spotbugs"
 
 default:
-  image: "${CI_REGISTRY_IMAGE}:v3_2"
+  image: "${CI_REGISTRY_IMAGE}:latest"
   tags:
     - linux
     - aws
