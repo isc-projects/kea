@@ -79,10 +79,12 @@ public:
 
     /// @brief Destroys the HDS and the schema.
     void destroyTest() {
-        try {
-            hdsptr_->rollback();
-        } catch (...) {
-            // Rollback may fail if backend is in read only mode. That's ok.
+        if (hdsptr_) {
+            try {
+                hdsptr_->rollback();
+            } catch (...) {
+                // Rollback may fail if backend is in read only mode. That's ok.
+            }
         }
         HostMgr::delAllBackends();
         hdsptr_.reset();
@@ -1587,10 +1589,12 @@ MySQLHostMgrTest::SetUp() {
 
 void
 MySQLHostMgrTest::TearDown() {
-    try {
-        HostMgr::instance().getHostDataSource()->rollback();
-    } catch(...) {
-        // we don't care if we aren't in a transaction.
+    if (HostMgr::instance().getHostDataSource()) {
+        try {
+            HostMgr::instance().getHostDataSource()->rollback();
+        } catch(...) {
+            // we don't care if we aren't in a transaction.
+        }
     }
 
     HostMgr::delBackend("mysql");

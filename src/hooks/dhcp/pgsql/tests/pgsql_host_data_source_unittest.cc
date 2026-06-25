@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -79,10 +79,12 @@ public:
 
     /// @brief Destroys the HDS and the schema.
     void destroyTest() {
-        try {
-            hdsptr_->rollback();
-        } catch (...) {
-            // Rollback may fail if backend is in read only mode. That's ok.
+        if (hdsptr_) {
+            try {
+                hdsptr_->rollback();
+            } catch (...) {
+                // Rollback may fail if backend is in read only mode. That's ok.
+            }
         }
         HostMgr::delAllBackends();
         hdsptr_.reset();
@@ -1538,10 +1540,12 @@ PgSQLHostMgrTest::SetUp() {
 
 void
 PgSQLHostMgrTest::TearDown() {
-    try {
-        HostMgr::instance().getHostDataSource()->rollback();
-    } catch(...) {
-        // we don't care if we aren't in a transaction.
+    if (HostMgr::instance().getHostDataSource()) {
+        try {
+            HostMgr::instance().getHostDataSource()->rollback();
+        } catch(...) {
+            // we don't care if we aren't in a transaction.
+        }
     }
 
     HostMgr::delBackend("postgresql");
