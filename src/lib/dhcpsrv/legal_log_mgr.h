@@ -93,6 +93,7 @@ public:
     ///       - prerotate
     ///       - postrotate
     ///       - count
+    ///       - mark-continuation-lines
     /// - syslog parameters:
     ///       - pattern
     ///       - facility
@@ -165,6 +166,7 @@ public:
     ///       - prerotate
     ///       - postrotate
     ///       - count
+    ///       - mark-continuation-lines
     ///
     /// @param parameters The library parameters.
     /// @param [out] map The parameter map.

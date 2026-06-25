@@ -197,6 +197,15 @@ LegalLogMgr::parseFile(const ConstElementPtr& parameters, DatabaseConnection::Pa
             file_parameters[key] = boost::lexical_cast<string>(integer_value);
         }
     }
+
+    // bool
+    for (char const* const& key : { "mark-continuation-lines" }) {
+        ConstElementPtr const value(parameters->get(key));
+        if (value) {
+            file_parameters.emplace(key,
+                                    value->boolValue() ? "true" : "false");
+        }
+    }
     map = file_parameters;
 }
 

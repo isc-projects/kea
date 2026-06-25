@@ -120,6 +120,11 @@ public:
         file_list_.insert(getFileName());
     }
 
+    /// @brief Sets the mark continuation lines flag.
+    void setMarkContinuationLines(bool mark_continuation_lines) {
+        mark_continuation_lines_ = mark_continuation_lines;
+    }
+
     /// @brief Sets the override date value
     ///
     /// @param new value for the override date
@@ -318,6 +323,47 @@ public:
                                                        << file_name;
 
                 string cmp_line = now_string + " " + expected_lines[i];
+                ASSERT_EQ(cmp_line, buf) << "line mismatch in: " << file_name
+                                         << " at line:" << i;
+
+                ++i;
+            }
+        }
+
+        ASSERT_EQ(i, expected_lines.size()) << "Not enough entries in file: "
+                                            << file_name;
+    }
+
+    /// @brief Check a file's contents against a multiple-line record
+    ///
+    /// Passes if the given file's content matches. Fails otherwise.
+    ///
+    /// @param file_name name of the file to read
+    /// @param expected_lines a vector of the lines expected to be found
+    /// in the file (entries DO NOT include EOL) representing a multiple
+    /// line record so continuation lines until the last one.
+    void checkFileMultipleLines(const string& file_name,
+                                const string& now_string,
+                                const vector<string>& expected_lines) {
+        ifstream is;
+        is.open(file_name.c_str());
+        ASSERT_TRUE(is.good()) << "Could not open file: " << file_name;
+
+        unsigned i = 0;
+        while (!is.eof()) {
+            char buf[1024];
+
+            is.getline(buf, sizeof(buf));
+            if (is.gcount() > 0) {
+                ASSERT_TRUE(i <= expected_lines.size())
+                    << "Too many entries in file: " << file_name;
+                string cmp_line = now_string;
+                if (i + 1 == expected_lines.size()) {
+                    cmp_line += " ";
+                } else {
+                    cmp_line += "-";
+                }
+                cmp_line += expected_lines[i];
                 ASSERT_EQ(cmp_line, buf) << "line mismatch in: " << file_name
                                          << " at line:" << i;
 

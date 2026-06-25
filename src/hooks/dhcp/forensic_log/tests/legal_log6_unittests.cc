@@ -2385,6 +2385,12 @@ TEST_F(CalloutTestv6, customRequestLoggingFormatMultipleLines) {
 
     LegalLogMgrFactory::instance()->setRequestFormatExpression(format);
 
+    // Disable mark continuation lines.
+    TestableRotatingFilePtr trfp =
+        boost::dynamic_pointer_cast<TestableRotatingFile>(LegalLogMgrFactory::instance());
+    ASSERT_TRUE(trfp);
+    trfp->setMarkContinuationLines(false);
+
     int ret;
 
     // Make a lease and add it to the callout arguments.
@@ -2417,6 +2423,55 @@ TEST_F(CalloutTestv6, customRequestLoggingFormatMultipleLines) {
 
     std::string today_now_string = LegalLogMgrFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
+}
+
+// Verifies that the custom format logs on a multiple line record.
+TEST_F(CalloutTestv6, customRequestLoggingFormatMultipleLineRecord) {
+    ASSERT_NO_THROW(LegalLogMgrFactory::instance().reset(new TestableRotatingFile(time_)));
+
+    CfgMgr::instance().setFamily(AF_INET6);
+
+    // Make a callout handle
+    CalloutHandlePtr handle = getCalloutHandle(decline_);
+    handle->setCurrentLibrary(0);
+
+    std::string format = "ifelse(pkt6.msgtype == 9, 'first line' + 0x0a + 'second line', '')";
+
+    LegalLogMgrFactory::instance()->setRequestFormatExpression(format);
+
+    int ret;
+
+    // Make a lease and add it to the callout arguments.
+    Lease6Ptr lease6 = createLease6(duid_, Lease::TYPE_NA, "2001:db8:1::", 128,
+                                    713, HWAddrPtr());
+
+    // The callout should succeed and generate an entry for 2001:db8:1::
+    {
+        ScopedCalloutHandleState callout_handle_state(handle);
+        handle->setArgument("lease6", lease6);
+        ASSERT_NO_THROW(ret = lease6_decline(*handle));
+        EXPECT_EQ(0, ret);
+    }
+
+    {
+        ScopedCalloutHandleState callout_handle_state(handle);
+        handle->setArgument("query6", decline_);
+        handle->setArgument("response6", response_);
+        ASSERT_NO_THROW(ret = pkt6_send(*handle));
+        EXPECT_EQ(0, ret);
+    }
+
+    // Close it to flush any unwritten data
+    LegalLogMgrFactory::instance()->close();
+
+    // Verify that the file content is correct.
+    std::vector<std::string>lines;
+    lines.push_back("first line");
+    lines.push_back("second line");
+
+    std::string today_now_string = LegalLogMgrFactory::instance()->getNowString();
+    // Use the continuation lines variant.
+    checkFileMultipleLines(genName(today()), today_now_string, lines);
 }
 
 TEST_F(CalloutTestv6, multipleAddressesAndPrefixesCustomLoggingFormatRequestOnly) {

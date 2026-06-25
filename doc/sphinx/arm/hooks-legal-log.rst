@@ -169,6 +169,13 @@ These executables must be stored in the ``"[kea-install-dir]/share/kea/scripts/"
 directory which can be overridden at startup by setting the environment variable
 ``KEA_HOOK_SCRIPTS_PATH`` to a different path.
 
+Since Kea 3.3.0 a new parameter was added to make always possible to
+distinguish a multiple line log record from multiple log records:
+
+-  ``mark-continuation-lines`` - when true (the default) continuation
+   lines (i.e. lines before the last one in the log record) get a hyphen
+   vs. a space after the timestamp.
+
 Custom formatting can be enabled for logging information that can be extracted
 either from the client's request packet or from the server's response packet.
 Use with caution as this might affect server performance.

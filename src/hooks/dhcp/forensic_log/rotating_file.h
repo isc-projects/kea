@@ -75,6 +75,7 @@ public:
     ///       - prerotate
     ///       - postrotate
     ///       - count
+    ///       - mark-continuation-lines
     ///
     /// @param parameters A data structure relating keywords and values
     ///        concerned with the manager configuration.
@@ -115,6 +116,10 @@ public:
     ///
     /// @b postrotate - An external executable or script called with the name of the file that
     /// was opened. Kea does not wait for the process to finish.
+    ///
+    /// @b mark-continuation-lines - When true (default) mark continuation
+    /// lines so only the last line in a multiple line record gets a space
+    /// (vs hyphen) after the leading timestamp.
     ///
     /// @param parameters The library parameters.
     void apply(const isc::db::DatabaseConnection::ParameterMap& parameters);
@@ -160,6 +165,12 @@ public:
     /// - @b text - text supplied by the parameter
     ///
     /// - @b EOL - the character(s) generated std::endl
+    ///
+    /// When mark_continuation_lines_ is true (default) multiple lines give:
+    ///
+    ///     "<timestamp>-<text1><EOL>"
+    ///     "<timestamp>-<text2><EOL>"
+    ///     "<timestamp>SP<text3><EOL>"
     ///
     /// @param addr Address or prefix (ignored).
     /// @param text String to append.
@@ -279,6 +290,10 @@ private:
 
     /// @brief Mutex to protect output.
     std::mutex mutex_;
+
+protected:
+    /// @brief The mark continuation lines flag.
+    bool mark_continuation_lines_;
 
 public:
     /// @brief Factory class method.

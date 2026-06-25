@@ -1,0 +1,9 @@
+[func]*		fdupont
+	Improved multiple line log records in forensic log files:
+	continuation lines, i.e. all lines before the last one of
+	the log record, get a hyphen instead a space after the
+	leading timestamp. This feature can be disabled e.g.
+	for backward compatibility by setting the new paramater
+	"mark-continuation-lines" to false in the hook library
+	configuration.
+	(Gitlab #4526)

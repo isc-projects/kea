@@ -16,6 +16,7 @@
 
 #include <errno.h>
 #include <iostream>
+#include <list>
 #include <set>
 #include <sstream>
 #include <time.h>
@@ -33,7 +34,8 @@ namespace isc {
 namespace legal_log {
 
 RotatingFile::RotatingFile(const DatabaseConnection::ParameterMap& parameters)
-    : LegalLogMgr(parameters), time_unit_(TimeUnit::Day), count_(1), timestamp_(0) {
+    : LegalLogMgr(parameters), time_unit_(TimeUnit::Day), count_(1),
+      timestamp_(0), mark_continuation_lines_(true) {
     apply(parameters);
 }
 
@@ -88,6 +90,11 @@ RotatingFile::apply(const DatabaseConnection::ParameterMap& parameters) {
     }
     if (parameters.find("postrotate") != parameters.end()) {
         postrotate = parameters.at("postrotate");
+    }
+    if (parameters.find("mark-continuation-lines") != parameters.end()) {
+        string mcl(parameters.at("mark-continuation-lines"));
+        // The parser sets "true" or "false" so do not check...
+        mark_continuation_lines_ = (mcl != "false");
     }
     path_ = path;
     base_name_ = base;
@@ -391,8 +398,21 @@ RotatingFile::writelnInternal(const string& text) {
 
     string timestamp = getNowString();
     stringstream ss(text);
+    // Collect lines.
+    list<string> lines;
     for (string line; getline(ss, line, '\n');) {
-        file_ << timestamp << " " << line << endl;
+        lines.push_back(line);
+    }
+    while (!lines.empty()) {
+        string line = lines.front();
+        lines.pop_front();
+        file_ << timestamp;
+        if (mark_continuation_lines_ && !lines.empty()) {
+            file_ << "-";
+        } else {
+            file_ << " ";
+        }
+        file_ << line << endl;
     }
     int sav_error = errno;
     if (!file_.good()) {

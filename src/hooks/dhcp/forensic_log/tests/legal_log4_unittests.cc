@@ -34,6 +34,8 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/pointer_cast.hpp>
+
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
@@ -1696,6 +1698,12 @@ TEST_F(CalloutTestv4, customRequestLoggingFormatMultipleLines) {
 
     LegalLogMgrFactory::instance()->setRequestFormatExpression(format);
 
+    // Disable mark continuation lines.
+    TestableRotatingFilePtr trfp =
+        boost::dynamic_pointer_cast<TestableRotatingFile>(LegalLogMgrFactory::instance());
+    ASSERT_TRUE(trfp);
+    trfp->setMarkContinuationLines(false);
+
     int ret;
 
     // Make a lease and add it to the callout arguments.
@@ -1767,6 +1775,45 @@ TEST_F(CalloutTestv4, customLogRenderError) {
                     " with hardware address: hwtype=1 08:00:2b:02:3f:4e");
     std::string today_now_string = LegalLogMgrFactory::instance()->getNowString();
     checkFileLines(genName(today()), today_now_string, lines);
+}
+
+// Verifies that the custom format logs on a multiple line record.
+TEST_F(CalloutTestv4, customRequestLoggingFormatMultipleLineRecord) {
+    ASSERT_NO_THROW(LegalLogMgrFactory::instance().reset(new TestableRotatingFile(time_)));
+
+    // Make a callout handle
+    CalloutHandlePtr handle = getCalloutHandle(decline_);
+    handle->setCurrentLibrary(0);
+
+    std::string format = "ifelse(pkt4.msgtype == 4, 'first line' + 0x0a + 'second line', '')";
+
+    LegalLogMgrFactory::instance()->setRequestFormatExpression(format);
+
+    int ret;
+
+    // Make a lease and add it to the callout arguments.
+    Lease4Ptr lease4 = createLease4("192.2.1.100", 6735, hwaddr_, ClientIdPtr(), 1234);
+
+    // The callout should succeed and generate an entry for 192.2.1.100.
+    {
+        ScopedCalloutHandleState callout_handle_state(handle);
+        handle->setArgument("lease4", lease4);
+        handle->setArgument("query4", decline_);
+        ASSERT_NO_THROW(ret = lease4_decline(*handle));
+        EXPECT_EQ(0, ret);
+    }
+
+    // Close it to flush any unwritten data
+    LegalLogMgrFactory::instance()->close();
+
+    // Verify that the file content is correct.
+    std::vector<std::string>lines;
+    lines.push_back("first line");
+    lines.push_back("second line");
+
+    std::string today_now_string = LegalLogMgrFactory::instance()->getNowString();
+    // Use the continuation lines variant.
+    checkFileMultipleLines(genName(today()), today_now_string, lines);
 }
 
 } // end of anonymous namespace
