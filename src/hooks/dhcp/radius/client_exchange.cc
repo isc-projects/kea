@@ -421,7 +421,7 @@ UdpExchange::open() {
                                          ph::_1,   // error_code.
                                          ph::_2)); // size.
             return;
-        } catch (const Exception& exc) {
+        } catch (const std::exception& exc) {
             LOG_ERROR(radius_logger, RADIUS_UDP_EXCHANGE_OPEN_FAILED)
                 .arg(identifier_)
                 .arg(exc.what());
@@ -518,7 +518,7 @@ UdpExchange::open() {
                                      ph::_1,   // error_code.
                                      ph::_2)); // size.
         return;
-    } catch (const Exception& exc) {
+    } catch (const std::exception& exc) {
         LOG_ERROR(radius_logger, RADIUS_UDP_EXCHANGE_OPEN_FAILED)
             .arg(identifier_)
             .arg(exc.what());
@@ -656,7 +656,7 @@ Exchange::processResponse() {
                 rc_ = BADRESP_RC;
             }
         }
-    } catch (const Exception& exc) {
+    } catch (const std::exception& exc) {
         LOG_ERROR(radius_logger, RADIUS_EXCHANGE_RECEIVED_BAD_RESPONSE)
             .arg(identifier_)
             .arg(exc.what());
@@ -871,7 +871,7 @@ TcpExchange::start() {
                       ph::_2,   // response
                       ph::_3),  // error_msg
             TcpClient::RequestTimeout(server_->getTimeout() * 1000));
-    } catch (const Exception& exc) {
+    } catch (const std::exception& exc) {
         LOG_ERROR(radius_logger, RADIUS_TCP_EXCHANGE_START_ERROR)
             .arg(identifier_)
             .arg(exc.what());
