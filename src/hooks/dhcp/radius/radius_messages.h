@@ -98,6 +98,7 @@ extern const isc::log::MessageID RADIUS_TLS_STATUS_ERROR;
 extern const isc::log::MessageID RADIUS_TLS_STATUS_FAILED;
 extern const isc::log::MessageID RADIUS_TLS_STATUS_SUCCEED;
 extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_FAILED;
+extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_MAX_PENDING;
 extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_OPEN_FAILED;
 extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_RECEIVED;
 extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_RECEIVE_FAILED;

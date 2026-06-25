@@ -193,7 +193,9 @@ RadiusAuthHandlerPtr subnet4Select(CalloutHandle& handle,
 
     // Too many pending requests.
     size_t max_requests = impl.auth_->max_pending_requests_;
-    if ((max_requests > 0) && (impl.auth_->requests4_.size() >= max_requests)) {
+    if (((max_requests > 0) &&
+         (impl.auth_->requests4_.size() >= max_requests)) ||
+        !impl.checkExchangeListRoom()) {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_ACCESS_MAX_PENDING_REQUESTS)
             .arg(query->getLabel())
@@ -350,7 +352,9 @@ RadiusAuthHandlerPtr subnet6Select(CalloutHandle& handle,
 
     // Too many pending requests.
     size_t max_requests = impl.auth_->max_pending_requests_;
-    if ((max_requests > 0) && (impl.auth_->requests6_.size() >= max_requests)) {
+    if (((max_requests > 0) &&
+         (impl.auth_->requests6_.size() >= max_requests)) ||
+        !impl.checkExchangeListRoom()) {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_ACCESS_MAX_PENDING_REQUESTS)
             .arg(query->getLabel())
@@ -592,6 +596,9 @@ int lease4_select(CalloutHandle& handle) {
     try {
         // Start the Accounting-Request transmission.
         RadiusAcctHandlerPtr handler = impl.acct_->buildAcct(lease, EVENT_CREATE);
+        if (!handler) {
+            return (CONTROL_RESULT_SUCCESS);
+        }
         impl.getIOContext()->post(std::bind(&RadiusAccounting::runAsync, handler));
     } catch (const std::exception& ex) {
         LOG_ERROR(radius_logger, RADIUS_HOOK_FAILED)
@@ -625,6 +632,9 @@ int lease4_renew(CalloutHandle& handle) {
     try {
         // Start the Accounting-Request transmission.
         RadiusAcctHandlerPtr handler = impl.acct_->buildAcct(lease, EVENT_RENEW);
+        if (!handler) {
+            return (CONTROL_RESULT_SUCCESS);
+        }
         impl.getIOContext()->post(std::bind(&RadiusAccounting::runAsync, handler));
     } catch (const std::exception& ex) {
         LOG_ERROR(radius_logger, RADIUS_HOOK_FAILED)
@@ -658,6 +668,9 @@ int lease4_release(CalloutHandle& handle) {
     try {
         // Start the Accounting-Request transmission.
         RadiusAcctHandlerPtr handler = impl.acct_->buildAcct(lease, EVENT_RELEASE);
+        if (!handler) {
+            return (CONTROL_RESULT_SUCCESS);
+        }
         impl.getIOContext()->post(std::bind(&RadiusAccounting::runAsync, handler));
     } catch (const std::exception& ex) {
         LOG_ERROR(radius_logger, RADIUS_HOOK_FAILED)
@@ -691,6 +704,9 @@ int lease4_decline(CalloutHandle& handle) {
     try {
         // Start the Accounting-Request transmission.
         RadiusAcctHandlerPtr handler = impl.acct_->buildAcct(lease, EVENT_DECLINE);
+        if (!handler) {
+            return (CONTROL_RESULT_SUCCESS);
+        }
         impl.getIOContext()->post(std::bind(&RadiusAccounting::runAsync, handler));
     } catch (const std::exception& ex) {
         LOG_ERROR(radius_logger, RADIUS_HOOK_FAILED)
@@ -720,6 +736,9 @@ int lease4_expire(CalloutHandle& handle) {
     handle.getArgument("lease4", lease);
     try {
         RadiusAcctHandlerPtr handler = impl.acct_->buildAcct(lease, EVENT_EXPIRE);
+        if (!handler) {
+            return (CONTROL_RESULT_SUCCESS);
+        }
         impl.getIOContext()->post(std::bind(&RadiusAccounting::runAsync, handler));
     } catch (const std::exception& ex) {
         LOG_ERROR(radius_logger, RADIUS_HOOK_FAILED)
@@ -754,6 +773,9 @@ int lease6_select(CalloutHandle& handle) {
     handle.getArgument("lease6", lease);
     try {
         RadiusAcctHandlerPtr handler = impl.acct_->buildAcct(lease, EVENT_CREATE);
+        if (!handler) {
+            return (CONTROL_RESULT_SUCCESS);
+        }
         impl.getIOContext()->post(std::bind(&RadiusAccounting::runAsync, handler));
     } catch (const std::exception& ex) {
         LOG_ERROR(radius_logger, RADIUS_HOOK_FAILED)
@@ -783,6 +805,9 @@ int lease6_renew(CalloutHandle& handle) {
     handle.getArgument("lease6", lease);
     try {
         RadiusAcctHandlerPtr handler = impl.acct_->buildAcct(lease, EVENT_RENEW);
+        if (!handler) {
+            return (CONTROL_RESULT_SUCCESS);
+        }
         impl.getIOContext()->post(std::bind(&RadiusAccounting::runAsync, handler));
     } catch (const std::exception& ex) {
         LOG_ERROR(radius_logger, RADIUS_HOOK_FAILED)
@@ -812,6 +837,9 @@ int lease6_rebind(CalloutHandle& handle) {
     handle.getArgument("lease6", lease);
     try {
         RadiusAcctHandlerPtr handler = impl.acct_->buildAcct(lease, EVENT_REBIND);
+        if (!handler) {
+            return (CONTROL_RESULT_SUCCESS);
+        }
         impl.getIOContext()->post(std::bind(&RadiusAccounting::runAsync, handler));
     } catch (const std::exception& ex) {
         LOG_ERROR(radius_logger, RADIUS_HOOK_FAILED)
@@ -841,6 +869,9 @@ int lease6_release(CalloutHandle& handle) {
     handle.getArgument("lease6", lease);
     try {
         RadiusAcctHandlerPtr handler = impl.acct_->buildAcct(lease, EVENT_RELEASE);
+        if (!handler) {
+            return (CONTROL_RESULT_SUCCESS);
+        }
         impl.getIOContext()->post(std::bind(&RadiusAccounting::runAsync, handler));
     } catch (const std::exception& ex) {
         LOG_ERROR(radius_logger, RADIUS_HOOK_FAILED)
@@ -870,6 +901,9 @@ int lease6_decline(CalloutHandle& handle) {
     handle.getArgument("lease6", lease);
     try {
         RadiusAcctHandlerPtr handler = impl.acct_->buildAcct(lease, EVENT_DECLINE);
+        if (!handler) {
+            return (CONTROL_RESULT_SUCCESS);
+        }
         impl.getIOContext()->post(std::bind(&RadiusAccounting::runAsync, handler));
     } catch (const std::exception& ex) {
         LOG_ERROR(radius_logger, RADIUS_HOOK_FAILED)
@@ -899,6 +933,9 @@ int lease6_expire(CalloutHandle& handle) {
     handle.getArgument("lease6", lease);
     try {
         RadiusAcctHandlerPtr handler = impl.acct_->buildAcct(lease, EVENT_EXPIRE);
+        if (!handler) {
+            return (CONTROL_RESULT_SUCCESS);
+        }
         impl.getIOContext()->post(std::bind(&RadiusAccounting::runAsync, handler));
     } catch (const std::exception& ex) {
         LOG_ERROR(radius_logger, RADIUS_HOOK_FAILED)

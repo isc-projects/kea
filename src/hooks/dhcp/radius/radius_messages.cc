@@ -97,6 +97,7 @@ extern const isc::log::MessageID RADIUS_TLS_STATUS_ERROR = "RADIUS_TLS_STATUS_ER
 extern const isc::log::MessageID RADIUS_TLS_STATUS_FAILED = "RADIUS_TLS_STATUS_FAILED";
 extern const isc::log::MessageID RADIUS_TLS_STATUS_SUCCEED = "RADIUS_TLS_STATUS_SUCCEED";
 extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_FAILED = "RADIUS_UDP_EXCHANGE_FAILED";
+extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_MAX_PENDING = "RADIUS_UDP_EXCHANGE_MAX_PENDING";
 extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_OPEN_FAILED = "RADIUS_UDP_EXCHANGE_OPEN_FAILED";
 extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_RECEIVED = "RADIUS_UDP_EXCHANGE_RECEIVED";
 extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_RECEIVE_FAILED = "RADIUS_UDP_EXCHANGE_RECEIVE_FAILED";
@@ -205,6 +206,7 @@ const char* values[] = {
     "RADIUS_TLS_STATUS_FAILED", "Status-Server failed: return code %1 (%2)",
     "RADIUS_TLS_STATUS_SUCCEED", "received valid response to Status-Server",
     "RADIUS_UDP_EXCHANGE_FAILED", "UDP exchange %1 failed: %2",
+    "RADIUS_UDP_EXCHANGE_MAX_PENDING", "accounting UDP exchange can't be created because already more than %1 exchanges are pending",
     "RADIUS_UDP_EXCHANGE_OPEN_FAILED", "Open socket for UDP exchange %1 failed: %2",
     "RADIUS_UDP_EXCHANGE_RECEIVED", "UDP exchange %1 received %2 bytes.",
     "RADIUS_UDP_EXCHANGE_RECEIVE_FAILED", "Receive for UDP exchange %1 failed: %2",

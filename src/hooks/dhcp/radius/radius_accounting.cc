@@ -261,8 +261,13 @@ RadiusAccounting::buildAcct(const dhcp::Lease4Ptr& lease, Event event) {
     // Return the handler.
     RadiusAcctEnv env(stream.str(), event, lease->subnet_id_, send);
     RadiusAcctHandlerPtr handler;
-    handler.reset(new RadiusAcctHandler(
-        env, std::bind(&RadiusAccounting::terminate, env, ph::_1)));
+    if (RadiusImpl::instance().checkExchangeListRoom()) {
+        handler.reset(new RadiusAcctHandler(
+            env, std::bind(&RadiusAccounting::terminate, env, ph::_1)));
+    } else {
+        LOG_ERROR(radius_logger, RADIUS_UDP_EXCHANGE_MAX_PENDING)
+            .arg(UdpClient::exchangeListMaxSize);
+    }
 
     // Erase create timestamp on stop.
     if (status == PW_STATUS_STOP) {
@@ -389,8 +394,13 @@ RadiusAccounting::buildAcct(const dhcp::Lease6Ptr& lease, Event event) {
     // Return the handler.
     RadiusAcctEnv env(stream.str(), event, lease->subnet_id_, send);
     RadiusAcctHandlerPtr handler;
-    handler.reset(new RadiusAcctHandler(
-        env, std::bind(&RadiusAccounting::terminate, env, ph::_1)));
+    if (RadiusImpl::instance().checkExchangeListRoom()) {
+        handler.reset(new RadiusAcctHandler(
+            env, std::bind(&RadiusAccounting::terminate, env, ph::_1)));
+    } else {
+        LOG_ERROR(radius_logger, RADIUS_UDP_EXCHANGE_MAX_PENDING)
+            .arg(UdpClient::exchangeListMaxSize);
+    }
 
     // Erase create timestamp on stop.
     if (status == PW_STATUS_STOP) {

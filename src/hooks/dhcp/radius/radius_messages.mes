@@ -441,6 +441,10 @@ was received from TLS servers.
 This error message is issued when an UDP exchange terminates with an error.
 The exchange identifier and the error return code are displayed.
 
+% RADIUS_UDP_EXCHANGE_MAX_PENDING accounting UDP exchange can't be created because already more than %1 exchanges are pending
+This error message is issued when the number of pending UDP exchanges
+is too large when a new accounting request will be issued.
+
 % RADIUS_UDP_EXCHANGE_OPEN_FAILED Open socket for UDP exchange %1 failed: %2
 This error message is issued when an UDP exchange failed to open a new socket.
 The exchange identifier and the error message are displayed.

@@ -98,6 +98,15 @@ public:
     /// @param exchange The exchange to unregister.
     void unregisterExchange(ExchangePtr exchange);
 
+    /// @brief Check Exchange List Room.
+    ///
+    /// @return True is enough room is available in the exchange list,
+    /// false otherwise.
+    bool checkExchangeListRoom();
+
+    /// @brief Exchange List Maximum Size (currently 200).
+    static const size_t exchangeListMaxSize;
+
 private:
     /// @brief Pointer to IOService.
     isc::asiolink::IOServicePtr io_service_;
@@ -261,6 +270,12 @@ public:
     ///
     /// @param exchange The exchange to unregister.
     void unregisterExchange(ExchangePtr exchange);
+
+    /// @brief Check Exchange List Room.
+    ///
+    /// @return True is enough room is available in the exchange list,
+    /// false otherwise.
+    bool checkExchangeListRoom();
 
     /// @brief Dictionary path.
     std::string dictionary_;

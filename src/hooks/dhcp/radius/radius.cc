@@ -33,6 +33,11 @@ using namespace isc::util;
 namespace isc {
 namespace radius {
 
+#ifndef RADIUS_UDP_EXCHANGE_LIST_MAX_SIZE
+#define RADIUS_UDP_EXCHANGE_LIST_MAX_SIZE 200
+#endif
+const size_t UdpClient::exchangeListMaxSize = RADIUS_UDP_EXCHANGE_LIST_MAX_SIZE;
+
 UdpClient::UdpClient(const IOServicePtr& io_service, unsigned thread_pool_size)
     : io_service_(io_service), thread_pool_size_(thread_pool_size) {
     // Do nothing in ST mode.
@@ -157,6 +162,12 @@ UdpClient::unregisterExchange(ExchangePtr exchange) {
     exchange_list_.remove(exchange);
 }
 
+bool
+UdpClient::checkExchangeListRoom() {
+    MultiThreadingLock lock(mutex_);
+    return (exchange_list_.size() <= exchangeListMaxSize);
+}
+
 std::atomic<bool> RadiusImpl::shutdown_(false);
 
 RadiusImpl&
@@ -203,6 +214,13 @@ void RadiusImpl::unregisterExchange(ExchangePtr exchange) {
     if (udp_client_) {
         udp_client_->unregisterExchange(exchange);
     }
+}
+
+bool RadiusImpl::checkExchangeListRoom() {
+    if (udp_client_) {
+        return (udp_client_->checkExchangeListRoom());
+    }
+    return (true);
 }
 
 void RadiusImpl::cleanup() {
