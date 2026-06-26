@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <cstring>
 #include <fcntl.h>
+#include <netinet/in.h>
 
 using namespace isc::asiolink;
 
@@ -77,6 +78,17 @@ PktFilterInet::openSocket(Iface& iface,
             isc_throw(SocketConfigError, "Failed to set SO_BINDTODEVICE option"
                       << " on socket " << sock);
         }
+    }
+#endif
+
+#ifdef IP_DONTFRAG
+#ifndef SO_TIMESTAMP
+    int enable = 1;
+#endif
+    if (setsockopt(sock, IPPROTO_IP, IP_DONTFRAG, &enable, sizeof(enable))) {
+        const char* errmsg = strerror(errno);
+        isc_throw(SocketConfigError, "Could not enable IP_DONTFRAG for "
+                  << addr.toText() << ", error: " << errmsg);
     }
 #endif
 
