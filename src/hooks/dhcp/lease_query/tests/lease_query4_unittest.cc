@@ -12,6 +12,7 @@
 #include <lease_query_log.h>
 #include <lease_query_impl_factory.h>
 #include <dhcp/pkt4.h>
+#include <dhcp/pkt4o6.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/callout_manager.h>
@@ -282,6 +283,31 @@ BaseLeaseQuery4Test<TestLeaseMgrType>::testNotLeaseQuery() {
 
 TEST_F(MemfileLeaseQuery4Test, notLeaseQuery) {
     testNotLeaseQuery();
+}
+
+// Verifies that a DHCPv4-over-DHCPv6 lease query is skipped.
+TEST_F(MemfileLeaseQuery4Test, dhcp4o6) {
+    // Prepare the Pkt4o6 lease query.
+    Pkt4Ptr pkt4(new Pkt4(DHCPLEASEQUERY, 12365));
+    ASSERT_NO_THROW(pkt4->pack());
+    const OutputBuffer& buffer = pkt4->getBuffer();
+    pkt4.reset(new Pkt4(reinterpret_cast<const uint8_t*>(buffer.getData()),
+                        buffer.getLength()));
+    pkt4->setIface("eth0");
+    pkt4->setIndex(ETH0_INDEX);
+    Pkt6Ptr pkt6(new Pkt6(DHCPV6_DHCPV4_QUERY, 12345));
+    Pkt4Ptr pkt(new Pkt4o6(pkt4, pkt6));
+    EXPECT_TRUE(pkt->isDhcp4o6());
+
+    // Call the buffer4_receive callout.
+    CalloutHandle handle(getCalloutManager());
+    handle.setArgument("query4", pkt);
+    int ret;
+    ASSERT_NO_THROW(ret = buffer4_receive(handle));
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_SKIP, handle.getStatus());
+    checkStat("pkt4-lease-query-received", 0);
+    checkStat("pkt4-receive-drop", 0);
 }
 
 // Verifies that DHCPLEASEQUERY gets processed.

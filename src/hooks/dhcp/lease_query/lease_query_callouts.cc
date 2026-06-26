@@ -129,8 +129,10 @@ int buffer4_receive(CalloutHandle& handle) {
     }
 
     // Not a lease query, so return without handling it.
+    // Also skipping DHCPv4-over-DHCPv6 queries as they can bypass
+    // the sender access control.
     // Make sure status is SKIP so it doesn't get unpacked again.
-    if (query->getType() != DHCPLEASEQUERY) {
+    if ((query->getType() != DHCPLEASEQUERY) || query->isDhcp4o6()) {
         handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
         return (0);
     }

@@ -1,0 +1,6 @@
+[func]		fdupont
+	Disallow DHCPv4 DHCPLEASEQUERY queries sent using
+	DHCPv4-over-DHCPv6 as they can bypass the sender
+	access control. Thank you to Qifan Zhang from
+	Palo Alto Networks for reporting the issue.
+	(Gitlab #4531)
