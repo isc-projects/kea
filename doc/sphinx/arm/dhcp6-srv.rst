@@ -8768,6 +8768,9 @@ client-fqdn (39) options with some invalid domain names, and starting with Kea
 version 3.1.9 to fix invalid flags, i.e. when 'S' and 'N' flags set to 1
 the 'N' flag is reset to 0 for compatibility with ISC DHCP behavior.
 
+Starting with Kea verion 3.3.0, the parsing of the iaprefix option replaces
+too big prefix length by its maximal value 128.
+
 .. _dhcp6_allocation_strategies:
 
 Allocation Strategies in DHCPv6

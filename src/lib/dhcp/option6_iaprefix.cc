@@ -103,6 +103,16 @@ void Option6IAPrefix::unpack(OptionBuffer::const_iterator begin,
     prefix_len_ = *begin;
     begin += sizeof(uint8_t);
 
+    if (prefix_len_ > 128) {
+        if (Option::lenient_parsing_) {
+            prefix_len_ = 128;
+        } else {
+            isc_throw(BadValue, static_cast<unsigned>(prefix_len_)
+                      << " is not a valid prefix length. "
+                      << "Allowed range is 0..128");
+        }
+    }
+
     // 16 bytes: IPv6 address
     OptionBuffer address_with_mask;
     mask(begin, begin + V6ADDRESS_LEN, prefix_len_, address_with_mask);
@@ -158,7 +168,6 @@ Option6IAPrefix::mask(OptionBuffer::const_iterator begin,
         output_address[len/8] = (*(begin + len/8) & (0xFF << (8 - (len % 8))));
     }
 }
-
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

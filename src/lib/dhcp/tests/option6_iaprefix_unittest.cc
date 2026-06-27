@@ -27,6 +27,18 @@ using namespace isc::util;
 using namespace isc::asiolink;
 
 namespace {
+// RAII device to make sure that lenient parsing flag is reset to false on exit.
+class LenientOptionParsing {
+public:
+    LenientOptionParsing(bool value) {
+        Option::lenient_parsing_ = value;
+    }
+
+    ~LenientOptionParsing() {
+        Option::lenient_parsing_ = false;
+    }
+};
+
 class Option6IAPrefixTest : public ::testing::Test {
 public:
     Option6IAPrefixTest() : buf_(255), out_buf_(255) {
@@ -263,12 +275,29 @@ TEST_F(Option6IAPrefixTest, build) {
 // This test verifies that invalid prefix length is not accepted.
 TEST_F(Option6IAPrefixTest, constructorInvalidPrefixLength) {
     boost::scoped_ptr<Option6IAPrefix> opt;
-    setExampleBuffer();
 
     ASSERT_THROW(opt.reset(new Option6IAPrefix(12345,
-                 IOAddress("2001:db8:1:0:afaf:0:dead:beef"), 77,
-                                               1000, 3000000000u)), BadValue);
+                     IOAddress("2001:db8:1:0:afaf:0:dead:beef"), 77,
+                     1000, 3000000000u)), BadValue);
     ASSERT_FALSE(opt);
+
+    ASSERT_THROW(opt.reset(new Option6IAPrefix(12345,
+                     IOAddress("2001:db8:1:0:afaf:0:dead:beef"), 200,
+                     1000, 3000000000u)), BadValue);
+    ASSERT_FALSE(opt);
+
+    setExampleBuffer();
+    buf_[8] = 200;
+
+    ASSERT_THROW(opt.reset(new Option6IAPrefix(D6O_IAPREFIX,
+                     buf_.begin(), buf_.end())), BadValue);
+
+    // Lenient parsing accepts and fixes it.
+    LenientOptionParsing lop(true);
+    ASSERT_NO_THROW(opt.reset(new Option6IAPrefix(D6O_IAPREFIX,
+                        buf_.begin(), buf_.end())));
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(128, opt->getLength());
 }
 
 // Checks negative cases

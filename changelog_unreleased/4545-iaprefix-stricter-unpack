@@ -1,0 +1,6 @@
+[func]		fdupont
+	Made the parsing of the the iaprefix option stricter:
+	now it refuses too bug prefix length values. Extended
+	the "lenient-option-parsing" compatibility flag to
+	replace such too big values by 128, the maximal one.
+	(Gitlab #4545)
