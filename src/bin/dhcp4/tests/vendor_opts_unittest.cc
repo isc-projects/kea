@@ -2956,3 +2956,53 @@ TEST_F(VendorOptsTest, vendorClassIdClassification3) {
     EXPECT_FALSE(dis->inClass("foo bar"));
     EXPECT_FALSE(dis->inClass("foo%20bar"));
 }
+
+TEST_F(VendorOptsTest, toms) {
+    string config =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"*\" ]"
+        "    },"
+        "    \"option-def\": ["
+        "        {"
+        "            \"name\": \"toms-int8\","
+        "            \"code\": 224,"
+        "            \"type\": \"int8\""
+        "        },"
+        "    ],"
+        "\"subnet4\": [ { "
+        "    \"id\": 10,"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\""
+        " } ]"
+        "}";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config, true));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    CfgMgr::instance().commit();
+
+    // Create a packet with enough to select the subnet and go through
+    // the DISCOVER processing
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    query->addOption(clientid);
+    query->setIface("eth1");
+    query->setIndex(ETH1_INDEX);
+
+    // Create and add a PRL option to the query
+    boost::shared_ptr<OptionInt<int8_t> >opt(new OptionInt<int8_t>(Option::V4, 224, 123));
+    ASSERT_TRUE(opt);
+    query->addOption(opt);
+    query->getDeferredOptions().push_back(224);
+
+    ASSERT_NO_THROW(srv_->deferredUnpack(query));
+}

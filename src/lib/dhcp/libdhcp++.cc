@@ -453,13 +453,16 @@ LibDHCP::unpackOptions6(const OptionBuffer& buf, const string& option_space,
                                          buf.begin() + offset,
                                          buf.begin() + offset + opt_len,
                                          false, rec_level);
+
+                // Check the stated length against defined length of scalar options.
+                sanityCheckScalarLength(def, opt_len);
             } catch (const SkipThisOptionError&) {
                 opt.reset();
             } catch (const SkipRemainingOptionsError&) {
                 throw;
             } catch (const std::exception& ex) {
                 isc_throw(OptionParseError, "opt_type: " << static_cast<uint16_t>(opt_type)
-                                            << ", opt_len " << static_cast<uint16_t>(opt_len)
+                                            << ", opt_len: " << static_cast<uint16_t>(opt_len)
                                             << ", error: " << ex.what());
             }
         }
@@ -689,7 +692,10 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf, const string& option_space,
                 const OptionDefinitionPtr& def = *(range.first);
                 isc_throw_assert(def);
                 opt = def->optionFactory(Option::V4, opt_type, obuf);
-            } catch (const SkipThisOptionError&) {
+
+                // Check the stated length against defined length of scalar options.
+                sanityCheckScalarLength(def, opt_len);
+            } catch (const SkipThisOptionError& ex) {
                 opt.reset();
             } catch (const SkipRemainingOptionsError&) {
                 throw;
@@ -707,6 +713,28 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf, const string& option_space,
     }
     last_offset = offset;
     return (last_offset);
+}
+
+void
+LibDHCP::sanityCheckScalarLength(const OptionDefinitionPtr& def, uint16_t opt_len) {
+    // Check the stated length against defined length of scalar options.
+    // If it exceeds the defined length throw.  We don't check for undersized
+    // lengths as this is done in option factories and would break v4 option
+    // fusing.
+    size_t exp_len = OptionDataTypeUtil::getDataTypeLen(def->getType());
+    if ((exp_len > 0 && opt_len > exp_len) && (!def->getArrayType()) &&
+        (def->getEncapsulatedSpace().empty())) {
+        ostringstream os;
+        os << "opt_len does not match defined option length "
+           << static_cast<uint16_t>(exp_len) << " for data type "
+           << OptionDataTypeUtil::getDataTypeName(def->getType());
+
+        if (Option::lenient_parsing_) {
+            isc_throw(SkipThisOptionError, os.str()); 
+        } else {
+            isc_throw(BadValue, os.str());
+        }
+    }
 }
 
 namespace { // Anonymous namespace.

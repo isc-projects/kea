@@ -1453,7 +1453,9 @@ TEST_F(Pkt4Test, truncatedVendorLength) {
     pkt = dhcp::test::PktCaptures::discoverWithTruncatedVIVSO();
 
     // Unpack should throw Skip exception
-    ASSERT_THROW(pkt->unpack(), SkipRemainingOptionsError);
+    ASSERT_THROW_MSG(pkt->unpack(), SkipRemainingOptionsError,
+                     "Truncated vendor-specific information option, length=1");
+
     ASSERT_EQ(DHCPDISCOVER, pkt->getType());
 
     // VIVSO option should not be there

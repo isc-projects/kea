@@ -5226,6 +5226,7 @@ Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query) {
         const OptionBuffer buf = opt->getData();
         try {
             // Unpack the option
+            LibDHCP::sanityCheckScalarLength(def, std::distance(buf.begin(), buf.end()));
             opt = def->optionFactory(Option::V4, code, buf);
         } catch (const std::exception& e) {
             // Failed to parse the option.

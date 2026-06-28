@@ -4126,8 +4126,8 @@ TEST_F(LibDhcpTest, tooDeepRecursionSequence) {
     string space = DHCP6_OPTION_SPACE;
     OptionCollection options;
     LibDHCP::MAX_RECURSION_LEVEL = 3;
-        string expected = "opt_type: 45, opt_len 8, error: ";
-        expected += "opt_type: 45, opt_len 4, error: ";
+        string expected = "opt_type: 45, opt_len: 8, error: ";
+        expected += "opt_type: 45, opt_len: 4, error: ";
         expected += "Too deep recursion in unpacking options";
     ASSERT_THROW_MSG(
         LibDHCP::unpackOptions6(buf, space, options),
@@ -4135,6 +4135,580 @@ TEST_F(LibDhcpTest, tooDeepRecursionSequence) {
     options.clear();
     LibDHCP::MAX_RECURSION_LEVEL = 4;
     EXPECT_NO_THROW(LibDHCP::unpackOptions6(buf, space, options));
+}
+
+// This test verifies that unpackOptions4() throws on a scalar
+// option if it's stated length does not match the defined type
+// length and lenient parsing is disabled..
+TEST_F(LibDhcpTest, invalidScalarLengthLenientDisabled4) {
+    Option::lenient_parsing_ = false;
+
+    // Define options for types that have no standard options.
+    OptionDefinitionPtr opt_def;
+    OptionDefSpaceContainer defs;
+
+    opt_def.reset(new OptionDefinition("toms-int8", 224, DHCP4_OPTION_SPACE,
+                                       "int8", false));
+    defs.addItem(opt_def);
+
+    opt_def.reset(new OptionDefinition("toms-int16", 225, DHCP4_OPTION_SPACE,
+                                       "int16", false));
+    defs.addItem(opt_def);
+
+    LibDHCP::setRuntimeOptionDefs(defs);
+    LibDHCP::commitRuntimeOptionDefs();
+
+    struct Scenario {
+        size_t line_;
+        OptionBuffer buf_;
+        std::string exp_error_;
+    };
+
+    std::list<Scenario> scenarios = {
+        {
+            //OPT_BOOLEAN_TYPE - too long
+            __LINE__,
+            { DHO_IP_FORWARDING, 3, 1, 2, 3 },
+            "opt_type: 19, opt_len: 3, error: opt_len does not"
+            " match defined option length 1 for data type boolean"
+        },
+        {
+            //OPT_BOOLEAN_TYPE - too short
+            __LINE__,
+            { DHO_IP_FORWARDING, 0 },
+            "opt_type: 19, opt_len: 0, error: option buffer truncated"
+        },
+        {
+            // OPT_INT8_TYPE - too long, should be deferred
+            __LINE__,
+            { 224, 2, 1, 2 },
+            ""
+        },
+        {
+            // OPT_INT8_TYPE - too short, should be deferred
+            __LINE__,
+            { 224, 0 },
+            ""
+        },
+        {
+            // OPT_UINT8_TYPE - too long
+            __LINE__,
+            { DHO_DHCP_MESSAGE_TYPE, 2, 1, 2 },
+            "opt_type: 53, opt_len: 2, error: opt_len does not"
+            " match defined option length 1 for data type uint8"
+        },
+        {
+            // OPT_UINT8_TYPE - too short
+            __LINE__,
+            { DHO_DHCP_MESSAGE_TYPE, 0 },
+            "opt_type: 53, opt_len: 0, error: OptionInt 53 truncated"
+        },
+        {
+            // OPT_INT16_TYPE - too long, should get deferred
+            __LINE__,
+            { 225, 4, 1, 2, 3, 4 },
+            ""
+        },
+        {
+            // OPT_UINT16_TYPE - too short, should get deferred
+            __LINE__,
+            { 225, 1, 1 },
+            ""
+        },
+        {
+            // OPT_UINT16_TYPE - too long
+            __LINE__,
+            { DHO_BOOT_SIZE, 4, 1, 2, 3, 4 },
+            "opt_type: 13, opt_len: 4, error: opt_len does not"
+            " match defined option length 2 for data type uint16"
+        },
+        {
+            // OPT_UINT16_TYPE - too short
+            __LINE__,
+            { DHO_BOOT_SIZE, 1, 1 },
+            "opt_type: 13, opt_len: 1, error: OptionInt 13 truncated"
+        },
+        {
+            // OPT_INT32_TYPE - too long
+            __LINE__,
+            { DHO_TIME_OFFSET, 5, 1, 2, 3, 4, 5 },
+            "opt_type: 2, opt_len: 5, error: opt_len does not"
+            " match defined option length 4 for data type int32"
+        },
+        {
+            // OPT_INT32_TYPE - too short
+            __LINE__,
+            { DHO_TIME_OFFSET, 3, 1, 2, 3 },
+            "opt_type: 2, opt_len: 3, error: OptionInt 2 truncated"
+        },
+        {
+            // OPT_UINT32_TYPE - too long
+            __LINE__,
+            { DHO_DHCP_LEASE_TIME, 5, 1, 2, 3, 4, 5 },
+            "opt_type: 51, opt_len: 5, error: opt_len does not"
+            " match defined option length 4 for data type uint32"
+        },
+        {
+            // OPT_UINT32_TYPE - too short
+            __LINE__,
+            { DHO_DHCP_LEASE_TIME, 3, 1, 2, 3 },
+            "opt_type: 51, opt_len: 3, error: OptionInt 51 truncated"
+        },
+        {
+            // OPT_IPV4_ADDRESS
+            __LINE__,
+            { DHO_SUBNET_MASK, 5, 1, 2, 3, 4, 5 },
+            "opt_type: 1, opt_len: 5, error: opt_len does not"
+            " match defined option length 4 for data type ipv4-address"
+        },
+        {
+            // OPT_IPV4_ADDRESS
+            __LINE__,
+            { DHO_SUBNET_MASK, 3, 1, 2, 3 },
+            "opt_type: 1, opt_len: 3, error: option buffer truncated"
+        },
+    };
+
+    for (auto const& scenario : scenarios) {
+        ostringstream os;
+        os << "Scenario at line: " << scenario.line_;
+        SCOPED_TRACE(os.str());
+        OptionCollection options;
+        std::list<uint16_t> deferred_options;
+        if (scenario.exp_error_.empty()) {
+            // Should get deferred.
+            ASSERT_NO_THROW_LOG(
+                LibDHCP::unpackOptions4(scenario.buf_, DHCP4_OPTION_SPACE, options,
+                                        deferred_options));
+            EXPECT_EQ(1U, options.size());
+            EXPECT_EQ(1U, deferred_options.size());
+        } else {
+            ASSERT_THROW_MSG(
+                LibDHCP::unpackOptions4(scenario.buf_, DHCP4_OPTION_SPACE, options,
+                                        deferred_options),
+                OptionParseError, scenario.exp_error_);
+            EXPECT_EQ(0U, options.size());
+            EXPECT_EQ(0U, deferred_options.size());
+        }
+    }
+}
+
+// This test verifies that unpackOptions4() throws on a scalar
+// option if it's stated length is too short, but skips the
+// option if it is too long when lenient parsing is enabled..
+TEST_F(LibDhcpTest, invalidScalarLengthLenientEnabled4) {
+    Option::lenient_parsing_ = true;
+
+    struct Scenario {
+        OptionBuffer buf_;
+        std::string exp_error_;
+    };
+
+    std::list<Scenario> scenarios = {
+        {
+            //OPT_BOOLEAN_TYPE - too long
+            { DHO_IP_FORWARDING, 3, 1, 2, 3 },
+            ""
+        },
+        {
+            //OPT_BOOLEAN_TYPE - too short
+            { DHO_IP_FORWARDING, 0 },
+            "opt_type: 19, opt_len: 0, error: option buffer truncated"
+        },
+        {
+            // OPT_UINT8_TYPE - too long
+            { DHO_DHCP_MESSAGE_TYPE, 2, 1, 2 },
+            ""
+        },
+        {
+            // OPT_UINT8_TYPE - too short
+            { DHO_DHCP_MESSAGE_TYPE, 0 },
+            "opt_type: 53, opt_len: 0, error: OptionInt 53 truncated"
+        },
+        {
+            // OPT_INT16_TYPE - too long
+            { DHO_BOOT_SIZE, 4, 1, 2, 3, 4 },
+            ""
+        },
+        {
+            // OPT_INT16_TYPE - too short
+            { DHO_BOOT_SIZE, 1, 1 },
+            "opt_type: 13, opt_len: 1, error: OptionInt 13 truncated"
+        },
+        {
+            // OPT_INT32_TYPE - too long
+            { DHO_TIME_OFFSET, 5, 1, 2, 3, 4, 5 },
+            ""
+        },
+        {
+            // OPT_INT32_TYPE - too short
+            { DHO_TIME_OFFSET, 3, 1, 2, 3 },
+            "opt_type: 2, opt_len: 3, error: OptionInt 2 truncated"
+        },
+        {
+            // OPT_UINT32_TYPE - too long
+            { DHO_DHCP_LEASE_TIME, 5, 1, 2, 3, 4, 5 },
+            ""
+        },
+        {
+            // OPT_UINT32_TYPE - too short
+            { DHO_DHCP_LEASE_TIME, 3, 1, 2, 3 },
+            "opt_type: 51, opt_len: 3, error: OptionInt 51 truncated"
+        },
+        {
+            // OPT_IPV4_ADDRESS - too long
+            { DHO_SUBNET_MASK, 5, 1, 2, 3, 4, 5 },
+            ""
+        },
+        {
+            // OPT_IPV4_ADDRESS - too short
+            { DHO_SUBNET_MASK, 3, 1, 2, 3 },
+            "opt_type: 1, opt_len: 3, error: option buffer truncated"
+        },
+    };
+
+    OptionBuffer good_option = { DHO_HOST_NAME, 3, 'f', 'o', 'o' };
+    for (auto const& scenario : scenarios) {
+
+        // Append good option to end of scenario option buffer.
+        OptionBuffer buf(scenario.buf_);
+        buf.insert(buf.end(), good_option.begin(), good_option.end());
+        OptionCollection options;
+        std::list<uint16_t> deferred_options;
+        if (scenario.exp_error_.empty()) {
+            // Should not throw.
+            ASSERT_NO_THROW_LOG(
+                LibDHCP::unpackOptions4(buf, DHCP4_OPTION_SPACE, options,
+                                        deferred_options));
+
+            // Should still have unpacked the host name option.
+            ASSERT_EQ(1U, options.size());
+            auto it = options.find(DHO_HOST_NAME);
+            ASSERT_TRUE(it != options.end());
+            OptionPtr opt = it->second;
+            ASSERT_EQ(opt->toText(), "type=012, len=003: \"foo\" (string)");
+        } else {
+            ASSERT_THROW_MSG(
+                LibDHCP::unpackOptions4(scenario.buf_, DHCP4_OPTION_SPACE, options,
+                                        deferred_options),
+                OptionParseError, scenario.exp_error_);
+            // Should not have unpacked the host name option.
+            ASSERT_EQ(0U, options.size());
+        }
+
+        // No deferred options.
+        ASSERT_EQ(0U, deferred_options.size());
+    }
+
+    Option::lenient_parsing_ = false;
+}
+
+// This test verifies that unpackOptions6() throws on a scalar
+// option if it's stated length does not match the defined type
+// length and lenient parsing is disabled..
+TEST_F(LibDhcpTest, invalidScalarLengthLenientDisabled6) {
+    Option::lenient_parsing_ = false;
+
+    struct Scenario {
+        size_t line_;
+        OptionBuffer buf_;
+        std::string exp_error_;
+    };
+
+    // Define options for types that have no such standard options.
+    // Unlike v4, these get unpacked with the rest, not deferred.
+    OptionDefinitionPtr opt_def;
+    OptionDefSpaceContainer defs;
+
+    opt_def.reset(new OptionDefinition("toms-bool", 1024, DHCP6_OPTION_SPACE,
+                                       "boolean", false));
+    defs.addItem(opt_def);
+
+    opt_def.reset(new OptionDefinition("toms-int8", 1025, DHCP6_OPTION_SPACE,
+                                       "int8", false));
+    defs.addItem(opt_def);
+
+    opt_def.reset(new OptionDefinition("toms-int16", 1026, DHCP6_OPTION_SPACE,
+                                       "int16", false));
+    defs.addItem(opt_def);
+
+    opt_def.reset(new OptionDefinition("toms-int32", 1027, DHCP6_OPTION_SPACE,
+                                       "int32", false));
+    defs.addItem(opt_def);
+
+    opt_def.reset(new OptionDefinition("toms-uint32", 1028, DHCP6_OPTION_SPACE,
+                                       "uint32", false));
+    defs.addItem(opt_def);
+
+    LibDHCP::setRuntimeOptionDefs(defs);
+    LibDHCP::commitRuntimeOptionDefs();
+
+    std::list<Scenario> scenarios = {
+        {
+            //OPT_BOOLEAN_TYPE - too long
+            __LINE__,
+            { 0x04, 0x00, 0x00, 0x03, 1, 2, 3 },
+            "opt_type: 1024, opt_len: 3, error: opt_len does not"
+            " match defined option length 1 for data type boolean"
+        },
+        {
+            //OPT_BOOLEAN_TYPE - too short
+            __LINE__,
+            { 0x04, 0x00, 0x00, 0x00 },
+            "opt_type: 1024, opt_len: 0, error: option buffer truncated"
+        },
+        {
+            // OPT_INT8_TYPE - too long
+            __LINE__,
+            { 0x04, 0x01, 0x00, 0x02, 1, 2 },
+            "opt_type: 1025, opt_len: 2, error: opt_len does not"
+            " match defined option length 1 for data type int8"
+        },
+        {
+            // OPT_INT8_TYPE - too short
+            __LINE__,
+            { 0x04, 0x01, 0x00, 0x00, },
+            "opt_type: 1025, opt_len: 0, error: OptionInt 1025 truncated"
+        },
+        {
+            // OPT_INT16_TYPE - too long
+            __LINE__,
+            { 0x04, 0x02, 0x00, 0x04, 0x01, 0x02, 0x03, 0x04 },
+            "opt_type: 1026, opt_len: 4, error: opt_len does not"
+            " match defined option length 2 for data type int16"
+        },
+        {
+            // OPT_INT16_TYPE - too short
+            __LINE__,
+            { 0x04, 0x02, 0x00, 0x01, 0x01 },
+            "opt_type: 1026, opt_len: 1, error: OptionInt 1026 truncated"
+        },
+        {
+            // OPT_UINT16_TYPE - too long
+            __LINE__,
+            { 0x00, D6O_ELAPSED_TIME, 0x00, 0x04, 0x01, 0x02, 0x03, 0x04 },
+            "opt_type: 8, opt_len: 4, error: opt_len does not"
+            " match defined option length 2 for data type uint16"
+        },
+        {
+            // OPT_UINT16_TYPE - too short
+            __LINE__,
+            { 0x00, D6O_ELAPSED_TIME, 0x00, 0x01, 0x01 },
+            "opt_type: 8, opt_len: 1, error: OptionInt 8 truncated"
+        },
+        {
+            // OPT_INT32_TYPE - too long
+            __LINE__,
+            { 0x04, 0x03, 0x00, 0x05, 1, 2, 3, 4, 5 },
+            "opt_type: 1027, opt_len: 5, error: opt_len does not"
+            " match defined option length 4 for data type int32"
+        },
+        {
+            // OPT_INT32_TYPE - too short
+            __LINE__,
+            { 0x04, 0x03, 0x00, 0x03, 1, 2, 3 },
+            "opt_type: 1027, opt_len: 3, error: OptionInt 1027 truncated"
+        },
+        {
+            // OPT_UINT32_TYPE - too long
+            __LINE__,
+            { 0x04, 0x04, 0x00, 0x05, 1, 2, 3, 4, 5 },
+            "opt_type: 1028, opt_len: 5, error: opt_len does not"
+            " match defined option length 4 for data type uint32"
+        },
+        {
+            // OPT_UINT32_TYPE - too short
+            __LINE__,
+            { 0x04, 0x04, 0x00, 0x03, 1, 2, 3 },
+            "opt_type: 1028, opt_len: 3, error: OptionInt 1028 truncated"
+        },
+        {
+            // OPT_IPV6_ADDRESS
+            __LINE__,
+            { 0x00, D6O_LINK_ADDRESS, 0x00, 0x11,
+              1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 , 17 },
+            "opt_type: 80, opt_len: 17, error: opt_len does not"
+            " match defined option length 16 for data type ipv6-address"
+        },
+        {
+            // OPT_IPV6_ADDRESS
+            __LINE__,
+            { 0x00, D6O_LINK_ADDRESS, 0x00, 0x03, 1, 2, 3 },
+            "opt_type: 80, opt_len: 3, error: option buffer truncated"
+        },
+    };
+
+    for (auto const& scenario : scenarios) {
+        ostringstream os;
+        os << "Scenario at line: " << scenario.line_;
+        SCOPED_TRACE(os.str());
+        OptionCollection options;
+
+        ASSERT_THROW_MSG(
+            LibDHCP::unpackOptions6(scenario.buf_, DHCP6_OPTION_SPACE, options),
+            OptionParseError, scenario.exp_error_);
+
+        ASSERT_EQ(0U, options.size());
+    }
+}
+
+// This test verifies that unpackOptions6() throws on a scalar
+// option if it's stated length is too short, but skips the
+// option if it is too long when lenient parsing is enabled..
+TEST_F(LibDhcpTest, invalidScalarLengthLenientEnabled6) {
+    Option::lenient_parsing_ = true;
+
+    struct Scenario {
+        size_t line_;
+        OptionBuffer buf_;
+        std::string exp_error_;
+    };
+
+    // Define options for types that have no such standard options.
+    // Unlike v4, these get unpacked with the rest, not deferred.
+    OptionDefinitionPtr opt_def;
+    OptionDefSpaceContainer defs;
+
+    opt_def.reset(new OptionDefinition("toms-bool", 1024, DHCP6_OPTION_SPACE,
+                                       "boolean", false));
+    defs.addItem(opt_def);
+
+    opt_def.reset(new OptionDefinition("toms-int8", 1025, DHCP6_OPTION_SPACE,
+                                       "int8", false));
+    defs.addItem(opt_def);
+
+    opt_def.reset(new OptionDefinition("toms-int16", 1026, DHCP6_OPTION_SPACE,
+                                       "int16", false));
+    defs.addItem(opt_def);
+
+    opt_def.reset(new OptionDefinition("toms-int32", 1027, DHCP6_OPTION_SPACE,
+                                       "int32", false));
+    defs.addItem(opt_def);
+
+    opt_def.reset(new OptionDefinition("toms-uint32", 1028, DHCP6_OPTION_SPACE,
+                                       "uint32", false));
+    defs.addItem(opt_def);
+
+    LibDHCP::setRuntimeOptionDefs(defs);
+    LibDHCP::commitRuntimeOptionDefs();
+
+    std::list<Scenario> scenarios = {
+        {
+            //OPT_BOOLEAN_TYPE - too long
+            __LINE__,
+            { 0x04, 0x00, 0x00, 0x03, 1, 2, 3 },
+            ""
+        },
+        {
+            //OPT_BOOLEAN_TYPE - too short
+            __LINE__,
+            { 0x04, 0x00, 0x00, 0x00 },
+            "opt_type: 1024, opt_len: 0, error: option buffer truncated"
+        },
+        {
+            // OPT_INT8_TYPE - too long
+            __LINE__,
+            { 0x04, 0x01, 0x00, 0x02, 1, 2 },
+            ""
+        },
+        {
+            // OPT_INT8_TYPE - too short
+            __LINE__,
+            { 0x04, 0x01, 0x00, 0x00, },
+            "opt_type: 1025, opt_len: 0, error: OptionInt 1025 truncated"
+        },
+        {
+            // OPT_INT16_TYPE - too long
+            __LINE__,
+            { 0x04, 0x02, 0x00, 0x04, 0x01, 0x02, 0x03, 0x04 },
+            ""
+        },
+        {
+            // OPT_INT16_TYPE - too short
+            __LINE__,
+            { 0x04, 0x02, 0x00, 0x01, 0x01 },
+            "opt_type: 1026, opt_len: 1, error: OptionInt 1026 truncated"
+        },
+        {
+            // OPT_UINT16_TYPE - too long
+            __LINE__,
+            { 0x00, D6O_ELAPSED_TIME, 0x00, 0x04, 0x01, 0x02, 0x03, 0x04 },
+            ""
+        },
+        {
+            // OPT_UINT16_TYPE - too short
+            __LINE__,
+            { 0x00, D6O_ELAPSED_TIME, 0x00, 0x01, 0x01 },
+            "opt_type: 8, opt_len: 1, error: OptionInt 8 truncated"
+        },
+        {
+            // OPT_INT32_TYPE - too long
+            __LINE__,
+            { 0x04, 0x03, 0x00, 0x05, 1, 2, 3, 4, 5 },
+            ""
+        },
+        {
+            // OPT_INT32_TYPE - too short
+            __LINE__,
+            { 0x04, 0x03, 0x00, 0x03, 1, 2, 3 },
+            "opt_type: 1027, opt_len: 3, error: OptionInt 1027 truncated"
+        },
+        {
+            // OPT_UINT32_TYPE - too long
+            __LINE__,
+            { 0x04, 0x04, 0x00, 0x05, 1, 2, 3, 4, 5 },
+            ""
+        },
+        {
+            // OPT_UINT32_TYPE - too short
+            __LINE__,
+            { 0x04, 0x04, 0x00, 0x03, 1, 2, 3 },
+            "opt_type: 1028, opt_len: 3, error: OptionInt 1028 truncated"
+        },
+        {
+            // OPT_IPV6_ADDRESS
+            __LINE__,
+            { 0x00, D6O_LINK_ADDRESS, 0x00, 0x11,
+              1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 , 17 },
+            ""
+        },
+        {
+            // OPT_IPV6_ADDRESS
+            __LINE__,
+            { 0x00, D6O_LINK_ADDRESS, 0x00, 0x03, 1, 2, 3 },
+            "opt_type: 80, opt_len: 3, error: option buffer truncated"
+        },
+    };
+
+    OptionBuffer good_option = { 0x00, D6O_BOOTFILE_URL, 0x00, 0x03, 'f', 'o', 'o' };
+    for (auto const& scenario : scenarios) {
+        ostringstream os;
+        os << "Scenario at line: " << scenario.line_;
+        SCOPED_TRACE(os.str());
+
+        // Append good option to end of scenario option buffer.
+        OptionBuffer buf(scenario.buf_);
+        buf.insert(buf.end(), good_option.begin(), good_option.end());
+        OptionCollection options;
+        if (scenario.exp_error_.empty()) {
+            // Should not throw.
+            ASSERT_NO_THROW_LOG(
+                LibDHCP::unpackOptions6(buf, DHCP6_OPTION_SPACE, options));
+
+            // Should still have unpacked the host name option.
+            ASSERT_EQ(1U, options.size());
+            auto it = options.find(D6O_BOOTFILE_URL);
+            ASSERT_TRUE(it != options.end());
+            OptionPtr opt = it->second;
+            ASSERT_EQ(opt->toText(), "type=00059, len=00003: \"foo\" (string)");
+        } else {
+            ASSERT_THROW_MSG(
+                LibDHCP::unpackOptions6(scenario.buf_, DHCP6_OPTION_SPACE, options),
+                OptionParseError, scenario.exp_error_);
+            // Should not have unpacked the host name option.
+            ASSERT_EQ(0U, options.size());
+        }
+    }
 }
 
 }  // namespace
