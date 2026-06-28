@@ -1,0 +1,7 @@
+[func]		tmark
+	Changed legal log hook library to generate a legal
+	log entry using the default log expression when
+	a custom log expression results in an evaluation
+	error. Prior to this the library would emit an
+	error but not generate a legal log entry.
+	(Gitlab #4563)

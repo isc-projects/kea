@@ -2764,4 +2764,56 @@ TEST_F(CalloutTestv6, multipleAddressesAndPrefixesCustomLoggingFormatRequestAndR
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
+TEST_F(CalloutTestv6, customLogRenderError) {
+    ASSERT_NO_THROW(LegalLogMgrFactory::instance().reset(new TestableRotatingFile(time_)));
+
+    CfgMgr::instance().setFamily(AF_INET6);
+
+    // Make a callout handle
+    CalloutHandlePtr handle = getCalloutHandle(decline_);
+    handle->setCurrentLibrary(0);
+
+    // Set the request format to an expression that is valid syntax but
+    // will fail to evaluate. Message type has a defined length of 2 which
+    // will cause uint32totext() to throw.
+    std::string format = "uint32totext(option[1].hex)";
+    LegalLogMgrFactory::instance()->setRequestFormatExpression(format);
+
+    int ret;
+
+    // Make a lease and add it to the callout arguments.
+    Lease6Ptr lease6 = createLease6(duid_, Lease::TYPE_NA, "2001:db8:1::", 128,
+                                    713, HWAddrPtr());
+
+    // The callout should succeed and generate an entry for 2001:db8:1::
+    {
+        ScopedCalloutHandleState callout_handle_state(handle);
+        handle->setArgument("lease6", lease6);
+        ASSERT_NO_THROW(ret = lease6_decline(*handle));
+        ASSERT_EQ(0, ret);
+    }
+
+    {
+        ScopedCalloutHandleState callout_handle_state(handle);
+        handle->setArgument("query6", decline_);
+        handle->setArgument("response6", response_);
+        ASSERT_NO_THROW(ret = pkt6_send(*handle));
+        EXPECT_EQ(0, ret);
+    }
+
+    // Verify we logged the error.
+    auto err_text = "LEGAL_LOG_LEASE6_RENDER_ERROR custom request/"
+                    "response-parser-format failed for lease 2001:db8:1::"
+                    " duid 17:34:e2:ff:09:92:54 (Can not convert to valid"
+                    " uint32.); falling back to default format";
+    EXPECT_EQ(1, countFile(err_text));
+
+    // Verify that the default entry was generated.
+    std::vector<std::string>lines;
+    lines.push_back("Address: 2001:db8:1:: has been released "
+                    "from a device with DUID: 17:34:e2:ff:09:92:54");
+    std::string today_now_string = LegalLogMgrFactory::instance()->getNowString();
+    checkFileLines(genName(today()), today_now_string, lines);
+}
+
 } // end of anonymous namespace

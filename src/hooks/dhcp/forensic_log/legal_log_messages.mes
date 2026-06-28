@@ -78,3 +78,19 @@ the backend are logged.
 This is an error message issued when an error occurs while unloading the
 Legal Log library.  This is unlikely to occur and normal operations of the
 library will likely resume when it is next loaded.
+
+% LEGAL_LOG_LEASE4_RENDER_ERROR custom request/response-parser-format failed for lease %1 hwaddr %2 (%3); falling back to default format
+This error message is issued when an error occurs while evaluating a custom
+legal log message expression.  When this occurs the legal log library will
+then attempt to output an entry using the default expression.  This is most
+likely caused by an invalid expression such as attempting to evaluate
+uint32totext() on an uint8 byte option. The arguments provide the lease
+address, hardware address, and a description of the error.
+
+% LEGAL_LOG_LEASE6_RENDER_ERROR custom request/response-parser-format failed for lease %1 duid %2 (%3); falling back to default format
+This error message is issued when an error occurs while evaluating a custom
+legal log message expression.  When this occurs the legal log library will
+then attempt to output an entry using the default expression.  This is most
+likely caused by an invalid expression such as attempting to evaluate
+uint32totext() on an uint8 byte option. The arguments provide the lease
+address, duid, and a description of the error.

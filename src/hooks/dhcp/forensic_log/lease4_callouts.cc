@@ -36,19 +36,28 @@ using namespace std;
 /// @param lease The current lease generating this log entry.
 /// @param [out] value The value of the custom log entry after parser execution.
 bool getCustomEntry(CalloutHandle& handle, const Pkt4Ptr& query, const Pkt4Ptr& response,
-                    const Lease4Ptr& /*lease*/, std::string& value) {
+                    const Lease4Ptr& lease, std::string& value) {
     bool using_custom_format = false;
+    auto library = LegalLogMgrFactory::instance(handle.getCurrentLibrary());
+    try {
+        auto expression = library->getRequestFormatExpression();
+        if (expression && query) {
+            value = evaluateString(*expression, *query);
+            using_custom_format = true;
+        }
 
-    auto expression = LegalLogMgrFactory::instance(handle.getCurrentLibrary())->getRequestFormatExpression();
-    if (expression && query) {
-        value = evaluateString(*expression, *query);
-        using_custom_format = true;
-    }
-
-    expression = LegalLogMgrFactory::instance(handle.getCurrentLibrary())->getResponseFormatExpression();
-    if (expression && response) {
-        value += evaluateString(*expression, *response);
-        using_custom_format = true;
+        expression = library->getResponseFormatExpression();
+        if (expression && response) {
+            value += evaluateString(*expression, *response);
+            using_custom_format = true;
+        }
+    } catch (const std::exception& ex) {
+        LOG_ERROR(legal_log_logger, LEGAL_LOG_LEASE4_RENDER_ERROR)
+                  .arg(lease ? lease->addr_.toText() : "<none>")
+                  .arg(lease && lease->hwaddr_ ? lease->hwaddr_->toText() : "<none>")
+                  .arg(ex.what());
+        value.clear();
+        return (false);
     }
 
     return (using_custom_format);

@@ -8,8 +8,10 @@ extern const isc::log::MessageID LEGAL_LOG_COMMAND_NO_LEGAL_STORE = "LEGAL_LOG_C
 extern const isc::log::MessageID LEGAL_LOG_COMMAND_WRITE_ERROR = "LEGAL_LOG_COMMAND_WRITE_ERROR";
 extern const isc::log::MessageID LEGAL_LOG_DB_OPEN_CONNECTION_WITH_RETRY_FAILED = "LEGAL_LOG_DB_OPEN_CONNECTION_WITH_RETRY_FAILED";
 extern const isc::log::MessageID LEGAL_LOG_LEASE4_NO_LEGAL_STORE = "LEGAL_LOG_LEASE4_NO_LEGAL_STORE";
+extern const isc::log::MessageID LEGAL_LOG_LEASE4_RENDER_ERROR = "LEGAL_LOG_LEASE4_RENDER_ERROR";
 extern const isc::log::MessageID LEGAL_LOG_LEASE4_WRITE_ERROR = "LEGAL_LOG_LEASE4_WRITE_ERROR";
 extern const isc::log::MessageID LEGAL_LOG_LEASE6_NO_LEGAL_STORE = "LEGAL_LOG_LEASE6_NO_LEGAL_STORE";
+extern const isc::log::MessageID LEGAL_LOG_LEASE6_RENDER_ERROR = "LEGAL_LOG_LEASE6_RENDER_ERROR";
 extern const isc::log::MessageID LEGAL_LOG_LEASE6_WRITE_ERROR = "LEGAL_LOG_LEASE6_WRITE_ERROR";
 extern const isc::log::MessageID LEGAL_LOG_LOAD_ERROR = "LEGAL_LOG_LOAD_ERROR";
 extern const isc::log::MessageID LEGAL_LOG_STORE_CLOSED = "LEGAL_LOG_STORE_CLOSED";
@@ -27,8 +29,10 @@ const char* values[] = {
     "LEGAL_LOG_COMMAND_WRITE_ERROR", "Could not write command entry to the legal store: %1",
     "LEGAL_LOG_DB_OPEN_CONNECTION_WITH_RETRY_FAILED", "Failed to connect to database: %1 with error: %2",
     "LEGAL_LOG_LEASE4_NO_LEGAL_STORE", "LegalStore instance is null",
+    "LEGAL_LOG_LEASE4_RENDER_ERROR", "custom request/response-parser-format failed for lease %1 hwaddr %2 (%3); falling back to default format",
     "LEGAL_LOG_LEASE4_WRITE_ERROR", "Could not write to the legal store: %1",
     "LEGAL_LOG_LEASE6_NO_LEGAL_STORE", "LegalStore instance is null",
+    "LEGAL_LOG_LEASE6_RENDER_ERROR", "custom request/response-parser-format failed for lease %1 duid %2 (%3); falling back to default format",
     "LEGAL_LOG_LEASE6_WRITE_ERROR", "Could not write to the legal store: %1",
     "LEGAL_LOG_LOAD_ERROR", "LEGAL LOGGING DISABLED! An error occurred loading the library: %1",
     "LEGAL_LOG_STORE_CLOSED", "Legal store closed: %1",

@@ -1722,4 +1722,51 @@ TEST_F(CalloutTestv4, customRequestLoggingFormatMultipleLines) {
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
+// Verifies that the custom format logs that fail to render
+// are error logged and the default format is used instead.
+TEST_F(CalloutTestv4, customLogRenderError) {
+    ASSERT_NO_THROW(LegalLogMgrFactory::instance().reset(new TestableRotatingFile(time_)));
+
+    // Make a callout handle
+    CalloutHandlePtr handle = getCalloutHandle(decline_);
+    handle->setCurrentLibrary(0);
+
+    // Set the request format to an expression that is valid syntax but
+    // will fail to evaluate. Option 53 has a defined length of 1 which
+    // will cause uint32totext() to throw.
+    std::string format = "uint32totext(option[53].hex)";
+    LegalLogMgrFactory::instance()->setRequestFormatExpression(format);
+
+    int ret;
+
+    // Make a lease and add it to the callout arguments.
+    Lease4Ptr lease4 = createLease4("192.2.1.100", 6735, hwaddr_, ClientIdPtr(), 1234);
+
+    // The callout should succeed and generate an entry for 192.2.1.100.
+    {
+        ScopedCalloutHandleState callout_handle_state(handle);
+        handle->setArgument("lease4", lease4);
+        handle->setArgument("query4", decline_);
+        ASSERT_NO_THROW(ret = lease4_decline(*handle));
+        EXPECT_EQ(0, ret);
+    }
+
+    // Close it to flush any unwritten data
+    LegalLogMgrFactory::instance()->close();
+
+    // Verify we logged the error.
+    auto err_text = "LEGAL_LOG_LEASE4_RENDER_ERROR custom request/response"
+                    "-parser-format failed for lease 192.2.1.100 hwaddr hwtype"
+                    "=1 08:00:2b:02:3f:4e (Can not convert to valid uint32.);"
+                    " falling back to default format";
+    EXPECT_EQ(1, countFile(err_text));
+
+    // Verify that the default entry was generated.
+    std::vector<std::string>lines;
+    lines.push_back("Address: 192.2.1.100 has been released from a device"
+                    " with hardware address: hwtype=1 08:00:2b:02:3f:4e");
+    std::string today_now_string = LegalLogMgrFactory::instance()->getNowString();
+    checkFileLines(genName(today()), today_now_string, lines);
+}
+
 } // end of anonymous namespace

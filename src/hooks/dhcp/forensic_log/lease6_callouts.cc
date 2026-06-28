@@ -483,21 +483,30 @@ void replaceTokensForLease(isc::dhcp::ExpressionPtr& expression,
 bool getCustomEntry(CalloutHandle& handle, const Pkt6Ptr& query, const Pkt6Ptr& response,
                     const Lease6Ptr& lease, std::string& value) {
     bool using_custom_format = false;
+    auto library = LegalLogMgrFactory::instance(handle.getCurrentLibrary());
+    try {
+        auto expression = library->getRequestFormatExpression();
+        if (expression && query) {
+            replaceTokensForLease(expression, lease);
 
-    auto expression = LegalLogMgrFactory::instance(handle.getCurrentLibrary())->getRequestFormatExpression();
-    if (expression && query) {
-        replaceTokensForLease(expression, lease);
+            value = evaluateString(*expression, *query);
+            using_custom_format = true;
+        }
 
-        value = evaluateString(*expression, *query);
-        using_custom_format = true;
-    }
+        expression = library->getResponseFormatExpression();
+        if (expression && response) {
+            replaceTokensForLease(expression, lease);
 
-    expression = LegalLogMgrFactory::instance(handle.getCurrentLibrary())->getResponseFormatExpression();
-    if (expression && response) {
-        replaceTokensForLease(expression, lease);
-
-        value += evaluateString(*expression, *response);
-        using_custom_format = true;
+            value += evaluateString(*expression, *response);
+            using_custom_format = true;
+        }
+    } catch (const std::exception& ex) {
+        LOG_ERROR(legal_log_logger, LEGAL_LOG_LEASE6_RENDER_ERROR)
+                  .arg(lease ? lease->addr_.toText() : "<none>")
+                  .arg(lease && lease->duid_ ? lease->duid_->toText() : "<none>")
+                  .arg(ex.what());
+        value.clear();
+        return (false);
     }
 
     return (using_custom_format);
