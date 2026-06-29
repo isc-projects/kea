@@ -717,6 +717,10 @@ LibDHCP::unpackOptions4(const OptionBuffer& buf, const string& option_space,
 
 void
 LibDHCP::sanityCheckScalarLength(const OptionDefinitionPtr& def, uint16_t opt_len) {
+    if (Option::lenient_parsing_) {
+        return;
+    }
+
     // Check the stated length against defined length of scalar options.
     // If it exceeds the defined length throw.  We don't check for undersized
     // lengths as this is done in option factories and would break v4 option
@@ -724,16 +728,9 @@ LibDHCP::sanityCheckScalarLength(const OptionDefinitionPtr& def, uint16_t opt_le
     size_t exp_len = OptionDataTypeUtil::getDataTypeLen(def->getType());
     if ((exp_len > 0 && opt_len > exp_len) && (!def->getArrayType()) &&
         (def->getEncapsulatedSpace().empty())) {
-        ostringstream os;
-        os << "opt_len does not match defined option length "
-           << static_cast<uint16_t>(exp_len) << " for data type "
-           << OptionDataTypeUtil::getDataTypeName(def->getType());
-
-        if (Option::lenient_parsing_) {
-            isc_throw(SkipThisOptionError, os.str()); 
-        } else {
-            isc_throw(BadValue, os.str());
-        }
+        isc_throw(BadValue, "opt_len does not match defined option length "
+                             << static_cast<uint16_t>(exp_len) << " for data type "
+                             << OptionDataTypeUtil::getDataTypeName(def->getType()));
     }
 }
 
