@@ -233,7 +233,7 @@ RotatingFile::useExistingFiles(struct tm& time_info) {
             return;
         }
         time_t current_timestamp = mktime(&time_info);
-        if (current_timestamp < (file_timestamp + count_)) {
+        if (current_timestamp < (file_timestamp + static_cast<time_t>(count_))) {
             localtime_r(&file_timestamp, &time_info);
         } else {
             file.clear();
@@ -329,7 +329,7 @@ RotatingFile::rotate() {
     if (!isOpen()) {
         rotate_file = true;
     } else if (time_unit_ == TimeUnit::Second) {
-        if (count_ <= (timestamp - timestamp_)) {
+        if (static_cast<time_t>(count_) <= (timestamp - timestamp_)) {
             rotate_file = true;
         }
     } else if (time_unit_ == TimeUnit::Day) {
