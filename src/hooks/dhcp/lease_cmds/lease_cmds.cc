@@ -33,6 +33,7 @@
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/algorithm/string.hpp>
+#include <limits>
 #include <string>
 #include <sstream>
 
@@ -752,7 +753,12 @@ LeaseCmdsImpl::getParameters(bool v6, const ConstElementPtr& params) {
     if (tmp->getType() != Element::integer) {
         isc_throw(BadValue, "'subnet-id' parameter is not integer.");
     }
-    x.subnet_id = tmp->intValue();
+    int64_t tmp64 = tmp->intValue();
+    if ((tmp64 < numeric_limits<uint32_t>::min()) ||
+        (tmp64 > numeric_limits<uint32_t>::max())) {
+        isc_throw(BadValue, "'subnet-id' parameter is not a 32 bit unsigned integer.");
+    }
+    x.subnet_id = static_cast<SubnetID>(tmp64);
 
     if (params->contains("iaid")) {
         x.iaid = params->get("iaid")->intValue();
@@ -923,17 +929,23 @@ LeaseCmdsImpl::leaseGetAllHandler(CalloutHandle& handle) {
                 if (subnet_id->getType() != Element::integer) {
                     isc_throw(BadValue, "listed subnet identifiers must be numbers");
                 }
+                auto subnet_id_ = subnet_id->intValue();
+                if ((subnet_id_ < numeric_limits<uint32_t>::min()) ||
+                    (subnet_id_ > numeric_limits<uint32_t>::max())) {
+                    isc_throw(BadValue, "out of range subnet identifier "
+                              << subnet_id_);
+                }
 
                 if (v4) {
                     Lease4Collection leases =
-                        LeaseMgrFactory::instance().getLeases4(subnet_id->intValue());
+                        LeaseMgrFactory::instance().getLeases4(subnet_id_);
                     for (auto const& lease : leases) {
                         ElementPtr lease_json = lease->toElement();
                         leases_json->add(lease_json);
                     }
                 } else {
                     Lease6Collection leases =
-                        LeaseMgrFactory::instance().getLeases6(subnet_id->intValue());
+                        LeaseMgrFactory::instance().getLeases6(subnet_id_);
                     for (auto const& lease : leases) {
                         ElementPtr lease_json = lease->toElement();
                         leases_json->add(lease_json);
@@ -1316,7 +1328,12 @@ LeaseCmdsImpl::leaseGetByStateHandler(CalloutHandle& handle) {
             if (subnet->getType() != Element::integer) {
                 isc_throw(BadValue, "'subnet-id' parameter must be a number");
             }
-            subnet_id_ = subnet->intValue();
+            auto id64 = subnet->intValue();
+            if ((id64 < numeric_limits<uint32_t>::min()) ||
+                (id64 > numeric_limits<uint32_t>::max())) {
+                isc_throw(BadValue, "'subnet-id' parameter must be a 32 bit unsigned integer");
+            }
+            subnet_id_ = static_cast<SubnetID>(id64);
         }
 
         ElementPtr leases_json = Element::createList();

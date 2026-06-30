@@ -341,6 +341,10 @@ public:
     /// combinations).
     void testLease6GetByStateFindN();
 
+    /// @brief Check that lease6-get-by-state raises an error when
+    /// the argument is bad.
+    void testLease6GetByStateBadArgs();
+
     /// @brief Check that lease6-get-by-hostname can handle a situation when
     /// the query is broken (required parameter is missing).
     void testLease6GetByHostnameParams();
@@ -1452,6 +1456,39 @@ void Lease6CmdsTest::testLease6GetMissingParams() {
     string exp_rsp = "Mandatory 'subnet-id' parameter missing.";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
+    // Reject not numeric subnet id.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": \"foo\""
+        "    }\n"
+        "}";
+    exp_rsp = "'subnet-id' parameter is not integer.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Reject negative subnet id.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": -1"
+        "    }\n"
+        "}";
+    exp_rsp = "'subnet-id' parameter is not a 32 bit unsigned integer.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Reject too large subnet id.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 4294967297"
+        "    }\n"
+        "}";
+    exp_rsp = "'subnet-id' parameter is not a 32 bit unsigned integer.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
     // Just the subnet-id won't cut it, either.
     cmd =
         "{\n"
@@ -1879,6 +1916,28 @@ void Lease6CmdsTest::testLease6GetBySubnetIdInvalidArguments() {
         "    }\n"
         "}";
     exp_rsp = "listed subnet identifiers must be numbers";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Subnets list must contain positive numbers..
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-all\",\n"
+        "    \"arguments\": {"
+        "        \"subnets\": [ 1, -1 ]\n"
+        "    }\n"
+        "}";
+    exp_rsp = "out of range subnet identifier -1";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Subnets list must contain 32 bit unsigned integers..
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-all\",\n"
+        "    \"arguments\": {"
+        "        \"subnets\": [ 1, 4294967297 ]\n"
+        "    }\n"
+        "}";
+    exp_rsp = "out of range subnet identifier 4294967297";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
@@ -2448,6 +2507,44 @@ void Lease6CmdsTest::testLease6GetByStateFindN() {
         ASSERT_TRUE(lease);
         EXPECT_EQ(lease->str(), leases[scenario.state_]->toElement()->str());
     }
+}
+
+void Lease6CmdsTest::testLease6GetByStateBadArgs() {
+    // Subnet id must be a number.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": 3,\n"
+        "        \"subnet-id\": \"foo\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "'subnet-id' parameter must be a number";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Subnet id must be positive.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": 3,\n"
+        "        \"subnet-id\": -1\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'subnet-id' parameter must be a 32 bit unsigned integer";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Subnet id must be fir into 32 bits.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": 3,\n"
+        "        \"subnet-id\": 4294967297\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'subnet-id' parameter must be a 32 bit unsigned integer";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
 void Lease6CmdsTest::testLease6GetByHostnameParams() {
@@ -5409,6 +5506,15 @@ TEST_F(Lease6CmdsTest, lease6GetByStateFindN) {
 TEST_F(Lease6CmdsTest, lease6GetByStateFindNMultiThreading) {
     MultiThreadingTest mt(true);
     testLease6GetByStateFindN();
+}
+
+TEST_F(Lease6CmdsTest, lease6GetByStateBadArgs) {
+    testLease6GetByStateBadArgs();
+}
+
+TEST_F(Lease6CmdsTest, lease6GetByStateBadArgsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetByStateBadArgs();
 }
 
 TEST_F(Lease6CmdsTest, lease6GetByHostnameParams) {
