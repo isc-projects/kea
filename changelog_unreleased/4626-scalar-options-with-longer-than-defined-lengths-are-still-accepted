@@ -1,0 +1,7 @@
+[func]*		tmark
+	Unless "lenient-option-parsing" is true, Kea servers
+	will now drop packets which contain scalar options
+	whose length exceeds their defined length. Prior
+	to this the servers would attempt to parse the
+	option. Applies to both kea-dhcp4 and kea-dhcp6.
+	(Gitlab #4626)

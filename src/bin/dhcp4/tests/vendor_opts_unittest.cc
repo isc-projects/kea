@@ -57,12 +57,14 @@ public:
     void SetUp() override {
         iface_mgr_test_config_.reset(new IfaceMgrTestConfig(true));
         IfaceMgr::instance().openSockets4();
+        Option::lenient_parsing_ = false;
     }
 
     /// @brief Called after each test
     void TearDown() override {
         iface_mgr_test_config_.reset();
         IfaceMgr::instance().closeSockets();
+        Option::lenient_parsing_ = false;
     }
 
     /// @brief Checks if Option Request Option (ORO) in docsis (vendor-id=4491)
@@ -2957,7 +2959,9 @@ TEST_F(VendorOptsTest, vendorClassIdClassification3) {
     EXPECT_FALSE(dis->inClass("foo%20bar"));
 }
 
-TEST_F(VendorOptsTest, toms) {
+/// Verifies that deferred scalar options that exceed their defined
+/// length emit an error and are discarded.
+TEST_F(VendorOptsTest, sanityCheckDeferredOptions) {
     string config =
         "{"
         "    \"interfaces-config\": {"
@@ -2998,11 +3002,43 @@ TEST_F(VendorOptsTest, toms) {
     query->setIface("eth1");
     query->setIndex(ETH1_INDEX);
 
-    // Create and add a PRL option to the query
-    boost::shared_ptr<OptionInt<int8_t> >opt(new OptionInt<int8_t>(Option::V4, 224, 123));
+    // Add an option that is too long.
+    boost::shared_ptr<OptionInt<int16_t> >opt(new OptionInt<int16_t>(Option::V4, 224, 123));
     ASSERT_TRUE(opt);
     query->addOption(opt);
-    query->getDeferredOptions().push_back(224);
 
-    ASSERT_NO_THROW(srv_->deferredUnpack(query));
+    // Create a packed copy, then unpack it so we can then call deferredUnpack().
+    query->pack();
+    Pkt4Ptr msg_copy(new Pkt4(static_cast<const uint8_t*>
+                              (query->getBuffer().getData()),
+                               query->getBuffer().getLength()));
+    msg_copy->unpack();
+
+    ASSERT_FALSE(Option::lenient_parsing_);
+
+    // Should detect the valid length without throwing.
+    ASSERT_NO_THROW(srv_->deferredUnpack(msg_copy));
+    EXPECT_EQ(1, countFile("An error unpacking the deferred option 224:"
+                           " opt_len does not match defined option length"
+                           " 1 for data type int8"));
+    // Get the option.
+    OptionPtr after_opt = msg_copy->getOption(224);
+    ASSERT_TRUE(after_opt);
+    // It should be still be packed/raw.
+    EXPECT_EQ(after_opt->toText(), "type=224, len=002: 00:7b");
+
+    // Enable lenient parsing and try again. It should unpack the option.
+    Option::lenient_parsing_ = true;
+    msg_copy->unpack();
+    ASSERT_NO_THROW(srv_->deferredUnpack(msg_copy));
+
+    // Still only one complaint.
+    EXPECT_EQ(1, countFile("An error unpacking the deferred option 224:"
+                           " opt_len does not match defined option length"
+                           " 1 for data type int8"));
+    // Option exists.
+    after_opt = msg_copy->getOption(224);
+    ASSERT_TRUE(after_opt);
+    // It should have been unpacked as an int8.
+    EXPECT_EQ(after_opt->toText(), "type=224, len=001: 0 (int8)");
 }
