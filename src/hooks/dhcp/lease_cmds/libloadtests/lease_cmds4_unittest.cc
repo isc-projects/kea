@@ -1221,7 +1221,7 @@ void Lease4CmdsTest::testLease4GetMissingParams() {
         "    }\n"
         "}";
     exp_rsp = "Incorrect identifier type: color, the only supported values are: "
-        "address, hw-address, duid";
+        "address, hw-address, duid, client-id";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Query by DUID is not supported in v4. Sorry.
@@ -2911,7 +2911,7 @@ void Lease4CmdsTest::testLease4DelMissingParams() {
         "    }\n"
         "}";
     exp_rsp = "Incorrect identifier type: color, the only supported values are: "
-        "address, hw-address, duid";
+        "address, hw-address, duid, client-id";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Query by DUID is not supported in v4. Sorry.

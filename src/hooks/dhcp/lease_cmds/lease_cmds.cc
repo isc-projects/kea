@@ -103,7 +103,7 @@ public:
             } else {
                 isc_throw(BadValue, "Incorrect identifier type: "
                           << txt << ", the only supported values are: "
-                          "address, hw-address, duid");
+                          "address, hw-address, duid, client-id");
             }
         }
 
