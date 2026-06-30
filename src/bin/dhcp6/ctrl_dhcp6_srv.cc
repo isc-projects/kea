@@ -258,7 +258,9 @@ ControlledDhcpv6Srv::commandConfigReloadHandler(const string&,
     } catch (const FatalException& ex) {
         LOG_FATAL(dhcp6_logger, DHCP6_FATAL_DYNAMIC_RECONFIGURATION_FAIL)
             .arg(file);
-        shutdownServer(EXIT_FAILURE);
+        if (Daemon::getShutdownOnFailure()) {
+            shutdownServer(EXIT_FAILURE);
+        }
         return (createAnswer(CONTROL_RESULT_FATAL_ERROR,
                              "Config reload failed: " + string(ex.what())));
     } catch (const std::exception& ex) {
@@ -475,7 +477,9 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
         IOServiceMgr::instance().pollIOServices();
     } catch (const std::exception& ex) {
         if (rcode == CONTROL_RESULT_FATAL_ERROR) {
-            shutdownServer(EXIT_FAILURE);
+            if (Daemon::getShutdownOnFailure()) {
+                shutdownServer(EXIT_FAILURE);
+            }
             return (result);
         }
         std::ostringstream err;
@@ -484,7 +488,7 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
         return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
-    if (rcode == CONTROL_RESULT_FATAL_ERROR) {
+    if (rcode == CONTROL_RESULT_FATAL_ERROR && Daemon::getShutdownOnFailure()) {
         shutdownServer(EXIT_FAILURE);
     }
 
@@ -826,10 +830,10 @@ ControlledDhcpv6Srv::commandInterfaceAddHandler(const std::string&,
         }
         for (auto const& item : ifaces_config->listValue()) {
             auto const& str = item->stringValue();
-            if (seen.find(item->stringValue()) != seen.end()) {
+            if (seen.find(str) != seen.end()) {
                 continue;
             }
-            seen.insert(item->stringValue());
+            seen.insert(str);
             ifaces->add(item);
         }
         IfacesConfigParser parser(AF_INET6, true);

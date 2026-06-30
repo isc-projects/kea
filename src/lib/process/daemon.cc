@@ -36,6 +36,7 @@ namespace isc {
 namespace process {
 
 bool Daemon::verbose_ = false;
+bool Daemon::shutdown_on_failure_ = false;
 
 std::string Daemon::proc_name_("");
 

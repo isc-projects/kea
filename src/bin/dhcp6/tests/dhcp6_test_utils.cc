@@ -17,6 +17,7 @@
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/json_config_parser.h>
 #include <log/logger_support.h>
+#include <process/daemon.h>
 #include <process/log_parser.h>
 #include <stats/stats_mgr.h>
 #include <util/filesystem.h>
@@ -27,13 +28,13 @@
 #include <cstring>
 #include <sstream>
 
+using namespace isc::asiolink;
+using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
-using namespace isc::asiolink;
+using namespace isc::process;
 using namespace isc::stats;
 using namespace isc::util;
-using namespace isc::process;
-using namespace isc::config;
 using namespace boost::posix_time;
 
 namespace isc {
@@ -50,6 +51,7 @@ BaseServerTest::BaseServerTest() {
     resetLogPath();
     resetSocketPath();
     file::PathChecker::enableEnforcement(true);
+    Daemon::setShutdownOnFailure(false);
 }
 
 BaseServerTest::~BaseServerTest() {

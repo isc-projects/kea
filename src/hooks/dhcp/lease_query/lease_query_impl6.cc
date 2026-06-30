@@ -797,12 +797,12 @@ LeaseQueryImpl6::makeClientOption(Lease6Collection& leases) {
 
         // Calculate the remaining lifetimes.
         uint32_t preferred = lease->preferred_lft_;
-        if (elapsed < preferred) {
+        if (elapsed < static_cast<time_t>(preferred)) {
             preferred -= elapsed;
         }
 
         uint32_t valid = lease->valid_lft_;
-        if (elapsed < valid) {
+        if (elapsed < static_cast<time_t>(valid)) {
             valid -= elapsed;
         }
 
@@ -848,12 +848,12 @@ LeaseQueryImpl6::makeClientOption(Lease6Ptr lease) {
 
     // Calculate the remaining lifetimes.
     uint32_t preferred = lease->preferred_lft_;
-    if (elapsed < preferred) {
+    if (elapsed < static_cast<time_t>(preferred)) {
         preferred -= elapsed;
     }
 
     uint32_t valid = lease->valid_lft_;
-    if (elapsed < valid) {
+    if (elapsed < static_cast<time_t>(valid)) {
         valid -= elapsed;
     }
 

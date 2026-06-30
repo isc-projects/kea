@@ -313,6 +313,10 @@ DControllerBase::parseArgs(int argc, char* argv[]) {
             file::PathChecker::enableEnforcement(false);
             break;
 
+        case 'F': // exit on fatal error
+            Daemon::setShutdownOnFailure(true);
+            break;
+
         case '?': {
             char const saved_optopt(optopt);
             std::string const saved_optarg(optarg ? optarg : std::string());
@@ -685,7 +689,7 @@ DControllerBase::configSetHandler(const std::string&, ConstElementPtr args) {
         int rcode = 0;
         parseAnswer(rcode, answer);
 
-        if (rcode == CONTROL_RESULT_FATAL_ERROR) {
+        if (rcode == CONTROL_RESULT_FATAL_ERROR && Daemon::getShutdownOnFailure()) {
             setExitValue(EXIT_FAILURE);
             shutdownProcess(ElementPtr());
         }

@@ -83,6 +83,11 @@ the following command-line switches:
    rather than fail with an error. Please see
    :ref:`sec-kea-runtime-security-policy-checking` for details.
 
+-  ``-F`` - As of Kea 3.3.0, makes the server exit immediately on any fatal
+   error. Default behavior (parameter not set) is to just log the error and
+   continue, making it possible for an administrator to intervene and fix the
+   issue without restarting the server.
+
 On startup, the server detects available network interfaces and
 attempts to open UDP sockets on all interfaces listed in the
 configuration file. Since the DHCPv6 server opens privileged ports, it

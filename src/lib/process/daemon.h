@@ -262,6 +262,20 @@ public:
     /// @return the redacted configuration
     isc::data::ConstElementPtr redactConfig(isc::data::ConstElementPtr const& config);
 
+    /// @brief Get the shutdown on critical failure flag.
+    ///
+    /// @return The shutdown flag.
+    static bool getShutdownOnFailure() {
+        return (shutdown_on_failure_);
+    }
+
+    /// @brief Set the shutdown on critical failure flag.
+    ///
+    /// @param shutdown The shutdown flag.
+    static void setShutdownOnFailure(bool shutdown) {
+        shutdown_on_failure_ = shutdown;
+    }
+
 protected:
 
     /// @brief A pointer to the object installing custom signal handlers.
@@ -303,6 +317,10 @@ private:
     /// @brief Exit value the process should use.  Typically set
     /// by the application during a controlled shutdown.
     int exit_value_;
+
+    /// @brief Flag indicating if the server should exit on critical
+    /// failure.
+    static bool shutdown_on_failure_;
 };
 
 } // namespace process

@@ -30,6 +30,7 @@
 #include <http/response_parser.h>
 #include <http/testutils/test_http_client.h>
 #include <log/logger_support.h>
+#include <process/daemon.h>
 #include <process/log_parser.h>
 #include <stats/stats_mgr.h>
 #include <util/chrono_time_utils.h>
@@ -60,9 +61,9 @@ using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::hooks;
 using namespace isc::http;
+using namespace isc::process;
 using namespace isc::stats;
 using namespace isc::util;
-using namespace isc::process;
 namespace ph = std::placeholders;
 
 namespace {
@@ -5133,6 +5134,159 @@ TEST_F(HttpCtrlChannelDhcpv4Test, handleHttpToHttpsSwitch) {
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     EXPECT_EQ(1U, subnets->size());
 
+    EXPECT_EQ(EXIT_SUCCESS, server_->getExitValue());
+    EXPECT_FALSE(server_->getShutdown());
+
+    // Clean up after the test.
+    CfgMgr::instance().clear();
+}
+
+// Verify that the "config-set" command will exit with an error
+TEST_F(HttpCtrlChannelDhcpv4Test, handleHttpToHttpsSwitchFatal) {
+    Daemon::setShutdownOnFailure(true);
+    createHttpChannelServer();
+
+    // Define strings to permutate the config arguments
+    // (Note the line feeds makes errors easy to find)
+    string ca_dir(string(TEST_CA_DIR));
+    string config_set_txt = "{ \"command\": \"config-set\" \n";
+    string args_txt = " \"arguments\": { \n";
+    string dhcp4_cfg_txt =
+        "    \"Dhcp4\": { \n"
+        "        \"interfaces-config\": { \n"
+        "            \"interfaces\": [\"*\"] \n"
+        "        },   \n"
+        "        \"valid-lifetime\": 4000, \n"
+        "        \"renew-timer\": 1000, \n"
+        "        \"rebind-timer\": 2000, \n"
+        "        \"lease-database\": { \n"
+        "           \"type\": \"memfile\", \n"
+        "           \"persist\":false, \n"
+        "           \"lfc-interval\": 0  \n"
+        "        }, \n"
+        "        \"expired-leases-processing\": { \n"
+        "            \"reclaim-timer-wait-time\": 0, \n"
+        "            \"hold-reclaimed-time\": 0, \n"
+        "            \"flush-reclaimed-timer-wait-time\": 0 \n"
+        "        },"
+        "        \"subnet4\": [ \n";
+    string subnet1 =
+        "               {\"subnet\": \"192.2.0.0/24\", \"id\": 1, \n"
+        "                \"pools\": [{ \"pool\": \"192.2.0.1-192.2.0.50\" }]}\n";
+    string subnet_footer =
+        "          ] \n";
+    string option_def =
+        "    ,\"option-def\": [\n"
+        "    {\n"
+        "        \"name\": \"foo\",\n"
+        "        \"code\": 163,\n"
+        "        \"type\": \"uint32\",\n"
+        "        \"array\": false,\n"
+        "        \"record-types\": \"\",\n"
+        "        \"space\": \"dhcp4\",\n"
+        "        \"encapsulate\": \"\"\n"
+        "    }\n"
+        "]\n";
+    string option_data =
+        "    ,\"option-data\": [\n"
+        "    {\n"
+        "        \"name\": \"foo\",\n"
+        "        \"code\": 163,\n"
+        "        \"space\": \"dhcp4\",\n"
+        "        \"csv-format\": true,\n"
+        "        \"data\": \"12345\"\n"
+        "    }\n"
+        "]\n";
+    string control_socket_header =
+        "    ,\"control-socket\": { \n";
+    string control_socket_footer =
+        "       \"socket-type\": \"http\", \n"
+        "       \"socket-address\": \"127.0.0.1\", \n"
+        "       \"socket-port\": 18124 \n"
+        "    } \n";
+    string logger_txt =
+        "       ,\"loggers\": [ { \n"
+        "            \"name\": \"kea\", \n"
+        "            \"severity\": \"FATAL\", \n"
+        "            \"output-options\": [{ \n"
+        "                \"output\": \"/dev/null\", \n"
+        "                \"maxsize\": 0"
+        "            }] \n"
+        "        }] \n";
+
+    std::ostringstream os;
+
+    // Create a valid config with all the parts should parse
+    os << config_set_txt << ","
+       << args_txt
+       << dhcp4_cfg_txt
+       << subnet1
+       << subnet_footer
+       << option_def
+       << option_data
+       << control_socket_header
+       << control_socket_footer
+       << logger_txt
+       << "}\n"                      // close dhcp4
+       << "}}";
+
+    // Send the config-set command
+    std::string response;
+    sendHttpCommand(os.str(), response);
+    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"CEA228E014102D623F40E6E9C68EC166A6021A81E220A15276F8C87F68866FDF\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
+              response);
+
+    // Check that the config was indeed applied.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(1U, subnets->size());
+
+    OptionDefinitionPtr def =
+        LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
+    ASSERT_TRUE(def);
+
+    // Verify the HTTP control channel socket exists.
+    ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
+    auto const listener = HttpCommandMgr::instance().getHttpListener().get();
+    ASSERT_FALSE(HttpCommandMgr::instance().getHttpListener()->getTlsContext());
+
+    std::ostringstream second_config_os;
+
+    // Create a valid config with all the parts should parse
+    second_config_os << config_set_txt << ","
+        << args_txt
+        << dhcp4_cfg_txt
+        << subnet1
+        << subnet_footer
+        << option_def
+        << option_data
+        << control_socket_header
+        << "        \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
+        << "        \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
+        << "        \"key-file\": \"" << ca_dir << "/kea-server.key\", \n"
+        << control_socket_footer
+        << logger_txt
+        << "}\n"                      // close dhcp4
+        << "}}";
+
+    EXPECT_EQ(EXIT_SUCCESS, server_->getExitValue());
+    EXPECT_FALSE(server_->getShutdown());
+
+    // Send the config-set command.
+    sendHttpCommand(second_config_os.str(), response);
+
+    ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
+    EXPECT_EQ(listener, HttpCommandMgr::instance().getHttpListener().get());
+    ASSERT_FALSE(HttpCommandMgr::instance().getHttpListener()->getTlsContext());
+
+    EXPECT_NE(response.find("\"result\": 5"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Can not switch from HTTP to HTTPS sockets using the same address and port.\""),
+              std::string::npos);
+
+    // Check that the config was not lost
+    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(1U, subnets->size());
+
     EXPECT_EQ(EXIT_FAILURE, server_->getExitValue());
     EXPECT_TRUE(server_->getShutdown());
 
@@ -5142,6 +5296,168 @@ TEST_F(HttpCtrlChannelDhcpv4Test, handleHttpToHttpsSwitch) {
 
 // Verify that the "config-set" command will exit with an error
 TEST_F(HttpsCtrlChannelDhcpv4Test, handleHttpsToHttpSwitch) {
+    createHttpChannelServer();
+
+    // Define strings to permutate the config arguments
+    // (Note the line feeds makes errors easy to find)
+    string ca_dir(string(TEST_CA_DIR));
+    string config_set_txt = "{ \"command\": \"config-set\" \n";
+    string args_txt = " \"arguments\": { \n";
+    string dhcp4_cfg_txt =
+        "    \"Dhcp4\": { \n"
+        "        \"interfaces-config\": { \n"
+        "            \"interfaces\": [\"*\"] \n"
+        "        },   \n"
+        "        \"valid-lifetime\": 4000, \n"
+        "        \"renew-timer\": 1000, \n"
+        "        \"rebind-timer\": 2000, \n"
+        "        \"lease-database\": { \n"
+        "           \"type\": \"memfile\", \n"
+        "           \"persist\":false, \n"
+        "           \"lfc-interval\": 0  \n"
+        "        }, \n"
+        "        \"expired-leases-processing\": { \n"
+        "            \"reclaim-timer-wait-time\": 0, \n"
+        "            \"hold-reclaimed-time\": 0, \n"
+        "            \"flush-reclaimed-timer-wait-time\": 0 \n"
+        "        },"
+        "        \"subnet4\": [ \n";
+    string subnet1 =
+        "               {\"subnet\": \"192.2.0.0/24\", \"id\": 1, \n"
+        "                \"pools\": [{ \"pool\": \"192.2.0.1-192.2.0.50\" }]}\n";
+    string subnet_footer =
+        "          ] \n";
+    string option_def =
+        "    ,\"option-def\": [\n"
+        "    {\n"
+        "        \"name\": \"foo\",\n"
+        "        \"code\": 163,\n"
+        "        \"type\": \"uint32\",\n"
+        "        \"array\": false,\n"
+        "        \"record-types\": \"\",\n"
+        "        \"space\": \"dhcp4\",\n"
+        "        \"encapsulate\": \"\"\n"
+        "    }\n"
+        "]\n";
+    string option_data =
+        "    ,\"option-data\": [\n"
+        "    {\n"
+        "        \"name\": \"foo\",\n"
+        "        \"code\": 163,\n"
+        "        \"space\": \"dhcp4\",\n"
+        "        \"csv-format\": true,\n"
+        "        \"data\": \"12345\"\n"
+        "    }\n"
+        "]\n";
+    string control_socket_header =
+        "    ,\"control-socket\": { \n";
+    string control_socket_footer =
+        "       \"socket-type\": \"http\", \n"
+        "       \"socket-address\": \"127.0.0.1\", \n"
+        "       \"socket-port\": 18124 \n"
+        "    } \n";
+    string logger_txt =
+        "       ,\"loggers\": [ { \n"
+        "            \"name\": \"kea\", \n"
+        "            \"severity\": \"FATAL\", \n"
+        "            \"output-options\": [{ \n"
+        "                \"output\": \"/dev/null\", \n"
+        "                \"maxsize\": 0"
+        "            }] \n"
+        "        }] \n";
+
+    std::ostringstream os;
+
+    // Create a valid config with all the parts should parse
+    os << config_set_txt << ","
+       << args_txt
+       << dhcp4_cfg_txt
+       << subnet1
+       << subnet_footer
+       << option_def
+       << option_data
+       << control_socket_header
+       << "        \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
+       << "        \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
+       << "        \"key-file\": \"" << ca_dir << "/kea-server.key\", \n"
+       << control_socket_footer
+       << logger_txt
+       << "}\n"                      // close dhcp4
+       << "}}";
+
+    // Send the config-set command
+    std::string response;
+    sendHttpCommand(os.str(), response);
+    // Verify the configuration was successful. The config contains random
+    // file paths (CA directory), so the hash will be different each time.
+    // As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration successful." is there
+    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Configuration successful.\""),
+              std::string::npos);
+
+    // Check that the config was indeed applied.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(1U, subnets->size());
+
+    OptionDefinitionPtr def =
+        LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
+    ASSERT_TRUE(def);
+
+    // Verify the HTTP control channel socket exists.
+    ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
+    auto const listener = HttpCommandMgr::instance().getHttpListener().get();
+    ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener()->getTlsContext());
+    // The TLS settings have not changed
+    auto const context = HttpCommandMgr::instance().getHttpListener()->getTlsContext().get();
+
+    std::ostringstream second_config_os;
+
+    // Create a valid config with all the parts should parse
+    second_config_os << config_set_txt << ","
+        << args_txt
+        << dhcp4_cfg_txt
+        << subnet1
+        << subnet_footer
+        << option_def
+        << option_data
+        << control_socket_header
+        << control_socket_footer
+        << logger_txt
+        << "}\n"                      // close dhcp4
+        << "}}";
+
+    EXPECT_EQ(EXIT_SUCCESS, server_->getExitValue());
+    EXPECT_FALSE(server_->getShutdown());
+
+    // Send the config-set command.
+    sendHttpCommand(second_config_os.str(), response);
+
+    ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
+    EXPECT_EQ(listener, HttpCommandMgr::instance().getHttpListener().get());
+    ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener()->getTlsContext());
+    EXPECT_EQ(context, HttpCommandMgr::instance().getHttpListener()->getTlsContext().get());
+
+    EXPECT_NE(response.find("\"result\": 5"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Can not switch from HTTPS to HTTP sockets using the same address and port.\""),
+              std::string::npos);
+
+    // Check that the config was not lost
+    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(1U, subnets->size());
+
+    EXPECT_EQ(EXIT_SUCCESS, server_->getExitValue());
+    EXPECT_FALSE(server_->getShutdown());
+
+    // Clean up after the test.
+    CfgMgr::instance().clear();
+}
+
+// Verify that the "config-set" command will exit with an error
+TEST_F(HttpsCtrlChannelDhcpv4Test, handleHttpsToHttpSwitchFatal) {
+    Daemon::setShutdownOnFailure(true);
     createHttpChannelServer();
 
     // Define strings to permutate the config arguments

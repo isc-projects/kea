@@ -526,7 +526,7 @@ PingCheckMgr::shouldPing(Lease4Ptr& lease, Pkt4Ptr& query,
     if (old_lease && (old_lease->addr_ == lease->addr_)) {
         if (old_lease->belongsToClient(lease->hwaddr_, lease->client_id_)) {
             if (!old_lease->expired() ||
-                ((time(0) - old_lease->cltt_) < config->getPingClttSecs())) {
+                ((time(0) - old_lease->cltt_) < static_cast<time_t>(config->getPingClttSecs()))) {
                 return (CalloutHandle::CalloutNextStep::NEXT_STEP_CONTINUE);
             }
         }

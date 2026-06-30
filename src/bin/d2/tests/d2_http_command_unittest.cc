@@ -108,6 +108,7 @@ public:
     BaseCtrlChannelD2Test()
         : server_(NakedD2Controller::instance()) {
         file::PathChecker::enableEnforcement(false);
+        Daemon::setShutdownOnFailure(false);
     }
 
     /// @brief Destructor.
@@ -2349,6 +2350,111 @@ TEST_F(HttpCtrlChannelD2Test, handleHttpToHttpsSwitch) {
     ASSERT_TRUE(keys);
     EXPECT_EQ(1U, keys->size());
 
+    EXPECT_EQ(EXIT_SUCCESS, server_->getExitValue());
+    EXPECT_FALSE(d2Controller()->getProcess()->shouldShutdown());
+}
+
+// Verify that the "config-set" command will exit with an error
+TEST_F(HttpCtrlChannelD2Test, handleHttpToHttpsSwitchFatal) {
+
+    Daemon::setShutdownOnFailure(true);
+    string d2_cfg_txt =
+        "    { \n"
+        "        \"ip-address\": \"192.168.77.1\", \n"
+        "        \"port\": 777, \n"
+        "        \"forward-ddns\" : {}, \n"
+        "        \"reverse-ddns\" : {}, \n"
+        "        \"tsig-keys\": [ \n"
+        "            {\"name\": \"d2_key.example.com\", \n"
+        "             \"algorithm\": \"hmac-md5\", \n"
+        "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
+        "          ], \n"
+        "        \"control-socket\": { \n"
+        "           \"socket-type\": \"http\", \n"
+        "           \"socket-address\": \"127.0.0.1\", \n"
+        "           \"socket-port\": 18125 \n"
+        "        } \n"
+        "    } \n";
+
+    ASSERT_TRUE(server_);
+
+    ConstElementPtr config;
+    ASSERT_NO_THROW(config = parseDHCPDDNS(d2_cfg_txt, true));
+    ASSERT_NO_THROW(d2Controller()->initProcess());
+    D2ProcessPtr proc = d2Controller()->getProcess();
+    ASSERT_TRUE(proc);
+    ConstElementPtr answer = proc->configure(config, false);
+    ASSERT_TRUE(answer);
+    EXPECT_EQ("{ \"arguments\": { \"hash\": \"029AE1208415D6911B5651A6F82D054F55B7877D2589CFD1DCEB5BFFCD3B13A3\" }, \"result\": 0, \"text\": \"Configuration applied successfully.\" }",
+              answer->str());
+    ASSERT_NO_THROW(d2Controller()->registerCommands());
+
+    // Check that the config was indeed applied.
+    D2CfgMgrPtr cfg_mgr = proc->getD2CfgMgr();
+    ASSERT_TRUE(cfg_mgr);
+    D2CfgContextPtr d2_context = cfg_mgr->getD2CfgContext();
+    ASSERT_TRUE(d2_context);
+    TSIGKeyInfoMapPtr keys = d2_context->getKeys();
+    ASSERT_TRUE(keys);
+    EXPECT_EQ(1U, keys->size());
+
+    ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
+    auto const listener = HttpCommandMgr::instance().getHttpListener().get();
+    ASSERT_FALSE(HttpCommandMgr::instance().getHttpListener()->getTlsContext());
+
+    string ca_dir(string(TEST_CA_DIR));
+    ostringstream d2_st;
+    d2_st << "    { \n"
+          << "        \"ip-address\": \"192.168.77.1\", \n"
+          << "        \"port\": 777, \n"
+          << "        \"forward-ddns\" : {}, \n"
+          << "        \"reverse-ddns\" : {}, \n"
+          << "        \"tsig-keys\": [ \n"
+          << "            {\"name\": \"d2_key.example.com\", \n"
+          << "             \"algorithm\": \"hmac-md5\", \n"
+          << "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
+          << "          ], \n"
+          << "        \"control-socket\": { \n"
+          << "           \"socket-type\": \"https\", \n"
+          << "           \"socket-address\": \"127.0.0.1\", \n"
+          << "           \"socket-port\": 18125, \n"
+          << "        \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
+          << "        \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
+          << "        \"key-file\": \"" << ca_dir << "/kea-server.key\" \n"
+          << "        } \n"
+          << "    } \n";
+
+    // Create a config with HTTPS and same content that should not recreate listener.
+    string config_set_txt =
+        "{ \"command\": \"config-set\", \n"
+        "  \"arguments\": { \n"
+        "    \"DhcpDdns\": \n";
+
+    config_set_txt += d2_st.str();
+    config_set_txt += "}} \n";
+
+    EXPECT_EQ(EXIT_SUCCESS, server_->getExitValue());
+    EXPECT_FALSE(d2Controller()->getProcess()->shouldShutdown());
+
+    // Send the config-set command.
+    string response;
+    sendHttpCommand(config_set_txt, response);
+
+    ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
+    EXPECT_EQ(listener, HttpCommandMgr::instance().getHttpListener().get());
+    ASSERT_FALSE(HttpCommandMgr::instance().getHttpListener()->getTlsContext());
+
+    // Verify the configuration was rejected.
+    EXPECT_NE(response.find("\"result\": 5"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Can not switch from HTTP to HTTPS sockets using the same address and port.\""),
+              std::string::npos);
+
+    // Check that the config was not applied.
+    d2_context = cfg_mgr->getD2CfgContext();
+    keys = d2_context->getKeys();
+    ASSERT_TRUE(keys);
+    EXPECT_EQ(1U, keys->size());
+
     EXPECT_EQ(EXIT_FAILURE, server_->getExitValue());
     EXPECT_TRUE(d2Controller()->getProcess()->shouldShutdown());
 }
@@ -2356,6 +2462,120 @@ TEST_F(HttpCtrlChannelD2Test, handleHttpToHttpsSwitch) {
 // Verify that the "config-set" command will exit with an error
 TEST_F(HttpsCtrlChannelD2Test, handleHttpsToHttpSwitch) {
 
+    string ca_dir(string(TEST_CA_DIR));
+    ostringstream d2_st;
+    d2_st << "    { \n"
+          << "        \"ip-address\": \"192.168.77.1\", \n"
+          << "        \"port\": 777, \n"
+          << "        \"forward-ddns\" : {}, \n"
+          << "        \"reverse-ddns\" : {}, \n"
+          << "        \"tsig-keys\": [ \n"
+          << "            {\"name\": \"d2_key.example.com\", \n"
+          << "             \"algorithm\": \"hmac-md5\", \n"
+          << "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
+          << "          ], \n"
+          << "        \"control-socket\": { \n"
+          << "           \"socket-type\": \"https\", \n"
+          << "           \"socket-address\": \"127.0.0.1\", \n"
+          << "           \"socket-port\": 18125, \n"
+          << "        \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
+          << "        \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
+          << "        \"key-file\": \"" << ca_dir << "/kea-server.key\" \n"
+          << "        } \n"
+          << "    } \n";
+
+    ASSERT_TRUE(server_);
+
+    ConstElementPtr config;
+    ASSERT_NO_THROW(config = parseDHCPDDNS(d2_st.str(), true));
+    ASSERT_NO_THROW(d2Controller()->initProcess());
+    D2ProcessPtr proc = d2Controller()->getProcess();
+    ASSERT_TRUE(proc);
+    ConstElementPtr answer = proc->configure(config, false);
+    ASSERT_TRUE(answer);
+    // Verify the configuration was successful. The config contains random
+    // file paths (CA directory), so the hash will be different each time.
+    // As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration applied successfully." is there
+    string answer_txt = answer->str();
+    EXPECT_NE(answer_txt.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(answer_txt.find("\"text\": \"Configuration applied successfully.\""),
+              std::string::npos);
+    ASSERT_NO_THROW(d2Controller()->registerCommands());
+
+    // Check that the config was indeed applied.
+    D2CfgMgrPtr cfg_mgr = proc->getD2CfgMgr();
+    ASSERT_TRUE(cfg_mgr);
+    D2CfgContextPtr d2_context = cfg_mgr->getD2CfgContext();
+    ASSERT_TRUE(d2_context);
+    TSIGKeyInfoMapPtr keys = d2_context->getKeys();
+    ASSERT_TRUE(keys);
+    EXPECT_EQ(1U, keys->size());
+
+    ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
+    auto const listener = HttpCommandMgr::instance().getHttpListener().get();
+    ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener()->getTlsContext());
+    auto const context = HttpCommandMgr::instance().getHttpListener()->getTlsContext().get();
+
+    string d2_cfg_txt =
+        "    { \n"
+        "        \"ip-address\": \"192.168.77.1\", \n"
+        "        \"port\": 777, \n"
+        "        \"forward-ddns\" : {}, \n"
+        "        \"reverse-ddns\" : {}, \n"
+        "        \"tsig-keys\": [ \n"
+        "            {\"name\": \"d2_key.example.com\", \n"
+        "             \"algorithm\": \"hmac-md5\", \n"
+        "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
+        "          ], \n"
+        "        \"control-socket\": { \n"
+        "           \"socket-type\": \"http\", \n"
+        "           \"socket-address\": \"127.0.0.1\", \n"
+        "           \"socket-port\": 18125 \n"
+        "        } \n"
+        "    } \n";
+
+    // Create a config with HTTP and same content that should not recreate listener.
+    string config_set_txt =
+        "{ \"command\": \"config-set\", \n"
+        "  \"arguments\": { \n"
+        "    \"DhcpDdns\": \n";
+
+    config_set_txt += d2_cfg_txt;
+    config_set_txt += "}} \n";
+
+    EXPECT_EQ(EXIT_SUCCESS, server_->getExitValue());
+    EXPECT_FALSE(d2Controller()->getProcess()->shouldShutdown());
+
+    // Send the config-set command.
+    string response;
+    sendHttpCommand(config_set_txt, response);
+
+    ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener());
+    EXPECT_EQ(listener, HttpCommandMgr::instance().getHttpListener().get());
+    ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener()->getTlsContext());
+    // The TLS settings have not changed
+    EXPECT_EQ(context, HttpCommandMgr::instance().getHttpListener()->getTlsContext().get());
+
+    // Verify the configuration was rejected.
+    EXPECT_EQ("[ { \"result\": 5, \"text\": \"Can not switch from HTTPS to HTTP sockets using the same address and port.\" } ]",
+              response);
+
+    // Check that the config was not applied.
+    d2_context = cfg_mgr->getD2CfgContext();
+    keys = d2_context->getKeys();
+    ASSERT_TRUE(keys);
+    EXPECT_EQ(1U, keys->size());
+
+    EXPECT_EQ(EXIT_SUCCESS, server_->getExitValue());
+    EXPECT_FALSE(d2Controller()->getProcess()->shouldShutdown());
+}
+
+// Verify that the "config-set" command will exit with an error
+TEST_F(HttpsCtrlChannelD2Test, handleHttpsToHttpSwitchFatal) {
+
+    Daemon::setShutdownOnFailure(true);
     string ca_dir(string(TEST_CA_DIR));
     ostringstream d2_st;
     d2_st << "    { \n"

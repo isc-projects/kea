@@ -27,6 +27,7 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <log/logger_support.h>
+#include <process/daemon.h>
 #include <stats/stats_mgr.h>
 
 #include <cstdlib>
@@ -34,9 +35,10 @@
 
 using namespace std;
 using namespace isc::asiolink;
-using namespace isc::data;
-using namespace isc::util;
 using namespace isc::config;
+using namespace isc::data;
+using namespace isc::process;
+using namespace isc::util;
 using namespace boost::posix_time;
 
 namespace isc {
@@ -46,6 +48,7 @@ namespace test {
 BaseServerTest::BaseServerTest()
     : original_datadir_(CfgMgr::instance().getDataDir()) {
     CfgMgr::instance().getDataDir(true, TEST_DATA_BUILDDIR);
+    Daemon::setShutdownOnFailure(false);
 }
 
 BaseServerTest::~BaseServerTest() {

@@ -168,6 +168,11 @@ directly. It accepts the following command-line switches:
    rather than fail with an error. Please see
    :ref:`sec-kea-runtime-security-policy-checking` for details.
 
+-  ``-F`` - As of Kea 3.3.0, makes the server exit immediately on any fatal
+   error. Default behavior (parameter not set) is to just log the error and
+   continue, making it possible for an administrator to intervene and fix the
+   issue without restarting the server.
+
 Upon startup, the module loads its configuration and begins listening
 for NCRs based on that configuration.
 

@@ -58,6 +58,7 @@ using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::hooks;
+using namespace isc::process;
 using namespace isc::stats;
 using namespace isc::test;
 using namespace isc::util;

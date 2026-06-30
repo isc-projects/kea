@@ -69,6 +69,7 @@ usage() {
     cerr << "  -P number: specify non-standard client port number 1-65535 "
          << "(useful for testing only)" << endl;
     cerr << "  -X: disables security restrictions" << endl;
+    cerr << "  -F: exit on critical error" << endl;
     exit(EXIT_FAILURE);
 }
 }  // namespace
@@ -89,11 +90,15 @@ main(int argc, char* argv[]) {
     // The standard config file
     std::string config_file("");
 
-    // This is the DHCPv6 server
-    IfaceMgr::instance().setFamily(AF_INET6);
-    CfgMgr::instance().setFamily(AF_INET6);
+    try {
+        // This is the DHCPv6 server
+        IfaceMgr::instance().setFamily(AF_INET6);
+        CfgMgr::instance().setFamily(AF_INET6);
+    } catch (...) {
+        // suppress all errors.
+    }
 
-    while ((ch = getopt(argc, argv, "dvVWc:p:P:t:T:X")) != -1) {
+    while ((ch = getopt(argc, argv, "dvVWc:p:P:t:T:XF")) != -1) {
         switch (ch) {
         case 'd':
             verbose_mode = true;
@@ -158,6 +163,10 @@ main(int argc, char* argv[]) {
 
         case 'X': // relax security checks
             PathChecker::enableEnforcement(false);
+            break;
+
+        case 'F': // exit on fatal error
+            Daemon::setShutdownOnFailure(true);
             break;
 
         default:
