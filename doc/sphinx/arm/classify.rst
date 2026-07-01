@@ -885,7 +885,7 @@ bottleneck.
    Kea version 3.2.0 introduced an escape mechanism to avoid problematic
    characters in client class names:
 
-   - the escape character is the per-cent sign ``%``
+   - the escape character is the percent sign ``%``
    - valid characters are letters, digits and ``!#$%&*+-./:?@^_|~``
    - invalid characters are escaped into the escape character and
      the two hexadecimal digits representing the code

@@ -608,8 +608,8 @@ TEST_F(ClientClassDefParserTest, escapedName) {
     EXPECT_EQ(1U, countFile(warn));
 }
 
-// Verifies you can create a class with a per-cent sign in the name.
-// (the per-cent sign is doubled by escape() to enforce the injection,
+// Verifies you can create a class with a percent sign in the name.
+// (the percent sign is doubled by escape() to enforce the injection,
 // i.e. to make escape("foo bar") and escape("foo%20bar") different)
 TEST_F(ClientClassDefParserTest, escapedName2) {
     std::string cfg_text =

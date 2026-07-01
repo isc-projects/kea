@@ -2,7 +2,7 @@
 	Generated client class names are now escaped to avoid
 	problematic characters i.e. not letter, not digit and
 	not in '!#$%&*+-./:?@^_|~'. The escape character is
-	the per-cent sign '%'.
+	the percent sign '%'.
 	When a configured client class name contains such
 	character or the escape a warning is emitted.
 	(Gitlab #2598)
