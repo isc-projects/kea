@@ -144,8 +144,6 @@ typedef boost::shared_ptr<TestableRotatingFile> TestableRotatingFilePtr;
 /// @brief Test fixture for testing RotatingFile.
 /// It provides tools for erasing test files, altering date values,
 /// generating file names, checking file existence and content.
-
-//class RotatingFileTest : public ::testing::Test {
 class RotatingFileTest : public test::LogContentTest {
 public:
 

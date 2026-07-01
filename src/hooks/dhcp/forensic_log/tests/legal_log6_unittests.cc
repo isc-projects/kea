@@ -2764,6 +2764,8 @@ TEST_F(CalloutTestv6, multipleAddressesAndPrefixesCustomLoggingFormatRequestAndR
     checkFileLines(genName(today()), today_now_string, lines);
 }
 
+// Verifies that the custom format logs that fail to render
+// error are logged and the default format is used instead.
 TEST_F(CalloutTestv6, customLogRenderError) {
     ASSERT_NO_THROW(LegalLogMgrFactory::instance().reset(new TestableRotatingFile(time_)));
 
@@ -2789,6 +2791,7 @@ TEST_F(CalloutTestv6, customLogRenderError) {
     {
         ScopedCalloutHandleState callout_handle_state(handle);
         handle->setArgument("lease6", lease6);
+        handle->setArgument("query6", decline_);
         ASSERT_NO_THROW(ret = lease6_decline(*handle));
         ASSERT_EQ(0, ret);
     }
@@ -2800,6 +2803,9 @@ TEST_F(CalloutTestv6, customLogRenderError) {
         ASSERT_NO_THROW(ret = pkt6_send(*handle));
         EXPECT_EQ(0, ret);
     }
+
+    // Close it to flush any unwritten data
+    LegalLogMgrFactory::instance()->close();
 
     // Verify we logged the error.
     auto err_text = "LEGAL_LOG_LEASE6_RENDER_ERROR custom request/"

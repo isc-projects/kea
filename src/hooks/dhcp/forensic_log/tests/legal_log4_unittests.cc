@@ -1723,7 +1723,7 @@ TEST_F(CalloutTestv4, customRequestLoggingFormatMultipleLines) {
 }
 
 // Verifies that the custom format logs that fail to render
-// are error logged and the default format is used instead.
+// error are logged and the default format is used instead.
 TEST_F(CalloutTestv4, customLogRenderError) {
     ASSERT_NO_THROW(LegalLogMgrFactory::instance().reset(new TestableRotatingFile(time_)));
 

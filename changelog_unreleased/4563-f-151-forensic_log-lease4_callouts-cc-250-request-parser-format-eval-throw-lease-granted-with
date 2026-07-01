@@ -3,7 +3,7 @@
 	log entry using the default log expression when
 	a custom log expression results in an evaluation
 	error. Prior to this the library would emit an
-    error but not generate a legal log entry. Thank you
-    to Qifan Zhang from Palo Alto Networks for reporting
-    the issue.
+	error but not generate a legal log entry. Thank you
+	to Qifan Zhang from Palo Alto Networks for reporting
+	the issue.
 	(Gitlab #4563)
