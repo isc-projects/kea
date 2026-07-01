@@ -1,9 +1,10 @@
 2498.	[func]		razvan
-	Kea daemons now exit if a critical failure is detected when
-	issuing "config-reload", "config-set" or "interface-add"
-	commands. Changed database reconnect disabled and failed
-	log messages from info to either ERROR or FATAL as
-	appropriate in kea-dhcp4 and kea-dhcp6.
+	The kea-dhcp4, kea-dhcp6 or kea-dhcp-ddns daemons now exit if the
+	'-F' command line parameter is used and a critical failure is
+	detected when issuing "config-reload", "config-set" or
+	"interface-add" commands. Changed database reconnect disabled and
+	failed log messages from info to either ERROR or FATAL as
+	appropriate in kea-dhcp4 and kea-dhcp6 daemons.
 	(Gitlab #4415)
 
 Kea 3.2.0 (stable) released on June 24, 2026
