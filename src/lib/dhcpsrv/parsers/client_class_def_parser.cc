@@ -88,7 +88,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
     }
     std::string escaped = ClientClasses::escape(name);
     if (escaped != name) {
-        // Two possible long term behavior: reject the name or sanitize it.
+        // Two possible long term behaviors: reject the name or sanitize it.
         LOG_WARN(dhcpsrv_logger, DHCPSRV_CLASS_BAD_NAME)
             .arg(name)
             .arg(escaped);

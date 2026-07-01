@@ -882,7 +882,7 @@ bottleneck.
 
 .. note::
 
-   Kea version 3.2.0 introduced an escape mechanism to avoid problematic
+   Kea version 3.3.0 introduced an escape mechanism to avoid problematic
    characters in client class names:
 
    - the escape character is the percent sign ``%``
