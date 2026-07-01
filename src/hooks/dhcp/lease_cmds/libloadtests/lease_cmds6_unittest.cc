@@ -2270,7 +2270,8 @@ void Lease6CmdsTest::testLease6GetByDuidParams() {
         "        \"duid\": \"00::01:00:bc:0d:67\"\n"
         "    }\n"
         "}";
-    exp_rsp = "two consecutive separators (':') specified in a decoded string";
+    exp_rsp = "bad 'duid' parameter: ";
+    exp_rsp += "two consecutive separators (':') specified in a decoded string";
     exp_rsp += " '00::01:00:bc:0d:67'";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }

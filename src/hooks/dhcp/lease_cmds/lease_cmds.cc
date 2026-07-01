@@ -1199,7 +1199,12 @@ LeaseCmdsImpl::leaseGetByClientIdHandler(CalloutHandle& handle) {
             isc_throw(BadValue, "'client-id' parameter must be a string");
         }
 
-        ClientIdPtr clientid = ClientId::fromText(client_id->stringValue());
+        ClientIdPtr clientid;
+        try {
+            clientid = ClientId::fromText(client_id->stringValue());
+        } catch (const std::exception& ex) {
+            isc_throw(BadValue, "bad 'client-id' parameter: " << ex.what());
+        }
 
         Lease4Collection leases =
             LeaseMgrFactory::instance().getLease4(*clientid);
@@ -1249,7 +1254,12 @@ LeaseCmdsImpl::leaseGetByDuidHandler(CalloutHandle& handle) {
             isc_throw(BadValue, "'duid' parameter must be a string");
         }
 
-        DUID duid_ = DUID::fromText(duid->stringValue());
+        DUID duid_ = DUID::EMPTY();
+        try {
+            duid_ = DUID::fromText(duid->stringValue());
+        } catch (const std::exception& ex) {
+            isc_throw(BadValue, "bad 'duid' parameter: " << ex.what());
+        }
 
         Lease6Collection leases =
             LeaseMgrFactory::instance().getLeases6(duid_);

@@ -2006,7 +2006,8 @@ void Lease4CmdsTest::testLease4GetByClientIdParams() {
         "        \"client-id\": \"00::01:00:bc:0d:67\"\n"
         "    }\n"
         "}";
-    exp_rsp = "two consecutive separators (':') specified in a decoded string";
+    exp_rsp = "bad 'client-id' parameter: ";
+    exp_rsp += "two consecutive separators (':') specified in a decoded string";
     exp_rsp += " '00::01:00:bc:0d:67'";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
