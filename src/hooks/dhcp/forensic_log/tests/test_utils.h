@@ -121,6 +121,8 @@ public:
     }
 
     /// @brief Sets the mark continuation lines flag.
+    ///
+    /// @param mark_continuation_lines The mark continuation lines flag.
     void setMarkContinuationLines(bool mark_continuation_lines) {
         mark_continuation_lines_ = mark_continuation_lines;
     }

@@ -2846,7 +2846,6 @@ TEST_F(CalloutTestv6, customLogRenderError) {
     {
         ScopedCalloutHandleState callout_handle_state(handle);
         handle->setArgument("lease6", lease6);
-        handle->setArgument("query6", decline_);
         ASSERT_NO_THROW(ret = lease6_decline(*handle));
         ASSERT_EQ(0, ret);
     }
