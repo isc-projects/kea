@@ -86,7 +86,8 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
                   "not empty parameter 'name' is required "
                   << getPosition("name", class_def_cfg) << ")");
     }
-    std::string escaped = ClientClasses::escape(name);
+    // Note that the escape character is not problematic so is not escaped.
+    std::string escaped = ClientClasses::escape(name, false);
     if (escaped != name) {
         // Two possible long term behaviors: reject the name or sanitize it.
         LOG_WARN(dhcpsrv_logger, DHCPSRV_CLASS_BAD_NAME)

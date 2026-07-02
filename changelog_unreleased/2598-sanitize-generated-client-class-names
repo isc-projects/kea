@@ -4,5 +4,5 @@
 	not in '!#$%&*+-./:?@^_|~'. The escape character is
 	the percent sign '%'.
 	When a configured client class name contains such
-	character or the escape a warning is emitted.
+	character a warning is emitted.
 	(Gitlab #2598)

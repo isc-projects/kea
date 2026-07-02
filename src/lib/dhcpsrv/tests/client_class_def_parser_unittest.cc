@@ -609,8 +609,7 @@ TEST_F(ClientClassDefParserTest, escapedName) {
 }
 
 // Verifies you can create a class with a percent sign in the name.
-// (the percent sign is doubled by escape() to enforce the injection,
-// i.e. to make escape("foo bar") and escape("foo%20bar") different)
+// It is not doubled for configured names.
 TEST_F(ClientClassDefParserTest, escapedName2) {
     std::string cfg_text =
         "{ \n"
@@ -624,11 +623,11 @@ TEST_F(ClientClassDefParserTest, escapedName2) {
     ASSERT_TRUE(cclass);
     EXPECT_EQ("foo%bar", cclass->getName());
 
-    // A warning should be in logs.
+    // A warning should not be in logs.
     std::string warn = "DHCPSRV_CLASS_BAD_NAME class name 'foo%bar' ";
     warn += "includes problematic characters: ";
     warn += "its escaped form is 'foo%%bar'";
-    EXPECT_EQ(1U, countFile(warn));
+    EXPECT_EQ(0U, countFile(warn));
 }
 
 // Verifies you can create a class with a name, expression,

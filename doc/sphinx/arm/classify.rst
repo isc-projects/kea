@@ -891,8 +891,7 @@ bottleneck.
      the two hexadecimal digits representing the code
    - the escape character is doubled
    - generated names (i.e. vendor and spawned classes) are escaped
-   - when a configured name does not match its escaped form (i.e.
-     contains an invalid character or the escape) a warning is
+   - when a configured name contains an invalid character a warning is
      emitted. A future version could reject the config.
 
 .. _template-classes:

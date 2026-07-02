@@ -342,24 +342,8 @@ TEST(ClassifyTest, escapeVector) {
     valid_s += "0123456789";
     valid_s += "!#$%&*+-./:?@^_|~";
     for (int i = 0; i < 128; ++i) {
-        bool in_string = (valid_s.find_first_of(i) != std::string::npos);
-        bool in_ctype = false;
-        if ((i >= 'A') && (i <= 'Z')) {
-            in_ctype = true;
-        } else if ((i >= 'a') && (i <= 'z')) {
-            in_ctype = true;
-        } else if ((i >= '0') && (i <= '9')) {
-            in_ctype = true;
-        } else if ((i == '!') || (i == '#') || (i == '$') || (i == '%') ||
-                   (i == '&') || (i == '*') || (i == '+') || (i == '-') ||
-                   (i == '.') || (i == '/') || (i == ':') || (i == '?') ||
-                   (i == '@') || (i == '^') || (i == '_') || (i == '|') ||
-                   (i == '~')) {
-            in_ctype = true;
-        }
-        bool in_vector = ClientClasses::CLIENT_CLASS_VALID_CHARACTERS[i];
-        EXPECT_EQ(in_string, in_ctype);
-        EXPECT_EQ(in_ctype, in_vector);
+        bool expected = (valid_s.find_first_of(i) != std::string::npos);
+        EXPECT_EQ(expected, ClientClasses::CLIENT_CLASS_VALID_CHARACTERS[i]);
     }
 }
 
@@ -412,5 +396,58 @@ TEST(ClassifyTest, escape) {
         }
         SCOPED_TRACE(scenario.output_);
         EXPECT_EQ(scenario.output_, ClientClasses::escape(scenario.input_));
+    }
+}
+
+TEST(ClassifyTest, escape2) {
+    struct Scenario {
+        std::string input_;
+        std::string output_;
+    };
+
+    std::vector<Scenario> scenarios {
+        {
+            "", ""
+        },
+        {
+            "foobar", ""
+        },
+        {
+            "FooBar", ""
+        },
+        {
+            "f00b19", ""
+        },
+        {
+            "!#$%&*+-./:?@^_|~", ""
+        },
+        {
+            "foo%bar", ""
+        },
+        {
+            "fo\abar", "fo%07bar"
+        },
+        {
+            "foo bar", "foo%20bar"
+        },
+        {
+            "foo%20bar", "foo%20bar"
+        },
+        {
+            "\"foo\", \"bar\"", "%22foo%22%2c%20%22bar%22"
+        },
+        {
+            "\xeaoo\xe2" "ar", "%eaoo%e2ar"
+        }
+    };
+
+    for (auto scenario : scenarios) {
+        if (scenario.output_.empty()) {
+            // Empty output means same as input.
+            scenario.output_ = scenario.input_;
+        }
+        SCOPED_TRACE(scenario.output_);
+        EXPECT_EQ(scenario.output_,
+                  ClientClasses::escape(scenario.input_, false));
     }
 }

@@ -161,13 +161,13 @@ const std::vector<bool> ClientClasses::CLIENT_CLASS_VALID_CHARACTERS = {
 };
 
 std::string
-ClientClasses::escape(const std::string& name) {
+ClientClasses::escape(const std::string& name, bool escape_escape /*= true*/) {
     std::string output;
     for (char const& c : name) {
         uint8_t u = static_cast<uint8_t>(c);
         if ((u < 128) && CLIENT_CLASS_VALID_CHARACTERS[u]) {
             output.push_back(c);
-            if (c == CLIENT_CLASS_ESCAPE) {
+            if ((c == CLIENT_CLASS_ESCAPE) && escape_escape) {
                 output.push_back(CLIENT_CLASS_ESCAPE);
             }
         } else {

@@ -271,9 +271,17 @@ public:
     ///
     /// Valid characters are letters, digits and '!#$%&*+-./:?@^_|~'.
     ///
+    /// For generated names we need that when name1 != name2
+    /// escape(name1) != escape(name2), and for configured names
+    /// escape(escape(name)) == escape(name) for all names.
+    /// So escape the escape character itself for generated but not for
+    /// configured names.
+    ///
     /// @param name Candidate client class name.
+    /// @param escape_escape When true (default) escape the escape character.
     /// @return The name using '%xy' escapes for invalid characters, and doubling '%'.
-    static std::string escape(const std::string& name);
+    static std::string escape(const std::string& name,
+                              bool escape_escape = true);
 
 private:
     /// @brief container part

@@ -253,10 +253,9 @@ for a subnet.
 An info message issued when configuring the DHCP server to listen on the unicast
 address on the specific interface.
 
-% DHCPSRV_CLASS_BAD_NAME class name '%1' includes problematic characters: its escaped form is '%2'
+% DHCPSRV_CLASS_BAD_NAME class name '%1' includes problematic characters: suggest to use '%2' instead
 The warning is emitted whenever a class is configured with a name which includes
-problematic characters. Its escaped form is displayed and should be used instead
-when for instance the name is generated.
+problematic characters. The name and an escaped proposal are displayed.
 
 % DHCPSRV_CLASS_WITH_ADDITIONAL_AND_LIFETIMES class: %1 has 'only-in-additional-list' true while specifying one or more lease life time values. Life time values will be ignored.
 This warning is emitted whenever a class is configured with
