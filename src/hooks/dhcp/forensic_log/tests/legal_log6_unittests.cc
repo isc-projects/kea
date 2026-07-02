@@ -2812,7 +2812,7 @@ TEST_F(CalloutTestv6, customLogRenderError) {
                     "response-parser-format failed for lease 2001:db8:1::"
                     " duid 17:34:e2:ff:09:92:54 (Can not convert to valid"
                     " uint32.); falling back to default format";
-    EXPECT_EQ(1, countFile(err_text));
+    EXPECT_EQ(1U, countFile(err_text));
 
     // Verify that the default entry was generated.
     std::vector<std::string>lines;

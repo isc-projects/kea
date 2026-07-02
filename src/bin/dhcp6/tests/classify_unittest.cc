@@ -1768,7 +1768,7 @@ TEST_F(ClassifyTest, vendorClientClassification3) {
     // The packet should now belong to VENDOR_CLASS_foo%20bar.
     EXPECT_TRUE(sol->inClass(srv_->VENDOR_CLASS_PREFIX + "foo%20bar"));
 
-    // It should not belong to "foo bar" or "foo%20bar:
+    // It should not belong to "foo bar" or "foo%20bar".
     EXPECT_FALSE(sol->inClass("foo bar"));
     EXPECT_FALSE(sol->inClass("foo%20bar"));
 }

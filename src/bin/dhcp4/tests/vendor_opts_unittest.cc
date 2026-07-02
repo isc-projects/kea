@@ -2904,3 +2904,55 @@ TEST_F(VendorOptsTest, twoVivcos) {
     ASSERT_EQ(1U, opt_class5678->getTuplesNum());
     EXPECT_EQ("bar", opt_class5678->getTuple(0).getText());
 }
+
+// Tests whether a packet with custom vendor-class is classified properly.
+TEST_F(VendorOptsTest, vendorClassIdClassification2) {
+    // Let's create a DISCOVER.
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setIface("eth0");
+    dis->setIndex(ETH0_INDEX);
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Now let's add a vendor-class with content "foo",
+    OptionStringPtr vendor_class(new OptionString(Option::V4,
+                                                  DHO_VENDOR_CLASS_IDENTIFIER,
+                                                  "foo"));
+    dis->addOption(vendor_class);
+
+    // Now the server classifies the packet.
+    srv_->classifyPacket(dis);
+
+    // The packet should now belong to VENDOR_CLASS_foo.
+    EXPECT_TRUE(dis->inClass(srv_->VENDOR_CLASS_PREFIX + "foo"));
+
+    // It should not belong to "foo"
+    EXPECT_FALSE(dis->inClass("foo"));
+}
+
+// Tests whether a packet with custom vendor-class with to-be-escaped
+// characters is classified properly.
+TEST_F(VendorOptsTest, vendorClassIdClassification3) {
+    // Let's create a DISCOVER.
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setIface("eth0");
+    dis->setIndex(ETH0_INDEX);
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Now let's add a vendor-class with content "foo",
+    OptionStringPtr vendor_class(new OptionString(Option::V4,
+                                                  DHO_VENDOR_CLASS_IDENTIFIER,
+                                                  "foo bar"));
+    dis->addOption(vendor_class);
+
+    // Now the server classifies the packet.
+    srv_->classifyPacket(dis);
+
+    // The packet should now belong to VENDOR_CLASS_foo.
+    EXPECT_TRUE(dis->inClass(srv_->VENDOR_CLASS_PREFIX + "foo%20bar"));
+
+    // It should not belong to "foo bar" or "foo%20bar".
+    EXPECT_FALSE(dis->inClass("foo bar"));
+    EXPECT_FALSE(dis->inClass("foo%20bar"));
+}

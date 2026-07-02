@@ -1759,7 +1759,7 @@ TEST_F(CalloutTestv4, customLogRenderError) {
                     "-parser-format failed for lease 192.2.1.100 hwaddr hwtype"
                     "=1 08:00:2b:02:3f:4e (Can not convert to valid uint32.);"
                     " falling back to default format";
-    EXPECT_EQ(1, countFile(err_text));
+    EXPECT_EQ(1U, countFile(err_text));
 
     // Verify that the default entry was generated.
     std::vector<std::string>lines;
