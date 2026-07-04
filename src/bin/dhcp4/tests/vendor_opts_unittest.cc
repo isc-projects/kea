@@ -3018,9 +3018,9 @@ TEST_F(VendorOptsTest, sanityCheckDeferredOptions) {
 
     // Should detect the valid length without throwing.
     ASSERT_NO_THROW(srv_->deferredUnpack(msg_copy));
-    EXPECT_EQ(1, countFile("An error unpacking the deferred option 224:"
-                           " opt_len does not match defined option length"
-                           " 1 for data type int8"));
+    EXPECT_EQ(1U, countFile("An error unpacking the deferred option 224:"
+                            " opt_len does not match defined option length"
+                            " 1 for data type int8"));
     // Get the option.
     OptionPtr after_opt = msg_copy->getOption(224);
     ASSERT_TRUE(after_opt);
@@ -3033,9 +3033,9 @@ TEST_F(VendorOptsTest, sanityCheckDeferredOptions) {
     ASSERT_NO_THROW(srv_->deferredUnpack(msg_copy));
 
     // Still only one complaint.
-    EXPECT_EQ(1, countFile("An error unpacking the deferred option 224:"
-                           " opt_len does not match defined option length"
-                           " 1 for data type int8"));
+    EXPECT_EQ(1U, countFile("An error unpacking the deferred option 224:"
+                            " opt_len does not match defined option length"
+                            " 1 for data type int8"));
     // Option exists.
     after_opt = msg_copy->getOption(224);
     ASSERT_TRUE(after_opt);

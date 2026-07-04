@@ -337,7 +337,7 @@ public:
 
     /// @brief Validates a scalar option's length against it's defined length.
     ///
-    /// If the given defintion is a scalar option that is not part of an array,
+    /// If the given definition is a scalar option that is not part of an array,
     /// or record, the given length (length value from the option data) must
     /// not exceed the defined length.  If it exceeds the defined length then
     /// throw the appropriate exception based on Option::lenient_parsing_.
