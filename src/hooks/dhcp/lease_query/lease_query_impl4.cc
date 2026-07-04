@@ -87,7 +87,8 @@ LeaseQueryImpl4::processQuery(PktPtr base_query, bool& invalid) const {
     uint8_t query_mask = (!ciaddr.isV4Zero() ? 1 : 0);
 
     HWAddrPtr hwaddr = query->getHWAddr();
-    query_mask |= ((hwaddr->htype_ || hwaddr->hwaddr_.size()) ? 2 : 0);
+    // Ignore the htype.
+    query_mask |= (hwaddr->hwaddr_.size() ? 2 : 0);
 
     ClientIdPtr client_id;
     OptionPtr opt = query->getOption(DHO_DHCP_CLIENT_IDENTIFIER);

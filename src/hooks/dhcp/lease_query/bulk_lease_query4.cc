@@ -118,7 +118,8 @@ BulkLeaseQuery4::init() {
 
     // Get the hardware address.
     query_hwaddr_ = query4_->getHWAddr();
-    if (query_hwaddr_->htype_ || query_hwaddr_->hwaddr_.size()) {
+    // Ignore the hype.
+    if (query_hwaddr_->hwaddr_.size()) {
         query_mask_ |= 2;
     }
 
