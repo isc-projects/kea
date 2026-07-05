@@ -47,7 +47,7 @@ AdaptorHost::quoteIdentifier(ElementPtr host) {
         binary.assign(id.begin(), id.end());
     }
     // Convert in hexadecimal (from DUID::toText()).
-    host->set("flex-id", dumpAsHex(binary));
+    host->set("flex-id", Element::create(dumpAsHex(binary)));
 }
 
 }  // namespace yang

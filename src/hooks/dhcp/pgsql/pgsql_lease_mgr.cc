@@ -3660,7 +3660,7 @@ PgSqlLeaseMgr::getLeases4ByRelayId(const OptionBuffer& relay_id,
               PGSQL_LB_GET_RELAYID4)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText())
-        .arg(dumpAsText(relay_id))
+        .arg(dumpAsHex(relay_id))
         .arg(qry_start_time)
         .arg(qry_end_time);
 
@@ -3749,7 +3749,7 @@ PgSqlLeaseMgr::getLeases4ByRemoteId(const OptionBuffer& remote_id,
               PGSQL_LB_GET_REMOTEID4)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText())
-        .arg(dumpAsText(remote_id))
+        .arg(dumpAsHex(remote_id))
         .arg(qry_start_time)
         .arg(qry_end_time);
 
@@ -3947,7 +3947,7 @@ PgSqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
               PGSQL_LB_GET_REMOTEID6)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText())
-        .arg(dumpAsText(remote_id));
+        .arg(dumpAsHex(remote_id));
 
     // Expecting IPv6 valid address.
     if (!lower_bound_address.isV6()) {

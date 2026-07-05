@@ -647,7 +647,7 @@ PgSqlExchange::dumpRow(const PgSqlResult& r, int row) {
             } else {
                 stream << "0x";
                 for (int i = 0; i < length; ++i) {
-                    stream << byteToHex(data[x]);
+                    stream << byteToHex(data[i]);
                 }
                 stream << std::endl;
             }
