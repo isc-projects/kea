@@ -1,0 +1,6 @@
+[func]		fdupont
+	No longer ignore subnet client-classes guards when
+	selecting a subnet for a DHCPv4-over-DHCPv6 query.
+	Thank you to Qifan Zhang from Palo Alto Networks for
+	reporting the issue.
+	(Gitlab #4556)

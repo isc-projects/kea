@@ -1010,6 +1010,12 @@ TEST(CfgSubnets4Test, 4o6subnetMatchByAddress) {
     selector.remote_address_ = IOAddress("2001:db8:1::dead:beef");
 
     EXPECT_EQ(subnet2, cfg.selectSubnet4o6(selector));
+
+    // Retry with a guard.
+    subnet2->allowClientClass("foo");
+    EXPECT_FALSE(cfg.selectSubnet4o6(selector));
+    selector.client_classes_.insert("foo");
+    EXPECT_EQ(subnet2, cfg.selectSubnet4o6(selector));
 }
 
 // This test checks if the IPv4 subnet can be selected based on the value of
@@ -1044,6 +1050,12 @@ TEST(CfgSubnets4Test, 4o6subnetMatchByInterfaceId) {
     // This time we have correct interface-id. Should match.
     selector.interface_id_ = interfaceId1;
     EXPECT_EQ(subnet2, cfg.selectSubnet4o6(selector));
+
+    // Retry with a guard.
+    subnet2->allowClientClass("foo");
+    EXPECT_FALSE(cfg.selectSubnet4o6(selector));
+    selector.client_classes_.insert("foo");
+    EXPECT_EQ(subnet2, cfg.selectSubnet4o6(selector));
 }
 
 // This test checks if the IPv4 subnet can be selected based on the value of
@@ -1069,6 +1081,12 @@ TEST(CfgSubnets4Test, 4o6subnetMatchByInterfaceName) {
 
     // This time we have correct names. Should match.
     selector.iface_name_ = "eth7";
+    EXPECT_EQ(subnet2, cfg.selectSubnet4o6(selector));
+
+    // Retry with a guard.
+    subnet2->allowClientClass("foo");
+    EXPECT_FALSE(cfg.selectSubnet4o6(selector));
+    selector.client_classes_.insert("foo");
     EXPECT_EQ(subnet2, cfg.selectSubnet4o6(selector));
 }
 

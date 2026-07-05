@@ -269,6 +269,11 @@ CfgSubnets4::selectSubnet4o6(const SubnetSelector& selector) const {
             continue; // No? Let's try the next one.
         }
 
+        // Is this subnet guarded?
+        if (!subnet->clientSupported(selector.client_classes_)) {
+            continue; // Guard is not supoorted: let's try the next one.
+        }
+
         // First match criteria: check if we have a prefix/len defined.
         std::pair<asiolink::IOAddress, uint8_t> pref = cfg4o6.getSubnet4o6();
         if (!pref.first.isV6Zero()) {
