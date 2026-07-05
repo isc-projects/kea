@@ -726,8 +726,8 @@ LibDHCP::sanityCheckScalarLength(const OptionDefinitionPtr& def, uint16_t opt_le
     // lengths as this is done in option factories and would break v4 option
     // fusing.
     size_t exp_len = OptionDataTypeUtil::getDataTypeLen(def->getType());
-    if ((exp_len > 0 && opt_len > exp_len) && (!def->getArrayType()) &&
-        (def->getEncapsulatedSpace().empty())) {
+    if ((exp_len > 0) && (opt_len > exp_len) && !def->getArrayType() &&
+        def->getEncapsulatedSpace().empty()) {
         isc_throw(BadValue, "opt_len does not match defined option length "
                              << static_cast<uint16_t>(exp_len) << " for data type "
                              << OptionDataTypeUtil::getDataTypeName(def->getType()));

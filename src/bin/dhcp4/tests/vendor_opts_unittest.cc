@@ -3003,7 +3003,7 @@ TEST_F(VendorOptsTest, sanityCheckDeferredOptions) {
     query->setIndex(ETH1_INDEX);
 
     // Add an option that is too long.
-    boost::shared_ptr<OptionInt<int16_t> >opt(new OptionInt<int16_t>(Option::V4, 224, 123));
+    OptionPtr opt(new OptionInt<int16_t>(Option::V4, 224, 123));
     ASSERT_TRUE(opt);
     query->addOption(opt);
 

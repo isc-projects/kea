@@ -4267,6 +4267,15 @@ TEST_F(LibDhcpTest, invalidScalarLengthLenientDisabled4) {
             { DHO_SUBNET_MASK, 3, 1, 2, 3 },
             "opt_type: 1, opt_len: 3, error: option buffer truncated"
         },
+        {
+            // OPT_INT16_TYPE - Integer followed by a sub-option.
+            // This amounts to an undeclared record. With lenient
+            // parsing disabled it should not parse.
+            __LINE__,
+            { DHO_BOOT_SIZE, 6, 1, 2, DHO_BOOT_SIZE, 2, 3, 4 },
+            "opt_type: 13, opt_len: 6, error: opt_len does not"
+            " match defined option length 2 for data type uint16"
+        }
     };
 
     for (auto const& scenario : scenarios) {
@@ -4391,6 +4400,15 @@ TEST_F(LibDhcpTest, invalidScalarLengthLenientEnabled4) {
             false,
             "opt_type: 1, opt_len: 3, error: option buffer truncated"
         },
+        {
+            // OPT_INT16_TYPE - Integer followed by a sub-option.
+            // This amounts to an undeclared record. With lenient
+            // parsing enabled it should parse.
+            __LINE__,
+            { DHO_BOOT_SIZE, 6, 1, 2, DHO_BOOT_SIZE, 2,  3, 4 },
+            true,
+            "type=013, len=006: 258 (uint16),\noptions:\n  type=013, len=002: 03:04"
+        }
     };
 
     for (auto const& scenario : scenarios) {
@@ -4403,8 +4421,7 @@ TEST_F(LibDhcpTest, invalidScalarLengthLenientEnabled4) {
         if (scenario.should_parse_) {
             // Should not throw.
             ASSERT_NO_THROW_LOG(
-                LibDHCP::unpackOptions4(scenario.buf_, DHCP4_OPTION_SPACE, options,
-                                        deferred_options));
+                LibDHCP::unpackOptions4(scenario.buf_, DHCP4_OPTION_SPACE, options, deferred_options));
             ASSERT_EQ(1U, options.size());
             auto it = options.begin();
             ASSERT_TRUE(it != options.end());
@@ -4558,6 +4575,17 @@ TEST_F(LibDhcpTest, invalidScalarLengthLenientDisabled6) {
             __LINE__,
             { 0x00, D6O_LINK_ADDRESS, 0x00, 0x03, 1, 2, 3 },
             "opt_type: 80, opt_len: 3, error: option buffer truncated"
+        },
+        {
+            // OPT_INT16_TYPE - Integer followed by a sub-option.
+            // This amounts to an undeclared record. With lenient
+            // parsing disabled it should not parse.
+            __LINE__,
+            { 0x00, D6O_ELAPSED_TIME, 0x00, 0x08, 0x01, 0x02,
+              0x00, D6O_ELAPSED_TIME, 0x00, 0x02, 0x03, 0x04,
+            },
+            "opt_type: 8, opt_len: 8, error: opt_len does not"
+            " match defined option length 2 for data type uint16"
         },
     };
 
@@ -4715,6 +4743,17 @@ TEST_F(LibDhcpTest, invalidScalarLengthLenientEnabled6) {
             { 0x00, D6O_LINK_ADDRESS, 0x00, 0x03, 1, 2, 3 },
             false,
             "opt_type: 80, opt_len: 3, error: option buffer truncated"
+        },
+        {
+            // OPT_INT16_TYPE - Integer followed by a sub-option.
+            // This amounts to an undeclared record. With lenient
+            // parsing enabled it should parse.
+            __LINE__,
+            { 0x00, D6O_ELAPSED_TIME, 0x00, 0x08, 0x01, 0x02,
+              0x00, D6O_ELAPSED_TIME, 0x00, 0x02, 0x03, 0x04,
+            },
+            true,
+            "type=00008, len=00008: 258 (uint16),\noptions:\n  type=00008, len=00002: 03:04"
         },
     };
 

@@ -5238,8 +5238,10 @@ Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query) {
             continue;
         }
 
-        // Remove the packed option.
-        while (query->delOption(code));
+        // Remove the packed options.
+        while (query->delOption(code)) {
+            // continue;
+        };
 
         // Add the unpacked option.
         query->addOption(opt);

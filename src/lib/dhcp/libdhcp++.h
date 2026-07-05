@@ -337,12 +337,12 @@ public:
 
     /// @brief Validates a scalar option's length against it's defined length.
     ///
-    /// If the given definition is a scalar option that is not part of an array,
-    /// or record, the given length (length value from the option data) must
-    /// not exceed the defined length.  If it exceeds the defined length then
-    /// throw the appropriate exception based on Option::lenient_parsing_.
-    /// It does not check for truncated lengths as this is done in option
-    /// factories and would break option fusing of split scalar options.
+    /// If the given definition is a scalar option that is not part of an
+    /// array, the given length (length value from the option data) must not
+    /// exceed the defined length. If it exceeds the defined length then throw
+    /// the appropriate exception based on Option::lenient_parsing_. It does
+    /// not check for truncated lengths as this is done in option factories and
+    /// would break option fusing of split scalar options.
     ///
     /// @param def option's definition
     /// @param opt_len length of the option stated in the option data.
