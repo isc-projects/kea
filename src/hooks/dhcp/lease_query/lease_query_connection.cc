@@ -365,7 +365,7 @@ LeaseQueryConnection::processNextQuery() {
     }
     // Pop and process waiting queries until queue is empty or list full.
     while ((max_concurrent_queries_ == 0) ||
-           (max_concurrent_queries_ >= getNumRunningQueries())) {
+           (max_concurrent_queries_ > getNumRunningQueries())) {
         BlqQueryPtr query = popPendingQuery();
         if (!query) {
             return;

@@ -1,0 +1,6 @@
+[bug]		fdupont
+	Corrected Bulk Lease Query processing e.g. now
+	return an error on bad dhcp-client-identifier option.
+	Thank you to Qifan Zhang from Palo Alto Networks for
+	reporting the issue.
+	(Gitlab #4549)

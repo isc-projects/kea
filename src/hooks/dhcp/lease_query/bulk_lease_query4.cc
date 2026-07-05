@@ -113,6 +113,12 @@ BulkLeaseQuery4::init() {
     // Get the client identifier.
     query_client_id_ = query4_->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
     if (query_client_id_) {
+        try {
+            ClientId client_id(query_client_id_->getData());
+        } catch (const Exception&) {
+            sendDone(BLQ_STATUS_MalformedQuery, "bad client id option");
+            return;
+        }
         query_mask_ |= 1;
     }
 

@@ -1048,6 +1048,18 @@ TEST_F(MemfileBulkLeaseQuery4ProcessTest, initQueryInvalidWithStatus) {
             "multiple queries"
         },
         {
+            "bad client id option",
+            [](Pkt4Ptr lq) {
+                const vector<uint8_t> bad = { 1 };
+                OptionPtr cid(new Option(Option::V4,
+                                         DHO_DHCP_CLIENT_IDENTIFIER,
+                                         bad));
+                lq->addOption(cid);
+            },
+            BLQ_STATUS_MalformedQuery,
+            "bad client id option"
+        },
+        {
             "empty relay id option",
             [this](Pkt4Ptr lq) {
                 OptionPtr rai(new Option(Option::V4, DHO_DHCP_AGENT_OPTIONS));
@@ -1056,8 +1068,8 @@ TEST_F(MemfileBulkLeaseQuery4ProcessTest, initQueryInvalidWithStatus) {
                 rai->addOption(opt);
                 lq->addOption(rai);
             },
-             BLQ_STATUS_MalformedQuery,
-             "empty relay id option"
+            BLQ_STATUS_MalformedQuery,
+            "empty relay id option"
         },
         {
             "empty remote id option",
@@ -1068,8 +1080,8 @@ TEST_F(MemfileBulkLeaseQuery4ProcessTest, initQueryInvalidWithStatus) {
                 rai->addOption(opt);
                 lq->addOption(rai);
             },
-             BLQ_STATUS_MalformedQuery,
-             "empty remote id option"
+            BLQ_STATUS_MalformedQuery,
+            "empty remote id option"
         }
     };
 
