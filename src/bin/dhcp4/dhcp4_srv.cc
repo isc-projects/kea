@@ -3789,7 +3789,7 @@ Dhcpv4Srv::adjustRemoteAddr(Dhcpv4Exchange& ex) {
         }
         // DHCPNAK to a client on a different subnet: the client may not
         // have a correct network address or subnet mask, and may not be
-        // answering ARP requests, so set the broadcast bit to amke the
+        // answering ARP requests, so set the broadcast bit to make the
         // relay to broadcast the DHCPNAK to the client.
         if ((query->getType() == DHCPREQUEST) &&
             (response->getType() == DHCPNAK)) {
