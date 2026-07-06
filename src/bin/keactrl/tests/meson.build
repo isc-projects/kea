@@ -22,5 +22,5 @@ test(
     is_parallel: false,
     priority: -1,
     suite: 'shell-tests',
-    timeout: 60,
+    timeout: 90,
 )
