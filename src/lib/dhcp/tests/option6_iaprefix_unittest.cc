@@ -27,24 +27,21 @@ using namespace isc::util;
 using namespace isc::asiolink;
 
 namespace {
-// RAII device to make sure that lenient parsing flag is reset to false on exit.
-class LenientOptionParsing {
-public:
-    LenientOptionParsing(bool value) {
-        Option::lenient_parsing_ = value;
-    }
 
-    ~LenientOptionParsing() {
-        Option::lenient_parsing_ = false;
-    }
-};
-
+/// @brief Unit test fixture class.
 class Option6IAPrefixTest : public ::testing::Test {
 public:
+    /// @brief Constructor.
     Option6IAPrefixTest() : buf_(255), out_buf_(255) {
         for (unsigned i = 0; i < 255; i++) {
             buf_[i] = 255 - i;
         }
+        Option::lenient_parsing_ = false;
+    }
+
+    /// @brief Destructor.
+    ~Option6IAPrefixTest() {
+        Option::lenient_parsing_ = false;
     }
 
     /// @brief creates on-wire representation of IAPREFIX option
@@ -293,7 +290,7 @@ TEST_F(Option6IAPrefixTest, constructorInvalidPrefixLength) {
                      buf_.begin(), buf_.end())), BadValue);
 
     // Lenient parsing accepts and fixes it.
-    LenientOptionParsing lop(true);
+    Option::lenient_parsing_ = true;
     ASSERT_NO_THROW(opt.reset(new Option6IAPrefix(D6O_IAPREFIX,
                         buf_.begin(), buf_.end())));
     ASSERT_TRUE(opt);
