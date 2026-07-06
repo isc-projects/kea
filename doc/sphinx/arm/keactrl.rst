@@ -28,7 +28,7 @@ Command Line Options
 
 .. code-block:: console
 
-   # keactrl <command> [-c keactrl-config-file] [-s server[,server,...]]
+   # keactrl <command> [-c keactrl-config-file] [-s server[,server,...]] [-- server-options]
 
 ``<command>`` is one of the commands described in :ref:`keactrl-commands`.
 
@@ -42,6 +42,11 @@ which the command is issued. (``--server`` is a synonym for ``-s``.) If
 absent, the command is sent to all servers enabled in the :iscman:`keactrl`
 configuration file. If multiple servers are specified, they should be
 separated by commas with no intervening spaces.
+
+The optional ``-- server-options`` switch specifies options to be passed to
+the servers. These options will be combined with the options in the
+:iscman:`keactrl` configuration file.
+Example: ``-- -F -X``.
 
 .. _keactrl-config-file:
 
@@ -79,6 +84,12 @@ The contents of ``keactrl.conf`` are:
    dhcp_ddns_srv=@sbindir@/kea-dhcp-ddns
    netconf_srv=@sbindir@/kea-netconf
 
+   # CLI options passed to the servers. (e.g. "-F -X")
+   dhcp4_cli_options=""
+   dhcp6_cli_options=""
+   dhcp_ddns_cli_options=""
+   netconf_cli_options=""
+
    # Start DHCPv4 server?
    dhcp4=yes
 
@@ -112,6 +123,11 @@ By default, Kea servers managed by :iscman:`keactrl` are located in
 the default location needs to be altered, the paths
 specified with the ``dhcp4_srv``, ``dhcp6_srv``, ``dhcp_ddns_srv``,
 and ``netconf_srv`` parameters should be modified.
+
+The ``dhcp4_cli_options``, ``dhcp6_cli_options``, ``dhcp_ddns_cli_options``,
+and ``netconf_cli_options`` parameters specify options to be passed to the
+servers when starting them.
+Example: ``-F -X``.
 
 The ``kea_verbose`` parameter specifies the verbosity of the servers
 being started. When ``kea_verbose`` is set to ``yes``, the logging level of
@@ -314,6 +330,34 @@ The following keywords can be used with the ``-s`` command-line option:
 -  ``netconf`` for :iscman:`kea-netconf`.
 
 -  ``all`` for all servers (default).
+
+.. _keactrl-server-options:
+
+Adding server options
+=====================
+
+The :iscman:`keactrl` configuration file specifies options to be passed to the
+particular server when starting it. Options can be any command line options that
+are supported by the server.
+
+Example configuration part that disables security checks and enforces exit on fatal errors:
+
+.. code-block:: bash
+
+   dhcp4_cli_options="-F -X"
+   dhcp6_cli_options="-F -X"
+   dhcp_ddns_cli_options=""
+   netconf_cli_options=""
+
+The optional ``-- server-options`` switch specifies options to be passed to the
+servers when starting them. These options will be combined with the options in the
+:iscman:`keactrl` configuration file.
+
+Example command:
+
+.. code-block:: console
+
+   $ keactrl start  -- -F -X
 
 .. _systemd:
 

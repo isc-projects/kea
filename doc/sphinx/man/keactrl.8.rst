@@ -16,7 +16,7 @@
 Synopsis
 ~~~~~~~~
 
-:program:`keactrl` [**command**] [**-c** keactrl-config-file] [**-s** server[,server,...]] [**-v**]
+:program:`keactrl` [**command**] [**-c** keactrl-config-file] [**-s** server[,server,...]] [**-- ** server-options] [**-v**] [**-V**]
 
 Description
 ~~~~~~~~~~~
@@ -82,6 +82,11 @@ Options
    ``all``
       All servers, including NETCONF if it was configured to be
       built. This is the default.
+
+``-- server-options``
+   Specifies options to be passed to the servers. These options will be combined
+   with the options in the ``keactrl`` configuration file.
+   Example: ``-- -F -X``.
 
 ``-v|--version``
    Displays the Kea version.

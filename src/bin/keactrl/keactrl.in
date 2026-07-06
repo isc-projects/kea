@@ -83,9 +83,15 @@ is_in_list() {
 
 # Prints keactrl usage.
 usage() {
-    printf "usage is %s command [-c keactrl-config-file] [-s server[,server,..]]\n" \
-           "$(basename -- "${0}")"
+    printf "usage: %s command [-c keactrl-config-file]" "$(basename -- "${0}")"
+    printf " [-s server[,server,...]]"
+    printf " [-- server-options]\n\n"
+
     printf "commands: start stop reload status version\n"
+    printf "server-options: options to be passed to the servers.\n"
+    printf "                They will be combined with options in keactrl.conf file.\n"
+    printf "                example: -- -F -X\n"
+
 }
 
 ### Functions managing Kea processes ###
@@ -359,6 +365,10 @@ fi
 
 is_in_list "${command}" "start stop reload status version"
 if [ "${_inlist}" -eq 0 ]; then
+    if [ "${command}" = "-h" ] || [ "${command}" = "--help" ]; then
+        usage
+        exit 0
+    fi
     log_error "invalid command: ${command}"
     exit 1
 fi
@@ -409,6 +419,14 @@ do
                 fi
             done
             ;;
+        --)
+            # All following parameters are CLI options.
+            shift
+            cli_options="$*"
+            # End processing arguments; do not shift further.
+            break
+            ;;
+
         *)
             log_error "invalid option: ${option}"
             usage
@@ -453,6 +471,75 @@ if ${have_netconf}; then
     fi
 fi
 
+# Ensure cli_options is set and is a string
+if [ -z "${cli_options+x}" ]; then
+    cli_options=""
+fi
+
+if [ "${kea_verbose}" = "yes" ]; then
+    # Add -d to cli_options if not already present
+    case " ${cli_options} " in
+        *" -d "*) ;;
+        *) cli_options="${cli_options} -d" ;;
+    esac
+    cli_options="$(echo "${cli_options}" | sed 's/^ *//;s/ *$//')"
+fi
+
+# Merge global cli_options with per-server options, with global options first,
+# and ensure that no duplicate options are present (the global wins).
+merge_cli_options_sh() {
+    # $1 = per-server options string
+    # $2 = global cli_options string
+    local server_opts global_opts opt result
+    global_opts=$2
+    server_opts=$1
+    result=""
+
+    # build a space-padded version for easier matching
+    global_opts_pad=" $global_opts "
+
+    # First, include global options, in order
+    result="$global_opts"
+
+    # Then add per-server options only if NOT present in global_opts
+    for opt in $server_opts; do
+        case "$global_opts_pad" in
+            *" $opt "*)
+                ;; # skip, already in global_opts
+            *)
+                result="$result $opt"
+                ;;
+        esac
+    done
+
+    # trim leading and trailing spaces
+    result="$(printf '%s' "$result" | sed 's/^ *//;s/ *$//')"
+    printf '%s' "$result"
+}
+
+if [ -z "${dhcp4_cli_options+x}" ]; then
+    dhcp4_cli_options=""
+fi
+dhcp4_cli_options="$(merge_cli_options_sh "${dhcp4_cli_options}" "${cli_options}")"
+
+if [ -z "${dhcp6_cli_options+x}" ]; then
+    dhcp6_cli_options=""
+fi
+dhcp6_cli_options="$(merge_cli_options_sh "${dhcp6_cli_options}" "${cli_options}")"
+
+if [ -z "${dhcp_ddns_cli_options+x}" ]; then
+    dhcp_ddns_cli_options=""
+fi
+dhcp_ddns_cli_options="$(merge_cli_options_sh "${dhcp_ddns_cli_options}" "${cli_options}")"
+
+if ${have_netconf}; then
+    if [ -z "${netconf_cli_options+x}" ]; then
+        netconf_cli_options=""
+    fi
+    netconf_cli_options="$(merge_cli_options_sh "${netconf_cli_options}" "${cli_options}")"
+fi
+
+
 # dhcp4 and dhcp6 (=yes) indicate if we should start DHCPv4 and DHCPv6 server
 # respectively. The same is true for ddns and netconf.
 dhcp4=$( printf "%s" "${dhcp4}" | tr '[:upper:]' '[:lower:]' )
@@ -465,23 +552,19 @@ fi
 case ${command} in
     # Start the servers.
     start)
-        args=""
-        # kea_verbose is set in keactrl.conf that shellcheck is unable to load.
-        if [ "${kea_verbose}" = "yes" ]; then
-            args="-d"
-        fi
-
         # Run servers if they are on the list of servers from the command line
         # and if they are enabled in the keactrl configuration file.
         # The variables (dhcp4_srv, dhcp6_serv, dhcp_ddns_srv etc) are set in the
         # keactrl.conf file that shellcheck is unable to read.
-        run_conditional "dhcp4" "start_server ${dhcp4_srv} -c ${kea_dhcp4_config_file} ${args}" 1
-        run_conditional "dhcp6" "start_server ${dhcp6_srv} -c ${kea_dhcp6_config_file} ${args}" 1
+        run_conditional "dhcp4" "start_server ${dhcp4_srv} -c ${kea_dhcp4_config_file} \
+${dhcp4_cli_options}" 1
+        run_conditional "dhcp6" "start_server ${dhcp6_srv} -c ${kea_dhcp6_config_file} \
+${dhcp6_cli_options}" 1
         run_conditional "dhcp_ddns" "start_server ${dhcp_ddns_srv} -c ${kea_dhcp_ddns_config_file} \
-${args}" 1
+${dhcp_ddns_cli_options}" 1
         if ${have_netconf}; then
             run_conditional "netconf" "start_server ${netconf_srv} -c ${kea_netconf_config_file} \
-${args}" 1
+${netconf_cli_options}" 1
         fi
 
         exit 0 ;;

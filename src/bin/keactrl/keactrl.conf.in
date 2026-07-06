@@ -23,6 +23,12 @@ dhcp6_srv="@sbindir@/kea-dhcp6"
 dhcp_ddns_srv="@sbindir@/kea-dhcp-ddns"
 netconf_srv="@sbindir@/kea-netconf"
 
+# CLI options passed to the servers. (e.g. "-F -X")
+dhcp4_cli_options=""
+dhcp6_cli_options=""
+dhcp_ddns_cli_options=""
+netconf_cli_options=""
+
 # Start DHCPv4 server?
 dhcp4=yes
 
