@@ -271,7 +271,7 @@ CfgSubnets4::selectSubnet4o6(const SubnetSelector& selector) const {
 
         // Is this subnet guarded?
         if (!subnet->clientSupported(selector.client_classes_)) {
-            continue; // Guard is not supoorted: let's try the next one.
+            continue; // Guard is not supported: let's try the next one.
         }
 
         // First match criteria: check if we have a prefix/len defined.
