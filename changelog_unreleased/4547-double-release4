@@ -1,0 +1,5 @@
+[bug]		fdupont
+	Fixed incorrect handling of double DHCPv4 DHCPRELEASE
+	when the lease affinity feature is enabled, e.g.
+	leading to incorrect assigned statistics.
+	(Gitlab #4547)
