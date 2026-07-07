@@ -152,6 +152,7 @@ extern const isc::log::MessageID DHCP4_RECLAIM_EXPIRED_LEASES_FAIL;
 extern const isc::log::MessageID DHCP4_RECLAIM_EXPIRED_LEASES_SKIPPED;
 extern const isc::log::MessageID DHCP4_RECOVERED_STASHED_RELAY_AGENT_INFO;
 extern const isc::log::MessageID DHCP4_RELEASE;
+extern const isc::log::MessageID DHCP4_RELEASE_ALREADY_IN_RELEASED_STATE;
 extern const isc::log::MessageID DHCP4_RELEASE_DELETED;
 extern const isc::log::MessageID DHCP4_RELEASE_EXCEPTION;
 extern const isc::log::MessageID DHCP4_RELEASE_EXPIRED;

@@ -4174,6 +4174,14 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& cont
             return;
         }
 
+        if (lease->state_ == Lease4::STATE_RELEASED) {
+            LOG_DEBUG(lease4_logger, DBG_DHCP4_DETAIL,
+                      DHCP4_RELEASE_ALREADY_IN_RELEASED_STATE)
+                .arg(release->getLabel())
+                .arg(release->getCiaddr().toText());
+            return;
+        }
+
         bool skip = false;
 
         // Execute all callouts registered for lease4_release
