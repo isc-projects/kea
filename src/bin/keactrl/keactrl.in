@@ -480,7 +480,7 @@ if [ "${kea_verbose}" = "yes" ]; then
     # Add -d to cli_options if not already present
     case " ${cli_options} " in
         *" -d "*) ;;
-        *) cli_options="${cli_options} -d" ;;
+        *) cli_options="-d ${cli_options}" ;;
     esac
     cli_options="$(echo "${cli_options}" | sed 's/^ *//;s/ *$//')"
 fi
