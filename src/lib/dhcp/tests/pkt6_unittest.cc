@@ -2454,4 +2454,21 @@ TEST_F(Pkt6Test, PktEvents) {
               "total elapsed: 00:00:00.000150");
 }
 
+// Checks that garbage RELAY-FORW is dropped. Data from F-174 #4560.
+TEST_F(Pkt6Test, garbageRelayForw) {
+    // Packet sent in F-174 accepted before #4560 fix.
+    // Relay-forw with an interface-id and a relay-msg options,
+    // the relay-msg content is a truncated relay-forw header
+    // (length 23 vs 34).
+    string hex_string =
+        "0c00fd4a3b1c8d9e00230000000000000001fe80000000000000deadbeefcaf"
+        "e000100120007683031706f7274000900170c00000000000000000000000000"
+        "00000000deadbeef02";
+    vector<uint8_t> bin;
+    ASSERT_NO_THROW(isc::util::encode::decodeHex(hex_string, bin));
+    Pkt6Ptr pkt(new Pkt6(&bin[0], bin.size()));
+    ASSERT_TRUE(pkt);
+    EXPECT_THROW(pkt->unpack(), Unexpected);
+}
+
 }  // namespace
