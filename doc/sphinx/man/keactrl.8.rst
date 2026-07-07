@@ -16,7 +16,7 @@
 Synopsis
 ~~~~~~~~
 
-:program:`keactrl` [**command**] [**-c** keactrl-config-file] [**-s** server[,server,...]] [**-- ** server-options] [**-v**] [**-V**]
+:program:`keactrl` [**command**] [**-c** keactrl-config-file] [**-s** server[,server,...]] [**--** server-options] [**-v**] [**-V**]
 
 Description
 ~~~~~~~~~~~
