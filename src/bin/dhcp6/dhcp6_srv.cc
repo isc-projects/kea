@@ -2147,6 +2147,10 @@ void Dhcpv6Srv::sanityCheckDUID(const OptionPtr& opt, const std::string& opt_nam
                   << len << " byte(s). It must be at least " << DUID::MIN_DUID_LEN
                   << " and no more than " << DUID::MAX_DUID_LEN);
     }
+    auto const& empty_duid = DUID::EMPTY().getDuid();
+    if (len == DUID::MIN_DUID_LEN && opt->getData() == empty_duid) {
+        isc_throw(RFCViolation, "Received invalid DUID for " << opt_name);
+    }
 }
 
 ConstSubnet6Ptr

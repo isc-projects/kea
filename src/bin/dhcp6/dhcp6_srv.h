@@ -359,6 +359,7 @@ protected:
                      RequirementLevel serverid);
 
     /// @brief verifies if received DUID option (client-id or server-id) is sane
+    /// @note: extended to also refuse the empty DUID (00:00:00).
     ///
     /// @param opt option to be checked
     /// @param opt_name text name to be printed

@@ -2428,6 +2428,14 @@ TEST_F(Dhcpv6SrvTest, sanityCheckClientId) {
     pkt->addOption(generateBinaryOption(D6O_CLIENTID, DUID::MAX_DUID_LEN + 1));
     EXPECT_THROW(srv_->sanityCheck(pkt, Dhcpv6Srv::MANDATORY, Dhcpv6Srv::FORBIDDEN),
                  RFCViolation);
+
+    // case 6: empty DUID.
+    pkt->delOption(D6O_CLIENTID);
+    auto const& empty_duid = DUID::EMPTY().getDuid();
+    OptionPtr opt(new Option(Option::V6, D6O_CLIENTID, empty_duid));
+    pkt->addOption(opt);
+    EXPECT_THROW(srv_->sanityCheck(pkt, Dhcpv6Srv::MANDATORY, Dhcpv6Srv::FORBIDDEN),
+                 RFCViolation);
 }
 
 // This test verifies that sanity checking against valid and invalid
@@ -2459,6 +2467,14 @@ TEST_F(Dhcpv6SrvTest, sanityCheckServerId) {
     // Case 5: too long
     pkt->delOption(D6O_SERVERID);
     pkt->addOption(generateBinaryOption(D6O_SERVERID, DUID::MAX_DUID_LEN + 1));
+    EXPECT_THROW(srv_->sanityCheck(pkt, Dhcpv6Srv::FORBIDDEN, Dhcpv6Srv::MANDATORY),
+                 RFCViolation);
+
+    // case 6: empty DUID.
+    pkt->delOption(D6O_CLIENTID);
+    auto const& empty_duid = DUID::EMPTY().getDuid();
+    OptionPtr opt(new Option(Option::V6, D6O_CLIENTID, empty_duid));
+    pkt->addOption(opt);
     EXPECT_THROW(srv_->sanityCheck(pkt, Dhcpv6Srv::FORBIDDEN, Dhcpv6Srv::MANDATORY),
                  RFCViolation);
 }
