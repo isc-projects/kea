@@ -93,6 +93,7 @@
 #include <util/readwrite_mutex.h>
 #include <util/thread_pool.h>
 #include <util/triplet.h>
+#include <util/str.h>
 
 #include <algorithm>
 #include <cmath>
@@ -129,6 +130,7 @@ using namespace isc::log;
 using namespace isc::log::interprocess;
 using namespace isc::stats;
 using namespace isc::util;
+using namespace isc::util::str;
 using namespace std;
 namespace ph = std::placeholders;
 
@@ -1598,22 +1600,10 @@ Dhcpv6Srv::processPacketBufferSend(CalloutHandlePtr& callout_handle,
 
 std::string
 Dhcpv6Srv::duidToString(const OptionPtr& opt) {
-    stringstream tmp;
-
-    OptionBuffer data = opt->getData();
-
-    bool colon = false;
-    for (auto const& it : data) {
-        if (colon) {
-            tmp << ":";
-        }
-        tmp << hex << setw(2) << setfill('0') << static_cast<uint16_t>(it);
-        if (!colon) {
-            colon = true;
-        }
+    if (!opt) {
+        return ("<NULL>");
     }
-
-    return tmp.str();
+    return (dumpAsHex(opt->getData()));
 }
 
 void

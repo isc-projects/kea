@@ -43,12 +43,6 @@ std::vector<uint8_t> pop0(const dhcp::DuidPtr& duid);
 /// @return The textual or hexadecimal representation.
 std::string toPrintable(const std::vector<uint8_t>& content);
 
-/// @brief Return hexadecimal textual representation of a vector.
-///
-/// @param content The vector from a client-id or a duid.
-/// @return The hexadecimal representation.
-std::string toHex(const std::vector<uint8_t>& content);
-
 /// @brief Extract the duid from a RFC 4361 compliant DHCPv4 client ID.
 ///
 /// @param client_id Pointer to the client id.

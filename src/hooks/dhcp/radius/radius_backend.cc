@@ -11,9 +11,11 @@
 #include <radius.h>
 #include <radius_backend.h>
 #include <radius_log.h>
+#include <util/str.h>
 
 using namespace std;
 using namespace isc;
+using namespace isc::util::str;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 
@@ -216,16 +218,9 @@ RadiusBackendImpl::get4(const SubnetID& subnet_id,
     }
     // Unexpected call.
     ++xcount4_;
-    ostringstream id;
-    for (unsigned i = 0; i < identifier_len; ++i) {
-        if (i > 0) {
-            id << ':';
-        }
-        id << hex << setfill('0') << setw(2) << identifier_begin[i];
-    }
     LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_BACKEND_GET4)
         .arg(subnet_id)
-        .arg(id.str())
+        .arg(dumpAsHex(identifier_begin, identifier_len))
         .arg(Host::getIdentifierName(identifier_type));
     return (ConstHostPtr());
 }
@@ -247,16 +242,9 @@ RadiusBackendImpl::get6(const SubnetID& subnet_id,
     }
     // Unexpected call.
     ++xcount6_;
-    ostringstream id;
-    for (unsigned i = 0; i < identifier_len; ++i) {
-        if (i > 0) {
-            id << ':';
-        }
-        id << hex << setfill('0') << setw(2) << identifier_begin[i];
-    }
     LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_BACKEND_GET6)
         .arg(subnet_id)
-        .arg(id.str())
+        .arg(dumpAsHex(identifier_begin, identifier_len))
         .arg(Host::getIdentifierName(identifier_type));
     return (ConstHostPtr());
 }

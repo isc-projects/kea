@@ -82,20 +82,18 @@ UserId::getType() const {
 
 std::string
 UserId::toText(char delim_char) const {
-    std::stringstream tmp;
-    tmp << std::hex;
+    std::string tmp;
     bool delim = false;
     for (auto const& it : id_) {
         if (delim_char && delim) {
-            tmp << delim_char;
+            tmp.push_back(delim_char);
         }
 
-        tmp << std::setw(2) << std::setfill('0')
-            << static_cast<unsigned int>(it);
+        tmp.append(isc::util::str::byteToHex(it));
         delim = true;
     }
 
-    return (tmp.str());
+    return (tmp);
 }
 
 bool

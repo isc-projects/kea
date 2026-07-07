@@ -33,6 +33,7 @@ using namespace util;
 using namespace log;
 using namespace std;
 using namespace flex_id;
+using namespace isc::util::str;
 
 namespace {
 
@@ -99,13 +100,8 @@ void retrieveFlexId(CalloutHandle& callout_handle, const Expression& expression,
             LOG_DEBUG(flex_id_logger, DBGLVL_TRACE_BASIC, FLEX_ID_EXPRESSION_EVALUATED)
                 .arg(value).arg(value.size());
         } else {
-            ostringstream repr;
-            repr << hex;
-            for (const char& ch : value) {
-                repr << setw(2) << setfill('0') << static_cast<unsigned>(ch);
-            }
-            LOG_INFO(flex_id_logger, FLEX_ID_EXPRESSION_EVALUATED_NP)
-                .arg(repr.str()).arg(value.size());
+            LOG_DEBUG(flex_id_logger, DBGLVL_TRACE_BASIC, FLEX_ID_EXPRESSION_EVALUATED_NP)
+                .arg(dumpAsHex(value)).arg(value.size());
         }
 
         // ... and prepare data to be sent back to Kea.

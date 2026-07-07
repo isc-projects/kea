@@ -24,6 +24,7 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::util;
+using namespace isc::util::str;
 using namespace hooks;
 using namespace legal_log;
 using namespace std;
@@ -133,7 +134,7 @@ std::string genLease4Entry(CalloutHandle& handle,
         // It is not uncommon to provide a printable client ID
         auto bin = lease->client_id_->getClientId();
 
-        if (str::isPrintable(bin)) {
+        if (isPrintable(bin)) {
             stream << " (" << LegalLogMgr::vectorDump(bin) << ")";
         }
     }
@@ -152,9 +153,9 @@ std::string genLease4Entry(CalloutHandle& handle,
             if (opt) {
                 const OptionBuffer& id = opt->getData();
                 if (!id.empty()) {
-                    idstream << "circuit-id: " << LegalLogMgr::vectorHexDump(id);
+                    idstream << "circuit-id: " << dumpAsHex(id);
 
-                    if (str::isPrintable(id)) {
+                    if (isPrintable(id)) {
                         idstream << " (" << LegalLogMgr::vectorDump(id) << ")";
                     }
                 }
@@ -169,9 +170,9 @@ std::string genLease4Entry(CalloutHandle& handle,
                         idstream << " and ";
                     }
 
-                    idstream << "remote-id: " << LegalLogMgr::vectorHexDump(id);
+                    idstream << "remote-id: " << dumpAsHex(id);
 
-                    if (str::isPrintable(id)) {
+                    if (isPrintable(id)) {
                         idstream << " (" << LegalLogMgr::vectorDump(id) << ")";
                     }
                 }
@@ -186,9 +187,9 @@ std::string genLease4Entry(CalloutHandle& handle,
                         idstream << " and ";
                     }
 
-                    idstream << "subscriber-id: " << LegalLogMgr::vectorHexDump(id);
+                    idstream << "subscriber-id: " << dumpAsHex(id);
 
-                    if (str::isPrintable(id)) {
+                    if (isPrintable(id)) {
                         idstream << " (" << LegalLogMgr::vectorDump(id) << ")";
                     }
                 }

@@ -38,6 +38,7 @@
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/multi_threading_utils.h>
+#include <util/str.h>
 
 #include <atomic>
 #include <chrono>
@@ -58,6 +59,7 @@ using namespace isc::radius;
 using namespace isc::stats;
 using namespace isc::test;
 using namespace isc::util;
+using namespace isc::util::str;
 
 extern "C" {
 extern int dhcp4_srv_configured(CalloutHandle& handle);
@@ -1485,7 +1487,7 @@ TEST_F(AccessTest, getIdentifierDiscover) {
     string text;
     impl_.id_type4_ = Host::IDENT_HWADDR;
     EXPECT_TRUE(impl_.auth_->getIdentifier(*pkt, id, text));
-    EXPECT_EQ("20:e5:2a:b8:15:14", toHex(id));
+    EXPECT_EQ("20:e5:2a:b8:15:14", dumpAsHex(id));
     EXPECT_EQ("20:e5:2a:b8:15:14", text);
 
     // Try canonize case.
@@ -1493,7 +1495,7 @@ TEST_F(AccessTest, getIdentifierDiscover) {
     id.clear();
     text.clear();
     EXPECT_TRUE(impl_.auth_->getIdentifier(*pkt, id, text));
-    EXPECT_EQ("20:e5:2a:b8:15:14", toHex(id));
+    EXPECT_EQ("20:e5:2a:b8:15:14", dumpAsHex(id));
     EXPECT_EQ("20-e5-2a-b8-15-14", text);
 
     // Try standard case with duid.
@@ -1501,7 +1503,7 @@ TEST_F(AccessTest, getIdentifierDiscover) {
     id.clear();
     text.clear();
     EXPECT_TRUE(impl_.auth_->getIdentifier(*pkt, id, text));
-    EXPECT_EQ("00:03:00:01:20:e5:2a:b8:15:14", toHex(id));
+    EXPECT_EQ("00:03:00:01:20:e5:2a:b8:15:14", dumpAsHex(id));
     EXPECT_EQ("00:03:00:01:20:e5:2a:b8:15:14", text);
 
     // Pop0 is for client-id only.
@@ -1509,7 +1511,7 @@ TEST_F(AccessTest, getIdentifierDiscover) {
     id.clear();
     text.clear();
     EXPECT_TRUE(impl_.auth_->getIdentifier(*pkt, id, text));
-    EXPECT_EQ("00:03:00:01:20:e5:2a:b8:15:14", toHex(id));
+    EXPECT_EQ("00:03:00:01:20:e5:2a:b8:15:14", dumpAsHex(id));
     EXPECT_EQ("00:03:00:01:20:e5:2a:b8:15:14", text);
 
     // And printable too.
@@ -1517,7 +1519,7 @@ TEST_F(AccessTest, getIdentifierDiscover) {
     id.clear();
     text.clear();
     EXPECT_TRUE(impl_.auth_->getIdentifier(*pkt, id, text));
-    EXPECT_EQ("00:03:00:01:20:e5:2a:b8:15:14", toHex(id));
+    EXPECT_EQ("00:03:00:01:20:e5:2a:b8:15:14", dumpAsHex(id));
     EXPECT_EQ("00:03:00:01:20:e5:2a:b8:15:14", text);
 
     // Try standard case with circuit-id.
@@ -1525,7 +1527,7 @@ TEST_F(AccessTest, getIdentifierDiscover) {
     id.clear();
     text.clear();
     EXPECT_TRUE(impl_.auth_->getIdentifier(*pkt, id, text));
-    EXPECT_EQ("20:00:00:02", toHex(id));
+    EXPECT_EQ("20:00:00:02", dumpAsHex(id));
     EXPECT_EQ("20:00:00:02", text);
 
     // Try standard case with client-id.
@@ -1533,7 +1535,7 @@ TEST_F(AccessTest, getIdentifierDiscover) {
     id.clear();
     text.clear();
     EXPECT_TRUE(impl_.auth_->getIdentifier(*pkt, id, text));
-    EXPECT_EQ("ff:2a:b8:15:14:00:03:00:01:20:e5:2a:b8:15:14", toHex(id));
+    EXPECT_EQ("ff:2a:b8:15:14:00:03:00:01:20:e5:2a:b8:15:14", dumpAsHex(id));
     EXPECT_EQ("00:03:00:01:20:e5:2a:b8:15:14", text);
 
     // Try without extract duid.
@@ -1541,7 +1543,7 @@ TEST_F(AccessTest, getIdentifierDiscover) {
     id.clear();
     text.clear();
     EXPECT_TRUE(impl_.auth_->getIdentifier(*pkt, id, text));
-    EXPECT_EQ("ff:2a:b8:15:14:00:03:00:01:20:e5:2a:b8:15:14", toHex(id));
+    EXPECT_EQ("ff:2a:b8:15:14:00:03:00:01:20:e5:2a:b8:15:14", dumpAsHex(id));
     EXPECT_EQ("ff:2a:b8:15:14:00:03:00:01:20:e5:2a:b8:15:14", text);
 
     // Try standard case with flex-id.
@@ -1565,7 +1567,7 @@ TEST_F(AccessTest, getIdentifierSimpleSolicit) {
     string text;
     impl_.id_type6_ = Host::IDENT_DUID;
     EXPECT_TRUE(impl_.auth_->getIdentifier(*pkt, id, text));
-    EXPECT_EQ("01:02:03:04:05:06:07:08:09:0a", toHex(id));
+    EXPECT_EQ("01:02:03:04:05:06:07:08:09:0a", dumpAsHex(id));
     EXPECT_EQ("01:02:03:04:05:06:07:08:09:0a", text);
 
     // Pop0 does nothing (does not start with a 0).
@@ -1573,7 +1575,7 @@ TEST_F(AccessTest, getIdentifierSimpleSolicit) {
     id.clear();
     text.clear();
     EXPECT_TRUE(impl_.auth_->getIdentifier(*pkt, id, text));
-    EXPECT_EQ("01:02:03:04:05:06:07:08:09:0a", toHex(id));
+    EXPECT_EQ("01:02:03:04:05:06:07:08:09:0a", dumpAsHex(id));
     EXPECT_EQ("01:02:03:04:05:06:07:08:09:0a", text);
 
     // Printable does nothing too (not printable).
@@ -1582,7 +1584,7 @@ TEST_F(AccessTest, getIdentifierSimpleSolicit) {
     id.clear();
     text.clear();
     EXPECT_TRUE(impl_.auth_->getIdentifier(*pkt, id, text));
-    EXPECT_EQ("01:02:03:04:05:06:07:08:09:0a", toHex(id));
+    EXPECT_EQ("01:02:03:04:05:06:07:08:09:0a", dumpAsHex(id));
     EXPECT_EQ("01:02:03:04:05:06:07:08:09:0a", text);
 
     // Nor both pop0 and printable.
@@ -1591,7 +1593,7 @@ TEST_F(AccessTest, getIdentifierSimpleSolicit) {
     id.clear();
     text.clear();
     EXPECT_TRUE(impl_.auth_->getIdentifier(*pkt, id, text));
-    EXPECT_EQ("01:02:03:04:05:06:07:08:09:0a", toHex(id));
+    EXPECT_EQ("01:02:03:04:05:06:07:08:09:0a", dumpAsHex(id));
     EXPECT_EQ("01:02:03:04:05:06:07:08:09:0a", text);
 
     // Try standard case with hw-address.
@@ -1639,7 +1641,7 @@ TEST_F(AccessTest, getIdentifierRelayedSolicit) {
     string text;
     impl_.id_type6_ = Host::IDENT_HWADDR;
     EXPECT_TRUE(impl_.auth_->getIdentifier(*pkt, id, text));
-    EXPECT_EQ("08:00:27:58:f1:e8", toHex(id));
+    EXPECT_EQ("08:00:27:58:f1:e8", dumpAsHex(id));
     EXPECT_EQ("08:00:27:58:f1:e8", text);
 
     // With canonize.
@@ -1647,7 +1649,7 @@ TEST_F(AccessTest, getIdentifierRelayedSolicit) {
     id.clear();
     text.clear();
     EXPECT_TRUE(impl_.auth_->getIdentifier(*pkt, id, text));
-    EXPECT_EQ("08:00:27:58:f1:e8", toHex(id));
+    EXPECT_EQ("08:00:27:58:f1:e8", dumpAsHex(id));
     EXPECT_EQ("08-00-27-58-f1-e8", text);
 }
 
@@ -1848,7 +1850,7 @@ TEST_F(AccessTest, buildNoHWAddr4) {
     ASSERT_TRUE(pkt->getHWAddr());
     ASSERT_FALSE(pkt->getHWAddr()->hwaddr_.empty());
     vector<uint8_t> id = pkt->getHWAddr()->hwaddr_;
-    string text = toHex(id);
+    string text = dumpAsHex(id);
     impl_.id_type4_ = Host::IDENT_HWADDR;
     RadiusAuthHandlerPtr handler;
     ASSERT_NO_THROW(handler = impl_.auth_->buildAuth(*pkt, 1, id, text));

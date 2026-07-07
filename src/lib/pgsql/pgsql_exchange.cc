@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <pgsql/pgsql_exchange.h>
+#include <util/str.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -17,6 +18,7 @@
 #include <vector>
 
 using namespace isc::util;
+using namespace isc::util::str;
 using namespace isc::data;
 using namespace boost::posix_time;
 
@@ -309,12 +311,9 @@ PsqlBindArray::toText() const {
             const char *data = values_[i];
             stream << "0x";
             for (int x = 0; x < lengths_[i]; ++x) {
-                    stream << std::setfill('0') << std::setw(2)
-                           << std::setbase(16)
-                           << static_cast<unsigned int>(data[x]);
+                stream << byteToHex(data[x]);
             }
-
-            stream << std::endl << std::setbase(10);
+            stream << std::endl;
         }
     }
 
@@ -648,9 +647,7 @@ PgSqlExchange::dumpRow(const PgSqlResult& r, int row) {
             } else {
                 stream << "0x";
                 for (int i = 0; i < length; ++i) {
-                    stream << std::setfill('0') << std::setw(2)
-                           << std::setbase(16)
-                           << static_cast<unsigned int>(data[i]);
+                    stream << byteToHex(data[x]);
                 }
                 stream << std::endl;
             }

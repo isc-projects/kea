@@ -23,6 +23,7 @@
 #include <util/multi_threading_mgr.h>
 #include <util/pid_file.h>
 #include <util/reconnect_ctl.h>
+#include <util/str.h>
 
 #include <cstdio>
 #include <cstdlib>
@@ -55,6 +56,7 @@ using namespace isc::db;
 using namespace isc::util;
 using namespace isc::stats;
 using namespace isc::util::file;
+using namespace isc::util::str;
 
 namespace isc {
 namespace dhcp {
@@ -3234,26 +3236,6 @@ Memfile_LeaseMgr::getLeaseLimit(ConstElementPtr parent, Lease::Type ltype, size_
     return (false);
 }
 
-namespace {
-
-std::string
-idToText(const OptionBuffer& id) {
-    std::stringstream tmp;
-    tmp << std::hex;
-    bool delim = false;
-    for (auto const& it : id) {
-        if (delim) {
-            tmp << ":";
-        }
-        tmp << std::setw(2) << std::setfill('0')
-            << static_cast<unsigned int>(it);
-        delim = true;
-    }
-    return (tmp.str());
-}
-
-} // anonymous namespace
-
 Lease4Collection
 Memfile_LeaseMgr::getLeases4ByRelayId(const OptionBuffer& relay_id,
                                       const IOAddress& lower_bound_address,
@@ -3264,7 +3246,7 @@ Memfile_LeaseMgr::getLeases4ByRelayId(const OptionBuffer& relay_id,
               DHCPSRV_MEMFILE_GET_RELAYID4)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText())
-        .arg(idToText(relay_id))
+        .arg(dumpAsHex(relay_id))
         .arg(qry_start_time)
         .arg(qry_end_time);
 
@@ -3350,7 +3332,7 @@ Memfile_LeaseMgr::getLeases4ByRemoteId(const OptionBuffer& remote_id,
               DHCPSRV_MEMFILE_GET_REMOTEID4)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText())
-        .arg(idToText(remote_id))
+        .arg(dumpAsHex(remote_id))
         .arg(qry_start_time)
         .arg(qry_end_time);
 
@@ -3518,7 +3500,7 @@ Memfile_LeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
               DHCPSRV_MEMFILE_GET_REMOTEID6)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText())
-        .arg(idToText(remote_id));
+        .arg(dumpAsHex(remote_id));
 
     // Expecting IPv6 valid address.
     if (!lower_bound_address.isV6()) {

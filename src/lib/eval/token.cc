@@ -11,6 +11,7 @@
 #include <eval/eval_context.h>
 #include <util/encode/encode.h>
 #include <util/io.h>
+#include <util/str.h>
 #include <asiolink/io_address.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
@@ -32,6 +33,7 @@
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::util;
+using namespace isc::util::str;
 using namespace std;
 
 using isc::util::encode::toHex;
@@ -1045,8 +1047,7 @@ TokenToHexString::evaluate(Pkt& pkt, ValueStack& values) {
         } else {
             first = false;
         }
-        tmp << setw(2) << setfill('0')
-            << (static_cast<unsigned>(binary[i]) & 0xff);
+        tmp << byteToHex(binary[i]);
     }
     values.push(tmp.str());
 

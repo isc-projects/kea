@@ -24,6 +24,7 @@ using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::util;
+using namespace isc::util::str;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
 namespace ph = std::placeholders;
@@ -155,7 +156,7 @@ RadiusAccounting::buildAcct(const dhcp::Lease4Ptr& lease, Event event) {
         if (RadiusImpl::instance().clientid_printable_) {
             text = toPrintable(vec);
         } else {
-            text = toHex(vec);
+            text = dumpAsHex(vec);
         }
 
         send->add(Attribute::fromString(PW_USER_NAME, text));
@@ -286,7 +287,7 @@ RadiusAccounting::buildAcct(const dhcp::Lease6Ptr& lease, Event event) {
     if (RadiusImpl::instance().clientid_printable_) {
         text = toPrintable(vec);
     } else {
-        text = toHex(vec);
+        text = dumpAsHex(vec);
     }
     send->add(Attribute::fromString(PW_USER_NAME, text));
 
@@ -455,7 +456,7 @@ RadiusAccounting::buildAcct4(const ConstElementPtr& arguments, Event event) {
         if (RadiusImpl::instance().clientid_printable_) {
             text = toPrintable(vec);
         } else {
-            text = toHex(vec);
+            text = dumpAsHex(vec);
         }
 
         send->add(Attribute::fromString(PW_USER_NAME, text));
@@ -639,7 +640,7 @@ RadiusAccounting::buildAcct6(const ConstElementPtr& arguments, Event event) {
     if (RadiusImpl::instance().clientid_printable_) {
         text = toPrintable(vec);
     } else {
-        text = toHex(vec);
+        text = dumpAsHex(vec);
     }
     send->add(Attribute::fromString(PW_USER_NAME, text));
 

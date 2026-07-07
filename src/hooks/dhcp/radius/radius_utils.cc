@@ -17,6 +17,7 @@ using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::util;
+using namespace isc::util::str;
 
 namespace isc {
 namespace radius {
@@ -75,23 +76,8 @@ toPrintable(const vector<uint8_t>& content) {
         memmove(&repr[0], &content[0], repr.size());
         return (repr);
     } else {
-        return (toHex(content));
+        return (dumpAsHex(content));
     }
-}
-
-string
-toHex(const vector<uint8_t>& content) {
-    ostringstream repr;
-    repr << hex;
-    bool delim = false;
-    for (const unsigned char& ch : content) {
-        if (delim) {
-            repr << ":";
-        }
-        repr << setw(2) << setfill('0') << static_cast<unsigned>(ch);
-        delim = true;
-    }
-    return (repr.str());
 }
 
 vector<uint8_t>

@@ -164,7 +164,6 @@ TEST_F(LegalLogMgrTest, legalLogDbLogger) {
 TEST_F(LegalLogMgrTest, emptyVectorDump) {
     std::vector<uint8_t> bytes;
     EXPECT_TRUE(LegalLogMgr::vectorDump(bytes).empty());
-    EXPECT_TRUE(LegalLogMgr::vectorHexDump(bytes).empty());
 }
 
 // Verify path validation

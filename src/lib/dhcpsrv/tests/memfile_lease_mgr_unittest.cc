@@ -26,6 +26,7 @@
 #include <util/pid_file.h>
 #include <util/range_utilities.h>
 #include <util/stopwatch.h>
+#include <util/str.h>
 #include <testutils/env_var_wrapper.h>
 #include <util/filesystem.h>
 #include <testutils/log_utils.h>
@@ -2871,12 +2872,11 @@ TEST_F(MemfileLeaseMgrTest, testHWAddr) {
     int i = 0;
     for (uint16_t hwtype : hwtypes) {
         for (uint32_t hwsource : hwsources) {
-            std::stringstream hex;
-            hex << std::hex << std::setw(2) << std::setfill('0') << i;
-            contents << "2001:db8:1::" << hex.str()
-                     << ",00:00:00:00:00:" << hex.str()
+            auto ihex = str::byteToHex(i);
+            contents << "2001:db8:1::" << ihex
+                     << ",00:00:00:00:00:" << ihex
                      << std::dec << ",7200,8000,1,3600,0,1,128,0,0,,ff:ff:ff:ff:ff:"
-                     << hex.str() << ",1,," << hwtype << "," << hwsource << ",0\n";
+                     << ihex << ",1,," << hwtype << "," << hwsource << ",0\n";
             ++i;
         }
     }
@@ -2888,9 +2888,8 @@ TEST_F(MemfileLeaseMgrTest, testHWAddr) {
     i = 0;
     for (uint16_t hwtype : hwtypes) {
         for (uint32_t hwsource : hwsources) {
-            std::stringstream hex;
-            hex << std::hex << std::setw(2) << std::setfill('0') << i;
-            IOAddress address("2001:db8:1::" + hex.str());
+            auto ihex = str::byteToHex(i);
+            IOAddress address("2001:db8:1::" + ihex);
             Lease6Ptr lease(lmptr_->getLease6(Lease::TYPE_NA, address.toText()));
 
             ASSERT_TRUE(lease);
@@ -2902,8 +2901,8 @@ TEST_F(MemfileLeaseMgrTest, testHWAddr) {
                     "Pref life:     3600\n"
                     "Valid life:    7200\n"
                     "Cltt:          800\n"
-                    "DUID:          00:00:00:00:00:" + hex.str() + "\n"
-                    "Hardware addr: ff:ff:ff:ff:ff:" + hex.str() + "\n"
+                    "DUID:          00:00:00:00:00:" + ihex + "\n"
+                    "Hardware addr: ff:ff:ff:ff:ff:" + ihex + "\n"
                     "Subnet ID:     1\n"
                     "Pool ID:       0\n"
                     "State:         declined\n");

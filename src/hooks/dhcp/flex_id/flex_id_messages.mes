@@ -12,6 +12,7 @@ depending on the expression and content of the incoming packet, the
 expression may be evaluated to an empty string.
 
 % FLEX_ID_EXPRESSION_EVALUATED_NP Expression evaluated for packet to 0x%1 (size: %2)
+Logged at debug log level 40.
 This debug message is printed every time a packet evaluation is successful.
 This means that the identifier expression has been generated. As it is
 not printable it is converted to hexadecimal.

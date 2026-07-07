@@ -20,6 +20,7 @@
 #include <mysql_lease_mgr.h>
 #include <mysql/mysql_connection.h>
 #include <util/multi_threading_mgr.h>
+#include <util/str.h>
 
 #include <boost/array.hpp>
 #include <boost/make_shared.hpp>
@@ -39,6 +40,7 @@ using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::util;
+using namespace isc::util::str;
 using namespace std;
 
 /// @file
@@ -4492,26 +4494,6 @@ MySqlLeaseMgr::addRemoteId6(const IOAddress& lease_addr,
     checkError(ctx, status, stindex, "unable to execute");
 }
 
-namespace {
-
-std::string
-idToText(const OptionBuffer& id) {
-    std::stringstream tmp;
-    tmp << std::hex;
-    bool delim = false;
-    for (auto const& it : id) {
-        if (delim) {
-            tmp << ":";
-        }
-        tmp << std::setw(2) << std::setfill('0')
-            << static_cast<unsigned int>(it);
-        delim = true;
-    }
-    return (tmp.str());
-}
-
-} // anonymous namespace
-
 Lease4Collection
 MySqlLeaseMgr::getLeases4ByRelayId(const OptionBuffer& relay_id,
                                    const IOAddress& lower_bound_address,
@@ -4522,7 +4504,7 @@ MySqlLeaseMgr::getLeases4ByRelayId(const OptionBuffer& relay_id,
               MYSQL_LB_GET_RELAYID4)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText())
-        .arg(idToText(relay_id))
+        .arg(dumpAsHex(relay_id))
         .arg(qry_start_time)
         .arg(qry_end_time);
 
@@ -4635,7 +4617,7 @@ MySqlLeaseMgr::getLeases4ByRemoteId(const OptionBuffer& remote_id,
               MYSQL_LB_GET_REMOTEID4)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText())
-        .arg(idToText(remote_id))
+        .arg(dumpAsHex(remote_id))
         .arg(qry_start_time)
         .arg(qry_end_time);
 
@@ -4893,7 +4875,7 @@ MySqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
               MYSQL_LB_GET_REMOTEID6)
         .arg(page_size.page_size_)
         .arg(lower_bound_address.toText())
-        .arg(idToText(remote_id));
+        .arg(dumpAsHex(remote_id));
 
     // Expecting IPv6 valid address.
     if (!lower_bound_address.isV6()) {

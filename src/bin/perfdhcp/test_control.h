@@ -353,14 +353,6 @@ public:
         return unique_address_;
     }
 
-    /// \brief Convert binary value to hex string.
-    ///
-    /// \todo Consider moving this function to src/lib/util.
-    ///
-    /// \param b byte to convert.
-    /// \return hex string.
-    static std::string byte2Hex(const uint8_t b);
-
     /// \brief Convert vector in hexadecimal string.
     ///
     /// \todo Consider moving this function to src/lib/util.

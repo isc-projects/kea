@@ -12,12 +12,14 @@
 #include <dns/messagerenderer.h>
 #include <dns/opcode.h>
 #include <util/encode/encode.h>
+#include <util/str.h>
 
 #include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;
 using namespace isc::d2;
+using namespace isc::util;
 namespace ph = std::placeholders;
 
 namespace isc {
@@ -825,8 +827,7 @@ toHexText(const uint8_t* data, size_t len) {
             stream << std::endl;
         }
 
-        stream << setfill('0') << setw(2) << setbase(16)
-               << static_cast<unsigned int>(data[i]) << " ";
+        stream << str::byteToHex(data[i]) << " ";
     }
 
     return (stream.str());

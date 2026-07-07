@@ -17,6 +17,7 @@
 #include <radius_utils.h>
 #include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
+#include <util/str.h>
 #include <stdio.h>
 #include <sstream>
 
@@ -28,6 +29,7 @@ using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::stats;
 using namespace isc::util;
+using namespace isc::util::str;
 namespace ph = std::placeholders;
 
 namespace {
@@ -114,7 +116,7 @@ RadiusAccess::getIdentifier(dhcp::Pkt4& query,
             if (RadiusImpl::instance().clientid_printable_) {
                 text = toPrintable(id);
             } else {
-                text = toHex(id);
+                text = dumpAsHex(id);
             }
             break;
 
@@ -134,7 +136,7 @@ RadiusAccess::getIdentifier(dhcp::Pkt4& query,
             if (RadiusImpl::instance().clientid_printable_) {
                 text = toPrintable(id);
             } else {
-                text = toHex(id);
+                text = dumpAsHex(id);
             }
             break;
 
@@ -149,7 +151,7 @@ RadiusAccess::getIdentifier(dhcp::Pkt4& query,
                 isc_throw(BadValue, "empty client-id option");
             }
             if (RadiusImpl::instance().extract_duid_) {
-                text = toHex(extractDuid(clientid, extracted));
+                text = dumpAsHex(extractDuid(clientid, extracted));
             }
             if (extracted) {
                 break;
@@ -159,12 +161,12 @@ RadiusAccess::getIdentifier(dhcp::Pkt4& query,
                 if (RadiusImpl::instance().clientid_printable_) {
                     text = toPrintable(popped);
                 } else {
-                    text = toHex(popped);
+                    text = dumpAsHex(popped);
                 }
             } else if (RadiusImpl::instance().clientid_printable_) {
                 text = toPrintable(id);
             } else {
-                text = toHex(id);
+                text = dumpAsHex(id);
             }
             break;
 
@@ -183,7 +185,7 @@ RadiusAccess::getIdentifier(dhcp::Pkt4& query,
             if (RadiusImpl::instance().clientid_printable_) {
                 text = toPrintable(id);
             } else {
-                text = toHex(id);
+                text = dumpAsHex(id);
             }
             break;
 
@@ -200,7 +202,7 @@ RadiusAccess::getIdentifier(dhcp::Pkt4& query,
         return (false);
     }
     LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_ACCESS_GET_IDENTIFIER)
-        .arg(toHex(id))
+        .arg(dumpAsHex(id))
         .arg(Host::getIdentifierName(type))
         .arg(text)
         .arg(query.getLabel());
@@ -232,12 +234,12 @@ RadiusAccess::getIdentifier(dhcp::Pkt6& query,
                 if (RadiusImpl::instance().clientid_printable_) {
                     text = toPrintable(popped);
                 } else {
-                    text = toHex(popped);
+                    text = dumpAsHex(popped);
                 }
             } else if (RadiusImpl::instance().clientid_printable_) {
                 text = toPrintable(id);
             } else {
-                text = toHex(id);
+                text = dumpAsHex(id);
             }
             break;
 
@@ -270,7 +272,7 @@ RadiusAccess::getIdentifier(dhcp::Pkt6& query,
             if (RadiusImpl::instance().clientid_printable_) {
                 text = toPrintable(id);
             } else {
-                text = toHex(id);
+                text = dumpAsHex(id);
             }
             break;
 
@@ -287,7 +289,7 @@ RadiusAccess::getIdentifier(dhcp::Pkt6& query,
         return (false);
     }
     LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_ACCESS_GET_IDENTIFIER)
-        .arg(toHex(id))
+        .arg(dumpAsHex(id))
         .arg(Host::getIdentifierName(type))
         .arg(text)
         .arg(query.getLabel());
@@ -570,7 +572,7 @@ RadiusAccess::terminate4Internal(RadiusAuthEnv& env, int result,
         impl.auth_->requests4_.get(env.id_);
     if (!pending_request) {
         LOG_ERROR(radius_logger, RADIUS_ACCESS_ORPHAN)
-            .arg(toHex(env.id_));
+            .arg(dumpAsHex(env.id_));
         drop = true;
         return;
     }
@@ -786,7 +788,7 @@ RadiusAccess::terminate6Internal(RadiusAuthEnv& env, int result,
         impl.auth_->requests6_.get(env.id_);
     if (!pending_request) {
         LOG_ERROR(radius_logger, RADIUS_ACCESS_ORPHAN)
-            .arg(toHex(env.id_));
+            .arg(dumpAsHex(env.id_));
         drop = true;
         return;
     }

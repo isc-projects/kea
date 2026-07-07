@@ -151,15 +151,6 @@ TestControl::copyIaOptions(const Pkt6Ptr& pkt_from, Pkt6Ptr& pkt_to) {
     }
 }
 
-std::string
-TestControl::byte2Hex(const uint8_t b) {
-    const int b1 = b / 16;
-    const int b0 = b % 16;
-    ostringstream stream;
-    stream << std::hex << b1 << b0 << std::dec;
-    return (stream.str());
-}
-
 Pkt4Ptr
 TestControl::createMessageFromAck(const uint16_t msg_type,
                                   const dhcp::Pkt4Ptr& ack) {
@@ -746,17 +737,19 @@ TestControl::printStats() const {
 std::string
 TestControl::vector2Hex(const std::vector<uint8_t>& vec,
                         const std::string& separator /* = "" */) {
-    std::ostringstream stream;
+    string vhex;
     bool first = true;
     for (auto const& it : vec) {
         if (first) {
-            stream << byte2Hex(it);
             first = false;
         } else {
-            stream << separator << byte2Hex(it);
+            vhex.append(separator);
         }
+
+        vhex.append(util::str::byteToHex(it));
     }
-    return (stream.str());
+
+    return (vhex);
 }
 
 void

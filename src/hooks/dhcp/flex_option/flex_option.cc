@@ -25,6 +25,7 @@ using namespace isc::eval;
 using namespace isc::flex_option;
 using namespace isc::log;
 using namespace isc::util;
+using namespace isc::util::str;
 using namespace std;
 
 namespace {
@@ -511,9 +512,9 @@ FlexOptionImpl::logAction(Action action, uint16_t code,
     if (str::isPrintable(value)) {
         repr << "'" << value << "'";
     } else {
-        repr << "0x" << hex;
+        repr << "0x";
         for (const char& ch : value) {
-            repr << setw(2) << setfill('0') << static_cast<unsigned>(ch);
+            repr << byteToHex(ch);
         }
     }
     if (action == SUPERSEDE) {
@@ -574,9 +575,9 @@ FlexOptionImpl::logSubAction(Action action, uint16_t code,
     if (str::isPrintable(value)) {
         repr << "'" << value << "'";
     } else {
-        repr << "0x" << hex;
+        repr << "0x";
         for (const char& ch : value) {
-            repr << setw(2) << setfill('0') << static_cast<unsigned>(ch);
+            repr << byteToHex(ch);
         }
     }
     if (action == SUPERSEDE) {

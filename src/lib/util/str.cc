@@ -328,16 +328,31 @@ isPrintable(const vector<uint8_t>& content) {
 
 string
 dumpAsHex(const uint8_t* data, size_t length) {
-    stringstream output;
-    for (size_t i = 0; i < length; ++i) {
-        if (i) {
-            output << ":";
-        }
-
-        output << byteToHex(data[i]);
+    if (!data) {
+        return ("");
     }
 
-    return (output.str());
+    std::string tmp;
+    for (size_t i = 0; i < length; ++i) {
+        if (i) {
+            tmp.push_back(':');
+        }
+
+        tmp.append(util::str::byteToHex(data[i]));
+    }
+
+    return (tmp);
+}
+
+string
+dumpAsHex(const std::vector<uint8_t>& vec) {
+   return (dumpAsHex(vec.data(), vec.size()));
+}
+
+string
+dumpAsHex(const std::string& str) {
+   std::vector<uint8_t> vec(str.begin(), str.end());
+   return (dumpAsHex(vec));
 }
 
 string

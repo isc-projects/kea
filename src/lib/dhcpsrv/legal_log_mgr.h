@@ -285,15 +285,6 @@ public:
     /// @return String containing the duration text
     static std::string genDurationString(const uint32_t secs);
 
-    /// @brief Creates a string of hex digit pairs from a vector of bytes.
-    ///
-    /// @param bytes Vector of bytes to convert
-    /// @param delimiter String to use a delimiter, defaults to ":"
-    ///
-    /// @return std::string containing the hex output
-    static std::string vectorHexDump(const std::vector<uint8_t>& bytes,
-                                     const std::string& delimiter = ":");
-
     /// @brief Creates a string from a vector of printable bytes.
     ///
     /// This assumes that str::isPrintable was called and returned true.

@@ -53,15 +53,8 @@ std::string HWAddr::toText(bool include_htype) const {
     if (include_htype) {
         tmp << "hwtype=" << static_cast<unsigned int>(htype_) << " ";
     }
-    tmp << std::hex;
-    bool delim = false;
-    for (auto const& it : hwaddr_) {
-        if (delim) {
-            tmp << ":";
-        }
-        tmp << std::setw(2) << std::setfill('0') << static_cast<unsigned int>(it);
-        delim = true;
-    }
+
+    tmp << util::str::dumpAsHex(hwaddr_);
     return (tmp.str());
 }
 

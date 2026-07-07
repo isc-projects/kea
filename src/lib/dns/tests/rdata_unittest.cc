@@ -13,6 +13,7 @@
 #include <sstream>
 
 #include <util/buffer.h>
+#include <util/str.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
@@ -256,11 +257,17 @@ Rdata_Unknown_Test::getLongestRdataTxt() {
     ostringstream oss;
 
     oss << "\\# " << MAX_RDLENGTH << " ";
+#if 0
     static_cast<void>(oss.fill('0'));
     oss << right << hex;
     for (unsigned i = 0; i < MAX_RDLENGTH; i++) {
         oss << setw(2) << (i & 0xff);
     }
+#else
+    for (unsigned i = 0; i < MAX_RDLENGTH; i++) {
+        oss << str::byteToHex(i);
+    }
+#endif
 
     return (oss.str());
 }

@@ -234,8 +234,7 @@ std::string Option::toText(int indent) const {
         if (i) {
             output << ":";
         }
-        output << setfill('0') << setw(2) << hex
-               << static_cast<unsigned short>(data_[i]);
+        output << util::str::byteToHex(data_[i]);
     }
     if (data_.empty()) {
         output << "''";

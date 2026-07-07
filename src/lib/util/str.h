@@ -286,6 +286,18 @@ isPrintable(const std::vector<uint8_t>& content);
 std::string
 dumpAsHex(const uint8_t* data, size_t length);
 
+/// @brief Dumps a vector of bytes as a string of hexadecimal digits.
+///
+/// @param vec vector to dump
+std::string
+dumpAsHex(const std::vector<uint8_t>& vec);
+
+/// @brief Dumps a string as a string of hexadecimal digits.
+///
+/// @param str string to dump
+std::string
+dumpAsHex(const std::string& str);
+
 /// @brief Converts a double to a string with given precision
 ///
 /// @param val double to convert

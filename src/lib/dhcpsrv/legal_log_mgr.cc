@@ -323,22 +323,6 @@ LegalLogMgr::genDurationString(const uint32_t secs) {
 }
 
 string
-LegalLogMgr::vectorHexDump(const vector<uint8_t>& bytes,
-                           const string& delimiter) {
-    stringstream tmp;
-    tmp << hex;
-    bool delim = false;
-    for (auto const& it : bytes) {
-        if (delim) {
-            tmp << delimiter;
-        }
-        tmp << setw(2) << setfill('0') << static_cast<unsigned int>(it);
-        delim = true;
-    }
-    return (tmp.str());
-}
-
-string
 LegalLogMgr::vectorDump(const vector<uint8_t>& bytes) {
     if (bytes.empty()) {
         return (string());

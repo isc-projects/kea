@@ -17,6 +17,7 @@
 using namespace std;
 using namespace isc::data;
 using namespace isc::util;
+using namespace isc::util::str;
 
 namespace isc {
 namespace yang {
@@ -41,22 +42,12 @@ AdaptorHost::quoteIdentifier(ElementPtr host) {
         return;
     }
     // Quoted identifier?
-    vector<uint8_t> binary = str::quotedStringToBinary(id);
+    vector<uint8_t> binary = quotedStringToBinary(id);
     if (binary.empty()) {
         binary.assign(id.begin(), id.end());
     }
     // Convert in hexadecimal (from DUID::toText()).
-    stringstream tmp;
-    tmp << hex;
-    bool delim = false;
-    for (auto const& it : binary) {
-        if (delim) {
-            tmp << ":";
-        }
-        tmp << setw(2) << setfill('0') << static_cast<unsigned int>(it);
-        delim = true;
-    }
-    host->set("flex-id", Element::create(tmp.str()));
+    host->set("flex-id", dumpAsHex(binary));
 }
 
 }  // namespace yang
