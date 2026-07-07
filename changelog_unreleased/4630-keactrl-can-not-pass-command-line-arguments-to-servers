@@ -1,0 +1,5 @@
+[func]		mgodzina
+	Keactrl can now pass command line arguments to the servers.
+	Argument can be passed in the configuration file for each
+	server or globally from the command line for all servers.
+	(Gitlab #4630)
