@@ -1,7 +1,7 @@
 [bug]		fdupont
 	Made parsing of DHCPv6 relayed messages stricter:
 	now truncated RELAY-FORW and RELAY-REPLY headers
-	make the whole message to be dropped. Thank you to
+	cause the whole message to be dropped. Thank you to
 	Qifan Zhang from Palo Alto Networks for reporting
 	the issue.
 	(Gitlab #4560)
