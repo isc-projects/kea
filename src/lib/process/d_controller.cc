@@ -854,7 +854,7 @@ DControllerBase::usage(const std::string & text) {
               << std::endl
               << "  -W: display the configuration report and exit"
               << std::endl
-              << "  -d: optional, verbose output " << std::endl
+              << "  -d: optional, verbose output" << std::endl
               << "  -c <config file name> : mandatory,"
               << " specify name of configuration file" << std::endl
               << "  -t <config file name> : check the"

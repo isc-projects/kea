@@ -80,6 +80,12 @@ usage_test() {
     local test_name="${1}"
     local parameter="${2}"
     local expected_code="${3}"
+    local check_output=0
+    local expected_output=""
+    if [ "${#}" -eq 4 ]; then
+        expected_output="${4}"
+        check_output=1
+    fi
 
     # Log the start of the test and print test name.
     test_start "${test_name}"
@@ -89,11 +95,22 @@ usage_test() {
 
     # Check it
     printf "Running command %s.\n" "\"${bin_path}/${bin} -t ${CFG_FILE}\""
-    run_command \
-        "${bin_path}/${bin}" "${parameter}"
+    if [ "${check_output}" -eq 1 ]; then
+        run_command_check_error \
+            "${bin_path}/${bin}" "${parameter}"
+    else
+        run_command \
+            "${bin_path}/${bin}" "${parameter}"
+    fi
     if [ "${EXIT_CODE}" -ne "${expected_code}" ]; then
         printf 'ERROR: expected exit code %s, got %s\n' "${expected_code}" "${EXIT_CODE}"
         clean_exit 1
+    fi
+    if [ "${check_output}" -eq 1 ]; then
+        if [ "${OUTPUT}" != "${expected_output}" ]; then
+            printf 'ERROR: expected output %s, got %s\n' "${expected_output}" "${OUTPUT}"
+            clean_exit 1
+        fi
     fi
     test_finish 0
 }
@@ -200,7 +217,20 @@ shutdown_test() {
 }
 
 version_test "netconf.version"
-usage_test "netconf.invalid-param" "-f" 1
+EXPECTED_OUTPUT=$(cat << 'EOF'
+Usage error: unsupported option: -f
+Usage: kea-netconf
+  -v: print version number and exit
+  -V: print extended version information and exit
+  -W: display the configuration report and exit
+  -d: optional, verbose output
+  -c <config file name> : mandatory, specify name of configuration file
+  -t <config file name> : check the configuration file and exit
+  -X: disables security restrictions
+  -F: exit on critical error
+EOF
+)
+usage_test "netconf.invalid-param" "-f" 1 "${EXPECTED_OUTPUT}"
 usage_test "netconf.dash-h" "-h" 1
 usage_test "netconf.dash-v" "-v" 0
 no_argument_test "netconf.no-argument" 1

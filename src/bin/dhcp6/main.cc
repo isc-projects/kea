@@ -98,6 +98,10 @@ main(int argc, char* argv[]) {
         // suppress all errors.
     }
 
+    optarg = 0;
+    opterr = 0;
+    optind = 1;
+
     while ((ch = getopt(argc, argv, "dvVWc:p:P:t:T:XF")) != -1) {
         switch (ch) {
         case 'd':

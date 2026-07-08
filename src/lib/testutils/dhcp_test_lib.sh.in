@@ -178,6 +178,22 @@ run_command() {
     set -e
 }
 
+# Runs all the given arguments as a single command. Maintains quoting. Places
+# output in ${OUTPUT} and exit code in ${EXIT_CODE}. Does not support pipes and
+# redirections. Support for them could be added through eval and single
+# parameter assignment, but eval is not recommended.
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+run_command_check_error() {
+    if test -n "${DEBUG+x}"; then
+        printf '%s\n' "${*}" >&2
+    fi
+    set +e
+    OUTPUT=$("${@}" 2>&1)
+    EXIT_CODE=${?}
+    set -e
+}
+
 # Enable traps to print FAILED status when a command fails unexpectedly or when
 # the user sends a SIGINT. Used in `test_start`.
 traps_on() {

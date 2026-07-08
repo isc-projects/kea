@@ -365,11 +365,71 @@ bin_path="@abs_top_builddir@/src/bin/dhcp6"
 # shellcheck source=src/lib/testutils/dhcp_test_lib.sh.in
 . "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
+# This test verifies that help can be printed out.
+usage_test() {
+    local test_name="${1}"
+    local parameter="${2}"
+    local expected_code="${3}"
+    local check_output=0
+    local expected_output=""
+    if [ "${#}" -eq 4 ]; then
+        expected_output="${4}"
+        check_output=1
+    fi
+
+    # Log the start of the test and print test name.
+    test_start "${test_name}"
+
+    # Create correct configuration file.
+    create_config "${CONFIG}"
+
+    # Check it
+    printf "Running command %s.\n" "\"${bin_path}/${bin} -t ${CFG_FILE}\""
+    if [ "${check_output}" -eq 1 ]; then
+        run_command_check_error \
+            "${bin_path}/${bin}" "${parameter}"
+    else
+        run_command \
+            "${bin_path}/${bin}" "${parameter}"
+    fi
+    if [ "${EXIT_CODE}" -ne "${expected_code}" ]; then
+        printf 'ERROR: expected exit code %s, got %s\n' "${expected_code}" "${EXIT_CODE}"
+        clean_exit 1
+    fi
+    if [ "${check_output}" -eq 1 ]; then
+        if [ "${OUTPUT}" != "${expected_output}" ]; then
+            printf 'ERROR: expected output %s, got %s\n' "${expected_output}" "${OUTPUT}"
+            clean_exit 1
+        fi
+    fi
+    test_finish 0
+}
+
+# This test verifies that no argument is not reported as a PID file error.
+no_argument_test() {
+    local test_name="${1}"
+    local expected_code="${2}"
+
+    # Log the start of the test and print test name.
+    test_start "${test_name}"
+
+    # Check it
+    printf "Running command %s.\n" "\"${bin_path}/${bin}\""
+    run_command \
+        "${bin_path}/${bin}"
+    if [ "${EXIT_CODE}" -ne "${expected_code}" ]; then
+        printf 'ERROR: expected exit code %s, got %s\n' "${expected_code}" "${EXIT_CODE}"
+        clean_exit 1
+    fi
+    test_finish 0
+}
+
 # This test verifies that syntax checking works properly. This function
-# requires 3 parameters:
+# requires 4 parameters:
 # test_name
 # config - string with a content of the config (will be written to a file)
 # expected_code - expected exit code returned by kea (0 - success, 1 - failure)
+# check_type - extra parameter used to test config (-t or -T)
 syntax_check_test() {
     local test_name="${1}"
     local config="${2}"
@@ -663,6 +723,27 @@ dynamic_reconfiguration_test
 shutdown_test "dhcpv6.sigterm_test" 15
 shutdown_test "dhcpv6.sigint_test" 2
 version_test "dhcpv6.version"
+EXPECTED_OUTPUT=$(cat << 'EOF'
+Kea DHCPv6 server, version 3.3.0-git (development)
+
+Usage: kea-dhcp6 -[v|V|W|X] [-d] [-{c|t|T} cfgfile] [-p number] [-P number]
+  -v: print version number and exit
+  -V: print extended version and exit
+  -W: display the configuration report and exit
+  -d: debug mode with extra verbosity (former -v)
+  -c file: specify configuration file
+  -t file: check the configuration file syntax and exit
+  -T file: check the configuration file doing hooks load and extra checks and exit
+  -p number: specify non-standard server port number 1-65535 (useful for testing only)
+  -P number: specify non-standard client port number 1-65535 (useful for testing only)
+  -X: disables security restrictions
+  -F: exit on critical error
+EOF
+)
+usage_test "dhcpv6.invalid-param" "-f" 1 "${EXPECTED_OUTPUT}"
+usage_test "dhcpv6.dash-h" "-h" 1
+usage_test "dhcpv6.dash-v" "-v" 0
+no_argument_test "dhcpv6.no-argument" 1
 logger_vars_test "dhcpv6.variables"
 lfc_timer_test
 syntax_check_test "dhcpv6.syntax_check_success" "${CONFIG}" 0 -t

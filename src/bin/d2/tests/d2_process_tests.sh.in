@@ -144,6 +144,65 @@ bin_path="@abs_top_builddir@/src/bin/d2"
 # shellcheck source=src/lib/testutils/dhcp_test_lib.sh.in
 . "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
+# This test verifies that help can be printed out.
+usage_test() {
+    local test_name="${1}"
+    local parameter="${2}"
+    local expected_code="${3}"
+    local check_output=0
+    local expected_output=""
+    if [ "${#}" -eq 4 ]; then
+        expected_output="${4}"
+        check_output=1
+    fi
+
+    # Log the start of the test and print test name.
+    test_start "${test_name}"
+
+    # Create correct configuration file.
+    create_config "${CONFIG}"
+
+    # Check it
+    printf "Running command %s.\n" "\"${bin_path}/${bin} -t ${CFG_FILE}\""
+    if [ "${check_output}" -eq 1 ]; then
+        run_command_check_error \
+            "${bin_path}/${bin}" "${parameter}"
+    else
+        run_command \
+            "${bin_path}/${bin}" "${parameter}"
+    fi
+    if [ "${EXIT_CODE}" -ne "${expected_code}" ]; then
+        printf 'ERROR: expected exit code %s, got %s\n' "${expected_code}" "${EXIT_CODE}"
+        clean_exit 1
+    fi
+    if [ "${check_output}" -eq 1 ]; then
+        if [ "${OUTPUT}" != "${expected_output}" ]; then
+            printf 'ERROR: expected output %s, got %s\n' "${expected_output}" "${OUTPUT}"
+            clean_exit 1
+        fi
+    fi
+    test_finish 0
+}
+
+# This test verifies that no argument is not reported as a PID file error.
+no_argument_test() {
+    local test_name="${1}"
+    local expected_code="${2}"
+
+    # Log the start of the test and print test name.
+    test_start "${test_name}"
+
+    # Check it
+    printf "Running command %s.\n" "\"${bin_path}/${bin}\""
+    run_command \
+        "${bin_path}/${bin}"
+    if [ "${EXIT_CODE}" -ne "${expected_code}" ]; then
+        printf 'ERROR: expected exit code %s, got %s\n' "${expected_code}" "${EXIT_CODE}"
+        clean_exit 1
+    fi
+    test_finish 0
+}
+
 # This test verifies that syntax checking works properly. This function
 # requires 3 parameters:
 # test_name
@@ -327,6 +386,23 @@ dynamic_reconfiguration_test
 shutdown_test "dhcp-ddns.sigterm_test" 15
 shutdown_test "dhcp-ddns.sigint_test" 2
 version_test "dhcp-ddns.version"
+EXPECTED_OUTPUT=$(cat << 'EOF'
+Usage error: unsupported option: -f
+Usage: kea-dhcp-ddns
+  -v: print version number and exit
+  -V: print extended version information and exit
+  -W: display the configuration report and exit
+  -d: optional, verbose output
+  -c <config file name> : mandatory, specify name of configuration file
+  -t <config file name> : check the configuration file and exit
+  -X: disables security restrictions
+  -F: exit on critical error
+EOF
+)
+usage_test "dhcp-ddns.invalid-param" "-f" 1 "${EXPECTED_OUTPUT}"
+usage_test "dhcp-ddns.dash-h" "-h" 1
+usage_test "dhcp-ddns.dash-v" "-v" 0
+no_argument_test "dhcp-ddns.no-argument" 1
 logger_vars_test "dhcp-ddns.variables"
 syntax_check_test "dhcp-ddns.syntax_check_success" "${CONFIG}" 0
 syntax_check_test "dhcp-ddns.syntax_check_bad_syntax" "${CONFIG_BAD_SYNTAX}" 1
