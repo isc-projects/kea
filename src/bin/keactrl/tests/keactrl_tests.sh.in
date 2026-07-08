@@ -1441,16 +1441,18 @@ shutdown_servers() {
 
 server_options_tests() {
     test_start "keactrl.server_options_config_file_test"
-    # Test checking that the DHCPv4 and DHCPv6 servers are started with the expected arguments.
+    # Test checking that all servers are started with the expected arguments.
     # First test with the -F argument in the config file.
 
     # Create configuration file for keactrl. This configuration enables
-    # DHCPv4, DHCPv6, D2 and netconf.
+    # kea-dhcp4, kea-dhcp6, kea-dhcp-ddns and kea-netconf.
     keactrl_config="${CFG_FILES}\ndhcp4=yes\ndhcp6=yes\n\
-dhcp_ddns=no\nnetconf=no\n\
+dhcp_ddns=yes\nnetconf=yes\n\
 kea_verbose=no\n\
 dhcp4_cli_options=\"-F\"\n\
-dhcp6_cli_options=\"-F\"\n${keactrl_fixed_config}"
+dhcp6_cli_options=\"-F\"\n\
+dhcp_ddns_cli_options=\"-d\"\n\
+netconf_cli_options=\"-d\"\n${keactrl_fixed_config}"
 
     # Create configuration file for Kea and for keactrl.
     create_dhcp4_config "${dhcp4_config}"
@@ -1463,27 +1465,27 @@ dhcp6_cli_options=\"-F\"\n${keactrl_fixed_config}"
     set_logger
 
     # Start servers using keactrl script.
-    printf 'INFO/test_lib: Starting Kea: %s start -c %s -s dhcp4,dhcp6\n' \
+    printf 'INFO/test_lib: Starting Kea: %s start -c %s -s dhcp4,dhcp6,dhcp_ddns,netconf\n' \
            "${keactrl}" "${KEACTRL_CFG_FILE}"
     set +e
-    "${keactrl}" start -c "${KEACTRL_CFG_FILE}" -s dhcp4,dhcp6
+    "${keactrl}" start -c "${KEACTRL_CFG_FILE}" -s dhcp4,dhcp6,dhcp_ddns,netconf
     assert_eq 0 "${?}" "Expected keactrl to return %d, returned value was %d"
     set -e
 
-    # Wait up to 20s for the DHCPv6 server to configure.
+    # Wait up to 20s for the kea-dhcp6 server to configure.
     wait_for_message 20 "DHCP6_CONFIG_COMPLETE" 1
     assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea6_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
-    # Wait up to 20s for the DHCPv4 server to configure.
+    # Wait up to 20s for the kea-dhcp4 server to configure.
     wait_for_message 20 "DHCP4_CONFIG_COMPLETE" 1
     assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea4_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
     # Make sure that all servers are running and started with expected arguments.
-    # DHCPv4 server
+    # kea-dhcp4 server
     get_pid "${kea4_name}" "${DHCP4_CFG_FILE_NAME}"
     assert_eq 1 "${_GET_PIDS_NUM}" \
         "ERROR: Expected %d ${kea4_name} process running, found %d processes running"
@@ -1495,6 +1497,7 @@ Expected wait_for_message return %d, returned %d."
         test_finish 1
     fi
 
+    # kea-dhcp6 server
     get_pid "${kea6_name}" "${DHCP6_CFG_FILE_NAME}"
     assert_eq 1 "${_GET_PIDS_NUM}" \
         "ERROR: Expected %d ${kea6_name} process running, found %d processes running"
@@ -1506,6 +1509,30 @@ Expected wait_for_message return %d, returned %d."
         test_finish 1
     fi
 
+    # kea-dhcp-ddns server
+    get_pid "${d2_name}" "${D2_CFG_FILE_NAME}"
+    assert_eq 1 "${_GET_PIDS_NUM}" \
+        "ERROR: Expected %d ${d2_name} process running, found %d processes running"
+
+    D2_CMDLINE="$(ps -p "${_GET_PID}" -o args=)"
+    if ! echo "${D2_CMDLINE}" | grep -q -- ' -d'; then
+        printf "ERROR: kea-dhcp-ddns did not start with expected -d argument.\n"
+        shutdown_servers
+        test_finish 1
+    fi
+
+    # kea-netconf server
+    get_pid "${netconf_name}" "${NC_CFG_FILE_NAME}"
+    assert_eq 1 "${_GET_PIDS_NUM}" \
+        "ERROR: Expected %d ${netconf_name} process running, found %d processes running"
+
+    NETCONF_CMDLINE="$(ps -p "${_GET_PID}" -o args=)"
+    if ! echo "${NETCONF_CMDLINE}" | grep -q -- ' -d'; then
+        printf "ERROR: kea-netconf did not start with expected -d argument.\n"
+        shutdown_servers
+        test_finish 1
+    fi
+
     shutdown_servers
     test_finish 0
 
@@ -1513,12 +1540,14 @@ Expected wait_for_message return %d, returned %d."
     # Second test with the -X argument in the command line and -F in the config file.
 
     # Create configuration file for keactrl. This configuration enables
-    # DHCPv4, DHCPv6, D2 and netconf.
+    # kea-dhcp4, kea-dhcp6, kea-dhcp-ddns and kea-netconf.
     keactrl_config="${CFG_FILES}\ndhcp4=yes\ndhcp6=yes\n\
-dhcp_ddns=no\nnetconf=no\n\
+dhcp_ddns=yes\nnetconf=yes\n\
 kea_verbose=no\n\
 dhcp4_cli_options=\"-F\"\n\
-dhcp6_cli_options=\"-F\"\n${keactrl_fixed_config}"
+dhcp6_cli_options=\"-F\"\n\
+dhcp_ddns_cli_options=\"-d\"\n\
+netconf_cli_options=\"-d\"\n${keactrl_fixed_config}"
 
     # Create configuration file for Kea and for keactrl.
     create_dhcp4_config "${dhcp4_config}"
@@ -1531,27 +1560,27 @@ dhcp6_cli_options=\"-F\"\n${keactrl_fixed_config}"
     set_logger
 
     # Start servers using keactrl script.
-    printf 'INFO/test_lib: Starting Kea: %s start -c %s -s dhcp4,dhcp6 -- -X\n' \
+    printf 'INFO/test_lib: Starting Kea: %s start -c %s -s dhcp4,dhcp6,dhcp_ddns,netconf -- -X\n' \
            "${keactrl}" "${KEACTRL_CFG_FILE}"
     set +e
-    "${keactrl}" start -c "${KEACTRL_CFG_FILE}" -s dhcp4,dhcp6 -- -X
+    "${keactrl}" start -c "${KEACTRL_CFG_FILE}" -s dhcp4,dhcp6,dhcp_ddns,netconf -- -X
     assert_eq 0 "${?}" "Expected keactrl to return %d, returned value was %d"
     set -e
 
-    # Wait up to 20s for the DHCPv6 server to configure.
+    # Wait up to 20s for the kea-dhcp6 server to configure.
     wait_for_message 20 "DHCP6_CONFIG_COMPLETE" 1
     assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea6_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
-    # Wait up to 20s for the DHCPv4 server to configure.
+    # Wait up to 20s for the kea-dhcp4 server to configure.
     wait_for_message 20 "DHCP4_CONFIG_COMPLETE" 1
     assert_eq 1 "${_WAIT_FOR_MESSAGE}" \
         "Timeout waiting for ${kea4_name} to start. \
 Expected wait_for_message return %d, returned %d."
 
     # Make sure that all servers are running and started with expected arguments.
-    # DHCPv4 server
+    # kea-dhcp4 server
     get_pid "${kea4_name}" "${DHCP4_CFG_FILE_NAME}"
     assert_eq 1 "${_GET_PIDS_NUM}" \
         "ERROR: Expected %d ${kea4_name} process running, found %d processes running"
@@ -1563,6 +1592,7 @@ Expected wait_for_message return %d, returned %d."
         test_finish 1
     fi
 
+    # kea-dhcp6 server
     get_pid "${kea6_name}" "${DHCP6_CFG_FILE_NAME}"
     assert_eq 1 "${_GET_PIDS_NUM}" \
         "ERROR: Expected %d ${kea6_name} process running, found %d processes running"
@@ -1570,6 +1600,30 @@ Expected wait_for_message return %d, returned %d."
     DHCP6_CMDLINE="$(ps -p "${_GET_PID}" -o args=)"
     if ! echo "${DHCP6_CMDLINE}" | grep -q -- ' -X -F'; then
         printf "ERROR: kea-dhcp6 did not start with expected -X -F argument.\n"
+        shutdown_servers
+        test_finish 1
+    fi
+
+    # kea-dhcp-ddns server
+    get_pid "${d2_name}" "${D2_CFG_FILE_NAME}"
+    assert_eq 1 "${_GET_PIDS_NUM}" \
+        "ERROR: Expected %d ${d2_name} process running, found %d processes running"
+
+    D2_CMDLINE="$(ps -p "${_GET_PID}" -o args=)"
+    if ! echo "${D2_CMDLINE}" | grep -q -- ' -X -d'; then
+        printf "ERROR: kea-dhcp-ddns did not start with expected -X -d argument.\n"
+        shutdown_servers
+        test_finish 1
+    fi
+
+    # kea-netconf server
+    get_pid "${netconf_name}" "${NC_CFG_FILE_NAME}"
+    assert_eq 1 "${_GET_PIDS_NUM}" \
+        "ERROR: Expected %d ${netconf_name} process running, found %d processes running"
+
+    NETCONF_CMDLINE="$(ps -p "${_GET_PID}" -o args=)"
+    if ! echo "${NETCONF_CMDLINE}" | grep -q -- ' -X -d'; then
+        printf "ERROR: kea-netconf did not start with expected -X-d argument.\n"
         shutdown_servers
         test_finish 1
     fi
