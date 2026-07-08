@@ -265,7 +265,7 @@ DControllerBase::parseArgs(int argc, char* argv[]) {
     optarg = 0;
     opterr = 0;
     optind = 1;
-    std::string opts("dvVWc:t:X" + getCustomOpts());
+    std::string opts("dvVWc:t:XF" + getCustomOpts());
 
     // Defer exhausting of arguments to the end.
     ExhaustOptions e(argc, argv, opts);
@@ -859,7 +859,8 @@ DControllerBase::usage(const std::string & text) {
               << " specify name of configuration file" << std::endl
               << "  -t <config file name> : check the"
               << " configuration file and exit" << std::endl
-              << "  -X: disables security restrictions" << std::endl;
+              << "  -X: disables security restrictions" << std::endl
+              << "  -F: exit on critical error" << std::endl;
 
     // add any derivation specific usage
     std::cerr << getUsageText() << std::endl;

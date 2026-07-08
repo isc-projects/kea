@@ -1451,8 +1451,8 @@ dhcp_ddns=yes\nnetconf=yes\n\
 kea_verbose=no\n\
 dhcp4_cli_options=\"-F\"\n\
 dhcp6_cli_options=\"-F\"\n\
-dhcp_ddns_cli_options=\"-d\"\n\
-netconf_cli_options=\"-d\"\n${keactrl_fixed_config}"
+dhcp_ddns_cli_options=\"-F\"\n\
+netconf_cli_options=\"-F\"\n${keactrl_fixed_config}"
 
     # Create configuration file for Kea and for keactrl.
     create_dhcp4_config "${dhcp4_config}"
@@ -1515,8 +1515,8 @@ Expected wait_for_message return %d, returned %d."
         "ERROR: Expected %d ${d2_name} process running, found %d processes running"
 
     D2_CMDLINE="$(ps -p "${_GET_PID}" -o args=)"
-    if ! echo "${D2_CMDLINE}" | grep -q -- ' -d'; then
-        printf "ERROR: kea-dhcp-ddns did not start with expected -d argument.\n"
+    if ! echo "${D2_CMDLINE}" | grep -q -- ' -F'; then
+        printf "ERROR: kea-dhcp-ddns did not start with expected -F argument.\n"
         shutdown_servers
         test_finish 1
     fi
@@ -1527,8 +1527,8 @@ Expected wait_for_message return %d, returned %d."
         "ERROR: Expected %d ${netconf_name} process running, found %d processes running"
 
     NETCONF_CMDLINE="$(ps -p "${_GET_PID}" -o args=)"
-    if ! echo "${NETCONF_CMDLINE}" | grep -q -- ' -d'; then
-        printf "ERROR: kea-netconf did not start with expected -d argument.\n"
+    if ! echo "${NETCONF_CMDLINE}" | grep -q -- ' -F'; then
+        printf "ERROR: kea-netconf did not start with expected -F argument.\n"
         shutdown_servers
         test_finish 1
     fi
@@ -1546,8 +1546,8 @@ dhcp_ddns=yes\nnetconf=yes\n\
 kea_verbose=no\n\
 dhcp4_cli_options=\"-F\"\n\
 dhcp6_cli_options=\"-F\"\n\
-dhcp_ddns_cli_options=\"-d\"\n\
-netconf_cli_options=\"-d\"\n${keactrl_fixed_config}"
+dhcp_ddns_cli_options=\"-F\"\n\
+netconf_cli_options=\"-F\"\n${keactrl_fixed_config}"
 
     # Create configuration file for Kea and for keactrl.
     create_dhcp4_config "${dhcp4_config}"
@@ -1610,8 +1610,8 @@ Expected wait_for_message return %d, returned %d."
         "ERROR: Expected %d ${d2_name} process running, found %d processes running"
 
     D2_CMDLINE="$(ps -p "${_GET_PID}" -o args=)"
-    if ! echo "${D2_CMDLINE}" | grep -q -- ' -X -d'; then
-        printf "ERROR: kea-dhcp-ddns did not start with expected -X -d argument.\n"
+    if ! echo "${D2_CMDLINE}" | grep -q -- ' -X -F'; then
+        printf "ERROR: kea-dhcp-ddns did not start with expected -X -F argument.\n"
         shutdown_servers
         test_finish 1
     fi
@@ -1622,8 +1622,8 @@ Expected wait_for_message return %d, returned %d."
         "ERROR: Expected %d ${netconf_name} process running, found %d processes running"
 
     NETCONF_CMDLINE="$(ps -p "${_GET_PID}" -o args=)"
-    if ! echo "${NETCONF_CMDLINE}" | grep -q -- ' -X -d'; then
-        printf "ERROR: kea-netconf did not start with expected -X-d argument.\n"
+    if ! echo "${NETCONF_CMDLINE}" | grep -q -- ' -X -F'; then
+        printf "ERROR: kea-netconf did not start with expected -X -F argument.\n"
         shutdown_servers
         test_finish 1
     fi

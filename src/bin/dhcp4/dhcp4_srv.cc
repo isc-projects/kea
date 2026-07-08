@@ -2367,7 +2367,7 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
         // Iterate on the configured option list.
         for (auto const& copts : co_list) {
             for (auto const& desc : copts->getList(DHCP4_OPTION_SPACE,
-                                                        DHO_VIVCO_SUBOPTIONS)) {
+                                                   DHO_VIVCO_SUBOPTIONS)) {
                 if (!desc.option_ || !desc.allowedForClientClasses(cclasses)) {
                     continue;
                 }
@@ -5241,7 +5241,7 @@ Dhcpv4Srv::deferredUnpack(Pkt4Ptr& query) {
         // Remove the packed options.
         while (query->delOption(code)) {
             // continue;
-        };
+        }
 
         // Add the unpacked option.
         query->addOption(opt);
