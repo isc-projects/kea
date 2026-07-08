@@ -34,6 +34,8 @@ dhcp4_tests_conf_data = configuration_data()
 dhcp4_tests_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
 dhcp4_tests_conf_data.set('abs_top_srcdir', TOP_SOURCE_DIR)
 dhcp4_tests_conf_data.set('abs_builddir', current_build_dir)
+dhcp4_tests_conf_data.set('VERSION', f'"@PROJECT_VERSION@"')
+dhcp4_tests_conf_data.set('PACKAGE_VERSION_TYPE', f'"@package_version_type@"')
 dhcp4_process_tests = configure_file(
     input: 'dhcp4_process_tests.sh.in',
     output: 'dhcp4_process_tests.sh',

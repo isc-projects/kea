@@ -698,8 +698,10 @@ dynamic_reconfiguration_test
 shutdown_test "dhcpv4.sigterm_test" 15
 shutdown_test "dhcpv4.sigint_test" 2
 version_test "dhcpv4.version"
-EXPECTED_OUTPUT=$(cat << 'EOF'
-Kea DHCPv4 server, version 3.3.0-git (development)
+VERSION=@VERSION@
+PACKAGE_VERSION_TYPE=@PACKAGE_VERSION_TYPE@
+EXPECTED_OUTPUT=$(cat << EOF
+Kea DHCPv4 server, version $VERSION ($PACKAGE_VERSION_TYPE)
 
 Usage: kea-dhcp4 -[v|V|W|X] [-d] [-{c|t|T} cfgfile] [-p number] [-P number]
   -v: print version number and exit
