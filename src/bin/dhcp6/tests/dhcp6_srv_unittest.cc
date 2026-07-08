@@ -2471,9 +2471,9 @@ TEST_F(Dhcpv6SrvTest, sanityCheckServerId) {
                  RFCViolation);
 
     // case 6: empty DUID.
-    pkt->delOption(D6O_CLIENTID);
+    pkt->delOption(D6O_SERVERID);
     auto const& empty_duid = DUID::EMPTY().getDuid();
-    OptionPtr opt(new Option(Option::V6, D6O_CLIENTID, empty_duid));
+    OptionPtr opt(new Option(Option::V6, D6O_SERVERID, empty_duid));
     pkt->addOption(opt);
     EXPECT_THROW(srv_->sanityCheck(pkt, Dhcpv6Srv::FORBIDDEN, Dhcpv6Srv::MANDATORY),
                  RFCViolation);
