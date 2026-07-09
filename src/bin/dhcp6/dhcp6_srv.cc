@@ -2149,7 +2149,8 @@ void Dhcpv6Srv::sanityCheckDUID(const OptionPtr& opt, const std::string& opt_nam
     }
     auto const& empty_duid = DUID::EMPTY().getDuid();
     if (len == DUID::MIN_DUID_LEN && opt->getData() == empty_duid) {
-        isc_throw(RFCViolation, "Received invalid DUID for " << opt_name);
+        isc_throw(RFCViolation, "Received invalid DUID for " << opt_name
+                  << ". Itmatches the reserved empty-DUID sentinel 00:00:00");
     }
 }
 
