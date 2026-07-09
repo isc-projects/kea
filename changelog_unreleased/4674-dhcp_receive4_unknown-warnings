@@ -1,0 +1,6 @@
+[bug]		fdupont
+	Removed spurious DHCP_RECEIVE4_UNKNOWN and
+	DHCP_RECEIVE6_UNKNOWN warnings sent for instance
+	when a command is received. This bug was introduced
+	in 3.2.0 release.
+	(Gitlab #4674)

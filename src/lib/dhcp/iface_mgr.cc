@@ -1508,7 +1508,9 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     }
 
     if (!candidate || !recv_if) {
-        LOG_WARN(dhcp_logger, DHCP_RECEIVE4_UNKNOWN);
+        if (!found) {
+            LOG_WARN(dhcp_logger, DHCP_RECEIVE4_UNKNOWN);
+        }
         return (Pkt4Ptr());
     }
 
@@ -1678,7 +1680,9 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     }
 
     if (!candidate) {
-        LOG_WARN(dhcp_logger, DHCP_RECEIVE6_UNKNOWN);
+        if (!found) {
+            LOG_WARN(dhcp_logger, DHCP_RECEIVE6_UNKNOWN);
+        }
         return (Pkt6Ptr());
     }
 
