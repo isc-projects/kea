@@ -1,0 +1,5 @@
+[bug]		fdupont
+	Fixed the length of FQDN data fields when parsing
+	custom options. Thank you to Qifan Zhang from
+	Palo Alto Networks for reporting the issue.
+	(Gitlab #4567)

@@ -524,6 +524,25 @@ TEST_F(OptionDataTypesTest, readFqdn) {
     );
 }
 
+// Same as the previous test but with characters which could be escaped.
+TEST_F(OptionDataTypesTest, readFqdnRaw) {
+    // The binary representation of the "<tab>.".
+    const char data[] = { 1, 9, 0 };
+
+    // Make a vector out of the data.
+    std::vector<uint8_t> buf(data, data + sizeof(data));
+
+    // Read the buffer as FQDN and verify its correctness.
+    std::string fqdn;
+    EXPECT_NO_THROW(fqdn = OptionDataTypeUtil::readFqdn(buf));
+    EXPECT_EQ("\\009.", fqdn);
+    std::string raw;
+    EXPECT_NO_THROW(raw = OptionDataTypeUtil::readFqdn(buf, true));
+    EXPECT_EQ(2U, raw.size());
+    EXPECT_EQ(9, raw[0]);
+    EXPECT_EQ('.', raw[1]);
+}
+
 // The purpose of this test is to verify that FQDN's syntax is validated
 // and that FQDN is correctly written to a buffer in a format described
 // in RFC1035 section 3.1.

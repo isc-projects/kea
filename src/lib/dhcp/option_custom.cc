@@ -228,8 +228,10 @@ OptionCustom::bufferLength(const OptionDataType data_type, bool in_array,
         // utility function will return the size of the buffer on success.
         if (data_type == OPT_FQDN_TYPE) {
             try {
+                // Set the raw optional falg as we do not want escapes.
                 std::string fqdn =
-                    OptionDataTypeUtil::readFqdn(OptionBuffer(begin, end));
+                    OptionDataTypeUtil::readFqdn(
+                        OptionBuffer(begin, end), true);
                 // The size of the buffer holding an FQDN is always
                 // 1 byte larger than the size of the string
                 // representation of this FQDN.

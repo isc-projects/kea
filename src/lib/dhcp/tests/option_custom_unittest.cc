@@ -458,6 +458,25 @@ TEST_F(OptionCustomTest, fqdnData) {
     Option::lenient_parsing_ = false;
 }
 
+// Same as the previous test but with characters which could be escaped.
+TEST_F(OptionCustomTest, fqdnRawData) {
+    OptionDefinition opt_def("option-foo", 1000, "my-space", "fqdn",
+                             "option-foo-space");
+
+    const char data[] = { 1, 9, 0 }; // "<tab>."
+
+    std::vector<uint8_t> buf(data, data + sizeof(data));
+
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(option.reset(new OptionCustom(opt_def, Option::V6,
+                                                  buf.begin(), buf.end())));
+    ASSERT_TRUE(option);
+    ASSERT_EQ(1U, option->getDataFieldsNum());
+
+    std::string domain0 = option->readFqdn(0);
+    EXPECT_EQ("\\009.", domain0);
+}
+
 // The purpose of this test is to verify that the option definition comprising
 // 16-bit signed integer value can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, int16Data) {

@@ -538,11 +538,13 @@ public:
     /// section 3.1.
     ///
     /// @param buf input buffer holding a FQDN.
+    /// @param raw raw (i.e. not escape) output.
     ///
     /// @throw BadDataTypeCast if a FQDN stored within a buffer is
     /// invalid (e.g. empty, contains invalid characters, truncated).
     /// @return fully qualified domain name in a text form.
-    static std::string readFqdn(const std::vector<uint8_t>& buf);
+    static std::string readFqdn(const std::vector<uint8_t>& buf,
+                                bool raw = false);
 
     /// @brief Append FQDN into a buffer.
     ///
