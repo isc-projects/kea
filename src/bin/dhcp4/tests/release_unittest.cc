@@ -555,8 +555,8 @@ TEST_F(ReleaseTest, releaseAlreadyReleased) {
     // assigned stat is decremented once.
     EXPECT_EQ(before, after + 1);
 
-    // The alredy in RELEASED state is logged.
-    EXPECT_EQ(1U, countFile("DHCP4_RELEASE_ALREADY_IN_RELEASED_STATE"));
+    // The not assigned failure is logged.
+    EXPECT_EQ(1U, countFile("DHCP4_RELEASE_FAIL_NOT_ASSIGNED"));
 }
 
 } // end of anonymous namespace

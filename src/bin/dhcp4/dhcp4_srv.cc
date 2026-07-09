@@ -4174,11 +4174,11 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& cont
             return;
         }
 
-        if (lease->state_ == Lease4::STATE_RELEASED) {
-            LOG_DEBUG(lease4_logger, DBG_DHCP4_DETAIL,
-                      DHCP4_RELEASE_ALREADY_IN_RELEASED_STATE)
+        if (lease->state_ != Lease4::STATE_DEFAULT) {
+            LOG_DEBUG(lease4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_NOT_ASSIGNED)
                 .arg(release->getLabel())
-                .arg(release->getCiaddr().toText());
+                .arg(release->getCiaddr().toText())
+                .arg(Lease::basicStatesToText(lease->state_));
             return;
         }
 

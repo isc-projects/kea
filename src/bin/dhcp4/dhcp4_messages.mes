@@ -980,14 +980,6 @@ is a normal operation during client shutdown. The first argument includes
 the client and transaction identification information. The second argument
 includes the released IPv4 address.
 
-% DHCP4_RELEASE_ALREADY_IN_RELEASED_STATE %1: client is trying to release the lease %2 which is already in the RELEASED state
-Logged at debug log level 50.
-This debug message is issued when a client is trying to release the
-lease which is already in the RELEASED state i.e. kept for the client
-by the lease affinity feature. The first argument includes the client
-and the transaction identification information. The second argument
-specifies the leased address.
-
 % DHCP4_RELEASE_DELETED %1: address %2 was deleted on release.
 This informational message indicates that an address was deleted on release. It
 is a normal operation during client shutdown. The first argument includes the
@@ -1021,6 +1013,14 @@ removed from the database during RELEASE message processing. The
 first argument includes the client and the transaction identification
 information. The second argument holds the IPv4 address which release
 was attempted.
+
+% DHCP4_RELEASE_FAIL_NOT_ASSIGNED %1: client is trying to release the lease %2 which is in the %3 state
+Logged at debug log level 50.
+This debug message is issued when a client is trying to release the
+lease which is not in the default / assigned state e.g. kept for the client
+by the lease affinity feature in the released state. The first argument
+includes the client and the transaction identification information.
+The second argument specifies the leased address, the last one the lease state.
 
 % DHCP4_RELEASE_FAIL_NO_LEASE %1: client is trying to release non-existing lease %2
 Logged at debug log level 50.

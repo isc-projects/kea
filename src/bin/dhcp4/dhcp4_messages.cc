@@ -151,11 +151,11 @@ extern const isc::log::MessageID DHCP4_RECLAIM_EXPIRED_LEASES_FAIL = "DHCP4_RECL
 extern const isc::log::MessageID DHCP4_RECLAIM_EXPIRED_LEASES_SKIPPED = "DHCP4_RECLAIM_EXPIRED_LEASES_SKIPPED";
 extern const isc::log::MessageID DHCP4_RECOVERED_STASHED_RELAY_AGENT_INFO = "DHCP4_RECOVERED_STASHED_RELAY_AGENT_INFO";
 extern const isc::log::MessageID DHCP4_RELEASE = "DHCP4_RELEASE";
-extern const isc::log::MessageID DHCP4_RELEASE_ALREADY_IN_RELEASED_STATE = "DHCP4_RELEASE_ALREADY_IN_RELEASED_STATE";
 extern const isc::log::MessageID DHCP4_RELEASE_DELETED = "DHCP4_RELEASE_DELETED";
 extern const isc::log::MessageID DHCP4_RELEASE_EXCEPTION = "DHCP4_RELEASE_EXCEPTION";
 extern const isc::log::MessageID DHCP4_RELEASE_EXPIRED = "DHCP4_RELEASE_EXPIRED";
 extern const isc::log::MessageID DHCP4_RELEASE_FAIL = "DHCP4_RELEASE_FAIL";
+extern const isc::log::MessageID DHCP4_RELEASE_FAIL_NOT_ASSIGNED = "DHCP4_RELEASE_FAIL_NOT_ASSIGNED";
 extern const isc::log::MessageID DHCP4_RELEASE_FAIL_NO_LEASE = "DHCP4_RELEASE_FAIL_NO_LEASE";
 extern const isc::log::MessageID DHCP4_RELEASE_FAIL_WRONG_CLIENT = "DHCP4_RELEASE_FAIL_WRONG_CLIENT";
 extern const isc::log::MessageID DHCP4_REQUEST = "DHCP4_REQUEST";
@@ -340,11 +340,11 @@ const char* values[] = {
     "DHCP4_RECLAIM_EXPIRED_LEASES_SKIPPED", "dhcp6 service is currently disabled. Try again in %1 seconds.",
     "DHCP4_RECOVERED_STASHED_RELAY_AGENT_INFO", "recovered for query %1 relay agent option from lease %2: %3",
     "DHCP4_RELEASE", "%1: address %2 was released properly.",
-    "DHCP4_RELEASE_ALREADY_IN_RELEASED_STATE", "%1: client is trying to release the lease %2 which is already in the RELEASED state",
     "DHCP4_RELEASE_DELETED", "%1: address %2 was deleted on release.",
     "DHCP4_RELEASE_EXCEPTION", "%1: while trying to release address %2 an exception occurred: %3",
     "DHCP4_RELEASE_EXPIRED", "%1: address %2 expired on release.",
     "DHCP4_RELEASE_FAIL", "%1: failed to remove lease for address %2",
+    "DHCP4_RELEASE_FAIL_NOT_ASSIGNED", "%1: client is trying to release the lease %2 which is in the %3 state",
     "DHCP4_RELEASE_FAIL_NO_LEASE", "%1: client is trying to release non-existing lease %2",
     "DHCP4_RELEASE_FAIL_WRONG_CLIENT", "%1: client is trying to release the lease %2 which belongs to a different client",
     "DHCP4_REQUEST", "%1: server is processing DHCPREQUEST with hint=%2",
