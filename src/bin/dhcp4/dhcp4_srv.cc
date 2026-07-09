@@ -4535,15 +4535,11 @@ Dhcpv4Srv::serverDecline(hooks::CalloutHandlePtr& callout_handle, Pkt4Ptr& query
             }
         }
 
-        if (!lease_exists) {
-            try {
-                LeaseMgrFactory::instance().addLease(lease);
-            } catch (const Exception& ex) {
-                LOG_ERROR(lease4_logger, DHCP4_SERVER_INITIATED_DECLINE_ADD_FAILED)
-                    .arg(query->getLabel())
-                    .arg(lease->addr_.toText());
-                return;
-            }
+        if (!lease_exists && !LeaseMgrFactory::instance().addLease(lease)) {
+            LOG_ERROR(lease4_logger, DHCP4_SERVER_INITIATED_DECLINE_ADD_FAILED)
+                .arg(query->getLabel())
+                .arg(lease->addr_.toText());
+            return;
         }
     }
 
