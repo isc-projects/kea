@@ -9614,4 +9614,22 @@ TEST_F(Dhcp6ParserTest, poolDdnsParameters) {
     ASSERT_TRUE(pool->getDdnsTtlMax().unspecified());
 }
 
+// Verifies hosts-datatbase parsing (warning and conflict with hosts-databases.
+TEST_F(Dhcp6ParserTest, hostsDatabase) {
+    string config = R"(
+    {
+        "hosts-database": {
+            "type": "mysql"
+        },
+        "hosts-databases": [ {
+            "type": "mysql"
+        } ]
+    }
+    )";
+
+    string expected = "can't use hosts-database and hosts-databases at the same time";
+    configure(config, CONTROL_RESULT_ERROR, expected);
+    EXPECT_EQ(1U, countFile("DHCP6_CONFIG_HOSTS_DATABASE_DEPRECATED"));
+}
+
 }  // namespace

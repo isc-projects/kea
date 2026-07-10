@@ -1,0 +1,4 @@
+[func]		fdupont
+	The parameter 'hosts-database' is deprecated.
+	'hosts-databases' should be used instead.
+	(Gitlab #4309)
