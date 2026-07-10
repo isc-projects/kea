@@ -1523,6 +1523,7 @@ void Lease6CmdsTest::testLease6GetBadParam() {
     // Structure detailing a test scenario.
     struct Scenario {
         string name_;                // name
+        bool add_subnet_id_;         // set to true to add a subnet-id
         string param_;               // parameter entry to test
         string exp_rsp_;             // expected response
     };
@@ -1531,42 +1532,71 @@ void Lease6CmdsTest::testLease6GetBadParam() {
     std::vector<Scenario> scenarios = {
         {
             "Invalid family",
+            false,
             "\"ip-address\": \"192.0.2.1\"",
             "Invalid IPv6 address specified: 192.0.2.1"
         },
         {
             "Bad address",
+            false,
             "\"ip-address\": \"221B Baker St.\"",
             "Failed to convert string to address '221B Baker St.': Invalid argument"
         },
         {
             "Not numeric subnet id",
+            false,
             "\"subnet-id\": \"foo\"",
             "'subnet-id' parameter is not integer."
         },
         {
             "Negative subnet id",
+            false,
             "\"subnet-id\": -1",
             "'subnet-id' parameter is not a 32 bit unsigned integer."
         },
         {
             "Too large subnet id",
+            false,
             "\"subnet-id\": 4294967297",
             "'subnet-id' parameter is not a 32 bit unsigned integer."
+        },
+        {
+            "Not numeric iaid",
+            true,
+            "\"iaid\": true",
+            "'iaid' parameter is not integer."
+        },
+        {
+            "Negative iaid",
+            true,
+            "\"iaid\": -1",
+            "'iaid' parameter is not a 32 bit unsigned integer."
+        },
+        {
+            "Too large iaid",
+            true,
+            "\"iaid\": 4294967297",
+            "'iaid' parameter is not a 32 bit unsigned integer."
         }
     };
 
     string prefix_cmd =
         "{\n"
         "    \"command\": \"lease6-get\",\n"
-        "    \"arguments\": {"
+        "    \"arguments\": {\n"
         "        ";
+    string subnet_id = "        \"subnet-id\": 1\n,";
     string end_cmd =
+        "\n"
         "    }\n"
-        "}";
+        "}\n";
     for (auto const& scenario : scenarios) {
         SCOPED_TRACE(scenario.name_);
-        string cmd = prefix_cmd + scenario.param_ + end_cmd;
+        string cmd = prefix_cmd;
+        if (scenario.add_subnet_id_) {
+            cmd += subnet_id;
+        }
+        cmd += scenario.param_ + end_cmd;
         testCommand(cmd, CONTROL_RESULT_ERROR, scenario.exp_rsp_);
     }
 }

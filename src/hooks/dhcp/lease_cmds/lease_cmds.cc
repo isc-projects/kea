@@ -766,8 +766,19 @@ LeaseCmdsImpl::getParameters(bool v6, const ConstElementPtr& params) {
     }
     x.subnet_id = static_cast<SubnetID>(tmp128);
 
-    if (params->contains("iaid")) {
-        x.iaid = params->get("iaid")->intValue();
+    tmp = params->get("iaid");
+    if (tmp) {
+        if (!v6) {
+            isc_throw(BadValue, "'iaid' parameter is specific to DHCPv6.");
+        }
+        if (tmp->getType() != Element::integer) {
+            isc_throw(BadValue, "'iaid' parameter is not integer.");
+        }
+        tmp128 = tmp->intValue();
+        if ((tmp128 < uint32_min) || (tmp128 > uint32_max)) {
+            isc_throw(BadValue, "'iaid' parameter is not a 32 bit unsigned integer.");
+        }
+        x.iaid = static_cast<uint32_t>(tmp128);
     }
 
     // No address specified. Ok, so it must be identifier based query.
