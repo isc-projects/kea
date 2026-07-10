@@ -249,7 +249,7 @@ public:
         /// Used while parsing Dhcp6/lease-database structures.
         LEASE_DATABASE,
 
-        /// Used while parsing Dhcp6/hosts-database[s] structures.
+        /// Used while parsing Dhcp6/hosts-databases structures.
         HOSTS_DATABASE,
 
         /// Used while parsing Dhcp6/*-database/on-fail.

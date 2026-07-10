@@ -1800,7 +1800,7 @@ TEST_F(HostCmdsTest, reservationDelIdNotSubnet) {
 }
 
 // Checks that properly formed reservation-del(subnet-id, addr) will not work if
-// there is no hosts-database configured and the operation target is default.
+// there is no hosts-databases configured and the operation target is default.
 TEST_F(HostCmdsTest, reservationDelNoHostsDatabaseDefaultSource) {
     // Now send the command.
     string cmd =
@@ -1812,13 +1812,13 @@ TEST_F(HostCmdsTest, reservationDelNoHostsDatabaseDefaultSource) {
         "    }\n"
         "}";
     string exp_rsp = "Unable to delete a host because there is no "
-                     "hosts-database configured.";
+                     "hosts-databases configured.";
 
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
 // Checks that properly formed reservation-del(subnet-id, addr) will work if
-// there is no hosts-database configured but the operation target is memory
+// there is no hosts-databases configured but the operation target is memory
 // source.
 TEST_F(HostCmdsTest, reservationDelNoHostsDatabaseMemorySource) {
     // Now send the command.

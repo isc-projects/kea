@@ -20,8 +20,8 @@ namespace db {
 /// @brief Parse Database Parameters
 ///
 /// This class is the parser for the database configuration.  This is a
-/// map under the top-level "lease-database", "hosts-database" and
-/// "config-database" elements, and comprises a map of strings.
+/// map under the top-level "lease-database", "hosts-databases" and
+/// "config-databases" elements, and comprises a map of strings.
 class DbAccessParser: public isc::data::SimpleParser {
 public:
     /// @brief Constructor

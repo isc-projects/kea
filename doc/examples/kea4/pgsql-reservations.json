@@ -54,8 +54,7 @@
 // reservations list, within the subnet (configuration file). If there are
 // no reservations there, the server will try to retrieve reservations
 // from this database.
-// The database specification can go into one hosts-database entry for
-// backward compatibility or be listed in hosts-databases list.
+// The database specification can be listed in hosts-databases list.
   "hosts-databases": [
     {
        "type": "postgresql",

@@ -1161,11 +1161,11 @@ kea_dhcp_config() {
         }
       }
     ],
-    "hosts-database": {
+    "hosts-databases": [ {
       "password": "sensitive",
       "type": "mysql",
       "user": "keatest"
-    },
+    } ],
     "lease-database": {
       "password": "sensitive",
       "type": "mysql",

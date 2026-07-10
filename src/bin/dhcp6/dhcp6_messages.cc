@@ -31,6 +31,7 @@ extern const isc::log::MessageID DHCP6_CLASS_ASSIGNED = "DHCP6_CLASS_ASSIGNED";
 extern const isc::log::MessageID DHCP6_CLASS_UNCONFIGURED = "DHCP6_CLASS_UNCONFIGURED";
 extern const isc::log::MessageID DHCP6_CLIENT_FQDN_SCRUBBED_EMPTY = "DHCP6_CLIENT_FQDN_SCRUBBED_EMPTY";
 extern const isc::log::MessageID DHCP6_CONFIG_COMPLETE = "DHCP6_CONFIG_COMPLETE";
+extern const isc::log::MessageID DHCP6_CONFIG_HOSTS_DATABASE_DEPRECATED = "DHCP6_CONFIG_HOSTS_DATABASE_DEPRECATED";
 extern const isc::log::MessageID DHCP6_CONFIG_LOAD_FAIL = "DHCP6_CONFIG_LOAD_FAIL";
 extern const isc::log::MessageID DHCP6_CONFIG_PACKET_QUEUE = "DHCP6_CONFIG_PACKET_QUEUE";
 extern const isc::log::MessageID DHCP6_CONFIG_RECEIVED = "DHCP6_CONFIG_RECEIVED";
@@ -216,6 +217,7 @@ const char* values[] = {
     "DHCP6_CLASS_UNCONFIGURED", "%1: client packet belongs to an unconfigured class: %2",
     "DHCP6_CLIENT_FQDN_SCRUBBED_EMPTY", "%1: sanitizing client's FQDN option '%2' yielded an empty string",
     "DHCP6_CONFIG_COMPLETE", "DHCPv6 server has completed configuration: %1",
+    "DHCP6_CONFIG_HOSTS_DATABASE_DEPRECATED", "the \"host-database\" keyword will be deprecated",
     "DHCP6_CONFIG_LOAD_FAIL", "configuration error using file: %1, reason: %2",
     "DHCP6_CONFIG_PACKET_QUEUE", "DHCPv6 packet queue info after configuration: %1",
     "DHCP6_CONFIG_RECEIVED", "received configuration: %1",

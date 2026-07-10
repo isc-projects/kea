@@ -200,9 +200,9 @@ TEST_F(HostMgrTest, noDataSource) {
     HostPtr host(new Host(hwaddrs_[0]->toText(false), "hw-address",
                           SubnetID(1), SUBNET_ID_UNUSED, IOAddress("192.0.2.5")));
     EXPECT_THROW_MSG(HostMgr::instance().add(host), NoHostDataSourceManager,
-                     "Unable to add new host because there is no hosts-database configured.");
+                     "Unable to add new host because there is no hosts-databases configured.");
     EXPECT_THROW_MSG(HostMgr::instance().update(host), NoHostDataSourceManager,
-                     "Unable to update existing host because there is no hosts-database "
+                     "Unable to update existing host because there is no hosts-databases "
                      "configured.");
 }
 

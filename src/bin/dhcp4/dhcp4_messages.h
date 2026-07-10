@@ -34,6 +34,7 @@ extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_PROCESS;
 extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_SCRUBBED_EMPTY;
 extern const isc::log::MessageID DHCP4_CLIENT_NAME_PROC_FAIL;
 extern const isc::log::MessageID DHCP4_CONFIG_COMPLETE;
+extern const isc::log::MessageID DHCP4_CONFIG_HOSTS_DATABASE_DEPRECATED;
 extern const isc::log::MessageID DHCP4_CONFIG_LOAD_FAIL;
 extern const isc::log::MessageID DHCP4_CONFIG_PACKET_QUEUE;
 extern const isc::log::MessageID DHCP4_CONFIG_RECEIVED;

@@ -32,6 +32,7 @@ extern const isc::log::MessageID DHCP6_CLASS_ASSIGNED;
 extern const isc::log::MessageID DHCP6_CLASS_UNCONFIGURED;
 extern const isc::log::MessageID DHCP6_CLIENT_FQDN_SCRUBBED_EMPTY;
 extern const isc::log::MessageID DHCP6_CONFIG_COMPLETE;
+extern const isc::log::MessageID DHCP6_CONFIG_HOSTS_DATABASE_DEPRECATED;
 extern const isc::log::MessageID DHCP6_CONFIG_LOAD_FAIL;
 extern const isc::log::MessageID DHCP6_CONFIG_PACKET_QUEUE;
 extern const isc::log::MessageID DHCP6_CONFIG_RECEIVED;

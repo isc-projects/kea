@@ -167,6 +167,12 @@ new configuration. it is output during server startup, and when an updated
 configuration is committed by the administrator.  Additional information
 may be provided.
 
+% DHCP6_CONFIG_HOSTS_DATABASE_DEPRECATED the "host-database" keyword will be deprecated
+This warning message indicates the configuration still use
+the "hosts-database", a keyword which is deprecated and will
+be rejected by a future release,. Please use "hosts-databases" instead
+and put the database configuration into a list.
+
 % DHCP6_CONFIG_LOAD_FAIL configuration error using file: %1, reason: %2
 This error message indicates that the DHCPv6 configuration has failed.
 If this is an initial configuration (during server's startup) the server

@@ -1054,7 +1054,7 @@ or
 
    {
        "result": 1,
-       "text": "Unable to delete a host because there is no hosts-database configured."
+       "text": "Unable to delete a host because there is no hosts-databases configured."
    }
 
 The command accepts the ``operation-target`` argument. By default, it removes

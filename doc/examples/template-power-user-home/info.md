@@ -102,7 +102,7 @@ may wish to consider the following changes:
 
 - To expand the local network, adding a MySQL or PostgreSQL database is a popular solution.
   Users can choose to store leases, host reservations, and even most of the configuration
-  in a database. See :ref:`admin` and the ``lease-database``, ``hosts-database``, and
+  in a database. See :ref:`admin` and the ``lease-database``, ``hosts-databases``, and
   ``config-control`` parameters in :ref:`dhcp4`.
 
 - To provide more insight into how the DHCP server operates, Kea's RESTful API can query

@@ -63,14 +63,14 @@
     // small or you have few reservations, it's probably easier to keep them
     // in the configuration file. If your network is large, it's usually better
     // to use database for it. To enable it, uncomment the following:
-    // "hosts-database": {
+    // "hosts-databases": [ {
     //     "type": "mysql",
     //     "name": "kea",
     //     "user": "kea",
     //     "password": "1234",
     //     "host": "localhost",
     //     "port": 3306
-    // },
+    // } ],
     // See Section 8.2.3 "Hosts storage" for details.
 
     // Setup reclamation of the expired leases and leases affinity.

@@ -15012,7 +15012,7 @@ HOSTS_BACKENDS_REGISTERED
     the following host backend types are available: %1
 
 This informational message lists all possible host backends that could
-be used in hosts-database[s].
+be used in hosts-databases.
 
 HOSTS_BACKEND_DEREGISTER
 ========================

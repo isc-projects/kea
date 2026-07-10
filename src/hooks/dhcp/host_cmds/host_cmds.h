@@ -133,7 +133,7 @@ public:
     /// argument accordingly.
     ///
     /// Note: for this operation to work while the operation-target was set to
-    /// ALTERNATE_SOURCES, hosts-database must be specified in your
+    /// ALTERNATE_SOURCES, hosts-databases must be specified in your
     /// configuration file (or from code point of view, alternate_source_
     /// must be set in HostMgr).
     ///

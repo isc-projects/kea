@@ -42,7 +42,7 @@
 // reservations list, within the subnet (configuration file). If there are
 // no reservations there, the server will try to retrieve reservations
 // from this database.
-  "hosts-database": {
+  "hosts-databases": [ {
     "type": "mysql",
     "reconnect-wait-time": 3000, // expressed in ms
     "max-reconnect-tries": 3,
@@ -56,7 +56,7 @@
     "cert-file": "my-cert",
     "key-file": "my-key",
     "cipher-list": "AES"
-  },
+  } ],
 // Since Kea.2.7.4, the libdhcp_mysql.so hook library must be loaded in order to
 // store host reservations in the MySQL Host Database Backend.
 // Specify the host backend hook library location.

@@ -532,8 +532,14 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
         }
 
         ConstElementPtr hosts_database = mutable_cfg->get("hosts-database");
+        ConstElementPtr hosts_databases = mutable_cfg->get("hosts-databases");
         if (hosts_database) {
             parameter_name = "hosts-database";
+            LOG_WARN(dhcp4_logger, DHCP4_CONFIG_HOSTS_DATABASE_DEPRECATED);
+            if (hosts_databases) {
+                isc_throw(DhcpConfigError, "can't use hosts-database and "
+                          << "hosts-databases at the same time");
+            }
             db::DbAccessParser parser;
             std::string access_string;
             parser.parse(access_string, hosts_database);
@@ -541,7 +547,6 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
             cfg_db_access->setHostDbAccessString(access_string);
         }
 
-        ConstElementPtr hosts_databases = mutable_cfg->get("hosts-databases");
         if (hosts_databases) {
             parameter_name = "hosts-databases";
             CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();

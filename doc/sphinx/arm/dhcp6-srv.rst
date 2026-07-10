@@ -682,14 +682,14 @@ connection to MySQL:
 ::
 
    "Dhcp6": {
-       "hosts-database": {
+       "hosts-databases": [ {
            "type": "mysql",
            "name": "kea",
            "user": "kea",
            "password": "1234",
            "host": "localhost",
            "port": 3306
-       }
+       } ]
    }
 
 Depending on the database configuration, many of the
@@ -723,12 +723,21 @@ DHCPv6 Hosts Database Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Hosts database configuration is controlled through the
-``Dhcp6``/``hosts-database`` parameters. If enabled, the type of database must
-be set to ``mysql`` or ``postgresql``.
+``Dhcp6``/``hosts-databases`` parameters. If enabled, the type of database must
+be set to a valid type e.g. ``mysql`` or ``postgresql``.
 
 ::
 
-   "Dhcp6": { "hosts-database": { "type": "mysql", ... }, ... }
+   "Dhcp6": { "hosts-databases": [ { "type": "mysql", ... } ], ... }
+
+Since the multiple-storage extension the database configurations must be
+placed in a ``hosts-databases`` list.
+
+.. note::
+
+   The previous keyword ``hosts-database`` which takes one database
+   configuration only is deprecated and will be rejected by a future release.
+
 
 Next, the name of the database to hold the reservations must be set;
 this is the name used when the lease database was created (see
@@ -737,28 +746,28 @@ desired database type):
 
 ::
 
-   "Dhcp6": { "hosts-database": { "name": "database-name" , ... }, ... }
+   "Dhcp6": { "hosts-databases": [ { "name": "database-name" , ... } ], ... }
 
 If the database is located on a different system than the DHCPv6 server,
 the database host name must also be specified:
 
 ::
 
-   "Dhcp6": { "hosts-database": { "host": remote-host-name, ... }, ... }
+   "Dhcp6": { "hosts-databases": [ { "host": remote-host-name, ... } ], ... }
 
 Normally, the database is on the same machine as the DHCPv6 server.
 In this case, set the value to the empty string:
 
 ::
 
-   "Dhcp6": { "hosts-database": { "host" : "", ... }, ... }
+   "Dhcp6": { "hosts-databases": [ { "host" : "", ... } ], ... }
 
 Should the database use a port different than the default, it may be
 specified as well:
 
 ::
 
-   "Dhcp6": { "hosts-database": { "port" : 12345, ... }, ... }
+   "Dhcp6": { "hosts-databases": [ { "port" : 12345, ... } ], ... }
 
 The maximum number of times the server automatically attempts to
 reconnect to the host database after connectivity has been lost may be
@@ -766,7 +775,7 @@ specified:
 
 ::
 
-   "Dhcp6": { "hosts-database": { "max-reconnect-tries" : number-of-tries, ... }, ... }
+   "Dhcp6": { "hosts-databases": [ { "max-reconnect-tries" : number-of-tries, ... } ], ... }
 
 If the server is unable to reconnect to the database after making the
 maximum number of attempts, the server will exit. A value of 0 (the
@@ -780,7 +789,7 @@ be specified:
 
 ::
 
-   "Dhcp6": { "hosts-database": { "reconnect-wait-time" : number-of-milliseconds, ... }, ... }
+   "Dhcp6": { "hosts-databases": [ { "reconnect-wait-time" : number-of-milliseconds, ... } ], ... }
 
 The default value for MySQL and PostgreSQL is 0, which disables automatic
 recovery and causes the server to exit immediately upon detecting the
@@ -788,7 +797,7 @@ loss of connectivity.
 
 ::
 
-   "Dhcp6": { "hosts-database": { "on-fail" : "stop-retry-exit", ... }, ... }
+   "Dhcp6": { "hosts-databases": [ { "on-fail" : "stop-retry-exit", ... } ], ... }
 
 The possible values are:
 
@@ -817,7 +826,7 @@ The possible values are:
 
 ::
 
-   "Dhcp6": { "hosts-database": { "retry-on-startup" : true, ... }, ... }
+   "Dhcp6": { "hosts-databases": [ { "retry-on-startup" : true, ... } ], ... }
 
 During server startup, the inability to connect to any of the configured
 backends is considered fatal only if ``retry-on-startup`` is set to ``false``
@@ -834,24 +843,16 @@ access the database should be set:
 ::
 
    "Dhcp6": {
-       "hosts-database": {
+       "hosts-databases": [ {
            "user": "user-name",
            "password": "1234",
            ...
-       },
+       } ],
        ...
    }
 
 If there is no password to the account, set the password to the empty
 string ``""``. (This is the default.)
-
-The multiple-storage extension uses a similar syntax; a configuration is
-placed into a ``hosts-databases`` list instead of into a ``hosts-database``
-entry, as in:
-
-::
-
-   "Dhcp6": { "hosts-databases": [ { "type": "mysql", ... }, ... ], ... }
 
 If the same host is configured both in-file and in-database, Kea does not issue a warning,
 as it would if both were specified in the same data source.
@@ -884,7 +885,7 @@ is controlled by the ``readonly`` boolean parameter as follows:
 
 ::
 
-   "Dhcp6": { "hosts-database": { "readonly": true, ... }, ... }
+   "Dhcp6": { "hosts-databases": [ { "readonly": true, ... } ], ... }
 
 Setting this parameter to ``false`` configures the database backend to
 operate in "read-write" mode, which is also the default configuration if

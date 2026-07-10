@@ -158,7 +158,7 @@ Parser6Context::contextName() {
     case LEASE_DATABASE:
         return ("lease-database");
     case HOSTS_DATABASE:
-        return ("hosts-database");
+        return ("hosts-databases");
     case DATABASE_ON_FAIL:
         return ("database-on-fail");
     case SSL_MODE:

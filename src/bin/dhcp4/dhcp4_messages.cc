@@ -33,6 +33,7 @@ extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_PROCESS = "DHCP4_CLIENT_H
 extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_SCRUBBED_EMPTY = "DHCP4_CLIENT_HOSTNAME_SCRUBBED_EMPTY";
 extern const isc::log::MessageID DHCP4_CLIENT_NAME_PROC_FAIL = "DHCP4_CLIENT_NAME_PROC_FAIL";
 extern const isc::log::MessageID DHCP4_CONFIG_COMPLETE = "DHCP4_CONFIG_COMPLETE";
+extern const isc::log::MessageID DHCP4_CONFIG_HOSTS_DATABASE_DEPRECATED = "DHCP4_CONFIG_HOSTS_DATABASE_DEPRECATED";
 extern const isc::log::MessageID DHCP4_CONFIG_LOAD_FAIL = "DHCP4_CONFIG_LOAD_FAIL";
 extern const isc::log::MessageID DHCP4_CONFIG_PACKET_QUEUE = "DHCP4_CONFIG_PACKET_QUEUE";
 extern const isc::log::MessageID DHCP4_CONFIG_RECEIVED = "DHCP4_CONFIG_RECEIVED";
@@ -222,6 +223,7 @@ const char* values[] = {
     "DHCP4_CLIENT_HOSTNAME_SCRUBBED_EMPTY", "%1: sanitizing client's Hostname option '%2' yielded an empty string",
     "DHCP4_CLIENT_NAME_PROC_FAIL", "%1: failed to process the fqdn or hostname sent by a client: %2",
     "DHCP4_CONFIG_COMPLETE", "DHCPv4 server has completed configuration: %1",
+    "DHCP4_CONFIG_HOSTS_DATABASE_DEPRECATED", "the \"host-database\" keyword will be deprecated",
     "DHCP4_CONFIG_LOAD_FAIL", "configuration error using file: %1, reason: %2",
     "DHCP4_CONFIG_PACKET_QUEUE", "DHCPv4 packet queue info after configuration: %1",
     "DHCP4_CONFIG_RECEIVED", "received configuration %1",

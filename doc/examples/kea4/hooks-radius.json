@@ -78,7 +78,7 @@
     "type": "memfile"
   },
 
-  // Note there is hosts-database defined. RADIUS and Host Cache libraries
+  // Note there is hosts-databases defined. RADIUS and Host Cache libraries
   // will create them dynamically.
 
   // RADIUS uses flex-id reservations, so restrict Kea to use flex-id only.

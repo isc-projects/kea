@@ -7741,7 +7741,7 @@ kea4/hooks-radius.json
         "type": "memfile"
       },
 
-      // Note there is hosts-database defined. RADIUS and Host Cache libraries
+      // Note there is hosts-databases defined. RADIUS and Host Cache libraries
       // will create them dynamically.
 
       // RADIUS uses flex-id reservations, so restrict Kea to use flex-id only.
@@ -8408,7 +8408,7 @@ kea4/mysql-reservations.json
     // reservations list, within the subnet (configuration file). If there are
     // no reservations there, the server will try to retrieve reservations
     // from this database.
-      "hosts-database": {
+      "hosts-databases": [ {
         "type": "mysql",
         "reconnect-wait-time": 3000, // expressed in ms
         "max-reconnect-tries": 3,
@@ -8421,7 +8421,7 @@ kea4/mysql-reservations.json
         "cert-file": "my-cert",
         "key-file": "my-key",
         "cipher-list": "AES"
-      },
+      } ],
     // Since Kea.2.7.4, the libdhcp_mysql.so hook library must be loaded in order to
     // store host reservations in the MySQL Host Database Backend.
     // Specify the host backend hook library location.
@@ -8529,8 +8529,7 @@ kea4/pgsql-reservations.json
     // reservations list, within the subnet (configuration file). If there are
     // no reservations there, the server will try to retrieve reservations
     // from this database.
-    // The database specification can go into one hosts-database entry for
-    // backward compatibility or be listed in hosts-databases list.
+    // The database specification can be listed in hosts-databases list.
       "hosts-databases": [
         {
            "type": "postgresql",
@@ -16711,7 +16710,7 @@ kea6/mysql-reservations.json
     // reservations list, within the subnet (configuration file). If there are
     // no reservations there, the server will try to retrieve reservations
     // from this database.
-      "hosts-database": {
+      "hosts-databases": [ {
         "type": "mysql",
         "reconnect-wait-time": 3000, // expressed in ms
         "max-reconnect-tries": 3,
@@ -16725,7 +16724,7 @@ kea6/mysql-reservations.json
         "cert-file": "my-cert",
         "key-file": "my-key",
         "cipher-list": "AES"
-      },
+      } ],
     // Since Kea.2.7.4, the libdhcp_mysql.so hook library must be loaded in order to
     // store host reservations in the MySQL Host Database Backend.
     // Specify the host backend hook library location.
@@ -16830,8 +16829,7 @@ kea6/pgsql-reservations.json
     // reservations list, within the subnet (configuration file). If there are
     // no reservations there, the server will try to retrieve reservations
     // from this database.
-    // The database specification can go into one hosts-database entry for
-    // backward compatibility or be listed in hosts-databases list.
+    // The database specification can be listed in hosts-databases list.
       "hosts-databases": [
         {
            "type": "postgresql",

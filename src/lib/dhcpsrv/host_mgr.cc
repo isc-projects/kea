@@ -770,7 +770,7 @@ HostMgr::add(const HostPtr& host, const HostMgrOperationTarget target) {
         // Don't throw if all targets were selected.
         if (alternate_sources_.empty() && !(target & HostMgrOperationTarget::PRIMARY_SOURCE)) {
             isc_throw(NoHostDataSourceManager, "Unable to add new host because there is "
-                    "no hosts-database configured.");
+                    "no hosts-databases configured.");
 
         }
 
@@ -803,7 +803,7 @@ HostMgr::del(const SubnetID& subnet_id, const asiolink::IOAddress& addr,
         // Don't throw if all targets were selected.
         if (alternate_sources_.empty() && !(target & HostMgrOperationTarget::PRIMARY_SOURCE)) {
             isc_throw(NoHostDataSourceManager, "Unable to delete a host because there is "
-                    "no hosts-database configured.");
+                    "no hosts-databases configured.");
         }
 
         for (auto const& source : alternate_sources_) {
@@ -837,7 +837,7 @@ HostMgr::del4(const SubnetID& subnet_id, const Host::IdentifierType& identifier_
         // Don't throw if all targets were selected.
         if (alternate_sources_.empty() && !(target & HostMgrOperationTarget::PRIMARY_SOURCE)) {
             isc_throw(NoHostDataSourceManager, "Unable to delete a host because there is "
-                    "no hosts-database configured.");
+                    "no hosts-databases configured.");
         }
 
         for (auto const& source : alternate_sources_) {
@@ -874,7 +874,7 @@ HostMgr::del6(const SubnetID& subnet_id, const Host::IdentifierType& identifier_
         // Don't throw if all targets were selected.
         if (alternate_sources_.empty() && !(target & HostMgrOperationTarget::PRIMARY_SOURCE)) {
             isc_throw(NoHostDataSourceManager, "Unable to delete a host because there is "
-                    "no hosts-database configured.");
+                    "no hosts-databases configured.");
         }
 
         for (auto const& source : alternate_sources_) {
@@ -904,7 +904,7 @@ HostMgr::update(HostPtr const& host, const HostMgrOperationTarget target) {
         // Don't throw if all targets were selected.
         if (alternate_sources_.empty() && !(target & HostMgrOperationTarget::PRIMARY_SOURCE)) {
             isc_throw(NoHostDataSourceManager,
-                    "Unable to update existing host because there is no hosts-database configured.");
+                    "Unable to update existing host because there is no hosts-databases configured.");
         }
 
         for (HostDataSourcePtr const& source : alternate_sources_) {
