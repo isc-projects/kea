@@ -237,7 +237,7 @@ public:
     void testLease6GetMissingParams();
 
     /// @brief Check that lease6-get sanitizes its input.
-    void testLease6GetByAddrBadParam();
+    void testLease6GetBadParam();
 
     /// @brief Check that lease6-get can handle a situation when the query is
     /// correctly formed, but the lease is not there.
@@ -1456,39 +1456,6 @@ void Lease6CmdsTest::testLease6GetMissingParams() {
     string exp_rsp = "Mandatory 'subnet-id' parameter missing.";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Reject not numeric subnet id.
-    cmd =
-        "{\n"
-        "    \"command\": \"lease6-get\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": \"foo\""
-        "    }\n"
-        "}";
-    exp_rsp = "'subnet-id' parameter is not integer.";
-    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
-
-    // Reject negative subnet id.
-    cmd =
-        "{\n"
-        "    \"command\": \"lease6-get\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": -1"
-        "    }\n"
-        "}";
-    exp_rsp = "'subnet-id' parameter is not a 32 bit unsigned integer.";
-    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
-
-    // Reject too large subnet id.
-    cmd =
-        "{\n"
-        "    \"command\": \"lease6-get\",\n"
-        "    \"arguments\": {"
-        "        \"subnet-id\": 4294967297"
-        "    }\n"
-        "}";
-    exp_rsp = "'subnet-id' parameter is not a 32 bit unsigned integer.";
-    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
-
     // Just the subnet-id won't cut it, either.
     cmd =
         "{\n"
@@ -1552,31 +1519,56 @@ void Lease6CmdsTest::testLease6GetMissingParams() {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
-void Lease6CmdsTest::testLease6GetByAddrBadParam() {
-    // Initialize lease manager (true = v6, true = add leases)
-    initLeaseMgr(true, true);
+void Lease6CmdsTest::testLease6GetBadParam() {
+    // Structure detailing a test scenario.
+    struct Scenario {
+        string name_;                // name
+        string param_;               // parameter entry to test
+        string exp_rsp_;             // expected response
+    };
 
-    // Invalid family
-    string cmd =
+    // Test scenarios.
+    std::vector<Scenario> scenarios = {
+        {
+            "Invalid family",
+            "\"ip-address\": \"192.0.2.1\"",
+            "Invalid IPv6 address specified: 192.0.2.1"
+        },
+        {
+            "Bad address",
+            "\"ip-address\": \"221B Baker St.\"",
+            "Failed to convert string to address '221B Baker St.': Invalid argument"
+        },
+        {
+            "Not numeric subnet id",
+            "\"subnet-id\": \"foo\"",
+            "'subnet-id' parameter is not integer."
+        },
+        {
+            "Negative subnet id",
+            "\"subnet-id\": -1",
+            "'subnet-id' parameter is not a 32 bit unsigned integer."
+        },
+        {
+            "Too large subnet id",
+            "\"subnet-id\": 4294967297",
+            "'subnet-id' parameter is not a 32 bit unsigned integer."
+        }
+    };
+
+    string prefix_cmd =
         "{\n"
         "    \"command\": \"lease6-get\",\n"
         "    \"arguments\": {"
-        "        \"ip-address\": \"192.0.2.1\""
+        "        ";
+    string end_cmd =
         "    }\n"
         "}";
-    string exp_rsp = "Invalid IPv6 address specified: 192.0.2.1";
-    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
-
-    // This is way off
-    cmd =
-        "{\n"
-        "    \"command\": \"lease6-get\",\n"
-        "    \"arguments\": {"
-        "        \"ip-address\": \"221B Baker St.\""
-        "    }\n"
-        "}";
-    exp_rsp = "Failed to convert string to address '221B Baker St.': Invalid argument";
-    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    for (auto const& scenario : scenarios) {
+        SCOPED_TRACE(scenario.name_);
+        string cmd = prefix_cmd + scenario.param_ + end_cmd;
+        testCommand(cmd, CONTROL_RESULT_ERROR, scenario.exp_rsp_);
+    }
 }
 
 void Lease6CmdsTest::testLease6GetByAddrNotFound() {
@@ -2369,18 +2361,6 @@ void Lease6CmdsTest::testLease6GetByStateParams() {
         "}";
     exp_rsp = "'state' parameter value (foobar) is not recognized";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
-
-    // subnet-id must be a number.
-    cmd =
-        "{\n"
-        "    \"command\": \"lease6-get-by-state\",\n"
-        "    \"arguments\": {"
-        "        \"state\": 1,\n"
-        "        \"subnet-id\": \"mynet\"\n"
-        "    }\n"
-        "}";
-    exp_rsp = "'subnet-id' parameter must be a number";
-    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
 void Lease6CmdsTest::testLease6GetByStateFind0() {
@@ -2511,41 +2491,47 @@ void Lease6CmdsTest::testLease6GetByStateFindN() {
 }
 
 void Lease6CmdsTest::testLease6GetByStateBadArgs() {
-    // Subnet id must be a number.
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease6-get-by-state\",\n"
-        "    \"arguments\": {"
-        "        \"state\": 3,\n"
-        "        \"subnet-id\": \"foo\"\n"
-        "    }\n"
-        "}";
-    string exp_rsp = "'subnet-id' parameter must be a number";
-    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    // Structure detailing a test scenario.
+    struct Scenario {
+        string name_;                // name
+        string param_;               // parameter entry to test
+        string exp_rsp_;             // expected response
+    };
 
-    // Subnet id must be positive.
-    cmd =
-        "{\n"
-        "    \"command\": \"lease6-get-by-state\",\n"
-        "    \"arguments\": {"
-        "        \"state\": 3,\n"
-        "        \"subnet-id\": -1\n"
-        "    }\n"
-        "}";
-    exp_rsp = "'subnet-id' parameter must be a 32 bit unsigned integer";
-    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    // Test scenarios.
+    std::vector<Scenario> scenarios = {
+        {
+            "Subnet id must be a number",
+            "\"subnet-id\": \"foo\"",
+            "'subnet-id' parameter must be a number"
+        },
+        {
+            "Subnet id must be positive",
+            "\"subnet-id\": -1",
+            "'subnet-id' parameter must be a 32 bit unsigned integer"
+        },
+        {
+            "Subnet id must be fit into 32 bits",
+            "\"subnet-id\": 4294967297",
+            "'subnet-id' parameter must be a 32 bit unsigned integer"
+        }
+    };
 
-    // Subnet id must be fir into 32 bits.
-    cmd =
+    string prefix_cmd =
         "{\n"
         "    \"command\": \"lease6-get-by-state\",\n"
         "    \"arguments\": {"
         "        \"state\": 3,\n"
-        "        \"subnet-id\": 4294967297\n"
+        "        ";
+    string end_cmd =
+        "\n"
         "    }\n"
         "}";
-    exp_rsp = "'subnet-id' parameter must be a 32 bit unsigned integer";
-    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    for (auto const& scenario : scenarios) {
+        SCOPED_TRACE(scenario.name_);
+        string cmd = prefix_cmd + scenario.param_ + end_cmd;
+        testCommand(cmd, CONTROL_RESULT_ERROR, scenario.exp_rsp_);
+    }
 }
 
 void Lease6CmdsTest::testLease6GetByHostnameParams() {
@@ -5238,13 +5224,13 @@ TEST_F(Lease6CmdsTest, lease6GetMissingParamsMultiThreading) {
     testLease6GetMissingParams();
 }
 
-TEST_F(Lease6CmdsTest, lease6GetByAddrBadParam) {
-    testLease6GetByAddrBadParam();
+TEST_F(Lease6CmdsTest, lease6GetBadParam) {
+    testLease6GetBadParam();
 }
 
-TEST_F(Lease6CmdsTest, lease6GetByAddrBadParamMultiThreading) {
+TEST_F(Lease6CmdsTest, lease6GetBadParamMultiThreading) {
     MultiThreadingTest mt(true);
-    testLease6GetByAddrBadParam();
+    testLease6GetBadParam();
 }
 
 TEST_F(Lease6CmdsTest, lease6GetByAddrNotFound) {

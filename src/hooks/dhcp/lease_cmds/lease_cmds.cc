@@ -52,6 +52,13 @@ using namespace std;
 namespace isc {
 namespace lease_cmds {
 
+namespace {
+
+const int128_t uint32_min = numeric_limits<uint32_t>::min();
+const int128_t uint32_max = numeric_limits<uint32_t>::max();
+
+}
+
 /// @brief Wrapper class around reservation command handlers.
 class LeaseCmdsImpl : private CmdsImpl {
 public:
@@ -753,12 +760,11 @@ LeaseCmdsImpl::getParameters(bool v6, const ConstElementPtr& params) {
     if (tmp->getType() != Element::integer) {
         isc_throw(BadValue, "'subnet-id' parameter is not integer.");
     }
-    int64_t tmp64 = tmp->intValue();
-    if ((tmp64 < numeric_limits<uint32_t>::min()) ||
-        (tmp64 > numeric_limits<uint32_t>::max())) {
+    int128_t tmp128 = tmp->intValue();
+    if ((tmp128 < uint32_min) || (tmp128 > uint32_max)) {
         isc_throw(BadValue, "'subnet-id' parameter is not a 32 bit unsigned integer.");
     }
-    x.subnet_id = static_cast<SubnetID>(tmp64);
+    x.subnet_id = static_cast<SubnetID>(tmp128);
 
     if (params->contains("iaid")) {
         x.iaid = params->get("iaid")->intValue();
@@ -930,8 +936,7 @@ LeaseCmdsImpl::leaseGetAllHandler(CalloutHandle& handle) {
                     isc_throw(BadValue, "listed subnet identifiers must be numbers");
                 }
                 auto subnet_id_ = subnet_id->intValue();
-                if ((subnet_id_ < numeric_limits<uint32_t>::min()) ||
-                    (subnet_id_ > numeric_limits<uint32_t>::max())) {
+                if ((subnet_id_ < uint32_min) || (subnet_id_ > uint32_max)) {
                     isc_throw(BadValue, "out of range subnet identifier "
                               << subnet_id_);
                 }
@@ -1338,12 +1343,11 @@ LeaseCmdsImpl::leaseGetByStateHandler(CalloutHandle& handle) {
             if (subnet->getType() != Element::integer) {
                 isc_throw(BadValue, "'subnet-id' parameter must be a number");
             }
-            auto id64 = subnet->intValue();
-            if ((id64 < numeric_limits<uint32_t>::min()) ||
-                (id64 > numeric_limits<uint32_t>::max())) {
+            auto id128 = subnet->intValue();
+            if ((id128 < uint32_min) || (id128 > uint32_max)) {
                 isc_throw(BadValue, "'subnet-id' parameter must be a 32 bit unsigned integer");
             }
-            subnet_id_ = static_cast<SubnetID>(id64);
+            subnet_id_ = static_cast<SubnetID>(id128);
         }
 
         ElementPtr leases_json = Element::createList();
