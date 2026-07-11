@@ -773,11 +773,10 @@ Dhcpv4Srv::shutdown() {
 }
 
 isc::dhcp::ConstSubnet4Ptr
-Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
-                        bool sanity_only, bool allow_answer_park) {
+Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop, bool allow_answer_park) {
     // DHCPv4-over-DHCPv6 is a special (and complex) case
     if (query->isDhcp4o6()) {
-        return (selectSubnet4o6(query, drop, sanity_only, allow_answer_park));
+        return (selectSubnet4o6(query, drop, allow_answer_park));
     }
 
     ConstSubnet4Ptr subnet;
@@ -789,8 +788,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
 
     // Let's execute all callouts registered for subnet4_select
     // (skip callouts if the selectSubnet was called to do sanity checks only)
-    if (!sanity_only &&
-        HooksManager::calloutsPresent(Hooks.hook_index_subnet4_select_)) {
+    if (HooksManager::calloutsPresent(Hooks.hook_index_subnet4_select_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // Use the RAII wrapper to make sure that the callout handle state is
@@ -907,7 +905,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
 
 isc::dhcp::ConstSubnet4Ptr
 Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
-                           bool sanity_only, bool allow_answer_park) {
+                           bool allow_answer_park) {
     ConstSubnet4Ptr subnet;
 
     SubnetSelector selector;
@@ -957,8 +955,7 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
 
     // Let's execute all callouts registered for subnet4_select.
     // (skip callouts if the selectSubnet was called to do sanity checks only)
-    if (!sanity_only &&
-        HooksManager::calloutsPresent(Hooks.hook_index_subnet4_select_)) {
+    if (HooksManager::calloutsPresent(Hooks.hook_index_subnet4_select_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // Use the RAII wrapper to make sure that the callout handle state is
@@ -1564,7 +1561,7 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr query, bool allow_answer_park) {
             (query->getType() == DHCPREQUEST) ||
             (query->getType() == DHCPINFORM)) {
             bool drop = false;
-            ctx->subnet_ = selectSubnet(query, drop, false, allow_answer_park);
+            ctx->subnet_ = selectSubnet(query, drop, allow_answer_park);
             // Stop here if selectSubnet decided to drop the packet
             if (drop) {
                 return (Pkt4Ptr());
@@ -3061,19 +3058,28 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     // request from the INIT-REBOOT client if we're not authoritative, because
     // we don't know whether the network configuration is correct for this
     // client. We return DHCPNAK if we're authoritative, though.
-    if (!subnet && (!init_reboot || authoritative)) {
+    if (!subnet) {
         // This particular client is out of luck today. We do not have
         // information about the subnet he is connected to. This likely means
         // misconfiguration of the server (or some relays).
 
-        // Perhaps this should be logged on some higher level?
-        LOG_ERROR(bad_packet4_logger, DHCP4_PACKET_NAK_0001)
-            .arg(query->getLabel())
-            .arg(query->getRemoteAddr().toText())
-            .arg(query->getName());
-        resp->setType(DHCPNAK);
-        resp->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
-        return;
+        // If it's a rebind, quietly drop it.
+        if (!fake_allocation && !opt_serverid && !opt_requested_address
+            && !query->getCiaddr().isV4Zero() && query->getLocalAddr().isV4Bcast()) {
+            ex.deleteResponse();
+            return;
+        }
+
+        if (!init_reboot || authoritative) {
+            // Perhaps this should be logged on some higher level?
+            LOG_ERROR(bad_packet4_logger, DHCP4_PACKET_NAK_0001)
+                .arg(query->getLabel())
+                .arg(query->getRemoteAddr().toText())
+                .arg(query->getName());
+            resp->setType(DHCPNAK);
+            resp->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
+            return;
+        }
     }
 
     HWAddrPtr hwaddr = query->getHWAddr();
@@ -4656,14 +4662,8 @@ Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) {
         // we validate the message type prior to calling this function.
         return (false);
     }
-    bool drop = false;
-    bool result = (!pkt->getLocalAddr().isV4Bcast() ||
-                   selectSubnet(pkt, drop, true));
-    if (drop) {
-        // The packet must be dropped but as sanity_only is true it is dead code.
-        return (false);
-    }
-    return (result);
+
+    return (true);
 }
 
 bool

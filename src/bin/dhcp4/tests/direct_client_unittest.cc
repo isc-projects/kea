@@ -133,6 +133,13 @@ public:
     /// configured the client's message is discarded.
     void rebind();
 
+    /// This test verifies that when a client in the Init-Rebooting state broadcasts
+    /// a Request message through an interface for which a subnet is configured,
+    /// the server responds to this Request. It also verifies that when such a
+    /// Request is sent through the interface for which there is no subnet
+    /// configured the client's message is discarded.
+    void init_reboot();
+
     /// @brief classes the client belongs to
     ///
     /// This is empty in most cases, but it is needed as a parameter for all
@@ -369,6 +376,7 @@ DirectClientTest::renew() {
 
     // Put the client into the renewing state.
     client.setState(Dhcp4Client::RENEWING);
+    client.setDestAddress(IOAddress("10.0.0.1"));
 
     // Renew, and make sure we have obtained the same address.
     ASSERT_NO_THROW(client.doRequest());
@@ -413,7 +421,7 @@ DirectClientTest::rebind() {
     client.setIfaceName("eth1");
     client.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client.doRequest());
-    EXPECT_FALSE(client.getContext().response_);
+    ASSERT_FALSE(client.getContext().response_);
 
     // Send Rebind over the correct interface, and make sure we have obtained
     // the same address.
@@ -425,6 +433,50 @@ DirectClientTest::rebind() {
     EXPECT_EQ("10.0.0.10", client.config_.lease_.addr_.toText());
 }
 
+void
+DirectClientTest::init_reboot() {
+    // Configure IfaceMgr with fake interfaces lo, eth0 and eth1.
+    IfaceMgrTestConfig iface_config(true);
+    // After creating interfaces we have to open sockets as it is required
+    // by the message processing code.
+    ASSERT_NO_THROW(IfaceMgr::instance().openSockets4());
+    // Add a subnet.
+    ASSERT_NO_FATAL_FAILURE(configureSubnet("10.0.0.0"));
+
+    // Create the DHCPv4 client.
+    Dhcp4Client client(srv_);
+    client.useRelay(false);
+
+    // Obtain the lease using the 4-way exchange.
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("10.0.0.10"))));
+    ASSERT_EQ("10.0.0.10", client.config_.lease_.addr_.toText());
+
+    // Put the client into the init-rebooting state.
+    client.setState(Dhcp4Client::INIT_REBOOT);
+
+    // Broadcast Request through an interface for which there is no subnet
+    // configured. This message should be discarded by the server.
+    client.setIfaceName("eth1");
+    client.setIfaceIndex(ETH1_INDEX);
+    ASSERT_NO_THROW(client.doRequest());
+    ASSERT_FALSE(client.getContext().response_);
+
+    // Send init-reboot over the correct interface, and make sure we have obtained
+    // the same address.
+    client.setIfaceName("eth0");
+    client.setIfaceIndex(ETH0_INDEX);
+    ASSERT_NO_THROW(client.doRequest());
+    ASSERT_TRUE(client.getContext().response_);
+    EXPECT_EQ(DHCPACK, static_cast<int>(client.getContext().response_->getType()));
+    EXPECT_EQ("10.0.0.10", client.config_.lease_.addr_.toText());
+
+    // Send init-reboot over the wrong interface,  we should get no response.
+    client.setIfaceName("eth1");
+    client.setIfaceIndex(ETH1_INDEX);
+    ASSERT_NO_THROW(client.doRequest());
+    ASSERT_FALSE(client.getContext().response_);
+}
+
 TEST_F(DirectClientTest, rebind) {
     Dhcpv4SrvMTTestGuard guard(*this, false);
     rebind();
@@ -433,6 +485,16 @@ TEST_F(DirectClientTest, rebind) {
 TEST_F(DirectClientTest, rebindMultiThreading) {
     Dhcpv4SrvMTTestGuard guard(*this, true);
     rebind();
+}
+
+TEST_F(DirectClientTest, init_reboot) {
+    Dhcpv4SrvMTTestGuard guard(*this, false);
+    init_reboot();
+}
+
+TEST_F(DirectClientTest, init_rebootMultiThreading) {
+    Dhcpv4SrvMTTestGuard guard(*this, true);
+    init_reboot();
 }
 
 }

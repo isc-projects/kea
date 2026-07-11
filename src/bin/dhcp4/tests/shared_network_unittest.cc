@@ -1754,7 +1754,10 @@ TEST_F(Dhcpv4SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
 
     // The client should be refused to renew the lease because it doesn't belong
     // to "b-devices" class.
+    // Set the unicast destination address to indicate that it is a renewal.
     client2.setState(Dhcp4Client::RENEWING);
+    client2.setDestAddress(IOAddress("10.0.0.1"));
+
     testAssigned([this, &client2] {
         doRequest(client2, "");
     });
