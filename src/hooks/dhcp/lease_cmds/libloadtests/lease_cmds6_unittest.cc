@@ -1478,7 +1478,7 @@ void Lease6CmdsTest::testLease6GetMissingParams() {
         "    }\n"
         "}";
     exp_rsp = "Incorrect identifier type: color, the only supported values are: "
-        "address, hw-address, duid, client-id";
+        "hw-address, duid, client-id";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Query by hw-address is not supported in v6. Sorry.
@@ -1577,6 +1577,41 @@ void Lease6CmdsTest::testLease6GetBadParam() {
             true,
             "\"iaid\": 4294967297",
             "'iaid' parameter is not a 32 bit unsigned integer."
+        },
+        {
+            "Unknown identifier type",
+            true,
+            "\"identifier-type\": \"color\", \"identifier\": \"blue\"",
+            "Incorrect identifier type: color, the only supported values are: "
+            "hw-address, duid, client-id"
+        },
+        {
+            "Bad address identifier type",
+            true,
+            "\"identifier-type\": \"address\", \"identifier\": \"blue\"",
+            "Incorrect identifier type: address, the only supported values "
+            "are: hw-address, duid, client-id"
+        },
+        {
+            "Bad hw-address identifier",
+            true,
+            "\"identifier-type\": \"hw-address\", \"identifier\": \"01::\"",
+            "Bad 'hw-address' identifier: "
+            "two consecutive separators (':') specified in a decoded string '01::'"
+        },
+        {
+            "Bad client-id identifier",
+            true,
+            "\"identifier-type\": \"client-id\", \"identifier\": \"01\"",
+            "Bad 'client-id' identifier: "
+            "identifier is too short (1), at least 2 is required"
+        },
+        {
+            "Bad duid identifier",
+            true,
+            "\"identifier-type\": \"duid\", \"identifier\": \"01\"",
+            "Bad 'duid' identifier: "
+            "identifier is too short (1), at least 3 is required"
         }
     };
 
@@ -2207,7 +2242,8 @@ void Lease6CmdsTest::testLease6GetByHwAddressParams() {
         "        \"hw-address\": \"00::01:00:bc:0d:67\"\n"
         "    }\n"
         "}";
-    exp_rsp = "two consecutive separators (':') specified in a decoded string";
+    exp_rsp = "bad 'hw-address' parameter: ";
+    exp_rsp += "two consecutive separators (':') specified in a decoded string";
     exp_rsp += " '00::01:00:bc:0d:67'";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
@@ -3464,7 +3500,7 @@ void Lease6CmdsTest::testLease6DelMissingParams() {
         "    }\n"
         "}";
     exp_rsp = "Incorrect identifier type: color, the only supported values are: "
-        "address, hw-address, duid, client-id";
+        "hw-address, duid, client-id";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Query by hw-address is not supported in v6. Sorry.

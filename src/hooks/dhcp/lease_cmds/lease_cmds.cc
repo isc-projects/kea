@@ -100,9 +100,7 @@ public:
         ///
         /// @throw BadValue if unsupported type is specified
         static Type txtToType(const std::string& txt) {
-            if (txt == "address") {
-                return (Parameters::TYPE_ADDR);
-            } else if (txt == "hw-address") {
+            if (txt == "hw-address") {
                 return (Parameters::TYPE_HWADDR);
             } else if (txt == "duid") {
                 return (Parameters::TYPE_DUID);
@@ -111,7 +109,7 @@ public:
             } else {
                 isc_throw(BadValue, "Incorrect identifier type: "
                           << txt << ", the only supported values are: "
-                          "address, hw-address, duid, client-id");
+                          "hw-address, duid, client-id");
             }
         }
 
@@ -801,29 +799,32 @@ LeaseCmdsImpl::getParameters(bool v6, const ConstElementPtr& params) {
     x.query_type = Parameters::txtToType(type->stringValue());
 
     switch (x.query_type) {
-    case Parameters::TYPE_HWADDR: {
-        HWAddr hw = HWAddr::fromText(ident->stringValue());
-        x.hwaddr = HWAddrPtr(new HWAddr(hw));
+    case Parameters::TYPE_HWADDR:
+        try {
+            HWAddr hw = HWAddr::fromText(ident->stringValue());
+            x.hwaddr = HWAddrPtr(new HWAddr(hw));
+        } catch (const std::exception& ex) {
+            isc_throw(BadValue, "Bad 'hw-address' identifier: " << ex.what());
+        }
         break;
-    }
-    case Parameters::TYPE_CLIENT_ID: {
-        x.client_id = ClientId::fromText(ident->stringValue());
+    case Parameters::TYPE_CLIENT_ID:
+        try {
+            x.client_id = ClientId::fromText(ident->stringValue());
+        } catch (const std::exception& ex) {
+            isc_throw(BadValue, "Bad 'client-id' identifier: " << ex.what());
+        }
         break;
-    }
-    case Parameters::TYPE_DUID: {
-        DUID duid = DUID::fromText(ident->stringValue());
-        x.duid = DuidPtr(new DUID(duid));
+    case Parameters::TYPE_DUID:
+        try {
+            DUID duid = DUID::fromText(ident->stringValue());
+            x.duid = DuidPtr(new DUID(duid));
+        } catch (const std::exception& ex) {
+            isc_throw(BadValue, "Bad 'duid' identifier: " << ex.what());
+        }
         break;
-    }
-    case Parameters::TYPE_ADDR: {
-        // We should never get here. The address clause should have been caught
-        // earlier.
-        return (x);
-    }
-    default: {
+    default:
         isc_throw(BadValue, "Identifier type " << type->stringValue() <<
                   " is not supported.");
-    }
     }
 
     return (x);
@@ -1153,10 +1154,14 @@ LeaseCmdsImpl::leaseGetByHwAddressHandler(CalloutHandle& handle) {
             isc_throw(BadValue, "'hw-address' parameter must not be empty");
         }
 
-        HWAddr hwaddr = HWAddr::fromText(hw_address->stringValue());
+        HWAddr hwaddr;
+        try {
+            hwaddr = HWAddr::fromText(hw_address->stringValue());
+        } catch (const std::exception& ex) {
+            isc_throw(BadValue, "bad 'hw-address' parameter: " << ex.what());
+        }
 
         ElementPtr leases_json = Element::createList();
-
         if (v4) {
             Lease4Collection leases =
                 LeaseMgrFactory::instance().getLease4(hwaddr);
