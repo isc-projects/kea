@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -63,6 +63,9 @@ CSVLeaseFile6::append(const Lease6& lease) {
         row.writeAt(getColumnIndex("hwaddr"), lease.hwaddr_->toText(false));
         row.writeAt(getColumnIndex("hwtype"), lease.hwaddr_->htype_);
         row.writeAt(getColumnIndex("hwaddr_source"), lease.hwaddr_->source_);
+    } else {
+        row.writeAt(getColumnIndex("hwtype"), HTYPE_UNDEFINED);
+        row.writeAt(getColumnIndex("hwaddr_source"), HWAddr::HWADDR_SOURCE_UNKNOWN);
     }
     row.writeAt(getColumnIndex("state"), lease.state_);
     // User context is optional.
