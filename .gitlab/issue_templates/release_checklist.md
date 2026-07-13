@@ -5,6 +5,9 @@ about: Create a new issue using this checklist for each release.
 
 # Kea Release Checklist
 
+The Gitlab issue for this checklist can be created using QA script [create-release-checklist-gitlab-issue.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/release/create-release-checklist-gitlab-issue.py) with the advantage that it crosses out all the bullet points that do not apply to this release.
+   * Example command: `GITLAB_TOKEN='...' ./create-release-checklist-gitlab-issue.py 1.2.3 'stable,security'`.
+
 #### Legend
 
 - `A.B.C`: the version being released
@@ -27,7 +30,7 @@ When you see the following marks, only do the task if the current release matche
 
 - <mark>🟥 Security</mark>: If releasing from the `master` branch, use `kea-cve` instead of `kea-dev`.
 
-- <mark>🟥 Security</mark>: The release will be done from the isc-private/kea repo.
+- <mark>🟥 Security</mark>: The release will be done from the `isc-private/kea` repo.
 
 ## Pre-Release Preparation (QA)
 
@@ -48,6 +51,8 @@ Some of these checks and updates can be made before the actual freeze.
    1. [ ] Backport changes and link merge request with this issue.
 1. [ ] Check [Performance Test Results](https://jenkins.aws.isc.org/job/kea-dev/job/performance/lastSuccessfulBuild/artifact/qa-dhcp/kea/performance-jenkins/report.html) in Jenkins for drops in performance.
 1. [ ] Create a Gitlab issue for bumping up library versions and `KEA_HOOKS_VERSION` and notify developers.
+   * You can use QA script [create-bump-up-lib-versions-gitlab-issue.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/release/create-bump-up-lib-versions-gitlab-issue.py)
+   * Example command: `GITLAB_TOKEN='...' ./create-bump-up-lib-versions-gitlab-issue.py 1.2.3`.
    * In case of no developers available, it can be done by running: [./tools/bump-lib-versions.sh](https://gitlab.isc.org/isc-projects/kea/-/blob/master/tools/bump-lib-versions.sh).
    * Example command: `./tools/bump-lib-versions.sh`
    * <mark>🟩 Stable</mark>: The target version needs to be provided. Call `./tools/bump-lib-versions.sh Kea-A.B.C` instead.
@@ -68,13 +73,13 @@ The following steps may involve changing files in the repository.
 1. [ ] <mark>🟥 Security</mark>: Sync release branches from public repository into private. Run QA script [sync-repos.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/release/sync-repos.py) for both Kea and Forge \
    Example command: `GITLAB_TOKEN='...' ./sync-repos.py --source-project isc-projects/kea --target-project isc-private/kea --branch master`.
    Example command: `GITLAB_TOKEN='...' ./sync-repos.py --source-project isc-projects/forge --target-project isc-private/forge --branch master`.
-1. [ ] Run QA script [update-code-for-release.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/update-code-for-release.py) \
+1. [ ] Run QA script [update-code-for-release.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/release/update-code-for-release.py) \
    Example command: `GITLAB_TOKEN='...' ./update-code-for-release.py 2.3.4 --repo-dir ~/isc/repos/kea/`. \
    Help: `GITLAB_TOKEN='...' ./update-code-for-release.py --help`. \
    <mark>🟩 Stable or 🟨 Maintenance</mark>: Run from branch `v*_*` of `qa-dhcp`. \
    <mark>🟥 Security</mark>: Pass the `--cve` parameter. \
    The script makes the following changes and actions:
-      1. Runs [prepare_kea_release.sh](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/prepare_kea_release.sh) that:
+      1. Runs [prepare_kea_release.sh](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/release/prepare_kea_release.sh) that:
          1. Adds release entries in ChangeLogs.
          1. Updates Kea version in `meson.build`.
          1. Updates copyright years in files that were changed in the current year.
@@ -159,6 +164,8 @@ This is the last moment to freeze the code! :snowflake:
 Now it's time to publish the code.
 
 1. [ ] Update Release Notes with ChangeLog entries.
+1. [ ] Sanitize the release notes with script `sanitize-release-notes.sh` from kea.wiki. Review the output of `git diff --color-words`. If it looks good, commit and push.
+    * Example: `./Release-Notes/sanitize-release-notes.sh release-notes-3.2.0.md`
 1. Mark Jenkins jobs with release artifacts to be kept forever and update description of build by adding there version of released Kea `Kea-A.B.C`).
     * Go to the following Jenkins jobs, click release build and then, on the build page, click `Keep this build forever` button and edit the description:
         1. [ ] [build-tarball](https://jenkins.aws.isc.org/job/kea-dev/job/build-tarball/).
@@ -180,7 +187,7 @@ Now it's time to publish the code.
        - Open an issue on [the signing repository](https://gitlab.isc.org/isc-private/signing/-/issues) for signing final tarballs on repo.isc.org.
        - Create Gitlab releases `Kea-A.B.C` in Kea main and premium repositories.
     1. [ ] <mark>🟥 Security</mark>: Tick the `CVE` parameter.
-1. [ ] Sign the tarballs. Run QA script [sign_kea_and_upload_asc.sh](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/sign_kea_and_upload_asc.sh).
+1. [ ] Sign the tarballs. Run QA script [sign_kea_and_upload_asc.sh](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/release/sign_kea_and_upload_asc.sh).
     * Example command: `./sign_kea_and_upload_asc.sh 2.3.4 wlodek 0259A33B5F5A3A4466CF345C7A5E084CACA51884`
     * To get the fingerprint, run `gpg --list-keys wlodek@isc.org`.
     * Fallback if it does not work:
@@ -201,7 +208,7 @@ Now it's time to publish the code.
     * If you made a mistake, contact ASAP someone from the ops team to remove incorrectly uploaded tarballs.
     * [ ] Save the link to the subscriber tarball and put it into the signing ticket as a comment.
 1. Upload final APK, DEB & RPM packages, tarballs and signature files to cloudsmith.io:
-    1. [ ] If you uploaded packages to testing repo previously, you can copy them over instantaneously. Run script [copy-packages-between-cloudsmith-repos.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/release/copy-packages-between-cloudsmith-repos.py) \
+    1. [ ] If you uploaded packages to testing repo previously, you can copy them over instantaneously. Run script [copy-packages-between-cloudsmith-repos.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/repo-management/copy-packages-between-cloudsmith-repos.py) \
         * Example commands:
             * `./copy-packages-between-cloudsmith-repos.py -v 2.3.4 --from kea-dev-testing --to kea-dev`
             * `./copy-packages-between-cloudsmith-repos.py -v 2.3.4 --from kea-dev-prv-testing --to kea-dev-prv --premium`
@@ -217,7 +224,7 @@ Now it's time to publish the code.
 1. [ ] <mark>🟥 Security</mark>: Wait for public disclosure. Confirm with the Incident Manager that the disclosure is done.
 1. [ ] <mark>🟥 Security</mark>: Run make-available again with `--public` instead of `--private` for the core tarball.
 1. [ ] <mark>🟥 Security</mark>: Copy public packages from `-prv` Cloudsmith repo to public.
-    * You can use script [copy-missing-public-packages-between-cloudsmith-repos.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/release/copy-missing-public-packages-between-cloudsmith-repos.py) \
+    * You can use script [copy-missing-public-packages-between-cloudsmith-repos.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/repo-management/copy-missing-public-packages-between-cloudsmith-repos.py) \
       Example command: `./copy-missing-public-packages-between-cloudsmith-repos.py -v 2.3.4`.
     * Or you can use the Cloudsmith GUI. Consider using the filter from the script in the previous bullet point.
 1. [ ] Build and upload Docker images to Cloudsmith. Run Jenkins job [build-upload-docker](https://jenkins.aws.isc.org/job/kea-dev/job/build-upload-docker/).
@@ -241,7 +248,7 @@ Now it's time to publish the code.
   git pull --tags
   git push Kea-2.3.4 public
   ```
-1. [ ] <mark>🟥 Security</mark>: Gitlab Releases were not created on public repo because of missing tags. A quick way to create them is to run [add-missing-releases.sh](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/add-missing-releases.sh)
+1. [ ] <mark>🟥 Security</mark>: Gitlab Releases were not created on public repo because of missing tags. A quick way to create them is to run [add-missing-releases.sh](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/release/add-missing-releases.sh)
 1. [ ] <mark>Latest 🟩 Stable</mark>: Recreate the `stable` tag. Go to [the stable tag](https://gitlab.isc.org/isc-projects/kea/-/tags/stable), click `Delete tag`, then `New tag`, `Tag name`: `stable`, `Create from`: `Kea-A.B.C`.
 1. [ ] Update docs on <https://app.readthedocs.org/projects/kea/>.
     1. Click `Add version` -> click `Resync versions` at the bottom -> click on the `Search versions` search bar -> find the tag name in the dropdown menu -> toggle `Active` -> click `Update version`. Wait for the build to complete.
@@ -264,8 +271,6 @@ Now it's time to publish the code.
 1. [ ] <mark>🟥 Security</mark>: Update the security releases version table in the downloads data file on the website. This information is used by Stork to flag new security versions.
 1. [ ] <mark>🟩 Stable</mark>: If it is a new `major.minor` version, SWENG will have created a new repo in Cloudsmith, which will need the customer tokens migrated from an existing repo. Verify that the KB on installing from Cloudsmith has also been updated. When posting a new Stable major version, you will also need to update the Cloudsmith repo location on the downloads page.
    * If the tokens were not migrated, contact QA team and coordinate fix.
-1. [ ] Upload Premium hooks tarball to SendOwl for legacy 2.4 or 2.6 branches.
-1. [ ] Send notifications to existing Premium hooks subscribers of the new version (for legacy 2.6 branch).
 1. [ ] Announce release to support subscribers using the read-only Kea Announce queue, if a major version or other significant change to stable version.  Note that this announcement is different from the public announcement because you want to include the -prv repo information for the subscription hooks.
 1. [ ] Send announcement email to _kea-announce_. Highlight breaking changes, if any. NB - we use Printing press for this now.
 1. [ ] Update "Release Schedule" document in RT with current versions and next planned release.
