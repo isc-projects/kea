@@ -14,8 +14,6 @@
 #include <dhcpsrv/timer_mgr.h>
 #include <util/multi_threading_mgr.h>
 
-#include <boost/static_assert.hpp>
-
 #include <iomanip>
 #include <limits>
 #include <sstream>
@@ -65,7 +63,7 @@ public:
     /// @brief Constructor
     PgSqlLegLExchange() : address_(""), log_("") {
 
-        BOOST_STATIC_ASSERT(0 < LOG_COLUMNS);
+        static_assert(0 < LOG_COLUMNS, "0 < LOG_COLUMNS");
 
         // Set the column names (for error messages)
         columns_.push_back("log");

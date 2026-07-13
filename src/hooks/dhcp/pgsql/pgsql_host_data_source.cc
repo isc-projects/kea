@@ -30,7 +30,6 @@
 #include <boost/array.hpp>
 #include <boost/foreach.hpp>
 #include <boost/pointer_cast.hpp>
-#include <boost/static_assert.hpp>
 
 #include <stdint.h>
 
@@ -140,7 +139,7 @@ public:
         columns_[DHCP4_BOOT_FILE_NAME_COL] = "dhcp4_boot_file_name";
         columns_[AUTH_KEY_COL] = "auth_key";
 
-        BOOST_STATIC_ASSERT(12 < HOST_COLUMNS);
+        static_assert(12 < HOST_COLUMNS, "12 < HOST_COLUMNS");
     };
 
     /// @brief Virtual destructor.
@@ -942,7 +941,7 @@ public:
         columns_[excluded_prefix_index_] = "excluded_prefix";
         columns_[excluded_prefix_len_index_] = "excluded_prefix_len";
 
-        BOOST_STATIC_ASSERT(6 < RESERVATION_COLUMNS);
+        static_assert(6 < RESERVATION_COLUMNS, "6 < RESERVATION_COLUMNS");
     }
 
     /// @brief Reinitializes state information
@@ -1126,7 +1125,7 @@ public:
         columns_[5] = "excluded_prefix";
         columns_[6] = "excluded_prefix_len";
 
-        BOOST_STATIC_ASSERT(7 < RESRV_COLUMNS);
+        static_assert(7 < RESRV_COLUMNS, "7 < RESRV_COLUMNS");
     }
 
     /// @brief Populate a bind array representing an IPv6 reservation
@@ -1242,7 +1241,7 @@ public:
         columns_[DHCP_SUBNET_ID_COL] = "dhcp_subnet_id";
         columns_[HOST_ID_COL] = "host_id";
 
-        BOOST_STATIC_ASSERT(10 <= OPTION_COLUMNS);
+        static_assert(10 <= OPTION_COLUMNS, "10 <= OPTION_COLUMNS");
     }
 
     /// @brief Creates binding array to insert option data into database.

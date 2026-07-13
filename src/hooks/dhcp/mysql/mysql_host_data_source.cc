@@ -30,7 +30,6 @@
 #include <boost/array.hpp>
 #include <boost/foreach.hpp>
 #include <boost/pointer_cast.hpp>
-#include <boost/static_assert.hpp>
 
 #include <mysql.h>
 #include <mysqld_error.h>
@@ -169,7 +168,7 @@ public:
         columns_[DHCP4_BOOT_FILE_NAME_COL] = "dhcp4_boot_file_name";
         columns_[AUTH_KEY_COL] = "auth_key";
 
-        BOOST_STATIC_ASSERT(13 < HOST_COLUMNS);
+        static_assert(13 < HOST_COLUMNS, "13 < HOST_COLUMNS");
     }
 
     /// @brief Virtual destructor.
@@ -1722,7 +1721,7 @@ public:
         columns_[5] = "excluded_prefix";
         columns_[6] = "excluded_prefix_len";
 
-        BOOST_STATIC_ASSERT(6 < RESRV_COLUMNS);
+        static_assert(6 < RESRV_COLUMNS, "6 < RESRV_COLUMNS");
     }
 
     /// @brief Create MYSQL_BIND objects for IPv6 Reservation.
@@ -1904,7 +1903,7 @@ public:
           user_context_(), user_context_len_(0), subnet_id_(SUBNET_ID_UNUSED),
           host_id_(0), option_() {
 
-        BOOST_STATIC_ASSERT(10 <= OPTION_COLUMNS);
+        static_assert(10 <= OPTION_COLUMNS, "10 <= OPTION_COLUMNS");
     }
 
     /// @brief Creates binding array to insert option data into database.

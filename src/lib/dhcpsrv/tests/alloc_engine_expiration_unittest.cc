@@ -13,7 +13,6 @@
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
 #include <gtest/gtest.h>
-#include <boost/static_assert.hpp>
 #include <functional>
 #include <iomanip>
 #include <sstream>
@@ -691,7 +690,8 @@ public:
         // Hence, it is convenient if the number of test leases is a
         // multiple of 10.
         const size_t reclamation_group_size = 10;
-        BOOST_STATIC_ASSERT(TEST_LEASES_NUM % reclamation_group_size == 0);
+        static_assert(TEST_LEASES_NUM % reclamation_group_size == 0,
+                      "TEST_LEASES_NUM % reclamation_group_size == 0");
 
         // Leases will be reclaimed in groups of 10.
         for (unsigned int i = reclamation_group_size; i < TEST_LEASES_NUM;
@@ -760,7 +760,8 @@ public:
         }
 
         const size_t reclamation_group_size = 10;
-        BOOST_STATIC_ASSERT(TEST_LEASES_NUM % reclamation_group_size == 0);
+        static_assert(TEST_LEASES_NUM % reclamation_group_size == 0,
+                      "TEST_LEASES_NUM % reclamation_group_size == 0");
 
         // Leases will be reclaimed in groups of 10
         for (unsigned int i = 10; i < TEST_LEASES_NUM;  i += reclamation_group_size) {
@@ -1438,7 +1439,7 @@ ExpirationAllocEngine6Test::setLeaseType(const uint16_t lease_index,
 void
 ExpirationAllocEngine6Test::testReclaimExpiredLeasesStats() {
     // This test requires that the number of leases is an even number.
-    BOOST_STATIC_ASSERT(TEST_LEASES_NUM % 2 == 0);
+    static_assert(TEST_LEASES_NUM % 2 == 0, "TEST_LEASES_NUM % 2 == 0");
 
     for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
         // Mark all leases as expired. The higher the index the less
@@ -1477,7 +1478,7 @@ ExpirationAllocEngine6Test::testReclaimExpiredLeasesStats() {
 void
 ExpirationAllocEngine6Test::testReclaimReusedLeases(const uint16_t msg_type,
                                                     const bool use_reclaimed) {
-    BOOST_STATIC_ASSERT(TEST_LEASES_NUM < 1000);
+    static_assert(TEST_LEASES_NUM < 1000, "TEST_LEASES_NUM < 1000");
 
     for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
         // Depending on the parameter, mark leases 'expired-reclaimed' or
@@ -1580,7 +1581,7 @@ ExpirationAllocEngine6Test::testReclaimDeclinedHook(bool skip) {
 void
 ExpirationAllocEngine6Test::testReclaimExpiredLeasesRegisteredStats() {
     // This test requires that the number of leases is an even number.
-    BOOST_STATIC_ASSERT(TEST_LEASES_NUM % 2 == 0);
+    static_assert(TEST_LEASES_NUM % 2 == 0, "TEST_LEASES_NUM % 2 == 0");
 
     for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
         // Mark all leases as expired. The higher the index the less
@@ -1675,7 +1676,8 @@ TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesHooksWithSkip) {
 // execution of the lease reclamation routine.
 TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesTimeout) {
     // This test needs at least 40 leases to make sense.
-    BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 40);
+    static_assert(TEST_LEASES_NUM >= 40, "TEST_LEASES_NUM >= 40");
+
     // Run with timeout of 1.2s.
     testReclaimExpiredLeasesTimeout(1200);
 }
@@ -1687,7 +1689,7 @@ TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesTimeout) {
 // reclamation.
 TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesShortTimeout) {
     // We will most likely reclaim just one lease, so 5 is more than enough.
-    BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 5);
+    static_assert(TEST_LEASES_NUM >= 5, "TEST_LEASES_NUM >= 5");
     // Reclaim leases with the 1ms timeout.
     testReclaimExpiredLeasesTimeout(1);
 }
@@ -1695,7 +1697,7 @@ TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesShortTimeout) {
 // This test verifies that expired-reclaimed leases are removed from the
 // lease database.
 TEST_F(ExpirationAllocEngine6Test, deleteExpiredReclaimedLeases) {
-    BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 10);
+    static_assert(TEST_LEASES_NUM >= 10, "TEST_LEASES_NUM >= 10");
     testDeleteExpiredReclaimedLeases();
 }
 
@@ -2152,7 +2154,7 @@ ExpirationAllocEngine4Test::testReclaimExpiredLeasesWithDDNSAndClientId() {
 void
 ExpirationAllocEngine4Test::testReclaimExpiredLeasesStats() {
     // This test requires that the number of leases is an even number.
-    BOOST_STATIC_ASSERT(TEST_LEASES_NUM % 2 == 0);
+    static_assert(TEST_LEASES_NUM % 2 == 0, "TEST_LEASES_NUM % 2 == 0");
 
     for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
         // Mark all leases as expired. The higher the index the less
@@ -2192,7 +2194,7 @@ ExpirationAllocEngine4Test::testReclaimReusedLeases(const uint8_t msg_type,
                                                     const bool client_renews,
                                                     const bool use_reclaimed) {
     // Let's restrict the number of leases.
-    BOOST_STATIC_ASSERT(TEST_LEASES_NUM < 1000);
+    static_assert(TEST_LEASES_NUM < 1000, "TEST_LEASES_NUM < 1000");
 
     for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
         // Depending on the parameter, mark leases 'expired-reclaimed' or
@@ -2361,7 +2363,7 @@ TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesHooksWithSkip) {
 // execution of the lease reclamation routine.
 TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesTimeout) {
     // This test needs at least 40 leases to make sense.
-    BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 40);
+    static_assert(TEST_LEASES_NUM >= 40, "TEST_LEASES_NUM >= 40");
     // Run with timeout of 1.2s.
     testReclaimExpiredLeasesTimeout(1200);
 }
@@ -2373,7 +2375,7 @@ TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesTimeout) {
 // reclamation.
 TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesShortTimeout) {
     // We will most likely reclaim just one lease, so 5 is more than enough.
-    BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 5);
+    static_assert(TEST_LEASES_NUM >= 5, "TEST_LEASES_NUM >= 5");
     // Reclaim leases with the 1ms timeout.
     testReclaimExpiredLeasesTimeout(1);
 }
@@ -2381,7 +2383,7 @@ TEST_F(ExpirationAllocEngine4Test, reclaimExpiredLeasesShortTimeout) {
 // This test verifies that expired-reclaimed leases are removed from the
 // lease database.
 TEST_F(ExpirationAllocEngine4Test, deleteExpiredReclaimedLeases) {
-    BOOST_STATIC_ASSERT(TEST_LEASES_NUM >= 10);
+    static_assert(TEST_LEASES_NUM >= 10, "TEST_LEASES_NUM >= 10");
     testDeleteExpiredReclaimedLeases();
 }
 

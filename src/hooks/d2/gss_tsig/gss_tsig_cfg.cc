@@ -59,8 +59,10 @@ DnsServer::DnsServer(const string& id, const set<string>& domains,
       rekey_interval_(DEFAULT_REKEY_INTERVAL),
       retry_interval_(DEFAULT_RETRY_INTERVAL), tkey_proto_(IOFetch::TCP),
       fallback_(false), exchange_timeout_(DEFAULT_EXCHANGE_TIMEOUT), timer_() {
-    BOOST_STATIC_ASSERT(DEFAULT_REKEY_INTERVAL < DEFAULT_KEY_LIFETIME);
-    BOOST_STATIC_ASSERT(DEFAULT_RETRY_INTERVAL < DEFAULT_REKEY_INTERVAL);
+    static_assert(DEFAULT_REKEY_INTERVAL < DEFAULT_KEY_LIFETIME,
+                  "DEFAULT_REKEY_INTERVAL < DEFAULT_KEY_LIFETIME");
+    static_assert(DEFAULT_RETRY_INTERVAL < DEFAULT_REKEY_INTERVAL,
+                  "DEFAULT_RETRY_INTERVAL < DEFAULT_REKEY_INTERVAL");
     initStats();
 }
 

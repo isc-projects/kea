@@ -201,6 +201,7 @@ boost_headers = [
     'boost/asio/io_context.hpp',
     'boost/asio/ip/address.hpp',
     'boost/asio/signal_set.hpp',
+    'boost/asio/system_timer.hpp',
     'boost/circular_buffer.hpp',
     'boost/date_time/posix_time/posix_time_types.hpp',
     'boost/foreach.hpp',

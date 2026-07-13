@@ -44,13 +44,20 @@ LoggerLevelImpl::convertFromBindLevel(const Level& level) {
     };
 
     // ... with compile-time checks to ensure that table indexes are correct.
-    BOOST_STATIC_ASSERT(static_cast<int>(DEFAULT) == 0);
-    BOOST_STATIC_ASSERT(static_cast<int>(DEBUG) == 1);
-    BOOST_STATIC_ASSERT(static_cast<int>(INFO) == 2);
-    BOOST_STATIC_ASSERT(static_cast<int>(WARN) == 3);
-    BOOST_STATIC_ASSERT(static_cast<int>(ERROR) == 4);
-    BOOST_STATIC_ASSERT(static_cast<int>(FATAL) == 5);
-    BOOST_STATIC_ASSERT(static_cast<int>(NONE) == 6);
+    static_assert(static_cast<int>(DEFAULT) == 0,
+                  "static_cast<int>(DEFAULT) == 0");
+    static_assert(static_cast<int>(DEBUG) == 1,
+                  "static_cast<int>(DEBUG) == 1");
+    static_assert(static_cast<int>(INFO) == 2,
+                  "static_cast<int>(INFO) == 2");
+    static_assert(static_cast<int>(WARN) == 3,
+                  "static_cast<int>(WARN) == 3");
+    static_assert(static_cast<int>(ERROR) == 4,
+                  "static_cast<int>(ERROR) == 4");
+    static_assert(static_cast<int>(FATAL) == 5,
+                  "static_cast<int>(FATAL) == 5");
+    static_assert(static_cast<int>(NONE) == 6,
+                  "static_cast<int>(NONE) == 6");
 
     // Do the conversion
     if (level.severity == DEBUG) {
