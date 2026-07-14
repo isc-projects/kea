@@ -302,6 +302,9 @@ public:
     /// @brief Verifies that the limit of 0 is rejected.
     void testLease6GetPagedLimitIsZero();
 
+    /// @brief Verifies that the limit of negative value is rejected.
+    void testLease6GetPagedLimitIsNegative();
+
     /// @brief Check that lease6-get-by-hw-address can handle a situation when
     /// the query is broken (required parameter is missing).
     void testLease6GetByHwAddressParams();
@@ -1975,7 +1978,7 @@ void Lease6CmdsTest::testLease6GetBySubnetIdInvalidArguments() {
     exp_rsp = "listed subnet identifiers must be numbers";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Subnets list must contain positive numbers..
+    // Subnets list must contain positive numbers.
     cmd =
         "{\n"
         "    \"command\": \"lease6-get-all\",\n"
@@ -1986,7 +1989,7 @@ void Lease6CmdsTest::testLease6GetBySubnetIdInvalidArguments() {
     exp_rsp = "out of range subnet identifier -1";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Subnets list must contain 32 bit unsigned integers..
+    // Subnets list must contain 32 bit unsigned integers.
     cmd =
         "{\n"
         "    \"command\": \"lease6-get-all\",\n"
@@ -2197,7 +2200,25 @@ void Lease6CmdsTest::testLease6GetPagedLimitIsZero() {
         "    }"
         "}";
 
-    string exp_rsp = "page size of retrieved leases must not be 0";
+    string exp_rsp = "'limit' parameter must not be 0.";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+void Lease6CmdsTest::testLease6GetPagedLimitIsNegative() {
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    // Query for a page of leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-page\",\n"
+        "    \"arguments\": {"
+        "        \"from\": \"start\","
+        "        \"limit\": -1"
+        "    }"
+        "}";
+
+    string exp_rsp = "'limit' parameter is not a 32 bit unsigned integer.";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
@@ -2577,7 +2598,7 @@ void Lease6CmdsTest::testLease6GetByStateBadArgs() {
             "'subnet-id' parameter must be a 32 bit unsigned integer"
         },
         {
-            "Subnet id must be fit into 32 bits",
+            "Subnet id must fit into 32 bits",
             "\"subnet-id\": 4294967297",
             "'subnet-id' parameter must be a 32 bit unsigned integer"
         }
@@ -5468,6 +5489,15 @@ TEST_F(Lease6CmdsTest, lease6GetPagedLimitIsZero) {
 TEST_F(Lease6CmdsTest, lease6GetPagedLimitIsZeroMultiThreading) {
     MultiThreadingTest mt(true);
     testLease6GetPagedLimitIsZero();
+}
+
+TEST_F(Lease6CmdsTest, lease6GetPagedLimitIsNegative) {
+    testLease6GetPagedLimitIsNegative();
+}
+
+TEST_F(Lease6CmdsTest, lease6GetPagedLimitIsNegativeMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetPagedLimitIsNegative();
 }
 
 TEST_F(Lease6CmdsTest, lease6GetByHwAddressParams) {

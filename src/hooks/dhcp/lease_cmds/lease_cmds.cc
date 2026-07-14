@@ -1071,8 +1071,17 @@ LeaseCmdsImpl::leaseGetPageHandler(CalloutHandle& handle) {
             isc_throw(BadValue, "'limit' parameter must be a number");
         }
 
+        auto tmp128 = page_limit->intValue();
+        if ((tmp128 < uint32_min) || (tmp128 > uint32_max)) {
+            isc_throw(BadValue, "'limit' parameter is not a 32 bit unsigned integer.");
+        }
+
+        if (tmp128 == 0) {
+            isc_throw(BadValue, "'limit' parameter must not be 0.");
+        }
+
         // Retrieve the desired page size.
-        size_t page_limit_value = static_cast<size_t>(page_limit->intValue());
+        size_t page_limit_value = static_cast<size_t>(tmp128);
 
         ElementPtr leases_json = Element::createList();
 

@@ -1332,7 +1332,7 @@ GenericHostDataSourceTest::testGet4ByIdentifier(
     HostPtr host1 = HostDataSourceUtils::initializeHost4("192.0.2.1", identifier_type);
     HostPtr host2 = HostDataSourceUtils::initializeHost4("192.0.2.2", identifier_type);
 
-    // Sanity check: make sure the hosts have different identifiers..
+    // Sanity check: make sure the hosts have different identifiers.
     ASSERT_FALSE(host1->getIdentifier() == host2->getIdentifier());
 
     // Try to add both of them to the host data source.

@@ -604,7 +604,7 @@ TEST_F(ClientClassDefParserTest, escapedName) {
     // A warning should be in logs.
     std::string warn = "DHCPSRV_CLASS_BAD_NAME class name 'foo bar' ";
     warn += "includes problematic characters: ";
-    warn += "its escaped form is 'foo%20bar'";
+    warn += "suggest to use 'foo%20bar' instead";
     EXPECT_EQ(1U, countFile(warn));
 }
 
@@ -626,7 +626,7 @@ TEST_F(ClientClassDefParserTest, escapedName2) {
     // A warning should not be in logs.
     std::string warn = "DHCPSRV_CLASS_BAD_NAME class name 'foo%bar' ";
     warn += "includes problematic characters: ";
-    warn += "its escaped form is 'foo%%bar'";
+    warn += "suggest to use 'foo%%bar' instead";
     EXPECT_EQ(0U, countFile(warn));
 }
 

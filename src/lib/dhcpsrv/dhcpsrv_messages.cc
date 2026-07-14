@@ -231,7 +231,7 @@ const char* values[] = {
     "DHCPSRV_CFGMGR_USE_ADDRESS", "listening on address %1, on interface %2",
     "DHCPSRV_CFGMGR_USE_ALLOCATOR", "using the %1 allocator for %2 leases in subnet %3",
     "DHCPSRV_CFGMGR_USE_UNICAST", "listening on unicast address %1, on interface %2",
-    "DHCPSRV_CLASS_BAD_NAME", "class name '%1' includes problematic characters: its escaped form is '%2'",
+    "DHCPSRV_CLASS_BAD_NAME", "class name '%1' includes problematic characters: suggest to use '%2' instead",
     "DHCPSRV_CLASS_WITH_ADDITIONAL_AND_LIFETIMES", "class: %1 has 'only-in-additional-list' true while specifying one or more lease life time values. Life time values will be ignored.",
     "DHCPSRV_CLIENT_CLASS_DEPRECATED", "The parameter 'client-class' is deprecated. Use 'client-classes' list parameter instead",
     "DHCPSRV_CLOSE_DB", "closing currently open %1 database",

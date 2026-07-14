@@ -645,7 +645,7 @@ Expected wait_for_message return %d, returned %d."
 # servers are not started.
 start_v6_server_test() {
     # Create configuration file for keactrl. This configuration enables
-    # DHCPv6 server but disables other servers..
+    # DHCPv6 server but disables other servers.
     keactrl_config="${CFG_FILES}\ndhcp4=no\ndhcp6=yes\n\
 dhcp_ddns=no\nnetconf=no\n\
 kea_verbose=no\n${keactrl_fixed_config}"
