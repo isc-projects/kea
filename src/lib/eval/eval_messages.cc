@@ -42,8 +42,6 @@ extern const isc::log::MessageID EVAL_DEBUG_STRING = "EVAL_DEBUG_STRING";
 extern const isc::log::MessageID EVAL_DEBUG_SUBSTRING = "EVAL_DEBUG_SUBSTRING";
 extern const isc::log::MessageID EVAL_DEBUG_SUBSTRING_EMPTY = "EVAL_DEBUG_SUBSTRING_EMPTY";
 extern const isc::log::MessageID EVAL_DEBUG_SUBSTRING_RANGE = "EVAL_DEBUG_SUBSTRING_RANGE";
-extern const isc::log::MessageID EVAL_DEBUG_SUB_OPTION = "EVAL_DEBUG_SUB_OPTION";
-extern const isc::log::MessageID EVAL_DEBUG_SUB_OPTION_NO_OPTION = "EVAL_DEBUG_SUB_OPTION_NO_OPTION";
 extern const isc::log::MessageID EVAL_DEBUG_TOHEXSTRING = "EVAL_DEBUG_TOHEXSTRING";
 extern const isc::log::MessageID EVAL_DEBUG_UCASE = "EVAL_DEBUG_UCASE";
 extern const isc::log::MessageID EVAL_DEBUG_UINT16TOTEXT = "EVAL_DEBUG_UINT16TOTEXT";
@@ -83,7 +81,7 @@ const char* values[] = {
     "EVAL_DEBUG_MATCH_ERROR", "Matching '%1' on %2 raised an error: %3",
     "EVAL_DEBUG_MEMBER", "%1: Checking membership of '%2', pushing result %3",
     "EVAL_DEBUG_NOT", "%1: Popping %2 pushing %3",
-    "EVAL_DEBUG_OPTION", "%1: Pushing option %2 with value %3",
+    "EVAL_DEBUG_OPTION", "%1: Pushing %2 with value %3",
     "EVAL_DEBUG_OR", "%1: Popping %2 and %3 pushing %4",
     "EVAL_DEBUG_PKT", "%1: Pushing PKT meta data %2 with value %3",
     "EVAL_DEBUG_PKT4", "%1: Pushing PKT4 field %2 with value %3",
@@ -101,8 +99,6 @@ const char* values[] = {
     "EVAL_DEBUG_SUBSTRING", "%1: Popping length %2, start %3, string %4 pushing result %5",
     "EVAL_DEBUG_SUBSTRING_EMPTY", "%1: Popping length %2, start %3, string %4 pushing result %5",
     "EVAL_DEBUG_SUBSTRING_RANGE", "%1: Popping length %2, start %3, string %4 pushing result %5",
-    "EVAL_DEBUG_SUB_OPTION", "%1: Pushing option %2 sub-option %3 with value %4",
-    "EVAL_DEBUG_SUB_OPTION_NO_OPTION", "%1: Requested option %2 sub-option %3, but the parent option is not present, pushing result %4",
     "EVAL_DEBUG_TOHEXSTRING", "%1: Popping binary value %2 and separator %3, pushing result %4",
     "EVAL_DEBUG_UCASE", "%1: Popping string %2 and pushing converted value to upper case %3",
     "EVAL_DEBUG_UINT16TOTEXT", "%1: Pushing UInt16 %2",

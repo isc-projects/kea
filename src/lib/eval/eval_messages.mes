@@ -131,7 +131,7 @@ The string is displayed in text.
 
 # For use with TokenPopAndBranchFalse
 
-% EVAL_DEBUG_OPTION %1: Pushing option %2 with value %3
+% EVAL_DEBUG_OPTION %1: Pushing %2 with value %3
 Logged at debug log level 55.
 This debug message indicates that the given string representing the
 value of the requested option is being pushed onto the value stack.
@@ -264,22 +264,6 @@ This debug message indicates that the value of start is outside of the
 string and an empty result will be pushed onto the stack.  The start,
 length and string are still popped from the stack and the result is
 still pushed.  The strings are displayed in hex.
-
-# For use with TokenSubOption
-
-% EVAL_DEBUG_SUB_OPTION %1: Pushing option %2 sub-option %3 with value %4
-This debug message indicates that the given string representing the
-value of the requested sub-option of the requested parent option is
-being pushed onto the value stack. The string may be the text or
-binary value of the string based on the representation type requested
-(.text or .hex) or "true" or "false" if the requested type is .exists.
-The codes are the parent option and the sub-option codes as requested
-in the classification statement.
-
-% EVAL_DEBUG_SUB_OPTION_NO_OPTION %1: Requested option %2 sub-option %3, but the parent option is not present, pushing result %4
-This debug message indicates that the parent option was not found.
-The codes are the parent option and the sub-option codes as requested
-in the classification statement.
 
 # For use with TokenToHexString
 

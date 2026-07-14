@@ -397,7 +397,21 @@ TokenUInt32ToText::evaluate(Pkt& pkt, ValueStack& values) {
 
 OptionPtr
 TokenOption::getOption(Pkt& pkt) {
-    return (pkt.getOption(option_code_));
+    OptionPtr option;
+    for (auto const& c : option_path_) {
+        if (!option) {
+            option = pkt.getOption(c);
+            if (!option) {
+                break;
+            }
+        } else {
+            option = option->getOption(c);
+        }
+        if (!option) {
+            break;
+        }
+    }
+    return (option);
 }
 
 unsigned
@@ -424,18 +438,26 @@ TokenOption::evaluate(Pkt& pkt, ValueStack& values) {
     // in the packet.
     values.push(opt_str);
 
+    stringstream tmp;
+    for (auto const& c : option_path_) {
+        if (!tmp.str().empty()) {
+            tmp << ".";
+        }
+        tmp << "option[" << c << "]";
+    }
+
     // Log what we pushed, both exists and textual are simple text
     // and can be output directly.  We also include the code number
     // of the requested option.
     if (representation_type_ == HEXADECIMAL) {
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_OPTION)
             .arg(pkt.getLabel())
-            .arg(option_code_)
+            .arg(tmp.str())
             .arg(toHex(opt_str));
     } else {
         LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_OPTION)
             .arg(pkt.getLabel())
-            .arg(option_code_)
+            .arg(tmp.str())
             .arg('\'' + opt_str + '\'');
     }
 
@@ -452,21 +474,22 @@ TokenOption::pushFailure(ValueStack& values) {
     return (txt);
 }
 
-TokenRelay4Option::TokenRelay4Option(const uint16_t option_code,
-                                     const RepresentationType& rep_type)
-    : TokenOption(option_code, rep_type) {
-}
-
 OptionPtr
 TokenRelay4Option::getOption(Pkt& pkt) {
     // Check if there is Relay Agent Option.
-    OptionPtr rai = pkt.getOption(DHO_DHCP_AGENT_OPTIONS);
-    if (!rai) {
+    OptionPtr option = pkt.getOption(DHO_DHCP_AGENT_OPTIONS);
+    if (!option) {
         return (OptionPtr());
     }
 
     // If there is, try to return its suboption
-    return (rai->getOption(option_code_));
+    for (auto const& c : option_path_) {
+        option = option->getOption(c);
+        if (!option) {
+            break;
+        }
+    }
+    return (option);
 }
 
 OptionPtr
@@ -475,34 +498,43 @@ TokenRelay6Option::getOption(Pkt& pkt) {
         // Check if it's a Pkt6.  If it's not the dynamic_cast will
         // throw std::bad_cast.
         Pkt6& pkt6 = dynamic_cast<Pkt6&>(pkt);
-
-        try {
-            // Now that we have the right type of packet we can
-            // get the option and return it.
-            if (nest_level_ >= 0) {
-                uint8_t nesting_level = static_cast<uint8_t>(nest_level_);
-                return(pkt6.getRelayOption(option_code_, nesting_level));
-            } else {
-                int nesting_level = pkt6.relay_info_.size() + nest_level_;
-                if (nesting_level < 0) {
+        OptionPtr option;
+        for (auto const& c : option_path_) {
+            if (!option) {
+                try {
+                    // Now that we have the right type of packet we can
+                    // get the option and return it.
+                    if (nest_level_ >= 0) {
+                        uint8_t nesting_level = static_cast<uint8_t>(nest_level_);
+                        option = pkt6.getRelayOption(c, nesting_level);
+                    } else {
+                        int nesting_level = pkt6.relay_info_.size() + nest_level_;
+                        if (nesting_level < 0) {
+                            return (OptionPtr());
+                        }
+                        option = pkt6.getRelayOption(c, static_cast<uint8_t>(nesting_level));
+                    }
+                } catch (const isc::OutOfRange&) {
+                    // The only exception we expect is OutOfRange if the nest
+                    // level is out of range of the encapsulations, for example
+                    // if nest_level_ is 4 and there are only 2 encapsulations.
+                    // We return a NULL in that case.
                     return (OptionPtr());
                 }
-                return(pkt6.getRelayOption(option_code_,
-                                           static_cast<uint8_t>(nesting_level)));
+                if (!option) {
+                    break;
+                }
+            } else {
+                option = option->getOption(c);
+            }
+            if (!option) {
+                break;
             }
         }
-        catch (const isc::OutOfRange&) {
-            // The only exception we expect is OutOfRange if the nest
-            // level is out of range of the encapsulations, for example
-            // if nest_level_ is 4 and there are only 2 encapsulations.
-            // We return a NULL in that case.
-           return (OptionPtr());
-        }
-
+        return (option);
     } catch (const std::bad_cast&) {
         isc_throw(EvalTypeError, "Specified packet is not Pkt6");
     }
-
 }
 
 unsigned
@@ -1164,14 +1196,14 @@ TokenMember::evaluate(Pkt& pkt, ValueStack& values) {
 }
 
 TokenVendor::TokenVendor(Option::Universe u, uint32_t vendor_id, RepresentationType repr,
-                         uint16_t option_code)
-    : TokenOption(option_code, repr), universe_(u), vendor_id_(vendor_id),
-      field_(option_code ? SUBOPTION : EXISTS) {
+                         const std::vector<uint16_t>& option_codes)
+    : TokenOption(option_codes, repr), universe_(u), vendor_id_(vendor_id),
+      field_(option_codes.size() ? SUBOPTION : EXISTS) {
 }
 
 TokenVendor::TokenVendor(Option::Universe u, uint32_t vendor_id, FieldType field)
-    : TokenOption(0, TokenOption::HEXADECIMAL), universe_(u), vendor_id_(vendor_id),
-      field_(field) {
+    : TokenOption(std::vector<uint16_t>{}, TokenOption::HEXADECIMAL), universe_(u),
+      vendor_id_(vendor_id), field_(field) {
     if (field_ == EXISTS) {
         representation_type_ = TokenOption::EXISTS;
     }
@@ -1263,7 +1295,7 @@ TokenVendor::evaluate(Pkt& pkt, ValueStack& values) {
 
 OptionPtr
 TokenVendor::getOption(Pkt& pkt) {
-   uint16_t code = 0;
+    uint16_t code = 0;
     switch (universe_) {
     case Option::V4:
         code = DHO_VIVSO_SUBOPTIONS;
@@ -1273,25 +1305,31 @@ TokenVendor::getOption(Pkt& pkt) {
         break;
     }
 
-    OptionPtr opt = pkt.getOption(code);
-    if (!opt) {
+    OptionPtr option = pkt.getOption(code);
+    if (!option) {
         // If vendor option is not found, return NULL
-        return (opt);
+        return (OptionPtr());
     }
 
     // If vendor option is found, try to return its
     // encapsulated option.
-    return (opt->getOption(option_code_));
+    for (auto const& c : option_path_) {
+        option = option->getOption(c);
+        if (!option) {
+            break;
+        }
+    }
+    return (option);
 }
 
 TokenVendorClass::TokenVendorClass(Option::Universe u, uint32_t vendor_id,
                                    RepresentationType repr)
-    : TokenVendor(u, vendor_id, repr, 0), index_(0) {
+    : TokenVendor(u, vendor_id, repr, std::vector<uint16_t> {}), index_(0) {
 }
 
 TokenVendorClass::TokenVendorClass(Option::Universe u, uint32_t vendor_id,
                                    FieldType field, uint16_t index)
-    : TokenVendor(u, vendor_id, TokenOption::HEXADECIMAL, 0), index_(index) {
+    : TokenVendor(u, vendor_id, TokenOption::HEXADECIMAL, std::vector<uint16_t>{}), index_(index) {
     field_ = field;
 }
 
@@ -1403,71 +1441,6 @@ TokenVendorClass::evaluate(Pkt& pkt, ValueStack& values) {
 
 TokenInteger::TokenInteger(const uint32_t value)
     : TokenString(EvalContext::fromUint32(value)), int_value_(value) {
-}
-
-OptionPtr
-TokenSubOption::getSubOption(const OptionPtr& parent) {
-    if (!parent) {
-        return (OptionPtr());
-    }
-    return (parent->getOption(sub_option_code_));
-}
-
-unsigned
-TokenSubOption::evaluate(Pkt& pkt, ValueStack& values) {
-    OptionPtr parent = getOption(pkt);
-    std::string txt;
-    isc::log::MessageID msgid = EVAL_DEBUG_SUB_OPTION;
-    if (!parent) {
-        // There's no parent option, notify that.
-        msgid = EVAL_DEBUG_SUB_OPTION_NO_OPTION;
-        if (representation_type_ == EXISTS) {
-            txt = "false";
-        }
-    } else {
-        OptionPtr sub = getSubOption(parent);
-        if (!sub) {
-            // Failed to find the sub-option
-            if (representation_type_ == EXISTS) {
-                txt = "false";
-            }
-        } else {
-            if (representation_type_ == TEXTUAL) {
-                txt = sub->toString();
-            } else if (representation_type_ == HEXADECIMAL) {
-                std::vector<uint8_t> binary = sub->toBinary();
-                txt.resize(binary.size());
-                if (!binary.empty()) {
-                    memmove(&txt[0], &binary[0], binary.size());
-                }
-            } else {
-                txt = "true";
-            }
-        }
-    }
-
-    // Push value of the sub-option or empty string if there was no
-    // such parent option in the packet or sub-option in the parent.
-    values.push(txt);
-
-    // Log what we pushed, both exists and textual are simple text
-    // and can be output directly.  We also include the code numbers
-    // of the requested parent option and sub-option.
-    if (representation_type_ == HEXADECIMAL) {
-        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, msgid)
-            .arg(pkt.getLabel())
-            .arg(option_code_)
-            .arg(sub_option_code_)
-            .arg(toHex(txt));
-    } else {
-        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, msgid)
-            .arg(pkt.getLabel())
-            .arg(option_code_)
-            .arg(sub_option_code_)
-            .arg('\'' + txt + '\'');
-    }
-
-    return (0);
 }
 
 TokenMatch::TokenMatch(const std::string& reg_exp) : reg_exp_str_(reg_exp) {

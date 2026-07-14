@@ -150,7 +150,7 @@ public:
                             const std::string& result_string) {
         // Create the token
         ASSERT_NO_THROW(t_.reset(new TokenRelay6Option(test_level,
-                                                       test_code,
+                                                       std::vector<uint16_t> { test_code },
                                                        test_rep)));
 
         // We should be able to evaluate it
@@ -504,7 +504,7 @@ public:
         clearStack();
 
         ASSERT_NO_THROW(t_.reset(new TokenVendor(u, token_vendor_id, repr,
-                                                 token_option_code)));
+                                                 std::vector<uint16_t> { token_option_code })));
         if (option_vendor_id) {
             setVendorOption(u, option_vendor_id);
             if (option_code) {
@@ -1264,9 +1264,9 @@ TEST_F(TokenTest, optionString4) {
     TokenPtr not_found;
 
     // The packets we use have option 100 with a string in them.
-    ASSERT_NO_THROW(found.reset(new TokenOption(100, TokenOption::TEXTUAL)));
+    ASSERT_NO_THROW(found.reset(new TokenOption(std::vector<uint16_t> { 100 }, TokenOption::TEXTUAL)));
     EXPECT_EQ(0U, found->getLabel());
-    ASSERT_NO_THROW(not_found.reset(new TokenOption(101, TokenOption::TEXTUAL)));
+    ASSERT_NO_THROW(not_found.reset(new TokenOption(std::vector<uint16_t> { 101 }, TokenOption::TEXTUAL)));
 
     // This should evaluate to the content of the option 100 (i.e. "hundred4")
     testEvaluate(found, *pkt4_, values_);
@@ -1288,8 +1288,8 @@ TEST_F(TokenTest, optionString4) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'hundred4'", pkt4_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value ''", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[100] with value 'hundred4'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[101] with value ''", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1301,8 +1301,8 @@ TEST_F(TokenTest, optionHexString4) {
     TokenPtr not_found;
 
     // The packets we use have option 100 with a string in them.
-    ASSERT_NO_THROW(found.reset(new TokenOption(100, TokenOption::HEXADECIMAL)));
-    ASSERT_NO_THROW(not_found.reset(new TokenOption(101, TokenOption::HEXADECIMAL)));
+    ASSERT_NO_THROW(found.reset(new TokenOption(std::vector<uint16_t> { 100 }, TokenOption::HEXADECIMAL)));
+    ASSERT_NO_THROW(not_found.reset(new TokenOption(std::vector<uint16_t> { 101 }, TokenOption::HEXADECIMAL)));
 
     // This should evaluate to the content of the option 100 (i.e. "hundred4")
     testEvaluate(found, *pkt4_, values_);
@@ -1324,9 +1324,9 @@ TEST_F(TokenTest, optionHexString4) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 0x68756E6472656434",
+    addString("EVAL_DEBUG_OPTION", "Pushing option[100] with value 0x68756E6472656434",
               pkt4_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value 0x", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[101] with value 0x", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1337,8 +1337,8 @@ TEST_F(TokenTest, optionExistsString4) {
     TokenPtr not_found;
 
     // The packets we use have option 100 with a string in them.
-    ASSERT_NO_THROW(found.reset(new TokenOption(100, TokenOption::EXISTS)));
-    ASSERT_NO_THROW(not_found.reset(new TokenOption(101, TokenOption::EXISTS)));
+    ASSERT_NO_THROW(found.reset(new TokenOption(std::vector<uint16_t> { 100 }, TokenOption::EXISTS)));
+    ASSERT_NO_THROW(not_found.reset(new TokenOption(std::vector<uint16_t> { 101 }, TokenOption::EXISTS)));
 
     testEvaluate(found, *pkt4_, values_);
     testEvaluate(not_found, *pkt4_, values_);
@@ -1354,8 +1354,8 @@ TEST_F(TokenTest, optionExistsString4) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'true'", pkt4_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value 'false'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[100] with value 'true'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[101] with value 'false'", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1366,8 +1366,8 @@ TEST_F(TokenTest, optionString6) {
     TokenPtr not_found;
 
     // The packets we use have option 100 with a string in them.
-    ASSERT_NO_THROW(found.reset(new TokenOption(100, TokenOption::TEXTUAL)));
-    ASSERT_NO_THROW(not_found.reset(new TokenOption(101, TokenOption::TEXTUAL)));
+    ASSERT_NO_THROW(found.reset(new TokenOption(std::vector<uint16_t> { 100 }, TokenOption::TEXTUAL)));
+    ASSERT_NO_THROW(not_found.reset(new TokenOption(std::vector<uint16_t> { 101 }, TokenOption::TEXTUAL)));
 
     // This should evaluate to the content of the option 100 (i.e. "hundred6")
     testEvaluate(found, *pkt6_, values_);
@@ -1389,8 +1389,8 @@ TEST_F(TokenTest, optionString6) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'hundred6'", pkt6_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value ''", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[100] with value 'hundred6'", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[101] with value ''", pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1402,8 +1402,8 @@ TEST_F(TokenTest, optionHexString6) {
     TokenPtr not_found;
 
     // The packets we use have option 100 with a string in them.
-    ASSERT_NO_THROW(found.reset(new TokenOption(100, TokenOption::HEXADECIMAL)));
-    ASSERT_NO_THROW(not_found.reset(new TokenOption(101, TokenOption::HEXADECIMAL)));
+    ASSERT_NO_THROW(found.reset(new TokenOption(std::vector<uint16_t> { 100 }, TokenOption::HEXADECIMAL)));
+    ASSERT_NO_THROW(not_found.reset(new TokenOption(std::vector<uint16_t> { 101 }, TokenOption::HEXADECIMAL)));
 
     // This should evaluate to the content of the option 100 (i.e. "hundred6")
     testEvaluate(found, *pkt6_, values_);
@@ -1425,9 +1425,9 @@ TEST_F(TokenTest, optionHexString6) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 0x68756E6472656436",
+    addString("EVAL_DEBUG_OPTION", "Pushing option[100] with value 0x68756E6472656436",
               pkt6_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value 0x", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[101] with value 0x", pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1438,8 +1438,8 @@ TEST_F(TokenTest, optionExistsString6) {
     TokenPtr not_found;
 
     // The packets we use have option 100 with a string in them.
-    ASSERT_NO_THROW(found.reset(new TokenOption(100, TokenOption::EXISTS)));
-    ASSERT_NO_THROW(not_found.reset(new TokenOption(101, TokenOption::EXISTS)));
+    ASSERT_NO_THROW(found.reset(new TokenOption(std::vector<uint16_t> { 100 }, TokenOption::EXISTS)));
+    ASSERT_NO_THROW(not_found.reset(new TokenOption(std::vector<uint16_t> { 101 }, TokenOption::EXISTS)));
 
     testEvaluate(found, *pkt6_, values_);
     testEvaluate(not_found, *pkt6_, values_);
@@ -1455,8 +1455,8 @@ TEST_F(TokenTest, optionExistsString6) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'true'", pkt6_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value 'false'", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[100] with value 'true'", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[101] with value 'false'", pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1467,7 +1467,7 @@ TEST_F(TokenTest, relay4Option) {
     insertRelay4Option();
 
     // Creating the token should be safe.
-    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(13, TokenOption::TEXTUAL)));
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(std::vector<uint16_t> { 13 }, TokenOption::TEXTUAL)));
 
     // We should be able to evaluate it.
     testEvaluate(t_, *pkt4_, values_);
@@ -1482,7 +1482,7 @@ TEST_F(TokenTest, relay4Option) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 13 with value 'thirteen'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[13] with value 'thirteen'", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1494,7 +1494,7 @@ TEST_F(TokenTest, relay4OptionNoSuboption) {
     insertRelay4Option();
 
     // Creating the token should be safe.
-    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(15, TokenOption::TEXTUAL)));
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(std::vector<uint16_t> { 15 }, TokenOption::TEXTUAL)));
     EXPECT_EQ(0U, t_->getLabel());
 
     // We should be able to evaluate it.
@@ -1510,7 +1510,7 @@ TEST_F(TokenTest, relay4OptionNoSuboption) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 15 with value ''", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[15] with value ''", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1521,7 +1521,7 @@ TEST_F(TokenTest, relay4OptionNoRai) {
     // We didn't call insertRelay4Option(), so there's no RAI option.
 
     // Creating the token should be safe.
-    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(13, TokenOption::TEXTUAL)));
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(std::vector<uint16_t> { 13 }, TokenOption::TEXTUAL)));
 
     // We should be able to evaluate it.
     testEvaluate(t_, *pkt4_, values_);
@@ -1536,7 +1536,7 @@ TEST_F(TokenTest, relay4OptionNoRai) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 13 with value ''", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[13] with value ''", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1561,14 +1561,14 @@ TEST_F(TokenTest, relay4RAIOnly) {
     //      - option 13 (containing "thirteen")
 
     // Let's try to get option 13. It should get the one from RAI
-    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(13, TokenOption::TEXTUAL)));
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(std::vector<uint16_t> { 13 }, TokenOption::TEXTUAL)));
     testEvaluate(t_, *pkt4_, values_);
     ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("thirteen", values_.top());
 
     // Try to get option 1. It should get the one from RAI
     clearStack();
-    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(1, TokenOption::TEXTUAL)));
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(std::vector<uint16_t> { 1 }, TokenOption::TEXTUAL)));
     testEvaluate(t_, *pkt4_, values_);
     ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("one", values_.top());
@@ -1576,21 +1576,21 @@ TEST_F(TokenTest, relay4RAIOnly) {
     // Try to get option 70. It should fail, as there's no such
     // sub option in RAI.
     clearStack();
-    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(70, TokenOption::TEXTUAL)));
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(std::vector<uint16_t> { 70 }, TokenOption::TEXTUAL)));
     testEvaluate(t_, *pkt4_, values_);
     ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("", values_.top());
 
     // Try to check option 1. It should return "true"
     clearStack();
-    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(1, TokenOption::EXISTS)));
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(std::vector<uint16_t> { 1 }, TokenOption::EXISTS)));
     testEvaluate(t_, *pkt4_, values_);
     ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("true", values_.top());
 
     // Try to check option 70. It should return "false"
     clearStack();
-    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(70, TokenOption::EXISTS)));
+    ASSERT_NO_THROW(t_.reset(new TokenRelay4Option(std::vector<uint16_t> { 70 }, TokenOption::EXISTS)));
     testEvaluate(t_, *pkt4_, values_);
     ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("false", values_.top());
@@ -1598,11 +1598,11 @@ TEST_F(TokenTest, relay4RAIOnly) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 13 with value 'thirteen'", pkt4_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 'one'", pkt4_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 70 with value ''", pkt4_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 'true'", pkt4_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 70 with value 'false'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[13] with value 'thirteen'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[1] with value 'one'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[70] with value ''", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[1] with value 'true'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[70] with value 'false'", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -1656,37 +1656,37 @@ TEST_F(TokenTest, relay6Option) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'hundred.zero'",
+    addString("EVAL_DEBUG_OPTION", "Pushing option[100] with value 'hundred.zero'",
               pkt6_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'true'", pkt6_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value 'hundredone.zero'",
+    addString("EVAL_DEBUG_OPTION", "Pushing option[100] with value 'true'", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[101] with value 'hundredone.zero'",
               pkt6_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 102 with value ''", pkt6_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 102 with value 'false'", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[102] with value ''", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[102] with value 'false'", pkt6_->getLabel());
 
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'hundred.one'",
+    addString("EVAL_DEBUG_OPTION", "Pushing option[100] with value 'hundred.one'",
               pkt6_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value ''", pkt6_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 102 with value 'hundredtwo.one'",
-              pkt6_->getLabel());
-
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value ''", pkt6_->getLabel());
-
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'hundred.one'",
-              pkt6_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value ''", pkt6_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 102 with value 'hundredtwo.one'",
+    addString("EVAL_DEBUG_OPTION", "Pushing option[101] with value ''", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[102] with value 'hundredtwo.one'",
               pkt6_->getLabel());
 
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'hundred.zero'",
-              pkt6_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value 'true'", pkt6_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 101 with value 'hundredone.zero'",
-              pkt6_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 102 with value ''", pkt6_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 102 with value 'false'", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[100] with value ''", pkt6_->getLabel());
 
-    addString("EVAL_DEBUG_OPTION", "Pushing option 100 with value ''", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[100] with value 'hundred.one'",
+              pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[101] with value ''", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[102] with value 'hundredtwo.one'",
+              pkt6_->getLabel());
+
+    addString("EVAL_DEBUG_OPTION", "Pushing option[100] with value 'hundred.zero'",
+              pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[100] with value 'true'", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[101] with value 'hundredone.zero'",
+              pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[102] with value ''", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[102] with value 'false'", pkt6_->getLabel());
+
+    addString("EVAL_DEBUG_OPTION", "Pushing option[100] with value ''", pkt6_->getLabel());
 
     EXPECT_TRUE(checkFile());
 }
@@ -1694,7 +1694,7 @@ TEST_F(TokenTest, relay6Option) {
 // Verifies that relay6 option requires DHCPv6
 TEST_F(TokenTest, relay6OptionError) {
     // Create a relay6 option token
-    ASSERT_NO_THROW(t_.reset(new TokenRelay6Option(0, 13, TokenOption::TEXTUAL)));
+    ASSERT_NO_THROW(t_.reset(new TokenRelay6Option(0, std::vector<uint16_t> { 13 }, TokenOption::TEXTUAL)));
     EXPECT_EQ(0U, t_->getLabel());
 
     // A DHCPv6 packet is required
@@ -3014,8 +3014,8 @@ TEST_F(TokenTest, vendor4SuboptionExists) {
               "Was looking for 4491, option had 1234, pushing result 'false'", pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH",
               "Was looking for 4491, option had 1234, pushing result 'false'", pkt4_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 'false'", pkt4_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 'true'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[1] with value 'false'", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[1] with value 'true'", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3048,8 +3048,8 @@ TEST_F(TokenTest, vendor6SuboptionExists) {
               "Was looking for 4491, option had 1234, pushing result 'false'", pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH",
               "Was looking for 4491, option had 1234, pushing result 'false'", pkt6_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 'false'", pkt6_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 'true'", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[1] with value 'false'", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[1] with value 'true'", pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3080,8 +3080,8 @@ TEST_F(TokenTest, vendor4SuboptionHex) {
               "Was looking for 4491, option had 1234, pushing result ''", pkt4_->getLabel());
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH",
               "Was looking for 4491, option had 1234, pushing result ''", pkt4_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 0x", pkt4_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 0x616C706861", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[1] with value 0x", pkt4_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[1] with value 0x616C706861", pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3112,8 +3112,8 @@ TEST_F(TokenTest, vendor6SuboptionHex) {
               "Was looking for 4491, option had 1234, pushing result ''", pkt6_->getLabel());
     addString("EVAL_DEBUG_VENDOR_ENTERPRISE_ID_MISMATCH",
               "Was looking for 4491, option had 1234, pushing result ''", pkt6_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 0x", pkt6_->getLabel());
-    addString("EVAL_DEBUG_OPTION", "Pushing option 1 with value 0x616C706861", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[1] with value 0x", pkt6_->getLabel());
+    addString("EVAL_DEBUG_OPTION", "Pushing option[1] with value 0x616C706861", pkt6_->getLabel());
     EXPECT_TRUE(checkFile());
 }
 
@@ -3542,7 +3542,7 @@ TEST_F(TokenTest, subOption) {
     insertRelay4Option();
 
     // Creating the token should be safe.
-    ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS, 13, TokenOption::TEXTUAL)));
+    ASSERT_NO_THROW(t_.reset(new TokenOption({ DHO_DHCP_AGENT_OPTIONS, 13 }, TokenOption::TEXTUAL)));
     EXPECT_EQ(0U, t_->getLabel());
 
     // We should be able to evaluate it.
@@ -3558,7 +3558,7 @@ TEST_F(TokenTest, subOption) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_SUB_OPTION", "Pushing option 82 sub-option 13 with value 'thirteen'",
+    addString("EVAL_DEBUG_OPTION", "Pushing option[82].option[13] with value 'thirteen'",
               pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
@@ -3572,7 +3572,7 @@ TEST_F(TokenTest, subOptionNoSubOption) {
 
 
     // Creating the token should be safe.
-    ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS, 15, TokenOption::TEXTUAL)));
+    ASSERT_NO_THROW(t_.reset(new TokenOption({ DHO_DHCP_AGENT_OPTIONS, 15 }, TokenOption::TEXTUAL)));
 
     // We should be able to evaluate it.
     testEvaluate(t_, *pkt4_, values_);
@@ -3587,7 +3587,7 @@ TEST_F(TokenTest, subOptionNoSubOption) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_SUB_OPTION", "Pushing option 82 sub-option 15 with value ''",
+    addString("EVAL_DEBUG_OPTION", "Pushing option[82].option[15] with value ''",
               pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }
@@ -3599,7 +3599,7 @@ TEST_F(TokenTest, subOptionNoOption) {
     // We didn't call insertRelay4Option(), so there's no RAI option.
 
     // Creating the token should be safe.
-    ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS, 13, TokenOption::TEXTUAL)));
+    ASSERT_NO_THROW(t_.reset(new TokenOption({ DHO_DHCP_AGENT_OPTIONS, 13 }, TokenOption::TEXTUAL)));
 
     // We should be able to evaluate it.
     testEvaluate(t_, *pkt4_, values_);
@@ -3610,15 +3610,6 @@ TEST_F(TokenTest, subOptionNoOption) {
     // The option should NOT be found (there is no option 82),
     // so the expression should evaluate to ""
     EXPECT_EQ("", values_.top());
-
-    // Check that the debug output was correct.  Add the strings
-    // to the test vector in the class and then call checkFile
-    // for comparison
-    addString("EVAL_DEBUG_SUB_OPTION_NO_OPTION",
-              "Requested option 82 sub-option 13, but the parent option is not present, pushing "
-              "result ''",
-              pkt4_->getLabel());
-    EXPECT_TRUE(checkFile());
 }
 
 // This test checks that only the requested parent is searched for
@@ -3642,14 +3633,14 @@ TEST_F(TokenTest, subOptionOptionOnly) {
     //      - option 13 (containing "thirteen")
 
     // Let's try to get option 13. It should get the one from RAI
-    ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS, 13, TokenOption::TEXTUAL)));
+    ASSERT_NO_THROW(t_.reset(new TokenOption({ DHO_DHCP_AGENT_OPTIONS, 13 }, TokenOption::TEXTUAL)));
     testEvaluate(t_, *pkt4_, values_);
     ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("thirteen", values_.top());
 
     // Try to get option 1. It should get the one from RAI
     clearStack();
-    ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS, 1, TokenOption::TEXTUAL)));
+    ASSERT_NO_THROW(t_.reset(new TokenOption({ DHO_DHCP_AGENT_OPTIONS, 1 }, TokenOption::TEXTUAL)));
     testEvaluate(t_, *pkt4_, values_);
     ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("one", values_.top());
@@ -3657,21 +3648,21 @@ TEST_F(TokenTest, subOptionOptionOnly) {
     // Try to get option 70. It should fail, as there's no such
     // sub option in RAI.
     clearStack();
-    ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS, 70, TokenOption::TEXTUAL)));
+    ASSERT_NO_THROW(t_.reset(new TokenOption({ DHO_DHCP_AGENT_OPTIONS, 70 }, TokenOption::TEXTUAL)));
     testEvaluate(t_, *pkt4_, values_);
     ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("", values_.top());
 
     // Try to check option 1. It should return "true"
     clearStack();
-    ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS, 1, TokenOption::EXISTS)));
+    ASSERT_NO_THROW(t_.reset(new TokenOption({ DHO_DHCP_AGENT_OPTIONS, 1 }, TokenOption::EXISTS)));
     testEvaluate(t_, *pkt4_, values_);
     ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("true", values_.top());
 
     // Try to check option 70. It should return "false"
     clearStack();
-    ASSERT_NO_THROW(t_.reset(new TokenSubOption(DHO_DHCP_AGENT_OPTIONS, 70, TokenOption::EXISTS)));
+    ASSERT_NO_THROW(t_.reset(new TokenOption({ DHO_DHCP_AGENT_OPTIONS, 70 }, TokenOption::EXISTS)));
     testEvaluate(t_, *pkt4_, values_);
     ASSERT_EQ(1U, values_.size());
     EXPECT_EQ("false", values_.top());
@@ -3679,15 +3670,15 @@ TEST_F(TokenTest, subOptionOptionOnly) {
     // Check that the debug output was correct.  Add the strings
     // to the test vector in the class and then call checkFile
     // for comparison
-    addString("EVAL_DEBUG_SUB_OPTION", "Pushing option 82 sub-option 13 with value 'thirteen'",
+    addString("EVAL_DEBUG_OPTION", "Pushing option[82].option[13] with value 'thirteen'",
               pkt4_->getLabel());
-    addString("EVAL_DEBUG_SUB_OPTION", "Pushing option 82 sub-option 1 with value 'one'",
+    addString("EVAL_DEBUG_OPTION", "Pushing option[82].option[1] with value 'one'",
               pkt4_->getLabel());
-    addString("EVAL_DEBUG_SUB_OPTION", "Pushing option 82 sub-option 70 with value ''",
+    addString("EVAL_DEBUG_OPTION", "Pushing option[82].option[70] with value ''",
               pkt4_->getLabel());
-    addString("EVAL_DEBUG_SUB_OPTION", "Pushing option 82 sub-option 1 with value 'true'",
+    addString("EVAL_DEBUG_OPTION", "Pushing option[82].option[1] with value 'true'",
               pkt4_->getLabel());
-    addString("EVAL_DEBUG_SUB_OPTION", "Pushing option 82 sub-option 70 with value 'false'",
+    addString("EVAL_DEBUG_OPTION", "Pushing option[82].option[70] with value 'false'",
               pkt4_->getLabel());
     EXPECT_TRUE(checkFile());
 }

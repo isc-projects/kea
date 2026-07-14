@@ -94,7 +94,7 @@ public:
     /// IA_NA packet options.
     /// @param rep_type Token representation type.
     TokenLeaseIA_NA(const Lease6Ptr& lease, const RepresentationType& rep_type)
-    : TokenOption(D6O_IA_NA, rep_type), lease_(lease) {
+    : TokenOption(std::vector<uint16_t> { D6O_IA_NA }, rep_type), lease_(lease) {
         if (lease->type_ != Lease::TYPE_NA) {
             isc_throw(EvalTypeError, "Can not create token using non IPv6 address type");
         }
@@ -154,7 +154,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param rep_type Token representation type.
-    TokenFilterIA_NA(const RepresentationType& rep_type) : TokenOption(D6O_IA_NA, rep_type) {
+    TokenFilterIA_NA(const RepresentationType& rep_type) : TokenOption(std::vector<uint16_t> { D6O_IA_NA }, rep_type) {
     }
 
     /// @brief Get no option regardless of what the packet contains.
@@ -168,7 +168,7 @@ public:
 
 /// @brief Filter the IA_NA (3) option containing the OPTION_IAADDR (5)
 /// option matching the respective lease. Used when filtering sub-options.
-class TokenLeaseIA_NASuboption : public virtual TokenLeaseIA_NA, public virtual TokenSubOption {
+class TokenLeaseIA_NASuboption : public virtual TokenLeaseIA_NA {
 public:
     /// @brief Constructor.
     ///
@@ -176,8 +176,8 @@ public:
     /// IA_NA packet options.
     /// @param rep_type Token representation type.
     TokenLeaseIA_NASuboption(const Lease6Ptr& lease, const RepresentationType& rep_type)
-    : TokenOption(D6O_IA_NA, rep_type), TokenLeaseIA_NA(lease, rep_type),
-      TokenSubOption(D6O_IA_NA, D6O_IAADDR, rep_type) {
+    : TokenOption(std::vector<uint16_t> { D6O_IA_NA, D6O_IAADDR }, rep_type),
+      TokenLeaseIA_NA(lease, rep_type) {
     }
 
     /// @brief Get the IA_NA (3) option containing the OPTION_IAADDR (5)
@@ -188,7 +188,11 @@ public:
     /// option (but all other options of different type) matching the
     /// respective lease or null if none exists.
     virtual OptionPtr getOption(Pkt& pkt) {
-        return (TokenLeaseIA_NA::getOption(pkt));
+        OptionPtr option = TokenLeaseIA_NA::getOption(pkt);
+        if (option) {
+            option = option->getOption(D6O_IAADDR);
+        }
+        return (option);
     }
 
     /// @brief Evaluate the expression using the @ref TokenSubOption
@@ -198,19 +202,19 @@ public:
     /// @param values value of the sub-option will be pushed here (or "")
     /// @return 0 which means evaluate next token if any.
     unsigned evaluate(Pkt& pkt, ValueStack& values) {
-        return (TokenSubOption::evaluate(pkt, values));
+        return (TokenOption::evaluate(pkt, values));
     }
 };
 
 /// @brief Filter all IA_NA so that no sub-option is matched by the expression.
-class TokenFilterIA_NASuboption : public virtual TokenFilterIA_NA, public virtual TokenSubOption {
+class TokenFilterIA_NASuboption : public virtual TokenFilterIA_NA {
 public:
     /// @brief Constructor.
     ///
     /// @param rep_type Token representation type.
     TokenFilterIA_NASuboption(const RepresentationType& rep_type)
-    : TokenOption(D6O_IA_NA, rep_type), TokenFilterIA_NA(rep_type),
-      TokenSubOption(D6O_IA_NA, D6O_IAADDR, rep_type) {
+    : TokenOption(std::vector<uint16_t> { D6O_IA_NA, D6O_IAADDR }, rep_type),
+      TokenFilterIA_NA(rep_type) {
     }
 
     /// @brief Get no option regardless of what the packet contains.
@@ -228,7 +232,7 @@ public:
     /// @param values value of the sub-option will be pushed here (or "")
     /// @return 0 which means evaluate next token if any.
     unsigned evaluate(Pkt& pkt, ValueStack& values) {
-        return (TokenSubOption::evaluate(pkt, values));
+        return (TokenOption::evaluate(pkt, values));
     }
 };
 
@@ -242,7 +246,7 @@ public:
     /// IA_PD packet options.
     /// @param rep_type Token representation type.
     TokenLeaseIA_PD(const Lease6Ptr& lease, const RepresentationType& rep_type)
-    : TokenOption(D6O_IA_PD, rep_type), lease_(lease) {
+    : TokenOption(std::vector<uint16_t> { D6O_IA_PD }, rep_type), lease_(lease) {
         if (lease->type_ != Lease::TYPE_PD) {
             isc_throw(EvalTypeError, "Can not create token using non IPv6 prefix type");
         }
@@ -303,7 +307,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param rep_type Token representation type.
-    TokenFilterIA_PD(const RepresentationType& rep_type) : TokenOption(D6O_IA_PD, rep_type) {
+    TokenFilterIA_PD(const RepresentationType& rep_type) : TokenOption(std::vector<uint16_t> { D6O_IA_PD }, rep_type) {
     }
 
     /// @brief Get no option regardless of what the packet contains.
@@ -317,7 +321,7 @@ public:
 
 /// @brief Filter the IA_PD (25) option containing the OPTION_IAPREFIX (25)
 /// option matching the respective lease. Used when filtering sub-options.
-class TokenLeaseIA_PDSuboption : public virtual TokenLeaseIA_PD, public virtual TokenSubOption {
+class TokenLeaseIA_PDSuboption : public virtual TokenLeaseIA_PD {
 public:
     /// @brief Constructor.
     ///
@@ -325,8 +329,8 @@ public:
     /// IA_PD packet options.
     /// @param rep_type Token representation type.
     TokenLeaseIA_PDSuboption(const Lease6Ptr& lease, const RepresentationType& rep_type)
-    : TokenOption(D6O_IA_PD, rep_type), TokenLeaseIA_PD(lease, rep_type),
-      TokenSubOption(D6O_IA_PD, D6O_IAPREFIX, rep_type) {
+    : TokenOption(std::vector<uint16_t> { D6O_IA_PD, D6O_IAPREFIX }, rep_type),
+      TokenLeaseIA_PD(lease, rep_type) {
     }
 
     /// @brief Get the IA_PD (25) option containing the OPTION_IAPREFIX (25)
@@ -337,7 +341,11 @@ public:
     /// option (but all other options of different type) matching the
     /// respective lease or null if none exists.
     virtual OptionPtr getOption(Pkt& pkt) {
-        return (TokenLeaseIA_PD::getOption(pkt));
+        OptionPtr option = TokenLeaseIA_PD::getOption(pkt);
+        if (option) {
+            option = option->getOption(D6O_IAPREFIX);
+        }
+        return (option);
     }
 
     /// @brief Evaluate the expression using the @ref TokenSubOption
@@ -347,19 +355,19 @@ public:
     /// @param values value of the sub-option will be pushed here (or "")
     /// @return 0 which means evaluate next token if any.
     unsigned evaluate(Pkt& pkt, ValueStack& values) {
-        return (TokenSubOption::evaluate(pkt, values));
+        return (TokenOption::evaluate(pkt, values));
     }
 };
 
 /// @brief Filter all IA_PD so that no sub-option is matched by the expression.
-class TokenFilterIA_PDSuboption : public virtual TokenFilterIA_PD, public virtual TokenSubOption {
+class TokenFilterIA_PDSuboption : public virtual TokenFilterIA_PD {
 public:
     /// @brief Constructor.
     ///
     /// @param rep_type Token representation type.
     TokenFilterIA_PDSuboption(const RepresentationType& rep_type)
-    : TokenOption(D6O_IA_PD, rep_type), TokenFilterIA_PD(rep_type),
-      TokenSubOption(D6O_IA_PD, D6O_IAPREFIX, rep_type) {
+    : TokenOption(std::vector<uint16_t> { D6O_IA_PD, D6O_IAPREFIX }, rep_type),
+      TokenFilterIA_PD(rep_type) {
     }
 
     /// @brief Get no option regardless of what the packet contains.
@@ -377,7 +385,7 @@ public:
     /// @param values value of the sub-option will be pushed here (or "")
     /// @return 0 which means evaluate next token if any.
     unsigned evaluate(Pkt& pkt, ValueStack& values) {
-        return (TokenSubOption::evaluate(pkt, values));
+        return (TokenOption::evaluate(pkt, values));
     }
 };
 
@@ -394,25 +402,22 @@ public:
 /// packet options.
 void filterLeaseIA_NA(isc::dhcp::Expression& expression, const Lease6Ptr& lease) {
     for (size_t i = 0; i < expression.size(); ++i) {
-        boost::shared_ptr<TokenSubOption> suboption = boost::dynamic_pointer_cast<TokenSubOption>(expression[i]);
-        if (suboption) {
-            if ((suboption->getCode() == D6O_IA_NA) && (suboption->getSubCode() == D6O_IAADDR)) {
-                expression[i] = TokenPtr(new TokenLeaseIA_NASuboption(lease, suboption->getRepresentation()));
-                continue;
-            }
-            if ((suboption->getCode() == D6O_IA_PD) && (suboption->getSubCode() == D6O_IAPREFIX)) {
-                expression[i] = TokenPtr(new TokenFilterIA_PDSuboption(suboption->getRepresentation()));
-                continue;
-            }
-        }
         boost::shared_ptr<TokenOption> option = boost::dynamic_pointer_cast<TokenOption>(expression[i]);
         if (option) {
-            if (option->getCode() == D6O_IA_NA) {
-                expression[i] = TokenPtr(new TokenLeaseIA_NA(lease, option->getRepresentation()));
+            if (option->getOptions()[0] == D6O_IA_NA) {
+                if (option->getOptions().size() == 2U && option->getOptions()[1] == D6O_IAADDR) {
+                    expression[i] = TokenPtr(new TokenLeaseIA_NASuboption(lease, option->getRepresentation()));
+                } else if (option->getOptions().size() == 1U) {
+                    expression[i] = TokenPtr(new TokenLeaseIA_NA(lease, option->getRepresentation()));
+                }
                 continue;
             }
-            if (option->getCode() == D6O_IA_PD) {
-                expression[i] = TokenPtr(new TokenFilterIA_PD(option->getRepresentation()));
+            if (option->getOptions()[0] == D6O_IA_PD) {
+                if (option->getOptions().size() == 2U && option->getOptions()[1] == D6O_IAPREFIX) {
+                    expression[i] = TokenPtr(new TokenFilterIA_PDSuboption(option->getRepresentation()));
+                } else if (option->getOptions().size() == 1U) {
+                    expression[i] = TokenPtr(new TokenFilterIA_PD(option->getRepresentation()));
+                }
                 continue;
             }
         }
@@ -429,25 +434,22 @@ void filterLeaseIA_NA(isc::dhcp::Expression& expression, const Lease6Ptr& lease)
 /// packet options.
 void filterLeaseIA_PD(isc::dhcp::Expression& expression, const Lease6Ptr& lease) {
     for (size_t i = 0; i < expression.size(); ++i) {
-        boost::shared_ptr<TokenSubOption> suboption = boost::dynamic_pointer_cast<TokenSubOption>(expression[i]);
-        if (suboption) {
-            if ((suboption->getCode() == D6O_IA_NA) && (suboption->getSubCode() == D6O_IAADDR)) {
-                expression[i] = TokenPtr(new TokenFilterIA_NASuboption(suboption->getRepresentation()));
-                continue;
-            }
-            if ((suboption->getCode() == D6O_IA_PD) && (suboption->getSubCode() == D6O_IAPREFIX)) {
-                expression[i] = TokenPtr(new TokenLeaseIA_PDSuboption(lease, suboption->getRepresentation()));
-                continue;
-            }
-        }
         boost::shared_ptr<TokenOption> option = boost::dynamic_pointer_cast<TokenOption>(expression[i]);
         if (option) {
-            if (option->getCode() == D6O_IA_NA) {
-                expression[i] = TokenPtr(new TokenFilterIA_NA(option->getRepresentation()));
+            if (option->getOptions()[0] == D6O_IA_NA) {
+                if (option->getOptions().size() == 2U && option->getOptions()[1] == D6O_IAADDR) {
+                    expression[i] = TokenPtr(new TokenFilterIA_NASuboption(option->getRepresentation()));
+                } else if (option->getOptions().size() == 1U) {
+                    expression[i] = TokenPtr(new TokenFilterIA_NA(option->getRepresentation()));
+                }
                 continue;
             }
-            if (option->getCode() == D6O_IA_PD) {
-                expression[i] = TokenPtr(new TokenLeaseIA_PD(lease, option->getRepresentation()));
+            if (option->getOptions()[0] == D6O_IA_PD) {
+                if (option->getOptions().size() == 2U && option->getOptions()[1] == D6O_IAPREFIX) {
+                    expression[i] = TokenPtr(new TokenLeaseIA_PDSuboption(lease, option->getRepresentation()));
+                } else if (option->getOptions().size() == 1U) {
+                    expression[i] = TokenPtr(new TokenLeaseIA_PD(lease, option->getRepresentation()));
+                }
                 continue;
             }
         }

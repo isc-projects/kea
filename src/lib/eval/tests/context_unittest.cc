@@ -159,7 +159,9 @@ public:
             boost::dynamic_pointer_cast<TokenOption>(token);
         ASSERT_TRUE(opt);
 
-        EXPECT_EQ(expected_code, opt->getCode());
+        ASSERT_EQ(1U, opt->getOptions().size());
+
+        EXPECT_EQ(expected_code, opt->getOptions()[0]);
         EXPECT_EQ(expected_repr, opt->getRepresentation());
     }
 
@@ -174,12 +176,12 @@ public:
         ASSERT_TRUE(token);
         boost::shared_ptr<TokenRelay4Option> relay4 =
             boost::dynamic_pointer_cast<TokenRelay4Option>(token);
-        EXPECT_TRUE(relay4);
+        ASSERT_TRUE(relay4);
 
-        if (relay4) {
-            EXPECT_EQ(expected_code, relay4->getCode());
-            EXPECT_EQ(expected_repr, relay4->getRepresentation());
-        }
+        ASSERT_EQ(1U, relay4->getOptions().size());
+
+        EXPECT_EQ(expected_code, relay4->getOptions()[0]);
+        EXPECT_EQ(expected_repr, relay4->getRepresentation());
     }
 
     /// @brief checks if the given token is a TokenRelay6Option with
@@ -197,8 +199,10 @@ public:
             boost::dynamic_pointer_cast<TokenRelay6Option>(token);
         ASSERT_TRUE(opt);
 
+        ASSERT_EQ(1U, opt->getOptions().size());
+
         EXPECT_EQ(expected_level, opt->getNest());
-        EXPECT_EQ(expected_code, opt->getCode());
+        EXPECT_EQ(expected_code, opt->getOptions()[0]);
         EXPECT_EQ(expected_repr, opt->getRepresentation());
     }
 
@@ -605,7 +609,13 @@ public:
 
         EXPECT_EQ(exp_vendor_id, vendor->getVendorId());
         EXPECT_EQ(exp_repr, vendor->getRepresentation());
-        EXPECT_EQ(exp_option_code, vendor->getCode());
+        if (exp_option_code) {
+            ASSERT_EQ(1U, vendor->getOptions().size());
+
+            EXPECT_EQ(exp_option_code, vendor->getOptions()[0]);
+        } else {
+            EXPECT_TRUE(vendor->getOptions().empty());
+        }
     }
 
     /// @brief Tests if specified token vendor expression can be parsed
@@ -784,12 +794,14 @@ public:
                              uint16_t expected_sub_code,
                              TokenOption::RepresentationType expected_repr) {
         ASSERT_TRUE(token);
-        boost::shared_ptr<TokenSubOption> sub =
-            boost::dynamic_pointer_cast<TokenSubOption>(token);
+        boost::shared_ptr<TokenOption> sub =
+            boost::dynamic_pointer_cast<TokenOption>(token);
         ASSERT_TRUE(sub);
 
-        EXPECT_EQ(expected_code, sub->getCode());
-        EXPECT_EQ(expected_sub_code, sub->getSubCode());
+        ASSERT_EQ(2U, sub->getOptions().size());
+
+        EXPECT_EQ(expected_code, sub->getOptions()[0]);
+        EXPECT_EQ(expected_sub_code, sub->getOptions()[1]);
         EXPECT_EQ(expected_repr, sub->getRepresentation());
     }
 

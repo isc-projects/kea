@@ -442,20 +442,30 @@ namespace isc { namespace eval {
       // nest_level
       char dummy6[sizeof (int8_t)];
 
+      // relay6_option_chain
+      char dummy7[sizeof (std::pair<int8_t, std::vector<uint16_t>>)];
+
+      // vendor_option_chain
+      char dummy8[sizeof (std::pair<uint32_t, std::vector<uint16_t>>)];
+
       // "constant string"
       // "integer"
       // "constant hexstring"
       // "option name"
       // "ip address"
-      char dummy7[sizeof (std::string)];
+      char dummy9[sizeof (std::string)];
+
+      // option_chain
+      // relay4_option_chain
+      char dummy10[sizeof (std::vector<uint16_t>)];
 
       // option_code
       // sub_option_code
-      char dummy8[sizeof (uint16_t)];
+      char dummy11[sizeof (uint16_t)];
 
       // integer_expr
       // enterprise_id
-      char dummy9[sizeof (uint32_t)];
+      char dummy12[sizeof (uint32_t)];
     };
 
     /// The size of the largest semantic type.
@@ -666,25 +676,29 @@ namespace isc { namespace eval {
         S_YYACCEPT = 70,                         // $accept
         S_start = 71,                            // start
         S_expression = 72,                       // expression
-        S_bool_expr = 73,                        // bool_expr
-        S_74_1 = 74,                             // $@1
-        S_75_2 = 75,                             // $@2
-        S_string_expr = 76,                      // string_expr
-        S_77_3 = 77,                             // $@3
-        S_78_4 = 78,                             // $@4
-        S_integer_expr = 79,                     // integer_expr
-        S_option_code = 80,                      // option_code
-        S_sub_option_code = 81,                  // sub_option_code
-        S_option_repr_type = 82,                 // option_repr_type
-        S_nest_level = 83,                       // nest_level
-        S_pkt_metadata = 84,                     // pkt_metadata
-        S_enterprise_id = 85,                    // enterprise_id
-        S_pkt4_field = 86,                       // pkt4_field
-        S_pkt6_field = 87,                       // pkt6_field
-        S_relay6_field = 88,                     // relay6_field
-        S_start_expr = 89,                       // start_expr
-        S_length_expr = 90,                      // length_expr
-        S_int_expr = 91                          // int_expr
+        S_option_chain = 73,                     // option_chain
+        S_relay4_option_chain = 74,              // relay4_option_chain
+        S_relay6_option_chain = 75,              // relay6_option_chain
+        S_vendor_option_chain = 76,              // vendor_option_chain
+        S_bool_expr = 77,                        // bool_expr
+        S_78_1 = 78,                             // $@1
+        S_79_2 = 79,                             // $@2
+        S_string_expr = 80,                      // string_expr
+        S_81_3 = 81,                             // $@3
+        S_82_4 = 82,                             // $@4
+        S_integer_expr = 83,                     // integer_expr
+        S_option_code = 84,                      // option_code
+        S_sub_option_code = 85,                  // sub_option_code
+        S_option_repr_type = 86,                 // option_repr_type
+        S_nest_level = 87,                       // nest_level
+        S_pkt_metadata = 88,                     // pkt_metadata
+        S_enterprise_id = 89,                    // enterprise_id
+        S_pkt4_field = 90,                       // pkt4_field
+        S_pkt6_field = 91,                       // pkt6_field
+        S_relay6_field = 92,                     // relay6_field
+        S_start_expr = 93,                       // start_expr
+        S_length_expr = 94,                      // length_expr
+        S_int_expr = 95                          // int_expr
       };
     };
 
@@ -745,12 +759,25 @@ namespace isc { namespace eval {
         value.move< int8_t > (std::move (that.value));
         break;
 
+      case symbol_kind::S_relay6_option_chain: // relay6_option_chain
+        value.move< std::pair<int8_t, std::vector<uint16_t>> > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_vendor_option_chain: // vendor_option_chain
+        value.move< std::pair<uint32_t, std::vector<uint16_t>> > (std::move (that.value));
+        break;
+
       case symbol_kind::S_STRING: // "constant string"
       case symbol_kind::S_INTEGER: // "integer"
       case symbol_kind::S_HEXSTRING: // "constant hexstring"
       case symbol_kind::S_OPTION_NAME: // "option name"
       case symbol_kind::S_IP_ADDRESS: // "ip address"
         value.move< std::string > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_option_chain: // option_chain
+      case symbol_kind::S_relay4_option_chain: // relay4_option_chain
+        value.move< std::vector<uint16_t> > (std::move (that.value));
         break;
 
       case symbol_kind::S_option_code: // option_code
@@ -871,6 +898,34 @@ namespace isc { namespace eval {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::pair<int8_t, std::vector<uint16_t>>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::pair<int8_t, std::vector<uint16_t>>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::pair<uint32_t, std::vector<uint16_t>>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::pair<uint32_t, std::vector<uint16_t>>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::string&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -878,6 +933,20 @@ namespace isc { namespace eval {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const std::string& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<uint16_t>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<uint16_t>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -960,12 +1029,25 @@ switch (yykind)
         value.template destroy< int8_t > ();
         break;
 
+      case symbol_kind::S_relay6_option_chain: // relay6_option_chain
+        value.template destroy< std::pair<int8_t, std::vector<uint16_t>> > ();
+        break;
+
+      case symbol_kind::S_vendor_option_chain: // vendor_option_chain
+        value.template destroy< std::pair<uint32_t, std::vector<uint16_t>> > ();
+        break;
+
       case symbol_kind::S_STRING: // "constant string"
       case symbol_kind::S_INTEGER: // "integer"
       case symbol_kind::S_HEXSTRING: // "constant hexstring"
       case symbol_kind::S_OPTION_NAME: // "option name"
       case symbol_kind::S_IP_ADDRESS: // "ip address"
         value.template destroy< std::string > ();
+        break;
+
+      case symbol_kind::S_option_chain: // option_chain
+      case symbol_kind::S_relay4_option_chain: // relay4_option_chain
+        value.template destroy< std::vector<uint16_t> > ();
         break;
 
       case symbol_kind::S_option_code: // option_code
@@ -2519,9 +2601,9 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 343,     ///< Last index in yytable_.
-      yynnts_ = 22,  ///< Number of nonterminal symbols.
-      yyfinal_ = 46 ///< Termination state number.
+      yylast_ = 359,     ///< Last index in yytable_.
+      yynnts_ = 26,  ///< Number of nonterminal symbols.
+      yyfinal_ = 51 ///< Termination state number.
     };
 
 
@@ -2618,12 +2700,25 @@ switch (yykind)
         value.copy< int8_t > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_relay6_option_chain: // relay6_option_chain
+        value.copy< std::pair<int8_t, std::vector<uint16_t>> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_vendor_option_chain: // vendor_option_chain
+        value.copy< std::pair<uint32_t, std::vector<uint16_t>> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_STRING: // "constant string"
       case symbol_kind::S_INTEGER: // "integer"
       case symbol_kind::S_HEXSTRING: // "constant hexstring"
       case symbol_kind::S_OPTION_NAME: // "option name"
       case symbol_kind::S_IP_ADDRESS: // "ip address"
         value.copy< std::string > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_option_chain: // option_chain
+      case symbol_kind::S_relay4_option_chain: // relay4_option_chain
+        value.copy< std::vector<uint16_t> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_option_code: // option_code
@@ -2691,12 +2786,25 @@ switch (yykind)
         value.move< int8_t > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_relay6_option_chain: // relay6_option_chain
+        value.move< std::pair<int8_t, std::vector<uint16_t>> > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_vendor_option_chain: // vendor_option_chain
+        value.move< std::pair<uint32_t, std::vector<uint16_t>> > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_STRING: // "constant string"
       case symbol_kind::S_INTEGER: // "integer"
       case symbol_kind::S_HEXSTRING: // "constant hexstring"
       case symbol_kind::S_OPTION_NAME: // "option name"
       case symbol_kind::S_IP_ADDRESS: // "ip address"
         value.move< std::string > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_option_chain: // option_chain
+      case symbol_kind::S_relay4_option_chain: // relay4_option_chain
+        value.move< std::vector<uint16_t> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_option_code: // option_code
@@ -2776,7 +2884,7 @@ switch (yykind)
 
 #line 14 "parser.yy"
 } } // isc::eval
-#line 2780 "parser.h"
+#line 2888 "parser.h"
 
 
 

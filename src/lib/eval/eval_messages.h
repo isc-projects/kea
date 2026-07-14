@@ -43,8 +43,6 @@ extern const isc::log::MessageID EVAL_DEBUG_STRING;
 extern const isc::log::MessageID EVAL_DEBUG_SUBSTRING;
 extern const isc::log::MessageID EVAL_DEBUG_SUBSTRING_EMPTY;
 extern const isc::log::MessageID EVAL_DEBUG_SUBSTRING_RANGE;
-extern const isc::log::MessageID EVAL_DEBUG_SUB_OPTION;
-extern const isc::log::MessageID EVAL_DEBUG_SUB_OPTION_NO_OPTION;
 extern const isc::log::MessageID EVAL_DEBUG_TOHEXSTRING;
 extern const isc::log::MessageID EVAL_DEBUG_UCASE;
 extern const isc::log::MessageID EVAL_DEBUG_UINT16TOTEXT;
