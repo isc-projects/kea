@@ -149,6 +149,12 @@ public:
     /// @brief Reset the state of the object.
     virtual void reset();
 
+    /// @brief Reset the Content-Length header.
+    ///
+    /// @note: to be called when the body was overwritten in an already
+    /// finalized response.
+    void resetContentLength();
+
     /// @brief Returns HTTP status code.
     HttpStatusCode getStatusCode() const;
 

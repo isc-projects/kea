@@ -137,6 +137,23 @@ HttpResponse::reset() {
     headers_.clear();
 }
 
+void
+HttpResponse::resetContentLength() {
+    // Make sense only for outbound responses.
+    if (getDirection() != HttpMessage::OUTBOUND) {
+        return;
+    }
+    // A previous header must be pesent.
+    if (!headers_.count("content-length")) {
+        return;
+    }
+    // Copied from create().
+    std::string length =
+        boost::lexical_cast<std::string>(context_->body_.length());
+    HttpHeaderPtr length_header(new HttpHeader("Content-Length", length));
+    headers_["content-length"] = length_header;
+}
+
 HttpStatusCode
 HttpResponse::getStatusCode() const {
     checkCreated();

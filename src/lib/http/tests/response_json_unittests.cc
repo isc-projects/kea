@@ -122,6 +122,28 @@ TEST_F(HttpResponseJsonTest, responseWithContent) {
     EXPECT_EQ(response_string.str(), response.toString());
 }
 
+// Test that the JSON body can be overwritten.
+TEST_F(HttpResponseJsonTest, responseWithContent2) {
+    TestHttpResponseJson response(HttpVersion(1, 1), HttpStatusCode::OK);
+    ASSERT_NO_THROW(response.setBodyAsJson(json_));
+    ASSERT_NO_THROW(response.finalize());
+
+    std::string json2_string_ = "[ \"Hello\", \"world\" ]";
+    ConstElementPtr json2_ = Element::fromJSON(json2_string_);
+    std::string json2_string_from_json_ = json2_->str();
+    response.setBodyAsJson(json2_);
+    response.resetContentLength();
+
+    std::ostringstream response_string;
+    response_string <<
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Length: " << json2_string_from_json_.length() << "\r\n"
+        "Content-Type: application/json\r\n"
+        "Date: " << response.getDateHeaderValue() << "\r\n\r\n"
+                    << json2_string_from_json_;
+    EXPECT_EQ(response_string.str(), response.toString());
+}
+
 // Test that generic responses are created properly.
 TEST_F(HttpResponseJsonTest, genericResponse) {
     testGenericResponse(HttpStatusCode::OK, "OK");
