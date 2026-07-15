@@ -624,10 +624,7 @@ TEST_F(ClientClassDefParserTest, escapedName2) {
     EXPECT_EQ("foo%bar", cclass->getName());
 
     // A warning should not be in logs.
-    std::string warn = "DHCPSRV_CLASS_BAD_NAME class name 'foo%bar' ";
-    warn += "includes problematic characters: ";
-    warn += "suggest to use 'foo%%bar' instead";
-    EXPECT_EQ(0U, countFile(warn));
+    EXPECT_EQ(0U, countFile("DHCPSRV_CLASS_BAD_NAME"));
 }
 
 // Verifies you can create a class with a name, expression,
