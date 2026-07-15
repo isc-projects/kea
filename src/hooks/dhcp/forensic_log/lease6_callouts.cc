@@ -94,7 +94,7 @@ public:
     /// IA_NA packet options.
     /// @param rep_type Token representation type.
     TokenLeaseIA_NA(const Lease6Ptr& lease, const RepresentationType& rep_type)
-    : TokenOption(std::vector<uint16_t> { D6O_IA_NA }, rep_type), lease_(lease) {
+    : TokenOption({ D6O_IA_NA }, rep_type), lease_(lease) {
         if (lease->type_ != Lease::TYPE_NA) {
             isc_throw(EvalTypeError, "Can not create token using non IPv6 address type");
         }
@@ -154,7 +154,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param rep_type Token representation type.
-    TokenFilterIA_NA(const RepresentationType& rep_type) : TokenOption(std::vector<uint16_t> { D6O_IA_NA }, rep_type) {
+    TokenFilterIA_NA(const RepresentationType& rep_type) : TokenOption({ D6O_IA_NA }, rep_type) {
     }
 
     /// @brief Get no option regardless of what the packet contains.
@@ -176,7 +176,7 @@ public:
     /// IA_NA packet options.
     /// @param rep_type Token representation type.
     TokenLeaseIA_NASuboption(const Lease6Ptr& lease, const RepresentationType& rep_type)
-    : TokenOption(std::vector<uint16_t> { D6O_IA_NA, D6O_IAADDR }, rep_type),
+    : TokenOption({ D6O_IA_NA, D6O_IAADDR }, rep_type),
       TokenLeaseIA_NA(lease, rep_type) {
     }
 
@@ -195,7 +195,7 @@ public:
         return (option);
     }
 
-    /// @brief Evaluate the expression using the @ref TokenSubOption
+    /// @brief Evaluate the expression using the @ref TokenOption
     /// implementation.
     ///
     /// @param pkt specified parent option will be extracted from this packet
@@ -213,7 +213,7 @@ public:
     ///
     /// @param rep_type Token representation type.
     TokenFilterIA_NASuboption(const RepresentationType& rep_type)
-    : TokenOption(std::vector<uint16_t> { D6O_IA_NA, D6O_IAADDR }, rep_type),
+    : TokenOption({ D6O_IA_NA, D6O_IAADDR }, rep_type),
       TokenFilterIA_NA(rep_type) {
     }
 
@@ -225,7 +225,7 @@ public:
         return (TokenFilterIA_NA::getOption(pkt));
     }
 
-    /// @brief Evaluate the expression using the @ref TokenSubOption
+    /// @brief Evaluate the expression using the @ref TokenOption
     /// implementation.
     ///
     /// @param pkt specified parent option will be extracted from this packet
@@ -246,7 +246,7 @@ public:
     /// IA_PD packet options.
     /// @param rep_type Token representation type.
     TokenLeaseIA_PD(const Lease6Ptr& lease, const RepresentationType& rep_type)
-    : TokenOption(std::vector<uint16_t> { D6O_IA_PD }, rep_type), lease_(lease) {
+    : TokenOption({ D6O_IA_PD }, rep_type), lease_(lease) {
         if (lease->type_ != Lease::TYPE_PD) {
             isc_throw(EvalTypeError, "Can not create token using non IPv6 prefix type");
         }
@@ -307,7 +307,7 @@ public:
     /// @brief Constructor.
     ///
     /// @param rep_type Token representation type.
-    TokenFilterIA_PD(const RepresentationType& rep_type) : TokenOption(std::vector<uint16_t> { D6O_IA_PD }, rep_type) {
+    TokenFilterIA_PD(const RepresentationType& rep_type) : TokenOption({ D6O_IA_PD }, rep_type) {
     }
 
     /// @brief Get no option regardless of what the packet contains.
@@ -329,7 +329,7 @@ public:
     /// IA_PD packet options.
     /// @param rep_type Token representation type.
     TokenLeaseIA_PDSuboption(const Lease6Ptr& lease, const RepresentationType& rep_type)
-    : TokenOption(std::vector<uint16_t> { D6O_IA_PD, D6O_IAPREFIX }, rep_type),
+    : TokenOption({ D6O_IA_PD, D6O_IAPREFIX }, rep_type),
       TokenLeaseIA_PD(lease, rep_type) {
     }
 
@@ -348,7 +348,7 @@ public:
         return (option);
     }
 
-    /// @brief Evaluate the expression using the @ref TokenSubOption
+    /// @brief Evaluate the expression using the @ref TokenOption
     /// implementation.
     ///
     /// @param pkt specified parent option will be extracted from this packet
@@ -366,7 +366,7 @@ public:
     ///
     /// @param rep_type Token representation type.
     TokenFilterIA_PDSuboption(const RepresentationType& rep_type)
-    : TokenOption(std::vector<uint16_t> { D6O_IA_PD, D6O_IAPREFIX }, rep_type),
+    : TokenOption({ D6O_IA_PD, D6O_IAPREFIX }, rep_type),
       TokenFilterIA_PD(rep_type) {
     }
 
@@ -378,7 +378,7 @@ public:
         return (TokenFilterIA_PD::getOption(pkt));
     }
 
-    /// @brief Evaluate the expression using the @ref TokenSubOption
+    /// @brief Evaluate the expression using the @ref TokenOption
     /// implementation.
     ///
     /// @param pkt specified parent option will be extracted from this packet
@@ -392,9 +392,8 @@ public:
 } // namespace dhcp
 } // namespace isc
 
-/// @brief Replace TokenOption and TokenSubOption expression tokens with the
-/// IA_NA (3) option containing the OPTION_IAADDR (5) option matching the
-/// respective lease.
+/// @brief Replace TokenOption expression tokens with the IA_NA (3) option containing
+/// the OPTION_IAADDR (5) option matching the respective lease.
 ///
 /// @param expression The expression that needs to be updated with filtering
 /// tokens.
@@ -424,9 +423,8 @@ void filterLeaseIA_NA(isc::dhcp::Expression& expression, const Lease6Ptr& lease)
     }
 }
 
-/// @brief Replace TokenOption and TokenSubOption expression tokens with the
-/// IA_PD (25) option containing the OPTION_IAPREFIX (25) option matching the
-/// respective lease.
+/// @brief Replace TokenOption expression tokens with the IA_PD (25) option containing
+/// the OPTION_IAPREFIX (25) option matching the respective lease.
 ///
 /// @param expression The expression that needs to be updated with filtering
 /// tokens.
@@ -456,13 +454,12 @@ void filterLeaseIA_PD(isc::dhcp::Expression& expression, const Lease6Ptr& lease)
     }
 }
 
-/// @brief Replace TokenOption and TokenSubOption expression tokens for all
-/// IA_NA and IA_PD options and sub-options filtering by the current lease.
+/// @brief Replace TokenOption expression tokens for all IA_NA and IA_PD options
+/// and sub-options filtering by the current lease.
 ///
 /// @param expression The expression which is updated to contain only
-/// TokenOption and TokenSubOption expression tokens for IA_NA or IA_PD
-/// which have an OPTION_IAADDR or an OPTION_IAPREFIX that matches the
-/// respective lease.
+/// TokenOption expression tokens for IA_NA or IA_PD which have an OPTION_IAADDR
+/// or an OPTION_IAPREFIX that matches the respective lease.
 /// @param lease The lease used to match any OPTION_IAADDR or OPTION_IAPREFIX
 /// option in the packet.
 void replaceTokensForLease(isc::dhcp::ExpressionPtr& expression,

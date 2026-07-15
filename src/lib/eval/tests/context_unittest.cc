@@ -165,45 +165,50 @@ public:
         EXPECT_EQ(expected_repr, opt->getRepresentation());
     }
 
-    /// @brief check if the given token is relay4 with the expected code
-    /// and representation type
+    /// @brief check if the given token is relay4 with the expected codes
+    /// and representation type.
+    ///
     /// @param token token to be checked
-    /// @param expected_code expected option code
+    /// @param expected_codes expected option codes
     /// @param expected_repr expected representation (text, hex, exists)
     void checkTokenRelay4(const TokenPtr& token,
-                          uint16_t expected_code,
+                          std::vector<uint16_t> expected_codes,
                           TokenOption::RepresentationType expected_repr) {
         ASSERT_TRUE(token);
         boost::shared_ptr<TokenRelay4Option> relay4 =
             boost::dynamic_pointer_cast<TokenRelay4Option>(token);
         ASSERT_TRUE(relay4);
 
-        ASSERT_EQ(1U, relay4->getOptions().size());
-
-        EXPECT_EQ(expected_code, relay4->getOptions()[0]);
+        ASSERT_EQ(expected_codes.size(), relay4->getOptions().size());
+        for (size_t i = 0; i < expected_codes.size(); ++i) {
+            EXPECT_EQ(expected_codes[i], relay4->getOptions()[i]);
+        }
         EXPECT_EQ(expected_repr, relay4->getRepresentation());
     }
 
     /// @brief checks if the given token is a TokenRelay6Option with
-    /// the correct nesting level, option code and representation.
+    /// the correct nesting level, option codes and representation type.
+    ///
     /// @param token token to be checked
     /// @param expected_level expected nesting level
-    /// @param expected_code expected option code
+    /// @param expected_codes expected option codes
     /// @param expected_repr expected representation (text, hex, exists)
     void checkTokenRelay6Option(const TokenPtr& token,
                                 int8_t expected_level,
-                                uint16_t expected_code,
+                                std::vector<uint16_t> expected_codes,
                                 TokenOption::RepresentationType expected_repr) {
         ASSERT_TRUE(token);
-        boost::shared_ptr<TokenRelay6Option> opt =
+        boost::shared_ptr<TokenRelay6Option> relay6 =
             boost::dynamic_pointer_cast<TokenRelay6Option>(token);
-        ASSERT_TRUE(opt);
+        ASSERT_TRUE(relay6);
 
-        ASSERT_EQ(1U, opt->getOptions().size());
+        EXPECT_EQ(expected_level, relay6->getNest());
 
-        EXPECT_EQ(expected_level, opt->getNest());
-        EXPECT_EQ(expected_code, opt->getOptions()[0]);
-        EXPECT_EQ(expected_repr, opt->getRepresentation());
+        ASSERT_EQ(expected_codes.size(), relay6->getOptions().size());
+        for (size_t i = 0; i < expected_codes.size(); ++i) {
+            EXPECT_EQ(expected_codes[i], relay6->getOptions()[i]);
+        }
+        EXPECT_EQ(expected_repr, relay6->getRepresentation());
     }
 
     /// @brief This tests attempts to parse the expression then checks
@@ -212,12 +217,12 @@ public:
     ///
     /// @param expr expression to be parsed
     /// @param exp_level expected level to be parsed
-    /// @param exp_code expected option code to be parsed
+    /// @param exp_codes expected option codes to be parsed
     /// @param exp_repr expected representation to be parsed
     /// @param exp_tokens expected number of tokens
     void testRelay6Option(const std::string& expr,
                          int8_t exp_level,
-                         uint16_t exp_code,
+                         std::vector<uint16_t> exp_codes,
                          TokenOption::RepresentationType exp_repr,
                          size_t exp_tokens) {
         EvalContext eval(Option::V6);
@@ -225,8 +230,7 @@ public:
         // parse the expression
         try {
             parsed_ = eval.parseString(expr);
-        }
-        catch (const EvalParseError& ex) {
+        } catch (const EvalParseError& ex) {
             FAIL() <<"Exception thrown: " << ex.what();
             return;
         }
@@ -239,7 +243,7 @@ public:
 
         // checked that the first token is TokenRelay6Option and that
         // is has the correct attributes
-        checkTokenRelay6Option(eval.expression_.at(0), exp_level, exp_code, exp_repr);
+        checkTokenRelay6Option(eval.expression_.at(0), exp_level, exp_codes, exp_repr);
     }
 
     /// @brief check if the given token is a Pkt of specified type
@@ -271,8 +275,7 @@ public:
         // Parse the expression.
         try {
             parsed_ = eval.parseString(expr);
-        }
-        catch (const EvalParseError& ex) {
+        } catch (const EvalParseError& ex) {
             FAIL() << "Exception thrown: " << ex.what();
             return;
         }
@@ -316,8 +319,7 @@ public:
         // Parse the expression.
         try {
             parsed_ = eval.parseString(expr);
-        }
-        catch (const EvalParseError& ex) {
+        } catch (const EvalParseError& ex) {
             FAIL() << "Exception thrown: " << ex.what();
             return;
         }
@@ -364,8 +366,7 @@ public:
         // Parse the expression.
         try {
             parsed_ = eval.parseString(expr);
-        }
-        catch (const EvalParseError& ex) {
+        } catch (const EvalParseError& ex) {
             FAIL() << "Exception thrown: " << ex.what();
             return;
         }
@@ -415,8 +416,7 @@ public:
         // parse the expression
         try {
             parsed_ = eval.parseString(expr);
-        }
-        catch (const EvalParseError& ex) {
+        } catch (const EvalParseError& ex) {
             FAIL() <<"Exception thrown: " << ex.what();
             return;
         }
@@ -463,8 +463,7 @@ public:
         // parse the expression
         try {
             parsed_ = eval.parseString(expr);
-        }
-        catch (const EvalParseError& ex) {
+        } catch (const EvalParseError& ex) {
             FAIL() <<"Exception thrown: " << ex.what();
             return;
         }
@@ -576,12 +575,10 @@ public:
         try {
             parsed_ = eval.parseString(expr);
             FAIL() << "Expected EvalParseError but nothing was raised";
-        }
-        catch (const EvalParseError& ex) {
+        } catch (const EvalParseError& ex) {
             EXPECT_EQ(msg, ex.what());
             EXPECT_FALSE(parsed_);
-        }
-        catch (...) {
+        } catch (...) {
             FAIL() << "Expected EvalParseError but something else was raised";
         }
     }
@@ -596,9 +593,9 @@ public:
     /// @param token token to be checked
     /// @param exp_vendor_id expected vendor-id (aka enterprise number)
     /// @param exp_repr expected representation (either 'exists' or 'hex')
-    /// @param exp_option_code expected option code (ignored if 0)
+    /// @param exp_option_codes expected option codes
     void checkTokenVendor(const TokenPtr& token, uint32_t exp_vendor_id,
-                          uint16_t exp_option_code,
+                          std::vector<uint16_t> exp_option_codes,
                           TokenOption::RepresentationType exp_repr) {
         ASSERT_TRUE(token);
 
@@ -609,12 +606,10 @@ public:
 
         EXPECT_EQ(exp_vendor_id, vendor->getVendorId());
         EXPECT_EQ(exp_repr, vendor->getRepresentation());
-        if (exp_option_code) {
-            ASSERT_EQ(1U, vendor->getOptions().size());
+        ASSERT_EQ(exp_option_codes.size(), vendor->getOptions().size());
 
-            EXPECT_EQ(exp_option_code, vendor->getOptions()[0]);
-        } else {
-            EXPECT_TRUE(vendor->getOptions().empty());
+        for (size_t i = 0; i < exp_option_codes.size(); ++i) {
+            EXPECT_EQ(exp_option_codes[i], vendor->getOptions()[i]);
         }
     }
 
@@ -628,10 +623,10 @@ public:
     /// @param expr expression to be parsed
     /// @param u universe (V4 or V6)
     /// @param vendor_id expected vendor-id (aka enterprise number)
-    /// @param option_code expected option code (ignored if 0)
+    /// @param option_codes expected option codes
     /// @param expected_repr expected representation (either 'exists' or 'hex')
     void testVendor(const std::string& expr, Option::Universe u,
-                    uint32_t vendor_id, uint16_t option_code,
+                    uint32_t vendor_id, std::vector<uint16_t> option_codes,
                     TokenOption::RepresentationType expected_repr) {
         EvalContext eval(u);
 
@@ -641,7 +636,7 @@ public:
         // We need at least one token, we will evaluate the first one.
         ASSERT_FALSE(eval.expression_.empty());
 
-        checkTokenVendor(eval.expression_.at(0), vendor_id, option_code, expected_repr);
+        checkTokenVendor(eval.expression_.at(0), vendor_id, option_codes, expected_repr);
     }
 
     /// @brief Checks if token is really a TokenVendor, that the vendor_id was
@@ -660,7 +655,7 @@ public:
     void testVendor(const std::string& expr, Option::Universe u,
                     uint32_t vendor_id,
                     TokenOption::RepresentationType expected_repr) {
-        testVendor(expr, u, vendor_id, 0, expected_repr);
+        testVendor(expr, u, vendor_id, { }, expected_repr);
     }
 
     /// @brief Tests if the expression parses into token vendor that returns enterprise-id
@@ -790,18 +785,17 @@ public:
     /// @param expected_sub_code expected sub-option code
     /// @param expected_repr expected representation (text, hex, exists)
     void checkTokenSubOption(const TokenPtr& token,
-                             uint16_t expected_code,
-                             uint16_t expected_sub_code,
+                             std::vector<uint16_t> expected_codes,
                              TokenOption::RepresentationType expected_repr) {
         ASSERT_TRUE(token);
         boost::shared_ptr<TokenOption> sub =
             boost::dynamic_pointer_cast<TokenOption>(token);
         ASSERT_TRUE(sub);
 
-        ASSERT_EQ(2U, sub->getOptions().size());
-
-        EXPECT_EQ(expected_code, sub->getOptions()[0]);
-        EXPECT_EQ(expected_sub_code, sub->getOptions()[1]);
+        ASSERT_EQ(expected_codes.size(), sub->getOptions().size());
+        for (size_t i = 0; i < expected_codes.size(); ++i) {
+            EXPECT_EQ(expected_codes[i], sub->getOptions()[i]);
+        }
         EXPECT_EQ(expected_repr, sub->getRepresentation());
     }
 
@@ -978,7 +972,7 @@ TEST_F(EvalContextTest, stringComplex) {
 }
 
 // Test the parsing of a basic expression using integers
-TEST_F(EvalContextTest, integer) {
+TEST_F(EvalContextTest, equalInteger) {
 
     EvalContext eval(Option::V4);
 
@@ -1018,7 +1012,7 @@ TEST_F(EvalContextTest, oddHexstring) {
 
 // Test the parsing of an IPv4 address
 TEST_F(EvalContextTest, ipaddress4) {
-    EvalContext eval(Option::V6);
+    EvalContext eval(Option::V4);
 
     EXPECT_NO_THROW(parsed_ = eval.parseString("10.0.0.1 == 'foo'"));
     EXPECT_TRUE(parsed_);
@@ -1173,7 +1167,7 @@ TEST_F(EvalContextTest, relay4Option) {
 
     EvalContext eval(Option::V4);
     EXPECT_NO_THROW(parsed_ =
-        eval.parseString("relay4[13].hex == 'thirteen'"));
+        eval.parseString("relay4[13].text == 'thirteen'"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(3U, eval.expression_.size());
 
@@ -1181,7 +1175,35 @@ TEST_F(EvalContextTest, relay4Option) {
     TokenPtr tmp2 = eval.expression_.at(1);
     TokenPtr tmp3 = eval.expression_.at(2);
 
-    checkTokenRelay4(tmp1, 13, TokenOption::HEXADECIMAL);
+    checkTokenRelay4(tmp1, { 13 }, TokenOption::TEXTUAL);
+    checkTokenString(tmp2, "thirteen");
+    checkTokenEq(tmp3);
+}
+
+// This test checks that the relay4[code].option[code0].XXX.option[codeN].hex can be used in expressions.
+TEST_F(EvalContextTest, relay4OptionMultiple) {
+
+    EvalContext eval(Option::V4);
+    std::string test_expr = "relay4[13]";
+    std::stringstream tmp;
+    std::vector<uint16_t> values;
+    values.push_back(13);
+    for (size_t i = 0; i < 128; ++i) {
+        tmp << ".option[" << i << "]";
+        values.push_back(i);
+    }
+    tmp << ".text == 'thirteen'";
+    test_expr += tmp.str();
+    EXPECT_NO_THROW(parsed_ =
+        eval.parseString(test_expr));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3U, eval.expression_.size());
+
+    TokenPtr tmp1 = eval.expression_.at(0);
+    TokenPtr tmp2 = eval.expression_.at(1);
+    TokenPtr tmp3 = eval.expression_.at(2);
+
+    checkTokenRelay4(tmp1, values, TokenOption::TEXTUAL);
     checkTokenString(tmp2, "thirteen");
     checkTokenEq(tmp3);
 }
@@ -1193,7 +1215,74 @@ TEST_F(EvalContextTest, relay4Exists) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("relay4[13].exists"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(1U, eval.expression_.size());
-    checkTokenRelay4(eval.expression_.at(0), 13, TokenOption::EXISTS);
+    checkTokenRelay4(eval.expression_.at(0), { 13 }, TokenOption::EXISTS);
+}
+
+// This test check the relay4[code].option[code0].XXX.option[codeN].exists is supported.
+TEST_F(EvalContextTest, relay4ExistsMultiple) {
+    EvalContext eval(Option::V4);
+    std::string test_expr = "relay4[13]";
+    std::stringstream tmp;
+    std::vector<uint16_t> values;
+    values.push_back(13);
+    for (size_t i = 0; i < 128; ++i) {
+        tmp << ".option[" << i << "]";
+        values.push_back(i);
+    }
+    tmp << ".exists";
+    test_expr += tmp.str();
+    EXPECT_NO_THROW(parsed_ =
+        eval.parseString(test_expr));
+
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(1U, eval.expression_.size());
+    checkTokenRelay4(eval.expression_.at(0), values, TokenOption::EXISTS);
+}
+
+// This test checks that the relay4[code].hex can be used in expressions.
+TEST_F(EvalContextTest, relay4OptionHex) {
+
+    EvalContext eval(Option::V4);
+    EXPECT_NO_THROW(parsed_ =
+        eval.parseString("relay4[13].hex == 'thirteen'"));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3U, eval.expression_.size());
+
+    TokenPtr tmp1 = eval.expression_.at(0);
+    TokenPtr tmp2 = eval.expression_.at(1);
+    TokenPtr tmp3 = eval.expression_.at(2);
+
+    checkTokenRelay4(tmp1, { 13 }, TokenOption::HEXADECIMAL);
+    checkTokenString(tmp2, "thirteen");
+    checkTokenEq(tmp3);
+}
+
+// This test checks that the relay4[code].option[code0].XXX.option[codeN].hex can be used in expressions.
+TEST_F(EvalContextTest, relay4OptionHexMultiple) {
+
+    EvalContext eval(Option::V4);
+    std::string test_expr = "relay4[13]";
+    std::stringstream tmp;
+    std::vector<uint16_t> values;
+    values.push_back(13);
+    for (size_t i = 0; i < 128; ++i) {
+        tmp << ".option[" << i << "]";
+        values.push_back(i);
+    }
+    tmp << ".hex == 'thirteen'";
+    test_expr += tmp.str();
+    EXPECT_NO_THROW(parsed_ =
+        eval.parseString(test_expr));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3U, eval.expression_.size());
+
+    TokenPtr tmp1 = eval.expression_.at(0);
+    TokenPtr tmp2 = eval.expression_.at(1);
+    TokenPtr tmp3 = eval.expression_.at(2);
+
+    checkTokenRelay4(tmp1, values, TokenOption::HEXADECIMAL);
+    checkTokenString(tmp2, "thirteen");
+    checkTokenEq(tmp3);
 }
 
 // Verify that relay4[13] is not usable in v6
@@ -1210,7 +1299,25 @@ TEST_F(EvalContextTest, relay6Option) {
     EvalContext eval(Option::V6);
 
     testRelay6Option("relay6[0].option[123].text == 'foo'",
-                     0, 123, TokenOption::TEXTUAL, 3);
+                     0, { 123 }, TokenOption::TEXTUAL, 3);
+}
+
+// Test the parsing of a relay6 option
+TEST_F(EvalContextTest, relay6OptionMultiple) {
+    EvalContext eval(Option::V6);
+
+    std::string test_expr = "relay6[0]";
+    std::stringstream tmp;
+    std::vector<uint16_t> values;
+    for (size_t i = 0; i < 128; ++i) {
+        tmp << ".option[" << i << "]";
+        values.push_back(i);
+    }
+    tmp << ".text == 'foo'";
+    test_expr += tmp.str();
+
+    testRelay6Option(test_expr,
+                     0, values, TokenOption::TEXTUAL, 3);
 }
 
 // Test the parsing of existence for a relay6 option
@@ -1218,7 +1325,25 @@ TEST_F(EvalContextTest, relay6OptionExists) {
     EvalContext eval(Option::V6);
 
     testRelay6Option("relay6[1].option[75].exists",
-                     1, 75, TokenOption::EXISTS, 1);
+                     1, { 75 }, TokenOption::EXISTS, 1);
+}
+
+// Test the parsing of existence for a relay6 option
+TEST_F(EvalContextTest, relay6OptionExistsMultiple) {
+    EvalContext eval(Option::V6);
+
+    std::string test_expr = "relay6[1]";
+    std::stringstream tmp;
+    std::vector<uint16_t> values;
+    for (size_t i = 0; i < 128; ++i) {
+        tmp << ".option[" << i << "]";
+        values.push_back(i);
+    }
+    tmp << ".exists";
+    test_expr += tmp.str();
+
+    testRelay6Option(test_expr,
+                     1, values, TokenOption::EXISTS, 1);
 }
 
 // Test the parsing of hex for a relay6 option
@@ -1226,7 +1351,25 @@ TEST_F(EvalContextTest, relay6OptionHex) {
     EvalContext eval(Option::V6);
 
     testRelay6Option("relay6[2].option[85].hex == 'foo'",
-                     2, 85, TokenOption::HEXADECIMAL, 3);
+                     2, { 85 }, TokenOption::HEXADECIMAL, 3);
+}
+
+// Test the parsing of hex for a relay6 option
+TEST_F(EvalContextTest, relay6OptionHexMultiple) {
+    EvalContext eval(Option::V6);
+
+    std::string test_expr = "relay6[2]";
+    std::stringstream tmp;
+    std::vector<uint16_t> values;
+    for (size_t i = 0; i < 128; ++i) {
+        tmp << ".option[" << i << "]";
+        values.push_back(i);
+    }
+    tmp << ".hex == 'foo'";
+    test_expr += tmp.str();
+
+    testRelay6Option(test_expr,
+                     2, values, TokenOption::HEXADECIMAL, 3);
 }
 
 // Test the parsing of a relay6 option in reverse order
@@ -1234,16 +1377,16 @@ TEST_F(EvalContextTest, relay6OptionReverse) {
     EvalContext eval(Option::V6);
 
     testRelay6Option("relay6[-1].option[123].text == 'foo'",
-                     -1, 123, TokenOption::TEXTUAL, 3);
+                     -1, { 123 } , TokenOption::TEXTUAL, 3);
 }
 
-// Test the nest level of a relay6 option should be in [-32..32[
+// Test the nest level of a relay6 option should be in [-32..32]
 TEST_F(EvalContextTest, relay6OptionLimits) {
     EvalContext eval(Option::V6);
 
     // max nest level is hop count limit minus one so 31
     testRelay6Option("relay6[31].option[123].text == 'foo'",
-                     31, 123, TokenOption::TEXTUAL, 3);
+                     31, { 123 }, TokenOption::TEXTUAL, 3);
 
     universe_ = Option::V6;
 
@@ -1253,7 +1396,7 @@ TEST_F(EvalContextTest, relay6OptionLimits) {
 
     // min nest level is minus hop count limit
     testRelay6Option("relay6[-32].option[123].text == 'foo'",
-                     -32, 123, TokenOption::TEXTUAL, 3);
+                     -32, { 123 }, TokenOption::TEXTUAL, 3);
 
     checkError("relay6[-33].option[123].text == 'foo'",
                "<string>:1.8-10: Nest level has invalid value in -33. Allowed range: -32..31");
@@ -1378,13 +1521,11 @@ TEST_F(EvalContextTest, memberError) {
     try {
         parsed_ = eval.parseString("member('bar')");
         FAIL() << "Expected EvalParseError but nothing was raised";
-    }
-    catch (const EvalParseError& ex) {
+    } catch (const EvalParseError& ex) {
         EXPECT_EQ("<string>:1.8-12: Not defined client class 'bar'",
                   std::string(ex.what()));
         EXPECT_FALSE(parsed_);
-    }
-    catch (...) {
+    } catch (...) {
         FAIL() << "Expected EvalParseError but something else was raised";
     }
 }
@@ -2390,21 +2531,113 @@ TEST_F(EvalContextTest, vendor6enterprise) {
     testVendorEnterprise("vendor.enterprise == 0x1234", Option::V6);
 }
 
+TEST_F(EvalContextTest, vendor4Suboption) {
+    testVendor("vendor[4491].option[1].text == 'foo'", Option::V4, 4491, { 1 },
+               TokenOption::TEXTUAL);
+}
+
+TEST_F(EvalContextTest, vendor4SuboptionMultiple) {
+    std::string test_expr = "vendor[4491]";
+    std::stringstream tmp;
+    std::vector<uint16_t> values;
+    for (size_t i = 0; i < 128; ++i) {
+        tmp << ".option[" << i << "]";
+        values.push_back(i);
+    }
+    tmp << ".text == 'foo'";
+    test_expr += tmp.str();
+    testVendor(test_expr, Option::V4, 4491, values,
+               TokenOption::TEXTUAL);
+}
+
+TEST_F(EvalContextTest, vendor6Suboption) {
+    testVendor("vendor[4491].option[1].text == 'foo'", Option::V6, 4491, { 1 },
+               TokenOption::TEXTUAL);
+}
+
+TEST_F(EvalContextTest, vendor6SuboptionMultiple) {
+    std::string test_expr = "vendor[4491]";
+    std::stringstream tmp;
+    std::vector<uint16_t> values;
+    for (size_t i = 0; i < 128; ++i) {
+        tmp << ".option[" << i << "]";
+        values.push_back(i);
+    }
+    tmp << ".text == 'foo'";
+    test_expr += tmp.str();
+    testVendor(test_expr, Option::V6, 4491, values,
+               TokenOption::TEXTUAL);
+}
+
 TEST_F(EvalContextTest, vendor4SuboptionExists) {
-    testVendor("vendor[4491].option[1].exists", Option::V4, 4491, 1, TokenOption::EXISTS);
+    testVendor("vendor[4491].option[1].exists", Option::V4, 4491, { 1 }, TokenOption::EXISTS);
+}
+
+TEST_F(EvalContextTest, vendor4SuboptionExistsMultiple) {
+    std::string test_expr = "vendor[4491]";
+    std::stringstream tmp;
+    std::vector<uint16_t> values;
+    for (size_t i = 0; i < 128; ++i) {
+        tmp << ".option[" << i << "]";
+        values.push_back(i);
+    }
+    tmp << ".exists";
+    test_expr += tmp.str();
+    testVendor(test_expr, Option::V4, 4491, values, TokenOption::EXISTS);
 }
 
 TEST_F(EvalContextTest, vendor6SuboptionExists) {
-    testVendor("vendor[4491].option[1].exists", Option::V6, 4491, 1, TokenOption::EXISTS);
+    testVendor("vendor[4491].option[1].exists", Option::V6, 4491, { 1 }, TokenOption::EXISTS);
+}
+
+TEST_F(EvalContextTest, vendor6SuboptionExistsMultiple) {
+    std::string test_expr = "vendor[4491]";
+    std::stringstream tmp;
+    std::vector<uint16_t> values;
+    for (size_t i = 0; i < 128; ++i) {
+        tmp << ".option[" << i << "]";
+        values.push_back(i);
+    }
+    tmp << ".exists";
+    test_expr += tmp.str();
+    testVendor(test_expr, Option::V6, 4491, values, TokenOption::EXISTS);
 }
 
 TEST_F(EvalContextTest, vendor4SuboptionHex) {
-    testVendor("vendor[4491].option[1].hex == 0x1234", Option::V4, 4491, 1,
+    testVendor("vendor[4491].option[1].hex == 0x1234", Option::V4, 4491, { 1 },
+               TokenOption::HEXADECIMAL);
+}
+
+TEST_F(EvalContextTest, vendor4SuboptionHexMultiple) {
+    std::string test_expr = "vendor[4491]";
+    std::stringstream tmp;
+    std::vector<uint16_t> values;
+    for (size_t i = 0; i < 128; ++i) {
+        tmp << ".option[" << i << "]";
+        values.push_back(i);
+    }
+    tmp << ".hex == 0x1234";
+    test_expr += tmp.str();
+    testVendor(test_expr, Option::V4, 4491, values,
                TokenOption::HEXADECIMAL);
 }
 
 TEST_F(EvalContextTest, vendor6SuboptionHex) {
-    testVendor("vendor[4491].option[1].hex == 0x1234", Option::V6, 4491, 1,
+    testVendor("vendor[4491].option[1].hex == 0x1234", Option::V6, 4491, { 1 },
+               TokenOption::HEXADECIMAL);
+}
+
+TEST_F(EvalContextTest, vendor6SuboptionHexMultiple) {
+    std::string test_expr = "vendor[4491]";
+    std::stringstream tmp;
+    std::vector<uint16_t> values;
+    for (size_t i = 0; i < 128; ++i) {
+        tmp << ".option[" << i << "]";
+        values.push_back(i);
+    }
+    tmp << ".hex == 0x1234";
+    test_expr += tmp.str();
+    testVendor(test_expr, Option::V6, 4491, values,
                TokenOption::HEXADECIMAL);
 }
 
@@ -2463,7 +2696,27 @@ TEST_F(EvalContextTest, subOptionWithCode) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("option[123].option[234].text == 'foo'"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(3U, eval.expression_.size());
-    checkTokenSubOption(eval.expression_.at(0), 123, 234, TokenOption::TEXTUAL);
+    checkTokenSubOption(eval.expression_.at(0), { 123, 234 }, TokenOption::TEXTUAL);
+}
+
+// Test the parsing of a sub-option with parent by code.
+TEST_F(EvalContextTest, subOptionWithCodeMultiple) {
+    EvalContext eval(Option::V4);
+
+    std::string test_expr = "option[123]";
+    std::stringstream tmp;
+    std::vector<uint16_t> values;
+    values.push_back(123);
+    for (size_t i = 0; i < 128; ++i) {
+        tmp << ".option[" << i << "]";
+        values.push_back(i);
+    }
+    tmp << ".text == 'foo'";
+    test_expr += tmp.str();
+    EXPECT_NO_THROW(parsed_ = eval.parseString(test_expr));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3U, eval.expression_.size());
+    checkTokenSubOption(eval.expression_.at(0), values, TokenOption::TEXTUAL);
 }
 
 // Test the parsing of a sub-option with parent by name.
@@ -2473,7 +2726,7 @@ TEST_F(EvalContextTest, subOptionWithName) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("option[host-name].option[123].text == 'foo'"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(3U, eval.expression_.size());
-    checkTokenSubOption(eval.expression_.at(0), 12, 123, TokenOption::TEXTUAL);
+    checkTokenSubOption(eval.expression_.at(0), { 12, 123 }, TokenOption::TEXTUAL);
 }
 
 // Test the parsing of a sub-option existence
@@ -2483,7 +2736,28 @@ TEST_F(EvalContextTest, subOptionExists) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("option[100].option[200].exists"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(1U, eval.expression_.size());
-    checkTokenSubOption(eval.expression_.at(0), 100, 200, TokenOption::EXISTS);
+    checkTokenSubOption(eval.expression_.at(0), { 100, 200 }, TokenOption::EXISTS);
+}
+
+// Test the parsing of a sub-option existence
+TEST_F(EvalContextTest, subOptionExistsMultiple) {
+    EvalContext eval(Option::V4);
+
+    std::string test_expr = "option[123]";
+    std::stringstream tmp;
+    std::vector<uint16_t> values;
+    values.push_back(123);
+    for (size_t i = 0; i < 128; ++i) {
+        tmp << ".option[" << i << "]";
+        values.push_back(i);
+    }
+    tmp << ".exists";
+    test_expr += tmp.str();
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString(test_expr));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(1U, eval.expression_.size());
+    checkTokenSubOption(eval.expression_.at(0), values, TokenOption::EXISTS);
 }
 
 // Test parsing of a sub-option represented as hexadecimal string.
@@ -2493,13 +2767,33 @@ TEST_F(EvalContextTest, subOptionHex) {
     EXPECT_NO_THROW(parsed_ = eval.parseString("option[123].option[234].hex == 0x666F6F"));
     EXPECT_TRUE(parsed_);
     ASSERT_EQ(3U, eval.expression_.size());
-    checkTokenSubOption(eval.expression_.at(0), 123, 234, TokenOption::HEXADECIMAL);
+    checkTokenSubOption(eval.expression_.at(0), { 123, 234 }, TokenOption::HEXADECIMAL);
+}
+
+// Test parsing of a sub-option represented as hexadecimal string.
+TEST_F(EvalContextTest, subOptionHexMultiple) {
+    EvalContext eval(Option::V4);
+
+    std::string test_expr = "option[123]";
+    std::stringstream tmp;
+    std::vector<uint16_t> values;
+    values.push_back(123);
+    for (size_t i = 0; i < 128; ++i) {
+        tmp << ".option[" << i << "]";
+        values.push_back(i);
+    }
+    tmp << ".hex == 0x666F6F";
+    test_expr += tmp.str();
+
+    EXPECT_NO_THROW(parsed_ = eval.parseString(test_expr));
+    EXPECT_TRUE(parsed_);
+    ASSERT_EQ(3U, eval.expression_.size());
+    checkTokenSubOption(eval.expression_.at(0), values, TokenOption::HEXADECIMAL);
 }
 
 // Checks if integer expressions can be parsed and checked for equality.
-TEST_F(EvalContextTest, integer1) {
-
-    EvalContext eval(Option::V6);
+TEST_F(EvalContextTest, integer) {
+    EvalContext eval(Option::V4);
 
     EXPECT_NO_THROW(parsed_ = eval.parseString("1 == 2"));
     EXPECT_TRUE(parsed_);

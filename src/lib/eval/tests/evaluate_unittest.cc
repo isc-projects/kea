@@ -189,7 +189,7 @@ TEST_F(EvaluateTest, compare6) {
 TEST_F(EvaluateTest, exists) {
     TokenPtr toption;
 
-    ASSERT_NO_THROW(toption.reset(new TokenOption(std::vector<uint16_t> { 100 }, TokenOption::EXISTS)));
+    ASSERT_NO_THROW(toption.reset(new TokenOption({ 100 }, TokenOption::EXISTS)));
     e_.push_back(toption);
 
     ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
@@ -202,7 +202,7 @@ TEST_F(EvaluateTest, exists) {
 TEST_F(EvaluateTest, dontExists) {
     TokenPtr toption;
 
-    ASSERT_NO_THROW(toption.reset(new TokenOption(std::vector<uint16_t> { 101 }, TokenOption::EXISTS)));
+    ASSERT_NO_THROW(toption.reset(new TokenOption({ 101 }, TokenOption::EXISTS)));
     e_.push_back(toption);
 
     ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
@@ -217,7 +217,7 @@ TEST_F(EvaluateTest, packet) {
     TokenPtr tstring;
     TokenPtr tequal;
 
-    ASSERT_NO_THROW(toption.reset(new TokenOption(std::vector<uint16_t> { 100 }, TokenOption::TEXTUAL)));
+    ASSERT_NO_THROW(toption.reset(new TokenOption({ 100 }, TokenOption::TEXTUAL)));
     e_.push_back(toption);
     ASSERT_NO_THROW(tstring.reset(new TokenString("hundred4")));
     e_.push_back(tstring);
@@ -236,7 +236,7 @@ TEST_F(EvaluateTest, optionHex) {
     TokenPtr tstring;
     TokenPtr tequal;
 
-    ASSERT_NO_THROW(toption.reset(new TokenOption(std::vector<uint16_t> { 100 }, TokenOption::HEXADECIMAL)));
+    ASSERT_NO_THROW(toption.reset(new TokenOption({ 100 }, TokenOption::HEXADECIMAL)));
     e_.push_back(toption);
     ASSERT_NO_THROW(tstring.reset(new TokenString("hundred4")));
     e_.push_back(tstring);
@@ -259,7 +259,7 @@ TEST_F(EvaluateTest, complex) {
     TokenPtr tequal;
 
     // Get the option, i.e., "hundred[46]"
-    ASSERT_NO_THROW(toption.reset(new TokenOption(std::vector<uint16_t> { 100 }, TokenOption::TEXTUAL)));
+    ASSERT_NO_THROW(toption.reset(new TokenOption({ 100 }, TokenOption::TEXTUAL)));
     e_.push_back(toption);
 
     // Get substring("hundred[46]", 0, 7), i.e., "hundred"

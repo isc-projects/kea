@@ -494,10 +494,10 @@ protected:
 /// many encapsulation levels), thus there are separate classes for v4 and v6.
 ///
 /// This token can represent the following expressions:
-/// relay[13].text - Textual representation of sub-option 13 in RAI (option 82)
-/// relay[13].hex  - Binary representation of sub-option 13 in RAI (option 82)
-/// relay[vendor-class].text - Text representation of sub-option X in RAI (option 82)
-/// relay[vendor-class].hex - Binary representation of sub-option X in RAI (option 82)
+/// relay4[13].text - Textual representation of sub-option 13 in RAI (option 82)
+/// relay4[13].hex  - Binary representation of sub-option 13 in RAI (option 82)
+/// relay4[vendor-class].text - Text representation of sub-option X in RAI (option 82)
+/// relay4[vendor-class].hex - Binary representation of sub-option X in RAI (option 82)
 class TokenRelay4Option : public TokenOption {
 public:
 
@@ -531,6 +531,10 @@ protected:
 ///
 /// The nesting level can go from 0 (closest to the server) to 31,
 /// or from -1 (closest to the client) to -32
+///
+/// This token can represent the following expressions:
+/// relay6[0].option[37].text - Textual representation of sub-option 37 (remote-id)
+/// relay6[0].option[37].hex  - Binary representation of sub-option 37 (remote-id)
 class TokenRelay6Option : public TokenOption {
 public:
     /// @brief Constructor that takes a nesting level and an option

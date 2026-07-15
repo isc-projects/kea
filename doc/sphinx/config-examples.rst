@@ -7075,7 +7075,7 @@ kea4/global-reservations.json
     // This reservation is using flexible identifier. Instead of relying
     // on specific field, sysadmin can define an expression similar to what
     // is used for client classification,
-    // e.g. substring(relay[0].option[17],0,6). Then, based on the value of
+    // e.g. substring(relay4[123].option[17],0,6). Then, based on the value of
     // that expression for incoming packet, the reservation is matched.
     // Expression can be specified either as hex or plain text using single
     // quotes.
@@ -8742,7 +8742,7 @@ kea4/reservations.json
     // This reservation is using flexible identifier. Instead of relying
     // on specific field, sysadmin can define an expression similar to what
     // is used for client classification,
-    // e.g. substring(relay[0].option[17],0,6). Then, based on the value of
+    // e.g. substring(relay4[123].option[17],0,6). Then, based on the value of
     // that expression for incoming packet, the reservation is matched.
     // Expression can be specified either as hex or plain text using single
     // quotes.
@@ -15729,7 +15729,7 @@ kea6/global-reservations.json
     // This reservation is using flexible identifier. Instead of relying
     // on specific field, sysadmin can define an expression similar to what
     // is used for client classification,
-    // e.g. substring(relay[0].option[17],0,6). Then, based on the value of
+    // e.g. substring(relay6[0].option[17],0,6). Then, based on the value of
     // that expression for incoming packet, the reservation is matched.
     // Expression can be specified either as hex or plain text using single
     // quotes.
@@ -17041,7 +17041,7 @@ kea6/reservations.json
     // This reservation is using flexible identifier. Instead of relying
     // on specific field, sysadmin can define an expression similar to what
     // is used for client classification,
-    // e.g. substring(relay[0].option[17],0,6). Then, based on the value of
+    // e.g. substring(relay6[0].option[17],0,6). Then, based on the value of
     // that expression for incoming packet, the reservation is matched.
     // Expression can be specified either as hex or plain text using single
     // quotes.

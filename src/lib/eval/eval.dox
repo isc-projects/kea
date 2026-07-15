@@ -146,9 +146,9 @@ instantiated with the appropriate value and put onto the expression vector.
  - isc::dhcp::TokenOption -- represents an option in a packet, e.g.
    option[123].text.
  - isc::dhcp::TokenRelay4Option -- represents a sub-option inserted by the
-   DHCPv4 relay, e.g. relay[123].text or relay[123].hex
+   DHCPv4 relay, e.g. relay4[123].text or relay4[123].hex
  - isc::dhcp::TokenRelay6Option -- represents a sub-option inserted by
-   a DHCPv6 relay
+   a DHCPv6 relay, e.g. relay6[0].option[123].text or relay6[0].option[123].hex
  - isc::dhcp::TokenPkt -- represents a DHCP packet meta data (incoming
    interface name, source/remote or destination/local IP address, length).
  - isc::dhcp::TokenPkt4 -- represents a DHCPv4 packet field.

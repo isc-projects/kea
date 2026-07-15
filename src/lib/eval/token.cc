@@ -1329,7 +1329,7 @@ TokenVendorClass::TokenVendorClass(Option::Universe u, uint32_t vendor_id,
 
 TokenVendorClass::TokenVendorClass(Option::Universe u, uint32_t vendor_id,
                                    FieldType field, uint16_t index)
-    : TokenVendor(u, vendor_id, TokenOption::HEXADECIMAL, std::vector<uint16_t>{}), index_(index) {
+    : TokenVendor(u, vendor_id, TokenOption::HEXADECIMAL, { }), index_(index) {
     field_ = field;
 }
 
