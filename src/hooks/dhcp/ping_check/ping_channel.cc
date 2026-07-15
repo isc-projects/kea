@@ -101,6 +101,9 @@ PingChannel::open() {
         isc_throw(Unexpected, "PingChannel::open failed:" << ex.what());
     }
 
+    // Start reader now so unexpected ICMP traffic won't go unhandled and pile up.
+    startRead();
+
     LOG_DEBUG(ping_check_logger, isc::log::DBGLVL_TRACE_BASIC, PING_CHECK_CHANNEL_SOCKET_OPENED);
 }
 
