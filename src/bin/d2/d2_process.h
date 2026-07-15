@@ -47,6 +47,10 @@ public:
     /// by restarting the queue manager.
     static const unsigned int QUEUE_RESTART_PERCENT;
 
+    /// @brief Amount of time to allow the main IOSerivce to wait
+    /// for ready handlers before timimg out in microseconds.
+    static const unsigned int IO_SERVICE_RUN_TIME_USECS;
+
     /// @brief Constructor
     ///
     /// Construction creates the configuration manager, the queue
@@ -209,8 +213,8 @@ protected:
     ///
     /// If callbacks are ready to be executed upon entry, the method will
     /// return as soon as these callbacks have completed.  If no callbacks
-    /// are ready, then it will wait (indefinitely) until at least one callback
-    /// is executed.
+    /// are ready, then it will wait until at least one callback
+    /// is executed or IO_SERVICE_RUN_TIME_USECS elapses.
     ///
     /// @note: Should become desirable to periodically force an
     /// event, an interval timer could be used to do so.

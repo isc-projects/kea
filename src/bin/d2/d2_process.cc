@@ -56,6 +56,9 @@ namespace d2 {
 // be configurable.
 const unsigned int D2Process::QUEUE_RESTART_PERCENT = 80;
 
+// IOService run time duration is 100 ms.
+const unsigned int D2Process::IO_SERVICE_RUN_TIME_USECS = (100 * 1000);
+
 D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
     : DProcessBase(name, io_service, DCfgMgrBasePtr(new D2CfgMgr())),
       reconf_queue_flag_(false), shutdown_type_(SD_NORMAL) {
@@ -150,18 +153,25 @@ D2Process::run() {
 
 size_t
 D2Process::runIO() {
-    // Handle events registered by hooks using external IOService objects.
-    IOServiceMgr::instance().pollIOServices();
-    // We want to block until at least one handler is called.
-    // Poll runs all that are ready. If none are ready it returns immediately
-    // with a count of zero.
-    size_t cnt = getIOService()->poll();
+    // We want to process all ready handlers on both the managed IOServices
+    // and the main IOservice.  If no handlers were executed on any of the
+    // IOServices will wait on the main IOService until at least one handler
+    // executes or we time out.
+    size_t cnt = IOServiceMgr::instance().pollIOServices();
+    cnt += getIOService()->poll();
     if (!cnt) {
-        // Poll ran no handlers either none are ready or the service has been
-        // stopped.  Either way, call runOne to wait for a IO event. If the
-        // service is stopped it will return immediately with a cnt of zero.
-        cnt = getIOService()->runOne();
+        // Polling ran no handlers so either none are ready or the service has been
+        // stopped.  Either way, call runOneFor() to wait for a IO event on the
+        // main service. If the service is stopped it will return immediately
+        // with a cnt of zero and timed_out set to false.
+        bool timed_out;
+        cnt = getIOService()->runOneFor(IO_SERVICE_RUN_TIME_USECS, timed_out);
+        if (timed_out) {
+            // Return 1 so caller knows the service has not stopped.
+            return (1);
+        }
     }
+
     return (cnt);
 }
 

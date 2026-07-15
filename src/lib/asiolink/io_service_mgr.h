@@ -62,7 +62,9 @@ public:
     }
 
     /// @brief Poll IOService objects.
-    void pollIOServices();
+    ///
+    /// @return The number of handlers that were executed.
+    size_t pollIOServices();
 
 private:
 
