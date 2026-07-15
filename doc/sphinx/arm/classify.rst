@@ -421,9 +421,15 @@ Notes:
    ``code`` from the incoming packet. If the packet does not contain the
    option, it returns an empty string. The string is presented as a byte
    string of the option payload, without the type code or length fields.
+   Note that this syntax can be repeated:
+   option[code0].option[code1].XXX.option[codeX].hex to access suboptions
+   data.
 
 -  ``option[code].exists`` checks whether an option with the code ``code``
    is present in the incoming packet. It can be used with empty options.
+   Note that this syntax can be repeated:
+   option[code0].option[code1].XXX.option[codeX].exists to check suboptions
+   existence.
 
 -  ``member('foobar')`` checks whether the packet belongs to the client
    class ``foobar``. To avoid dependency loops, the configuration file
@@ -448,6 +454,9 @@ Notes:
 
 -  ``relay4`` shares the same representation types as ``option``; for
    instance, ``relay4[code].exists`` is supported.
+   Note that this syntax can be repeated:
+   relay4[code0].option[code1].XXX.option[codeX].exists to check suboptions
+   existence.
 
 -  ``relay6[nest]`` allows access to the encapsulations used by any DHCPv6
    relays that forwarded the packet. The ``nest`` level specifies the
@@ -461,6 +470,9 @@ Notes:
 -  ``relay6[nest].option[code]`` shares the same representation types as
    ``option``; for instance, ``relay6[nest].option[code].exists`` is
    supported.
+   Note that this syntax can be repeated:
+   relay6[nest].option[code0].option[code1].XXX.option[codeX].exists to
+   check suboptions existence.
 
 -  Expressions starting with ``pkt4`` can be used only in DHCPv4. They
    allow access to DHCPv4 message fields.
@@ -476,8 +488,13 @@ Notes:
    3925 <https://datatracker.ietf.org/doc/html/rfc3925#section-4>`__) and the
    Vendor-Specific Information Option in DHCPv6 (code 17, defined in
    `Section 21.17 of RFC
-   9915 <https://datatracker.ietf.org/doc/html/rfc9915#section-21.17>`__). "Vendor
-   class option" means the Vendor-Identifying Vendor Class Option in DHCPv4
+   9915 <https://datatracker.ietf.org/doc/html/rfc9915#section-21.17>`__).
+   ``vendor[enterprise-id]`` shares the same representation types as ``option``;
+   for instance, ``vendor[enterprise-id].option[code].exists`` is supported.
+   Note that this syntax can be repeated:
+   vendor[enterprise-id].option[code0].option[code1].XXX.option[codeX].exists to
+   check suboptions existence.
+   "Vendor class option" means the Vendor-Identifying Vendor Class Option in DHCPv4
    (code 124; see `Section 3 of RFC
    3925 <https://datatracker.ietf.org/doc/html/rfc3925#section-3>`__) in DHCPv4 and
    the Class Option in DHCPv6 (code 16; see `Section 21.16 of RFC
