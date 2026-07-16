@@ -97,7 +97,7 @@ def _run(cmd: list[str]) -> Optional[str]:
     """
     try:
         return subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL).strip()
-    except Exception:
+    except (OSError, subprocess.SubprocessError):
         return None
 
 
@@ -140,7 +140,11 @@ def _dedupe_relationships(rel_list: list[dict]) -> list[dict]:
     seen = set()
     out = []
     for relationship in rel_list:
-        key = (relationship.get('spdxElementId'), relationship.get('relationshipType'), relationship.get('relatedSpdxElement'))
+        key = (
+            relationship.get('spdxElementId'),
+            relationship.get('relationshipType'),
+            relationship.get('relatedSpdxElement'),
+        )
         if key in seen:
             continue
         seen.add(key)
@@ -185,7 +189,7 @@ def _get_supplier_from_url(url: str) -> str:
         host = urlparse(url).hostname
         if host:
             return f'Organization: {host}'
-    except:
+    except (TypeError, ValueError):
         pass
     return 'Organization: Unknown'
 

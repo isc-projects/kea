@@ -83,8 +83,8 @@ def _json_read(path: Path):
         cannot be read or parsed.
     """
     try:
-        return json.loads(path.read_text())
-    except:
+        return json.loads(path.read_text(encoding='utf-8'))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         return None
 
 
@@ -150,7 +150,8 @@ def discover_meson(build_dir: Path, project_dir: Path) -> tuple[str, str, dict, 
     # Process subprojects and extract metadata from .wrap files
     # .wrap files define how to download and integrate external dependencies
     subprojects_dir = project_dir / 'subprojects'
-    wraps = {wrap_file.stem: _parse_wrap(wrap_file) for wrap_file in (subprojects_dir.glob('*.wrap') if subprojects_dir.exists() else [])}
+    wrap_files = subprojects_dir.glob('*.wrap') if subprojects_dir.exists() else []
+    wraps = {wrap_file.stem: _parse_wrap(wrap_file) for wrap_file in wrap_files}
 
     # Scan subproject directories to extract version information from meson.build files
     # This provides version data for subprojects that may not be available elsewhere

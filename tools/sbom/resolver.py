@@ -57,6 +57,10 @@ def _normalised_name(old: str, info: dict, wraps_meta: dict) -> Optional[str]:
             return stem
 
     # Check .wrap metadata for directory name
+    wrap_meta = wraps_meta.get(old) or {}
+    directory = wrap_meta.get('directory')
+    if directory:
+        return directory
     for source in info.get('sources', []):
         if source.get('kind') == 'wrap':
             wrap_meta = source.get('meta') or {}
@@ -209,8 +213,8 @@ class Graph:
             self.edges.add((parent, child))
 
 
-def _search_pkg(pkg: str, graph: Graph, cache: PcCache, wraps_meta: dict,
-             visited: set[str], stack: set[str], max_depth: int, depth: int):
+def _search_pkg(pkg: str, graph: Graph, cache: PcCache, wraps_meta: dict, *,
+                visited: set[str], stack: set[str], max_depth: int, depth: int):
     """Recursively discover and add transitive dependencies to the graph.
 
     This function performs depth-first traversal of the dependency tree starting
@@ -261,7 +265,8 @@ def _search_pkg(pkg: str, graph: Graph, cache: PcCache, wraps_meta: dict,
     for child in set(required_packages) | pkgconfig_libs:
         graph.add_edge(pkg, child)
         if child not in visited:
-            _search_pkg(child, graph, cache, wraps_meta, visited, stack, max_depth, depth + 1)
+            _search_pkg(child, graph, cache, wraps_meta, visited=visited, stack=stack,
+                        max_depth=max_depth, depth=depth + 1)
 
     # Add edges to system libraries (terminal nodes, no recursion)
     for system_lib in system_libs:
@@ -303,7 +308,8 @@ def build_pkg_graph_recursive(graph: Graph, wraps_meta: dict, max_depth: int):
     # Recursively expand dependencies from each seed package
     for seed in seeds:
         if seed not in visited:
-            _search_pkg(seed, graph, cache, wraps_meta, visited, set(), max_depth, 0)
+            _search_pkg(seed, graph, cache, wraps_meta, visited=visited, stack=set(),
+                        max_depth=max_depth, depth=0)
 
 
 def add_subproject_edges_from_targets(intro_targets: list, graph: Graph):

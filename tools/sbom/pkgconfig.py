@@ -50,7 +50,7 @@ def _run(cmd: list[str]) -> Optional[str]:
     """
     try:
         return subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL).strip()
-    except Exception:
+    except (OSError, subprocess.SubprocessError):
         return None
 
 
@@ -94,7 +94,7 @@ class PcCache:
             subprocess.check_call(['pkg-config', '--exists', name],
                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             self._exists[name] = True
-        except Exception:
+        except (OSError, subprocess.SubprocessError):
             self._exists[name] = False
         return self._exists[name]
 

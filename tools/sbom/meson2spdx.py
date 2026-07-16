@@ -76,30 +76,30 @@ def main():
 
     # Phase 1: Discover initial project metadata and dependencies from
     # Meson introspection
-    print(f'PHASE 1/6: Discovering project metadata and dependencies from Meson introspection...')
+    print('PHASE 1/6: Discovering project metadata and dependencies from Meson introspection...')
     proj_name, proj_ver, deps, intro_targets, binaries, wraps_meta = discover_meson(build_dir, project_dir)
 
     # Phase 2: Normalise dependency names to ensure consistency across sources
-    print(f'PHASE 2/6: Normalising dependency names to ensure consistency across sources...')
+    print('PHASE 2/6: Normalising dependency names to ensure consistency across sources...')
     normalise_deps_inplace(deps, wraps_meta)
     graph = Graph(deps)
 
     # Phase 3: Recursively expand dependency tree using pkg-config queries
-    print(f'PHASE 3/6: Recursively expanding dependency tree using pkg-config queries...')
+    print('PHASE 3/6: Recursively expanding dependency tree using pkg-config queries...')
     build_pkg_graph_recursive(graph, wraps_meta, max_depth=max_depth)
 
     # Phase 4: Add edges from Meson build targets to infer subproject relationships
-    print(f'PHASE 4/6: Adding edges from Meson build targets to infer subproject relationships...')
+    print('PHASE 4/6: Adding edges from Meson build targets to infer subproject relationships...')
     add_subproject_edges_from_targets(intro_targets, graph)
 
     # Phase 5: Final normalisation pass to ensure all names are consistent
-    print(f'PHASE 5/6: Final normalisation pass to ensure all names are consistent...')
+    print('PHASE 5/6: Final normalisation pass to ensure all names are consistent...')
     normalise_deps_inplace(graph.deps, wraps_meta)
 
     # Phase 6: Generate SPDX 2.3 JSON document and write to output file
-    print(f'PHASE 6/6: Generating SPDX 2.3 JSON document and writing to output file...')
+    print('PHASE 6/6: Generating SPDX 2.3 JSON document and writing to output file...')
     doc_str = build_spdx(proj_name, proj_ver, graph, binaries)
-    Path(args.out).write_text(doc_str)
+    Path(args.out).write_text(doc_str, encoding='utf-8')
     print(f'SPDX JSON written: {Path(args.out).resolve()}')
 
 
