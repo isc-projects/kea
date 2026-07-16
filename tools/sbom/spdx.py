@@ -351,7 +351,12 @@ def build_spdx(proj_name: str, proj_ver: str, graph, binaries) -> str:
     # Generate package entries for all build-time dependencies
     idmap: dict[str, str] = {}
     package_lines: list[str] = [root_pkg_str]
-    for name, info in sorted(graph.deps.items(), key=lambda item: item[0].lower()):
+    sorted_deps = sorted(graph.deps.items(), key=lambda item: item[0].lower())
+    print(f'Found {len(sorted_deps)} build-time dependencies')
+    cnt = 1
+    for name, info in sorted_deps:
+        print(f'Processing build-time dependency {cnt}/{len(sorted_deps)}: {name}...')
+        cnt += 1
         version = info.get('version') or '0.0'
         spdx_id = f'SPDXRef-pkg-{safe(name)}-{safe(version)}'
 
@@ -406,9 +411,13 @@ def build_spdx(proj_name: str, proj_ver: str, graph, binaries) -> str:
 
     # Discover and add runtime OS library dependencies from binaries
     if binaries:
+        print(f'Found {len(binaries)} binaries to process')
         os_ids: dict[str, str] = {}
         os_edges: set = set()
+        cnt = 1
         for binary_path in binaries:
+            print(f'Processing binary {cnt}/{len(binaries)}: {binary_path}...')
+            cnt += 1
             # Use ldd to discover shared library dependencies
             for shared_lib in ldd_libs(binary_path):
                 # Map shared library file to OS package name
