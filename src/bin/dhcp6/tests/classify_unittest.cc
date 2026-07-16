@@ -547,6 +547,31 @@ public:
     IfaceMgrTestConfig iface_mgr_test_config_;
 };
 
+// This test checks that empty client classes is supported.
+TEST_F(ClassifyTest, emptyClientClasses) {
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet6\": [ "
+        "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"id\": 1, "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" } ],"
+        "\"client-classes\": [ "
+        "] }";
+
+    // Check the config can be parsed.
+    EXPECT_NO_THROW(parseDHCP6(config));
+
+    // Load the config.
+    EXPECT_NO_THROW(configure(config));
+}
+
 // Checks if DOCSIS client packets are classified properly
 TEST_F(ClassifyTest, docsisClientClassification) {
     // Let's create a relayed SOLICIT. This particular relayed SOLICIT has
@@ -579,7 +604,9 @@ TEST_F(ClassifyTest, matchClassification) {
     IfaceMgrTestConfig test_config(true);
     // The router class matches incoming packets with foo in a host-name
     // option (code 1234) and sets an ipv6-forwarding option in the response.
-    std::string config = "{ \"interfaces-config\": {"
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
@@ -707,7 +734,9 @@ TEST_F(ClassifyTest, additional) {
     IfaceMgrTestConfig test_config(true);
     // The router class matches incoming packets with foo in a host-name
     // option (code 1234) and sets an ipv6-forwarding option in the response.
-    std::string config = "{ \"interfaces-config\": {"
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
@@ -818,7 +847,9 @@ TEST_F(ClassifyTest, additionalClassification) {
     IfaceMgrTestConfig test_config(true);
     // The router class matches incoming packets with foo in a host-name
     // option (code 1234) and sets an ipv6-forwarding option in the response.
-    std::string config = "{ \"interfaces-config\": {"
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
@@ -935,7 +966,9 @@ TEST_F(ClassifyTest, subnetClassPriority) {
     // Subnet sets an ipv6-forwarding option in the response.
     // The router class matches incoming packets with foo in a host-name
     // option (code 1234) and sets an ipv6-forwarding option in the response.
-    std::string config = "{ \"interfaces-config\": {"
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
@@ -1010,7 +1043,9 @@ TEST_F(ClassifyTest, subnetGlobalPriority) {
     // Subnet sets an ipv6-forwarding option in the response.
     // The router class matches incoming packets with foo in a host-name
     // option (code 1234) and sets an ipv6-forwarding option in the response.
-    std::string config = "{ \"interfaces-config\": {"
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
@@ -1076,7 +1111,9 @@ TEST_F(ClassifyTest, classGlobalPriority) {
     // A global ipv6-forwarding option is set in the response.
     // The router class matches incoming packets with foo in a host-name
     // option (code 1234) and sets an ipv6-forwarding option in the response.
-    std::string config = "{ \"interfaces-config\": {"
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
@@ -1153,7 +1190,9 @@ TEST_F(ClassifyTest, classGlobalPersistency) {
     // option (code 1234) and sets an ipv6-forwarding option in the response.
     // Note the persistency flag follows a "OR" semantic so to set
     // it to false (or to leave the default) has no effect.
-    std::string config = "{ \"interfaces-config\": {"
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
@@ -1223,7 +1262,9 @@ TEST_F(ClassifyTest, classNeverSend) {
     // option (code 1234) and sets an ipv6-forwarding option in the response.
     // Note the cancellation flag follows a "OR" semantic so to set
     // it to false (or to leave the default) has no effect.
-    std::string config = "{ \"interfaces-config\": {"
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
@@ -1293,7 +1334,9 @@ TEST_F(ClassifyTest, clientClassifySubnet) {
     // The second subnet does not play any role here. The client's
     // IP address belongs to the first subnet, so only that first
     // subnet is being tested.
-    std::string config = "{ \"interfaces-config\": {"
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
         "  \"interfaces\": [ \"*\" ]"
         "},"
         "\"preferred-lifetime\": 3000,"
@@ -1345,7 +1388,9 @@ TEST_F(ClassifyTest, clientClassifyPool) {
     // The second pool does not play any role here. The client's
     // IP address belongs to the first pool, so only that first
     // pool is being tested.
-    std::string config = "{ \"interfaces-config\": {"
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
         "  \"interfaces\": [ \"*\" ]"
         "},"
         "\"preferred-lifetime\": 3000,"
@@ -1441,7 +1486,9 @@ TEST_F(ClassifyTest, clientClassifyPoolKnown) {
     IfaceMgrTestConfig test_config(true);
     // This test configures 2 pools.
     // The first one requires reservation, the second does the opposite.
-    std::string config = "{ \"interfaces-config\": {"
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
         "  \"interfaces\": [ \"*\" ]"
         "},"
         "\"preferred-lifetime\": 3000,"
@@ -1564,7 +1611,9 @@ TEST_F(ClassifyTest, relayOverrideAndClientClass) {
     // This test configures 2 subnets. They both are on the same link, so they
     // have the same relay-ip address. Furthermore, the first subnet is
     // reserved for clients that belong to class "foo".
-    std::string config = "{ \"interfaces-config\": {"
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
         "  \"interfaces\": [ \"*\" ]"
         "},"
         "\"preferred-lifetime\": 3000,"
@@ -1704,7 +1753,9 @@ TEST_F(ClassifyTest, member) {
     IfaceMgrTestConfig test_config(true);
     // The router class matches incoming packets with foo in a host-name
     // option (code 1234) and sets an ipv6-forwarding option in the response.
-    std::string config = "{ \"interfaces-config\": {"
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
