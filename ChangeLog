@@ -1,3 +1,8 @@
+2389.	[bug]		razvan
+	Properly handle high availability listener shutdown on hook
+	unload under heavy load.
+	(Gitlab #4610, #4448)
+
 Kea 3.0.3 (stable) released on March 25, 2026
 
 2388.	[build]		razvan

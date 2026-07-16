@@ -55,6 +55,9 @@ public:
     /// @brief Destructor.
     virtual ~HAImpl();
 
+    /// @brief Stop the client and listener.
+    void stop();
+
     /// @brief Returns a configuration for the first relationship.
     ///
     /// This function is held here for historical reasons and it is currently

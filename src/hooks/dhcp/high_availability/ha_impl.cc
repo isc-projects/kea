@@ -62,13 +62,19 @@ HAImpl::startServices(const NetworkStatePtr& network_state,
 }
 
 HAImpl::~HAImpl() {
+    stop();
+    config_.reset();
+    services_.reset(new HAServiceMapper());
+    io_service_->stopAndPoll();
+}
+
+void
+HAImpl::stop() {
     for (auto const& service : services_->getAll()) {
         // Shut down the services explicitly, we need finer control
         // than relying on destruction order.
         service->stopClientAndListener();
     }
-    config_.reset();
-    services_.reset(new HAServiceMapper());
     io_service_->stopAndPoll();
 }
 
