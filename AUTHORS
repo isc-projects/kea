@@ -331,7 +331,6 @@ We have received the following contributions:
    2026-06: Contributed a patch that updates ARM documentation about internal
             option type.
 
-- Ada Logics
-  2026: Added more fuzz harnesses and support for oss-fuzz.
-
-
+ - Ada Logics
+   2026-01: Added more fuzz harnesses and support for oss-fuzz.
+   2026-07: Developed scripts to generate SBOM.
