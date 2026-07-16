@@ -292,6 +292,11 @@ public:
     /// @throw isc::OutOfRange If specified prefix length is greater than 128.
     explicit PrefixLen(const uint8_t prefix_len)
         : prefix_len_(prefix_len) {
+        if (prefix_len > 128) {
+            isc_throw(isc::OutOfRange, "bad prefix_len "
+                      << static_cast<unsigned>(prefix_len)
+                      << ", allowed range is [0..128]");
+        }
     }
 
     /// @brief Returns prefix length as uint8_t value.
