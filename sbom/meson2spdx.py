@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 
+# Copyright (C) 2025-2026 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# Developed by AdaLogics under contract to ISC.
+
 """Meson to SPDX SBOM Generation Tool - Main Entry Point.
 
 This is the main executable script that orchestrates the complete SBOM generation

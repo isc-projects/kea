@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 
+# Copyright (C) 2025-2026 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# Developed by AdaLogics under contract to ISC.
+
 """Dependency Graph Resolution and Normalisation Module.
 
 This module builds and normalises a complete dependency graph by merging data from
