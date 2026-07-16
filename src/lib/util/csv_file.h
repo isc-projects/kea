@@ -25,6 +25,14 @@ public:
         isc::Exception(file, line, what) { }
 };
 
+/// @brief Exception thrown when an unrecoverable error occurs such
+/// as disk-full on write.
+class CSVFileFatalError : public Exception {
+public:
+    CSVFileFatalError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { }
+};
+
 /// @brief Represents a single row of the CSV file.
 ///
 /// The object of this type can create the string holding a collection of the

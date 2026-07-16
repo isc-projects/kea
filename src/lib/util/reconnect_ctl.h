@@ -108,6 +108,11 @@ public:
                 (action_ == OnFailAction::SERVE_RETRY_EXIT));
     }
 
+    /// @brief Returns the on fail action value.
+    OnFailAction onFailAction() const {
+        return (action_);
+    }
+
     /// @brief Convert action to string.
     ///
     /// @param action The action type to be converted to text.

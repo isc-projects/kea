@@ -57,6 +57,17 @@ If connectivity to all backends is restored, the server returns to normal
 operations. If the connection cannot be restored and the server is configured
 to exit, it issues a fatal error before shutdown.
 
+.. note::
+
+    As of Kea 3.1.5, the memfile lease backend supports the ``on-fail``
+    parameter.  If an error such as "no space on device" occurs while writing
+    to the lease file and ``on-fail`` is either ``stop-retry-exit`` (the
+    default) or ``serve-retry-exit`` the server will exit immediately.  If
+    ``on-fail`` is ``serve-retry-continue`` the server will remain up, though
+    the write errors will continue until corrective action is taken.  Values other
+    than zero for ``max-reconnect-tries`` and ``reconnect-wait-time`` are not
+    supported by memfile.
+
 For Kea DHCP servers to work with database backends, the database schema must be
 created and must match the version of the Kea
 server. If the version check fails and the database backend is not configured
