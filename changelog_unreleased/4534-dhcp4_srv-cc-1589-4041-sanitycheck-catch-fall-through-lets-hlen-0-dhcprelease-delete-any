@@ -1,0 +1,4 @@
+[bug]		tmark,fdupont
+	Reject DHCPv4 DHCPRELEASE for leases that are not
+	in the default / assigned state.
+	(Gitlab #4534, #4547)

@@ -509,4 +509,51 @@ TEST_F(ReleaseTest, releaseAndReclaim) {
     ASSERT_EQ(count, after);
 }
 
+// This test checks that to release a second time just logs when lease
+// affinity is enabled. Specialized from acquireAndRelease code.
+TEST_F(ReleaseTest, releaseAlreadyReleased) {
+    CfgMgr::instance().clear();
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
+    configure(RELEASE_CONFIGS[0], *client.getServer(), true, true, true, false,
+              LEASE_AFFINITY_ENABLED);
+    // Explicitly set the client id.
+    client.includeClientId("12:14");
+    // Explicitly set the HW address.
+    client.setHWAddress("01:02:03:04:05:06");
+    // Perform 4-way exchange to obtain a new lease.
+    acquireLease(client);
+
+    std::stringstream name;
+
+    // Let's get the subnet-id and generate statistics name out of it
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    ASSERT_EQ(1U, subnets->size());
+    name << "subnet[" << (*subnets->begin())->getID() << "].assigned-addresses";
+
+    ObservationPtr assigned_cnt = StatsMgr::instance().getObservation(name.str());
+    ASSERT_TRUE(assigned_cnt);
+    uint64_t before = assigned_cnt->getInteger().first;
+
+    // Remember the acquired address.
+    IOAddress leased_address = client.config_.lease_.addr_;
+
+    // Send the release.
+    ASSERT_NO_THROW(client.doRelease());
+
+    // Restore the lease and send the release a second time.
+    client.createLease(leased_address, 0);
+    ASSERT_NO_THROW(client.doRelease());
+
+    assigned_cnt = StatsMgr::instance().getObservation(name.str());
+    ASSERT_TRUE(assigned_cnt);
+    uint64_t after = assigned_cnt->getInteger().first;
+
+    // assigned stat is decremented once.
+    EXPECT_EQ(before, after + 1);
+
+    // The not assigned failure is logged.
+    EXPECT_EQ(1U, countFile("DHCP4_RELEASE_FAIL_NOT_ASSIGNED"));
+}
+
 } // end of anonymous namespace

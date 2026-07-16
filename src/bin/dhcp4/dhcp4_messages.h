@@ -151,6 +151,7 @@ extern const isc::log::MessageID DHCP4_RELEASE_DELETED;
 extern const isc::log::MessageID DHCP4_RELEASE_EXCEPTION;
 extern const isc::log::MessageID DHCP4_RELEASE_EXPIRED;
 extern const isc::log::MessageID DHCP4_RELEASE_FAIL;
+extern const isc::log::MessageID DHCP4_RELEASE_FAIL_NOT_ASSIGNED;
 extern const isc::log::MessageID DHCP4_RELEASE_FAIL_NO_LEASE;
 extern const isc::log::MessageID DHCP4_RELEASE_FAIL_WRONG_CLIENT;
 extern const isc::log::MessageID DHCP4_REQUEST;
