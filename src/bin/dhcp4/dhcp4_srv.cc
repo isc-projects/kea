@@ -3666,6 +3666,14 @@ Dhcpv4Srv::adjustRemoteAddr(Dhcpv4Exchange& ex) {
             query->getCiaddr().isV4Zero()) {
             response->setFlags(BOOTP_BROADCAST);
         }
+        // DHCPNAK to a client on a different subnet: the client may not
+        // have a correct network address or subnet mask, and may not be
+        // answering ARP requests, so set the broadcast bit to make the
+        // relay to broadcast the DHCPNAK to the client.
+        if ((query->getType() == DHCPREQUEST) &&
+            (response->getType() == DHCPNAK)) {
+            response->setFlags(BOOTP_BROADCAST);
+        }
         response->setRemoteAddr(query->getGiaddr());
 
     // If giaddr is 0 but client set ciaddr, server should unicast the

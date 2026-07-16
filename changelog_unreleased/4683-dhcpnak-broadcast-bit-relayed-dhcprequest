@@ -1,0 +1,6 @@
+[bug]		fdupont
+	Set the broadcast flag in DHCPNAK responses to relayed
+	DHCPREQUEST queries as required by RFC 2131 4.3.2.
+	Thank you to Florian Krieger from Frauscher Sensor Technology
+	Group GmbH for reporting the issue.
+	(Gitlab #4683, #4424)

@@ -1536,6 +1536,9 @@ DORATest::authoritativeSubnetSelectionFail() {
     auto resp = client.getContext().response_;
     ASSERT_TRUE(resp);
     EXPECT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
+    // The DHCPNAK is relayed and its broadcast flag is set.
+    EXPECT_TRUE(resp->isRelayed());
+    EXPECT_EQ(BOOTP_BROADCAST, resp->getFlags());
 }
 
 TEST_F(DORATest, authoritativeSubnetSelectionFail) {
