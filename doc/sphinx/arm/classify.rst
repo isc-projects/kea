@@ -422,13 +422,13 @@ Notes:
    option, it returns an empty string. The string is presented as a byte
    string of the option payload, without the type code or length fields.
    Note that this syntax can be repeated:
-   option[code0].option[code1].XXX.option[codeX].hex to access suboptions
+   option[code0].option[code1]...option[codeX].hex to access suboptions
    data.
 
 -  ``option[code].exists`` checks whether an option with the code ``code``
    is present in the incoming packet. It can be used with empty options.
    Note that this syntax can be repeated:
-   option[code0].option[code1].XXX.option[codeX].exists to check suboptions
+   option[code0].option[code1]...option[codeX].exists to check suboptions
    existence.
 
 -  ``member('foobar')`` checks whether the packet belongs to the client
@@ -455,7 +455,7 @@ Notes:
 -  ``relay4`` shares the same representation types as ``option``; for
    instance, ``relay4[code].exists`` is supported.
    Note that this syntax can be repeated:
-   relay4[code0].option[code1].XXX.option[codeX].exists to check suboptions
+   relay4[code0].option[code1]...option[codeX].exists to check suboptions
    existence.
 
 -  ``relay6[nest]`` allows access to the encapsulations used by any DHCPv6
@@ -471,7 +471,7 @@ Notes:
    ``option``; for instance, ``relay6[nest].option[code].exists`` is
    supported.
    Note that this syntax can be repeated:
-   relay6[nest].option[code0].option[code1].XXX.option[codeX].exists to
+   relay6[nest].option[code0].option[code1]...option[codeX].exists to
    check suboptions existence.
 
 -  Expressions starting with ``pkt4`` can be used only in DHCPv4. They
@@ -492,7 +492,7 @@ Notes:
    ``vendor[enterprise-id]`` shares the same representation types as ``option``;
    for instance, ``vendor[enterprise-id].option[code].exists`` is supported.
    Note that this syntax can be repeated:
-   vendor[enterprise-id].option[code0].option[code1].XXX.option[codeX].exists to
+   vendor[enterprise-id].option[code0].option[code1]...option[codeX].exists to
    check suboptions existence.
    "Vendor class option" means the Vendor-Identifying Vendor Class Option in DHCPv4
    (code 124; see `Section 3 of RFC

@@ -1857,7 +1857,7 @@ TEST_F(TokenTest, relay4OptionMultiple) {
     // we should have one value on the stack
     ASSERT_EQ(1U, values_.size());
 
-    // The option should be found and relay4[100].option[1].option[2].XXX.option[128]
+    // The option should be found and relay4[100].option[1].option[2]...option[128]
     // should evaluate to the content of that sub-option, i.e. "128"
     EXPECT_EQ("128", values_.top());
 
@@ -2106,7 +2106,7 @@ TEST_F(TokenTest, relay6OptionMultiple) {
         option = sub_option;
     }
 
-    // The option should be found and relay6[0].option[100].option[1].option[2].XXX.option[128]
+    // The option should be found and relay6[0].option[100].option[1].option[2]...option[128]
     // should evaluate to the content of that sub-option, i.e. "128"
     verifyRelay6Option(0, values, TokenOption::TEXTUAL, "128");
 
@@ -3447,7 +3447,7 @@ TEST_F(TokenTest, vendor4SuboptionExists) {
     EXPECT_TRUE(checkFile());
 }
 
-// This one tests "vendor[4491].option[100].option[1].XXX.option[128].exists" expression.
+// This one tests "vendor[4491].option[100].option[1]...option[128].exists" expression.
 TEST_F(TokenTest, vendor4SuboptionExistsMultiple) {
     Option::Universe u = Option::V4;
     uint32_t token_vendor_id = 4491;
@@ -3520,7 +3520,7 @@ TEST_F(TokenTest, vendor6SuboptionExists) {
     EXPECT_TRUE(checkFile());
 }
 
-// This one tests "vendor[4491].option[100].option[1].XXX.option[128].exists" expression.
+// This one tests "vendor[4491].option[100].option[1]...option[128].exists" expression.
 TEST_F(TokenTest, vendor6SuboptionExistsMultiple) {
     Option::Universe u = Option::V6;
     uint32_t token_vendor_id = 4491;
@@ -3589,7 +3589,7 @@ TEST_F(TokenTest, vendor4SuboptionHex) {
     EXPECT_TRUE(checkFile());
 }
 
-// This test verifies if vendor[4491].option[100].option[1].XXX.option[128].hex expression properly returns
+// This test verifies if vendor[4491].option[100].option[1]...option[128].hex expression properly returns
 // value of said sub-option or empty string if desired option is not present.
 // This test is for DHCPv4.
 TEST_F(TokenTest, vendor4SuboptionHexMultiple) {
@@ -3660,7 +3660,7 @@ TEST_F(TokenTest, vendor6SuboptionHex) {
     EXPECT_TRUE(checkFile());
 }
 
-// This test verifies if vendor[4491].option[100].option[1].XXX.option[128].hex expression properly returns
+// This test verifies if vendor[4491].option[100].option[1]...option[128].hex expression properly returns
 // value of said sub-option or empty string if desired option is not present.
 // This test is for DHCPv6.
 TEST_F(TokenTest, vendor6SuboptionHexMultiple) {

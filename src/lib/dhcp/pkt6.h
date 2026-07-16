@@ -470,8 +470,8 @@ public:
     /// (or least bad) solution.
     ///
     /// This vector is arranged in the order packet is encapsulated, i.e.
-    /// relay6[0] was the outermost encapsulation (relay closest to the server),
-    /// relay6[last] was the innermost encapsulation (relay closest to the
+    /// relay[0] was the outermost encapsulation (relay closest to the server),
+    /// relay[last] was the innermost encapsulation (relay closest to the
     /// client).
     std::vector<RelayInfo> relay_info_;
 

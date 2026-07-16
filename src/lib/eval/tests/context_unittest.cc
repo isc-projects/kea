@@ -1180,7 +1180,7 @@ TEST_F(EvalContextTest, relay4Option) {
     checkTokenEq(tmp3);
 }
 
-// This test checks that the relay4[code].option[code0].XXX.option[codeN].hex can be used in expressions.
+// This test checks that the relay4[code].option[code0]...option[codeN].hex can be used in expressions.
 TEST_F(EvalContextTest, relay4OptionMultiple) {
 
     EvalContext eval(Option::V4);
@@ -1218,7 +1218,7 @@ TEST_F(EvalContextTest, relay4Exists) {
     checkTokenRelay4(eval.expression_.at(0), { 13 }, TokenOption::EXISTS);
 }
 
-// This test check the relay4[code].option[code0].XXX.option[codeN].exists is supported.
+// This test check the relay4[code].option[code0]...option[codeN].exists is supported.
 TEST_F(EvalContextTest, relay4ExistsMultiple) {
     EvalContext eval(Option::V4);
     std::string test_expr = "relay4[13]";
@@ -1257,7 +1257,7 @@ TEST_F(EvalContextTest, relay4OptionHex) {
     checkTokenEq(tmp3);
 }
 
-// This test checks that the relay4[code].option[code0].XXX.option[codeN].hex can be used in expressions.
+// This test checks that the relay4[code].option[code0]...option[codeN].hex can be used in expressions.
 TEST_F(EvalContextTest, relay4OptionHexMultiple) {
 
     EvalContext eval(Option::V4);

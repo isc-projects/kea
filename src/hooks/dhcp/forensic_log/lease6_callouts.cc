@@ -392,8 +392,8 @@ public:
 } // namespace dhcp
 } // namespace isc
 
-/// @brief Replace TokenOption expression tokens with the IA_NA (3) option containing
-/// the OPTION_IAADDR (5) option matching the respective lease.
+/// @brief Replace TokenOption expression tokens with the IA_NA (3) option
+/// containing the OPTION_IAADDR (5) option matching the respective lease.
 ///
 /// @param expression The expression that needs to be updated with filtering
 /// tokens.
@@ -423,8 +423,8 @@ void filterLeaseIA_NA(isc::dhcp::Expression& expression, const Lease6Ptr& lease)
     }
 }
 
-/// @brief Replace TokenOption expression tokens with the IA_PD (25) option containing
-/// the OPTION_IAPREFIX (25) option matching the respective lease.
+/// @brief Replace TokenOption expression tokens with the IA_PD (25) option
+/// containing the OPTION_IAPREFIX (25) option matching the respective lease.
 ///
 /// @param expression The expression that needs to be updated with filtering
 /// tokens.
