@@ -1,6 +1,6 @@
 # How to run the python script meson2spdx
 
-```
+```shell
 # Assume necessary packages for kea build and pkg-config are already installed in the running environment.
 
 # Compile Kea and generate meson-info
@@ -9,8 +9,9 @@ export CXXFLAGS="${CXXFLAGS:-} -gdwarf-4"
 export LDFLAGS="${LDFLAGS:-} -gdwarf-4"
 
 
-# Tomek: The following exports caused my compiler (g++ 13.3.0 on ubuntu 24.04.4 LTS)
-# to fail. With them skipped, the compilation and SBOM generation succeeded
+# Tomek: The following exports were recommended by the AdaLogics team. It caused my compiler
+# (g++ 13.3.0 on ubuntu 24.04.4 LTS) to fail. With them skipped, the compilation and SBOM
+# generation succeeded.
 CPP_ARGS="-stdlib=libc++  \
   -DCHRONO_SAME_DURATION=1 -D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR \
   -D_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION -D_GLIBCXX_USE_DEPRECATED=1"
@@ -21,32 +22,28 @@ meson setup build -D cpp_std=c++17 -D crypto=openssl -D default_library=static \
   -D default_both_libraries=static -D cpp_args="$CPP_ARGS" -D cpp_link_args="$LD_ARGS" \
   -D postgresql=enabled -D mysql=enabled -D krb5=enabled
 meson compile --verbose -C build
-meson install -C build --destdir _stage
-popd
 
-
-
-# Assume all python code in the same directory meson2spdx
 # Run the script
-pushd meson2spdx
-python3 meson2spdx.py -b ../kea/build -o sbom.spdx.json -r ../kea
-popd
+cd tools/sbom
+python3 meson2spdx.py -b ../../build -o sbom.spdx.json -r ../../kea
 
 # Output in meson2spdx/sbom.spdx.json from the above command
-cat meson2spdx/sbom.spdx.json
-
+cat sbom.spdx.json
 ```
 
-# sbom-conformance validation
+## sbom-conformance validation
 
-```
+SBOM conformance tool can be used to verify if the SBOM files generated
+adhere to the standards:
+
+```shell
 go install github.com/google/sbom-conformance@latest
-sbom-conformance -specs eo -sbom meson2spdx/sbom.spdx.json
-sbom-conformance -specs spdx -sbom meson2spdx/sbom.spdx.json
+sbom-conformance -specs eo -sbom sbom.spdx.json
+sbom-conformance -specs spdx -sbom sbom.spdx.json
 
 ```
 
-# sbom-conformance result (eo and spdx2.3)
+## sbom-conformance result (eo and spdx2.3)
 
 NTIA Minimum Elements
 
