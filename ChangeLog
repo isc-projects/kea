@@ -1,3 +1,8 @@
+2390.	[bug]		razvan
+	Properly handle lease allocation if client reserved lease is not
+	available because the hook has decided to skip the lease.
+	(Gitlab #4611, #4434)
+
 2389.	[bug]		razvan
 	Properly handle high availability listener shutdown on hook
 	unload under heavy load.

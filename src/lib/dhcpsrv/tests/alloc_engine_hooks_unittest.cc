@@ -171,7 +171,7 @@ unsigned HookAllocEngine6Test::callback_skip_;
 
 // This test checks if the lease6_select callout is executed and expected
 // parameters as passed.
-TEST_F(HookAllocEngine6Test, lease6_select) {
+TEST_F(HookAllocEngine6Test, lease6Select) {
 
     // Note: The following order is working as expected:
     // 1. create AllocEngine (that register hook points)
@@ -250,7 +250,7 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
 
 // This test checks if lease6_select callout is able to override the values
 // in a lease6.
-TEST_F(HookAllocEngine6Test, change_lease6_select) {
+TEST_F(HookAllocEngine6Test, changeLease6Select) {
 
     // Make sure that the overridden values are different than the ones from
     // subnet originally used to create the lease
@@ -302,7 +302,7 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
 
 // This test checks if lease6_select callout can set the status to next
 // step skip without the engine to retry.
-TEST_F(HookAllocEngine6Test, skip_lease6_select) {
+TEST_F(HookAllocEngine6Test, skipLease6Select) {
 
     // Create allocation engine (hook names are registered in its ctor)
     boost::scoped_ptr<AllocEngine> engine;
@@ -329,6 +329,114 @@ TEST_F(HookAllocEngine6Test, skip_lease6_select) {
 
     // Check no retry was attempted
     EXPECT_EQ(1, callback_skip_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(ctx.query_);
+}
+
+// This test checks if lease6_select callout can set the status to next
+// step skip with retry allocation from dynamic pool.
+TEST_F(HookAllocEngine6Test, skipLease6SelectGlobalHost) {
+
+    // Create allocation engine (hook names are registered in its ctor)
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
+    ASSERT_TRUE(engine);
+
+    // Initialize Hooks Manager
+    HookLibsCollection libraries; // no libraries at this time
+    ASSERT_NO_THROW(HooksManager::loadLibraries(libraries));
+
+    // Install a callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease6_select", lease6_select_skip_callout));
+
+    // Call allocateLeases6. Callouts should be triggered here.
+    Lease6Ptr lease;
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false,
+                                    Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234)),
+                                    HooksManager::createCalloutHandle());
+
+    HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
+                           Host::IDENT_DUID, SUBNET_ID_UNUSED, SUBNET_ID_GLOBAL,
+                           asiolink::IOAddress("0.0.0.0")));
+    host->setHostname("ghost1");
+    IPv6Resrv resv(IPv6Resrv::TYPE_NA, asiolink::IOAddress("2001:db8:1::1"), 128);
+    host->addReservation(resv);
+
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    subnet_->setReservationsGlobal(true);
+
+    // Look up the reservation.
+    findReservation(*engine, ctx);
+    // Make sure we found our host.
+    ConstHostPtr current = ctx.currentHost();
+    ASSERT_TRUE(current);
+    ASSERT_EQ("ghost1", current->getHostname());
+
+    ctx.currentIA().iaid_ = iaid_;
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+    // Check that we got no lease
+    EXPECT_FALSE(lease);
+
+    // Check that retry was attempted by doing dynamic allocation.
+    EXPECT_EQ(2, callback_skip_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(ctx.query_);
+}
+
+// This test checks if lease6_select callout can set the status to next
+// step skip with retry allocation from dynamic pool.
+TEST_F(HookAllocEngine6Test, skipLease6SelectSubnetHost) {
+
+    // Create allocation engine (hook names are registered in its ctor)
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
+    ASSERT_TRUE(engine);
+
+    // Initialize Hooks Manager
+    HookLibsCollection libraries; // no libraries at this time
+    ASSERT_NO_THROW(HooksManager::loadLibraries(libraries));
+
+    // Install a callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease6_select", lease6_select_skip_callout));
+
+    // Call allocateLeases6. Callouts should be triggered here.
+    Lease6Ptr lease;
+    AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", false,
+                                    Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234)),
+                                    HooksManager::createCalloutHandle());
+
+    HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
+                           Host::IDENT_DUID, SUBNET_ID_UNUSED, subnet_->getID(),
+                           asiolink::IOAddress("0.0.0.0")));
+    host->setHostname("ghost1");
+    IPv6Resrv resv(IPv6Resrv::TYPE_NA, asiolink::IOAddress("2001:db8:1::1"), 128);
+    host->addReservation(resv);
+
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    subnet_->setReservationsGlobal(true);
+
+    // Look up the reservation.
+    findReservation(*engine, ctx);
+    // Make sure we found our host.
+    ConstHostPtr current = ctx.currentHost();
+    ASSERT_TRUE(current);
+    ASSERT_EQ("ghost1", current->getHostname());
+
+    ctx.currentIA().iaid_ = iaid_;
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
+    // Check that we got no lease
+    EXPECT_FALSE(lease);
+
+    // Check that retry was attempted by doing dynamic allocation.
+    EXPECT_EQ(2, callback_skip_);
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(ctx.query_);
@@ -486,7 +594,7 @@ unsigned HookAllocEngine4Test::callback_skip_;
 
 // This test checks if the lease4_select callout is executed and expected
 // parameters as passed.
-TEST_F(HookAllocEngine4Test, lease4_select) {
+TEST_F(HookAllocEngine4Test, lease4Select) {
 
     // Note: The following order is working as expected:
     // 1. create AllocEngine (that register hook points)
@@ -564,7 +672,7 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
 
 // This test checks if lease4_select callout is able to override the values
 // in a lease4.
-TEST_F(HookAllocEngine4Test, change_lease4_select) {
+TEST_F(HookAllocEngine4Test, changeLease4Select) {
 
     // Make sure that the overridden values are different than the ones from
     // subnet originally used to create the lease
@@ -587,7 +695,6 @@ TEST_F(HookAllocEngine4Test, change_lease4_select) {
     // Normally, dhcpv4_srv would passed the handle when calling allocateLease4,
     // but in tests we need to create it on our own.
     CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
-
 
     AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
                                     false, true, "somehost.example.com.", false);
@@ -618,7 +725,7 @@ TEST_F(HookAllocEngine4Test, change_lease4_select) {
 
 // This test checks if lease4_select callout can set the status to next
 // step skip without the engine to retry.
-TEST_F(HookAllocEngine4Test, skip_lease4_select) {
+TEST_F(HookAllocEngine4Test, skipLease4Select) {
 
     // Create allocation engine (hook names are registered in its ctor)
     boost::scoped_ptr<AllocEngine> engine;
@@ -640,6 +747,114 @@ TEST_F(HookAllocEngine4Test, skip_lease4_select) {
                                     false, false, "", false);
     ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
     ctx.callout_handle_ = callout_handle;
+
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+
+    // Check that we got no lease
+    EXPECT_FALSE(lease);
+
+    // Check no retry was attempted
+    EXPECT_EQ(1, callback_skip_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(ctx.query_);
+}
+
+// This test checks if lease4_select callout can set the status to next
+// step skip without the engine to retry.
+TEST_F(HookAllocEngine4Test, skipLease4SelectGlobalHost) {
+
+    // Create allocation engine (hook names are registered in its ctor)
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
+    ASSERT_TRUE(engine);
+
+    // Initialize Hooks Manager
+    HookLibsCollection libraries; // no libraries at this time
+    ASSERT_NO_THROW(HooksManager::loadLibraries(libraries));
+
+    // Install a callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease4_select", lease4_select_skip_callout));
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress("0.0.0.0"),
+                                    false, false, "", false);
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    ctx.callout_handle_ = callout_handle;
+
+    HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                          Host::IDENT_HWADDR, SUBNET_ID_GLOBAL,
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.105")));
+    host->setHostname("ghost1");
+
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    subnet_->setReservationsGlobal(true);
+
+    // Look up the reservation.
+    engine->findReservation(ctx);
+    // Make sure we found our host.
+    ConstHostPtr current = ctx.currentHost();
+    ASSERT_TRUE(current);
+    ASSERT_EQ("ghost1", current->getHostname());
+
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+
+    // Check that we got no lease
+    EXPECT_FALSE(lease);
+
+    // Check no retry was attempted
+    EXPECT_EQ(1, callback_skip_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(ctx.query_);
+}
+
+// This test checks if lease4_select callout can set the status to next
+// step skip without the engine to retry.
+TEST_F(HookAllocEngine4Test, skipLease4SelectSubnetHost) {
+
+    // Create allocation engine (hook names are registered in its ctor)
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
+    ASSERT_TRUE(engine);
+
+    // Initialize Hooks Manager
+    HookLibsCollection libraries; // no libraries at this time
+    ASSERT_NO_THROW(HooksManager::loadLibraries(libraries));
+
+    // Install a callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease4_select", lease4_select_skip_callout));
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress("0.0.0.0"),
+                                    false, false, "", false);
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    ctx.callout_handle_ = callout_handle;
+
+    HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                          Host::IDENT_HWADDR, subnet_->getID(),
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.105")));
+    host->setHostname("ghost1");
+
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    subnet_->setReservationsGlobal(true);
+
+    // Look up the reservation.
+    engine->findReservation(ctx);
+    // Make sure we found our host.
+    ConstHostPtr current = ctx.currentHost();
+    ASSERT_TRUE(current);
+    ASSERT_EQ("ghost1", current->getHostname());
 
     Lease4Ptr lease = engine->allocateLease4(ctx);
 

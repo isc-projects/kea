@@ -1281,6 +1281,10 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
                 CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
                 Lease6Ptr lease = createLease6(ctx, addr, prefix_len, callout_status);
 
+                if (!lease) {
+                    continue;
+                }
+
                 // ... and add it to the existing leases list.
                 existing_leases.push_back(lease);
 
@@ -1427,6 +1431,10 @@ AllocEngine::allocateGlobalReservedLeases6(ClientContext6& ctx,
             // Ok, let's create a new lease...
             CalloutHandle::CalloutNextStep callout_status = CalloutHandle::NEXT_STEP_CONTINUE;
             Lease6Ptr lease = createLease6(ctx, addr, prefix_len, callout_status);
+
+            if (!lease) {
+                continue;
+            }
 
             // ... and add it to the existing leases list.
             existing_leases.push_back(lease);
