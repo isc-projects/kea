@@ -785,6 +785,19 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 }
             }
         } else {
+
+            // Usually unit tests create managers before calling configureDhcp4Server and
+            // do not call ControlledDhcpv4Srv::processConfig.
+            // Runtime code path creates the managers after calling configureDhcp4Server
+            // and they need to be reset just after successful configuration parsing.
+            if (!IfaceMgr::instance().isTestMode()) {
+                // Destroy lease manager before hooks unload.
+                LeaseMgrFactory::destroy();
+
+                // Destroy host manager before hooks unload.
+                HostMgr::create();
+            }
+
             // disable multi-threading (it will be applied by new configuration)
             // this must be done in order to properly handle MT to ST transition
             // when 'multi-threading' structure is missing from new config and
@@ -799,39 +812,50 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             server.discardPackets();
             server.getCBControl()->reset();
         }
+    }
 
-        if (status_code == CONTROL_RESULT_SUCCESS) {
-            string parameter_name;
-            ElementPtr mutable_cfg;
-            try {
-                // Get the staging configuration.
-                srv_config = CfgMgr::instance().getStagingCfg();
+    // Parsing stage is complete. The current configuration has not been altered.
+    // From this stage on, every error might have irreversible consequences and the
+    // configuration might not be restored to a working state.
+    if (status_code == CONTROL_RESULT_SUCCESS) {
+        string parameter_name;
+        ElementPtr mutable_cfg;
+        try {
+            // Get the staging configuration.
+            srv_config = CfgMgr::instance().getStagingCfg();
 
-                // This is a way to convert ConstElementPtr to ElementPtr.
-                // We need a config that can be edited, because we will insert
-                // default values and will insert derived values as well.
-                mutable_cfg = boost::const_pointer_cast<Element>(config_set);
+            // This is a way to convert ConstElementPtr to ElementPtr.
+            // We need a config that can be edited, because we will insert
+            // default values and will insert derived values as well.
+            mutable_cfg = boost::const_pointer_cast<Element>(config_set);
 
-                ConstElementPtr ifaces_config = mutable_cfg->get("interfaces-config");
-                if (ifaces_config) {
-                    parameter_name = "interfaces-config";
-                    IfacesConfigParser parser(AF_INET, check_only);
-                    CfgIfacePtr cfg_iface = srv_config->getCfgIface();
-                    cfg_iface->reset();
-                    parser.parse(cfg_iface, ifaces_config);
-                }
-            } catch (const isc::Exception& ex) {
-                LOG_ERROR(dhcp4_logger, DHCP4_PARSER_FAIL)
-                          .arg(parameter_name).arg(ex.what());
-                answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
-                status_code = CONTROL_RESULT_ERROR;
-            } catch (...) {
-                // For things like bad_cast in boost::lexical_cast
-                LOG_ERROR(dhcp4_logger, DHCP4_PARSER_EXCEPTION).arg(parameter_name);
-                answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
-                                                   " processing error");
+            ConstElementPtr ifaces_config = mutable_cfg->get("interfaces-config");
+            if (ifaces_config) {
+                parameter_name = "interfaces-config";
+                IfacesConfigParser parser(AF_INET, check_only);
+                CfgIfacePtr cfg_iface = srv_config->getCfgIface();
+                cfg_iface->reset();
+                parser.parse(cfg_iface, ifaces_config);
+            }
+        } catch (const isc::Exception& ex) {
+            LOG_ERROR(dhcp4_logger, DHCP4_PARSER_FAIL)
+                      .arg(parameter_name).arg(ex.what());
+            if (!check_only || extra_checks) {
+                status_code = CONTROL_RESULT_FATAL_ERROR;
+            } else {
                 status_code = CONTROL_RESULT_ERROR;
             }
+            answer = isc::config::createAnswer(status_code, ex.what());
+        } catch (...) {
+            // For things like bad_cast in boost::lexical_cast
+            LOG_ERROR(dhcp4_logger, DHCP4_PARSER_EXCEPTION).arg(parameter_name);
+            if (!check_only || extra_checks) {
+                status_code = CONTROL_RESULT_FATAL_ERROR;
+            } else {
+                status_code = CONTROL_RESULT_ERROR;
+            }
+            answer = isc::config::createAnswer(status_code, "undefined configuration"
+                                               " processing error");
         }
     }
 
@@ -846,14 +870,14 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             configureCommandChannel();
         } catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());
-            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
-            status_code = CONTROL_RESULT_ERROR;
+            status_code = CONTROL_RESULT_FATAL_ERROR;
+            answer = isc::config::createAnswer(status_code, ex.what());
         } catch (...) {
             // For things like bad_cast in boost::lexical_cast
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_EXCEPTION);
-            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
+            status_code = CONTROL_RESULT_FATAL_ERROR;
+            answer = isc::config::createAnswer(status_code, "undefined configuration"
                                                " parsing error");
-            status_code = CONTROL_RESULT_ERROR;
         }
     }
 
@@ -868,14 +892,14 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             CfgMgr::instance().setD2ClientConfig(cfg);
         } catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());
-            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
-            status_code = CONTROL_RESULT_ERROR;
+            status_code = CONTROL_RESULT_FATAL_ERROR;
+            answer = isc::config::createAnswer(status_code, ex.what());
         } catch (...) {
             // For things like bad_cast in boost::lexical_cast
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_EXCEPTION);
-            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
+            status_code = CONTROL_RESULT_FATAL_ERROR;
+            answer = isc::config::createAnswer(status_code, "undefined configuration"
                                                " parsing error");
-            status_code = CONTROL_RESULT_ERROR;
         }
     }
 
@@ -897,14 +921,14 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             libraries.loadLibraries(multi_threading_enabled);
         } catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());
-            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
-            status_code = CONTROL_RESULT_ERROR;
+            status_code = CONTROL_RESULT_FATAL_ERROR;
+            answer = isc::config::createAnswer(status_code, ex.what());
         } catch (...) {
             // For things like bad_cast in boost::lexical_cast
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_EXCEPTION);
-            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
+            status_code = CONTROL_RESULT_FATAL_ERROR;
+            answer = isc::config::createAnswer(status_code, "undefined configuration"
                                                " parsing error");
-            status_code = CONTROL_RESULT_ERROR;
         }
 
         if (extra_checks && status_code == CONTROL_RESULT_SUCCESS) {
@@ -918,8 +942,8 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 cfg_db->setAppendedParameters(params);
                 cfg_db->createManagers();
             } catch (const std::exception& ex) {
-                answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
-                status_code = CONTROL_RESULT_ERROR;
+                status_code = CONTROL_RESULT_FATAL_ERROR;
+                answer = isc::config::createAnswer(status_code, ex.what());
             }
         }
     }
@@ -946,16 +970,16 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             std::ostringstream err;
             err << "during update from config backend database: " << ex.what();
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(err.str());
-            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str());
-            status_code = CONTROL_RESULT_ERROR;
+            status_code = CONTROL_RESULT_FATAL_ERROR;
+            answer = isc::config::createAnswer(status_code, err.str());
         } catch (...) {
             // For things like bad_cast in boost::lexical_cast
             std::ostringstream err;
             err << "during update from config backend database: "
                 << "undefined configuration parsing error";
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(err.str());
-            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str());
-            status_code = CONTROL_RESULT_ERROR;
+            status_code = CONTROL_RESULT_FATAL_ERROR;
+            answer = isc::config::createAnswer(status_code, err.str());
         }
     }
 
@@ -979,7 +1003,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 std::ostringstream err;
                 err << "Error initializing hooks: "
                     << ex.what();
-                return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
+                return (isc::config::createAnswer(CONTROL_RESULT_FATAL_ERROR, err.str()));
             }
         }
 

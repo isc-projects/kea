@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <cc/command_interpreter.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/d2_unittest.h>
@@ -17,6 +18,7 @@
 #include <string>
 
 using namespace isc;
+using namespace isc::config;
 using namespace isc::asiolink;
 using namespace isc::data;
 
@@ -139,9 +141,9 @@ Dhcp6SrvD2Test::configure(const std::string& config, bool exp_result) {
     int rcode;
     ConstElementPtr comment = config::parseAnswer(rcode, status);
     if (exp_result == SHOULD_PASS) {
-        ASSERT_EQ(0, rcode) << "parse comment: " << comment->stringValue();
+        ASSERT_EQ(CONTROL_RESULT_SUCCESS, rcode) << "parse comment: " << comment->stringValue();
     } else {
-        ASSERT_EQ(1, rcode) << "parse comment: " << comment->stringValue();
+        ASSERT_EQ(CONTROL_RESULT_ERROR, rcode) << "parse comment: " << comment->stringValue();
     }
 
     if (rcode == 0) {

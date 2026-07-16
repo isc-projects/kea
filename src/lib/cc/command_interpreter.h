@@ -58,6 +58,10 @@ const int CONTROL_RESULT_EMPTY = 3;
 /// match the subnet identifier in the server configuration.
 const int CONTROL_RESULT_CONFLICT = 4;
 
+/// @brief Status code indicating that the command was unsuccessful and the
+/// configuration could not be reverted to a working state.
+const int CONTROL_RESULT_FATAL_ERROR = 5;
+
 /// @brief A standard control channel exception that is thrown if a function
 /// is there is a problem with one of the messages
 class CtrlChannelError : public isc::Exception {

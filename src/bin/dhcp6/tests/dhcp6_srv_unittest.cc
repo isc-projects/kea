@@ -3033,6 +3033,59 @@ TEST_F(Dhcpv6SrvTest, relaySourcePort) {
     EXPECT_TRUE(adv->getRelayOption(D6O_RELAY_SOURCE_PORT, 0));
 }
 
+// Checks that parser errors are non fatal.
+TEST_F(Dhcpv6SrvTest, recoverableConfigError) {
+
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "    \"preferred-lifetime\": 3000,"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"subnet6\": [ { "
+        "        \"id\": 1, "
+        "        \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "        \"subnet\": \"2001:db8::/48\" "
+        "     } ],"
+        "\"client-classes\": [ "
+        "{   \"name\": \"router\", "
+        "    \"test\": \"bogus\" } ] }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configure(*srv_, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(CONTROL_RESULT_ERROR, rcode_);
+}
+
+// Checks that most non parser errors are fatal.
+TEST_F(Dhcpv6SrvTest, unrecoverableConfigError) {
+
+    string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"1234567890\" ] }, "
+        "    \"preferred-lifetime\": 3000,"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"subnet6\": [ { "
+        "        \"id\": 1, "
+        "        \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "        \"subnet\": \"2001:db8::/48\" "
+        "     } ] }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is not accepted
+    EXPECT_NO_THROW(status = configure(*srv_, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(CONTROL_RESULT_FATAL_ERROR, rcode_);
+}
+
 // Checks effect of persistency (aka always-send) flag on the ORO
 TEST_F(Dhcpv6SrvTest, prlPersistency) {
     IfaceMgrTestConfig test_config(true);

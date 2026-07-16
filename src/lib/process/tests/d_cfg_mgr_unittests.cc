@@ -278,7 +278,7 @@ TEST_F(DStubCfgMgrTest, simpleParseConfigWithCallback) {
                                           []() {
         isc_throw(Unexpected, "unexpected configuration error");
     });
-    EXPECT_TRUE(checkAnswer(1));
+    EXPECT_TRUE(checkAnswer(CONTROL_RESULT_FATAL_ERROR));
 }
 
 // This test checks that redactConfig works as expected.

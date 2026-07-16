@@ -132,6 +132,7 @@ public:
 
     /// @brief creates Dhcpv6Srv and prepares buffers for callouts
     HooksDhcpv6SrvTest() : Dhcpv6SrvTest() {
+        IfaceMgr::instance().setTestMode(true);
         HooksManager::setTestMode(false);
         bool status = HooksManager::unloadLibraries();
         if (!status) {
@@ -178,6 +179,7 @@ public:
 
         // Clear statistics.
         StatsMgr::instance().removeAll();
+        IfaceMgr::instance().setTestMode(false);
     }
 
     /// @brief creates an option with specified option code

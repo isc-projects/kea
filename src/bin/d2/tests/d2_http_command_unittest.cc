@@ -2332,7 +2332,7 @@ TEST_F(HttpCtrlChannelD2Test, handleHttpToHttpsSwitch) {
     ASSERT_FALSE(HttpCommandMgr::instance().getHttpListener()->getTlsContext());
 
     // Verify the configuration was rejected.
-    EXPECT_NE(response.find("\"result\": 1"), std::string::npos);
+    EXPECT_NE(response.find("\"result\": 5"), std::string::npos);
     EXPECT_NE(response.find("\"text\": \"Can not switch from HTTP to HTTPS sockets using the same address and port.\""),
               std::string::npos);
 
@@ -2440,7 +2440,7 @@ TEST_F(HttpsCtrlChannelD2Test, handleHttpsToHttpSwitch) {
     EXPECT_EQ(context, HttpCommandMgr::instance().getHttpListener()->getTlsContext().get());
 
     // Verify the configuration was rejected.
-    EXPECT_EQ("[ { \"result\": 1, \"text\": \"Can not switch from HTTPS to HTTP sockets using the same address and port.\" } ]",
+    EXPECT_EQ("[ { \"result\": 5, \"text\": \"Can not switch from HTTPS to HTTP sockets using the same address and port.\" } ]",
               response);
 
     // Check that the config was not applied.

@@ -691,7 +691,7 @@ public:
         std::string config = createConfigWithOption(param_value, parameter);
         ConstElementPtr json = parseDHCP6(config);
         EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
-        checkResult(x, 1);
+        checkResult(x, CONTROL_RESULT_ERROR);
         EXPECT_TRUE(errorContainsPosition(x, "<string>"));
         CfgMgr::instance().clear();
     }
@@ -709,7 +709,7 @@ public:
         std::string config = createConfigWithOption(params);
         ConstElementPtr json = parseDHCP6(config);
         EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
-        checkResult(x, 1);
+        checkResult(x, CONTROL_RESULT_ERROR);
         EXPECT_TRUE(errorContainsPosition(x, "<string>"));
         CfgMgr::instance().clear();
     }
@@ -1063,7 +1063,7 @@ TEST_F(Dhcp6ParserTest, bogusCommand) {
                     parseJSON("{\"bogus\": 5}")));
 
     // returned value must be 1 (configuration parse error)
-    checkResult(x, 1);
+    checkResult(x, CONTROL_RESULT_ERROR);
 
     // it should be refused by syntax too
     EXPECT_THROW(parseDHCP6("{\"bogus\": 5}"), Dhcp6ParseError);
@@ -1106,7 +1106,7 @@ TEST_F(Dhcp6ParserTest, outBoundValidLifetime) {
     string expected = "subnet configuration failed: "
         "the value of min-valid-lifetime (2000) is not "
         "less than (default) valid-lifetime (1000)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
     resetConfiguration();
 
     string too_large =  "{ " + genIfaceConfig() + ","
@@ -1121,7 +1121,7 @@ TEST_F(Dhcp6ParserTest, outBoundValidLifetime) {
     expected = "subnet configuration failed: "
         "the value of (default) valid-lifetime (2000) is not "
         "less than max-valid-lifetime (1000)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
     resetConfiguration();
 
     string before =  "{ " + genIfaceConfig() + ","
@@ -1137,7 +1137,7 @@ TEST_F(Dhcp6ParserTest, outBoundValidLifetime) {
     expected = "subnet configuration failed: "
         "the value of (default) valid-lifetime (1000) is not "
         "between min-valid-lifetime (2000) and max-valid-lifetime (4000)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
     resetConfiguration();
 
     string after =  "{ " + genIfaceConfig() + ","
@@ -1153,7 +1153,7 @@ TEST_F(Dhcp6ParserTest, outBoundValidLifetime) {
     expected = "subnet configuration failed: "
         "the value of (default) valid-lifetime (5000) is not "
         "between min-valid-lifetime (1000) and max-valid-lifetime (4000)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
     resetConfiguration();
 
     string crossed =  "{ " + genIfaceConfig() + ","
@@ -1169,7 +1169,7 @@ TEST_F(Dhcp6ParserTest, outBoundValidLifetime) {
     expected = "subnet configuration failed: "
         "the value of min-valid-lifetime (2000) is not "
         "less than max-valid-lifetime (1000)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
 }
 
 /// Check that valid-lifetime must be between min-valid-lifetime and
@@ -1188,7 +1188,7 @@ TEST_F(Dhcp6ParserTest, outBoundGlobalValidLifetime) {
     string expected =
         "the value of min-valid-lifetime (2000) is not "
         "less than (default) valid-lifetime (1000)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
     resetConfiguration();
 
     string too_large =  "{ " + genIfaceConfig() + ","
@@ -1199,7 +1199,7 @@ TEST_F(Dhcp6ParserTest, outBoundGlobalValidLifetime) {
     expected =
         "the value of (default) valid-lifetime (2000) is not "
         "less than max-valid-lifetime (1000)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
     resetConfiguration();
 
     string before =  "{ " + genIfaceConfig() + ","
@@ -1211,7 +1211,7 @@ TEST_F(Dhcp6ParserTest, outBoundGlobalValidLifetime) {
     expected =
         "the value of (default) valid-lifetime (1000) is not "
         "between min-valid-lifetime (2000) and max-valid-lifetime (4000)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
     resetConfiguration();
 
     string after =  "{ " + genIfaceConfig() + ","
@@ -1223,7 +1223,7 @@ TEST_F(Dhcp6ParserTest, outBoundGlobalValidLifetime) {
     expected =
         "the value of (default) valid-lifetime (5000) is not "
         "between min-valid-lifetime (1000) and max-valid-lifetime (4000)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
     resetConfiguration();
 
     string crossed =  "{ " + genIfaceConfig() + ","
@@ -1235,7 +1235,7 @@ TEST_F(Dhcp6ParserTest, outBoundGlobalValidLifetime) {
     expected =
         "the value of min-valid-lifetime (2000) is not "
         "less than max-valid-lifetime (1000)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
 }
 
 /// Check that the renew-timer doesn't have to be specified, in which case
@@ -1327,7 +1327,7 @@ TEST_F(Dhcp6ParserTest, outBoundPreferredLifetime) {
     string expected = "subnet configuration failed: "
         "the value of min-preferred-lifetime (2000) is not "
         "less than (default) preferred-lifetime (1000)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
     resetConfiguration();
 
     string too_large =  "{ " + genIfaceConfig() + ","
@@ -1342,7 +1342,7 @@ TEST_F(Dhcp6ParserTest, outBoundPreferredLifetime) {
     expected = "subnet configuration failed: "
         "the value of (default) preferred-lifetime (2000) is not "
         "less than max-preferred-lifetime (1000)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
     resetConfiguration();
 
     string before =  "{ " + genIfaceConfig() + ","
@@ -1358,7 +1358,7 @@ TEST_F(Dhcp6ParserTest, outBoundPreferredLifetime) {
     expected = "subnet configuration failed: "
         "the value of (default) preferred-lifetime (1000) is not between "
         "min-preferred-lifetime (2000) and max-preferred-lifetime (4000)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
     resetConfiguration();
 
     string after =  "{ " + genIfaceConfig() + ","
@@ -1374,7 +1374,7 @@ TEST_F(Dhcp6ParserTest, outBoundPreferredLifetime) {
     expected = "subnet configuration failed: "
         "the value of (default) preferred-lifetime (5000) is not between "
         "min-preferred-lifetime (1000) and max-preferred-lifetime (4000)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
     resetConfiguration();
 
     string crossed =  "{ " + genIfaceConfig() + ","
@@ -1390,7 +1390,7 @@ TEST_F(Dhcp6ParserTest, outBoundPreferredLifetime) {
     expected = "subnet configuration failed: "
         "the value of min-preferred-lifetime (2000) is not "
         "less than max-preferred-lifetime (1000)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
 }
 
 /// Check that preferred-lifetime must be between min-preferred-lifetime and
@@ -1409,7 +1409,7 @@ TEST_F(Dhcp6ParserTest, outBoundGlobalPreferredLifetime) {
     string expected =
         "the value of min-preferred-lifetime (2000) is not "
         "less than (default) preferred-lifetime (1000)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
     resetConfiguration();
 
     string too_large =  "{ " + genIfaceConfig() + ","
@@ -1420,7 +1420,7 @@ TEST_F(Dhcp6ParserTest, outBoundGlobalPreferredLifetime) {
     expected =
         "the value of (default) preferred-lifetime (2000) is not "
         "less than max-preferred-lifetime (1000)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
     resetConfiguration();
 
     string before =  "{ " + genIfaceConfig() + ","
@@ -1432,7 +1432,7 @@ TEST_F(Dhcp6ParserTest, outBoundGlobalPreferredLifetime) {
     expected =
         "the value of (default) preferred-lifetime (1000) is not between "
         "min-preferred-lifetime (2000) and max-preferred-lifetime (4000)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
     resetConfiguration();
 
     string after =  "{ " + genIfaceConfig() + ","
@@ -1444,7 +1444,7 @@ TEST_F(Dhcp6ParserTest, outBoundGlobalPreferredLifetime) {
     expected =
         "the value of (default) preferred-lifetime (5000) is not between "
         "min-preferred-lifetime (1000) and max-preferred-lifetime (4000)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
     resetConfiguration();
 
     string crossed =  "{ " + genIfaceConfig() + ","
@@ -1456,7 +1456,7 @@ TEST_F(Dhcp6ParserTest, outBoundGlobalPreferredLifetime) {
     expected =
         "the value of min-preferred-lifetime (2000) is not "
         "less than max-preferred-lifetime (1000)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
 }
 
 /// The goal of this test is to verify if configuration without any
@@ -1621,7 +1621,7 @@ TEST_F(Dhcp6ParserTest, multipleSubnetsOverlappingIDs) {
     ASSERT_NO_THROW(json = parseDHCP6(config));
 
     EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
-    checkResult(x, 1);
+    checkResult(x, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(x, "<string>"));
 }
 
@@ -1819,7 +1819,7 @@ TEST_F(Dhcp6ParserTest, compatibilityUnknown) {
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     string expected = "unsupported compatibility parameter: ";
     expected += "foo-bar (<string>:1:154)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
 }
 
 // Check that not boolean compatibility flag value raises error.
@@ -1847,7 +1847,7 @@ TEST_F(Dhcp6ParserTest, compatibilityNotBool) {
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     string expected = "compatibility parameter values must be boolean ";
     expected += "(lenient-option-parsing at <string>:1:169)";
-    checkResult(status, 1, expected);
+    checkResult(status, CONTROL_RESULT_ERROR, expected);
 }
 
 // This test checks if it is possible to override global values
@@ -1960,7 +1960,7 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceBogus) {
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // returned value should be 1 (configuration error)
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     ConstSubnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->
@@ -1990,7 +1990,7 @@ TEST_F(Dhcp6ParserTest, interfaceGlobal) {
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // returned value should be 1 (parse error)
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     EXPECT_THROW(parseDHCP6(config), Dhcp6ParseError);
@@ -2065,7 +2065,7 @@ TEST_F(Dhcp6ParserTest, interfaceIdGlobal) {
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // Returned value should be 1 (parse error)
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     EXPECT_THROW(parseDHCP6(config), Dhcp6ParseError);
@@ -2094,7 +2094,7 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceAndInterfaceId) {
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // Returned value should be 1 (configuration error)
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
@@ -2161,7 +2161,7 @@ TEST_F(Dhcp6ParserTest, badSubnetValues) {
                         << "invalid json, broken test";
         ConstElementPtr status;
         EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, config));
-        checkResult(status, 1);
+        checkResult(status, CONTROL_RESULT_ERROR);
         ASSERT_TRUE(comment_);
         EXPECT_EQ(comment_->stringValue(), scenario.exp_error_msg_);
     }
@@ -2303,7 +2303,7 @@ TEST_F(Dhcp6ParserTest, poolOutOfSubnet) {
 
     // returned value must be 1 (values error)
     // as the pool does not belong to that subnet
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
@@ -2442,43 +2442,43 @@ TEST_F(Dhcp6ParserTest, badPools) {
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json1));
 
     // check if returned status is always a failure
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     CfgMgr::instance().clear();
 
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json2));
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     CfgMgr::instance().clear();
 
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json3));
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     CfgMgr::instance().clear();
 
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json4));
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     CfgMgr::instance().clear();
 
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json5));
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     CfgMgr::instance().clear();
 
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json6));
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     CfgMgr::instance().clear();
 
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json7));
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
@@ -2844,7 +2844,7 @@ TEST_F(Dhcp6ParserTest, invalidPdPools) {
 
         // Returned value must be non-empty ConstElementPtr to config result.
         // rcode should be 1 which indicates configuration error.
-        checkResult(x, 1);
+        checkResult(x, CONTROL_RESULT_ERROR);
         EXPECT_TRUE(errorContainsPosition(x, "<string>"));
     }
 }
@@ -2869,7 +2869,7 @@ TEST_F(Dhcp6ParserTest, unknownInterface) {
     ASSERT_NO_THROW(json = parseDHCP6(config, true));
     ConstElementPtr status;
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
@@ -3087,7 +3087,7 @@ TEST_F(Dhcp6ParserTest, optionDefDuplicate) {
     ConstElementPtr status;
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     // Specific check for incorrect report using default config pair
@@ -3214,7 +3214,7 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidName) {
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
@@ -3239,7 +3239,7 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidType) {
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
@@ -3265,7 +3265,7 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidRecordType) {
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
@@ -3316,7 +3316,7 @@ TEST_F(Dhcp6ParserTest, optionDefInvalidEncapsulatedSpace) {
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
@@ -3345,7 +3345,7 @@ TEST_F(Dhcp6ParserTest, optionDefEncapsulatedSpaceAndArray) {
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
@@ -3371,7 +3371,7 @@ TEST_F(Dhcp6ParserTest, optionDefEncapsulateOwnSpace) {
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
@@ -3435,7 +3435,7 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     /// @todo The option 63 is a standard DHCPv6 option. However, at this point
@@ -5570,7 +5570,7 @@ TEST_F(Dhcp6ParserTest, invalidD2ClientConfig) {
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, config));
 
     // check if returned status is failed.
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 
     // Verify that the D2 configuration can be fetched and is set to disabled.
@@ -5905,7 +5905,7 @@ TEST_F(Dhcp6ParserTest, reservationBogus) {
     CfgMgr::instance().clear();
 
     EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
-    checkResult(x, 1);
+    checkResult(x, CONTROL_RESULT_ERROR);
 
     EXPECT_THROW(parseDHCP6(config), Dhcp6ParseError);
 
@@ -5937,7 +5937,7 @@ TEST_F(Dhcp6ParserTest, reservationBogus) {
     CfgMgr::instance().clear();
 
     EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
-    checkResult(x, 1);
+    checkResult(x, CONTROL_RESULT_ERROR);
 
     // Case 3: Broken specification of option data.
     config = "{ " + genIfaceConfig() + ","
@@ -5970,7 +5970,7 @@ TEST_F(Dhcp6ParserTest, reservationBogus) {
     CfgMgr::instance().clear();
 
     EXPECT_NO_THROW(x = Dhcpv6SrvTest::configure(srv_, json));
-    checkResult(x, 1);
+    checkResult(x, CONTROL_RESULT_ERROR);
 }
 
 /// The goal of this test is to verify that configuration can include
@@ -6050,7 +6050,7 @@ TEST_F(Dhcp6ParserTest, macSourcesEmpty) {
 
     // returned value should be 1 (failure), because the mac-sources must not
     // be empty when specified.
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
 }
 
 /// The goal of this test is to verify that MAC sources configuration can
@@ -6069,7 +6069,7 @@ TEST_F(Dhcp6ParserTest, macSourcesBogus) {
     ConstElementPtr status;
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     // returned value should be 1 (failure)
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
 }
 
 /// The goal of this test is to verify that Host Reservation flags can be
@@ -6420,7 +6420,7 @@ TEST_F(Dhcp6ParserTest, rsooNegativeNumber) {
     ConstElementPtr status;
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     // returned value should be 0 (success)
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
@@ -6438,7 +6438,7 @@ TEST_F(Dhcp6ParserTest, rsooBogusName) {
     ConstElementPtr status;
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
     // returned value should be 0 (success)
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
 }
 
@@ -6457,7 +6457,7 @@ TEST_F(Dhcp6ParserTest, invalidDataDir) {
     // returned value should be 1 (error)
     int rcode;
     ConstElementPtr comment = parseAnswerText(rcode, status);
-    EXPECT_EQ(1, rcode);
+    EXPECT_EQ(CONTROL_RESULT_ERROR, rcode);
     string text;
     ASSERT_NO_THROW(text = comment->stringValue());
     std::ostringstream os;
@@ -6543,7 +6543,7 @@ TEST_F(Dhcp6ParserTest, declineTimerError) {
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // returned value should be 1 (error)
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
 
     // Check that the error contains error position.
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
@@ -6618,7 +6618,7 @@ TEST_F(Dhcp6ParserTest, expiredLeasesProcessingError) {
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
 
     // Returned value should be 0 (error)
-    checkResult(status, 1);
+    checkResult(status, CONTROL_RESULT_ERROR);
 
     // Check that the error contains error position.
     EXPECT_TRUE(errorContainsPosition(status, "<string>"));
@@ -8160,7 +8160,7 @@ TEST_F(Dhcp6ParserTest, configControlInfoNoFactory) {
                                             "mysql"));
 
     // Should fail because "type=mysql" has no factories.
-    configure(config, CONTROL_RESULT_ERROR,
+    configure(config, CONTROL_RESULT_FATAL_ERROR,
               "during update from config backend database: "
               "The Kea server has not been compiled with support for configuration "
               "database type: mysql. Did you forget to use -D mysql=enabled during "
@@ -9135,7 +9135,7 @@ TEST_F(Dhcp6ParserTest, deprecatedRequireClientClassesCheck) {
     ASSERT_NO_THROW(json = parseDHCP6(config));
 
     ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    checkResult(status, 1,
+    checkResult(status, CONTROL_RESULT_ERROR,
                 "subnet configuration failed: cannot specify both 'require-client-classes'"
                 " and 'evaluate-additional-classes'. Use only the latter.");
 }
@@ -9190,7 +9190,7 @@ TEST_F(Dhcp6ParserTest, deprecatedOnlyIfRequiredCheck) {
     ASSERT_NO_THROW(json = parseDHCP6(config));
 
     ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    checkResult(status, 1,
+    checkResult(status, CONTROL_RESULT_ERROR,
                 "cannot specify both 'only-if-required' and"
                 " 'only-in-additional-list'. Use only the latter.");
 }
@@ -9285,7 +9285,7 @@ TEST_F(Dhcp6ParserTest, deprecatedClientClassesCheck) {
     ASSERT_NO_THROW(json = parseDHCP6(config));
 
     ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
-    checkResult(status, 1,
+    checkResult(status, CONTROL_RESULT_ERROR,
                 "subnet configuration failed: cannot specify both 'client-class'"
                 " and 'client-classes'. Use only the latter.");
 }

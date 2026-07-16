@@ -133,6 +133,7 @@ public:
 
     /// @brief creates Dhcpv4Srv and prepares buffers for callouts
     HooksDhcpv4SrvTest() {
+        IfaceMgr::instance().setTestMode(true);
         HooksManager::setTestMode(false);
         bool status = HooksManager::unloadLibraries();
         if (!status) {
@@ -179,6 +180,7 @@ public:
 
         // Clear statistics.
         StatsMgr::instance().removeAll();
+        IfaceMgr::instance().setTestMode(false);
     }
 
     /// @brief creates an option with specified option code.

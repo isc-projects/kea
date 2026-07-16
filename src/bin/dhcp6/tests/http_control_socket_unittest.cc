@@ -3902,7 +3902,7 @@ TEST_F(HttpCtrlChannelDhcpv6Test, handleHttpToHttpsSwitch) {
     EXPECT_EQ(listener, HttpCommandMgr::instance().getHttpListener().get());
     ASSERT_FALSE(HttpCommandMgr::instance().getHttpListener()->getTlsContext());
 
-    EXPECT_NE(response.find("\"result\": 1"), std::string::npos);
+    EXPECT_NE(response.find("\"result\": 5"), std::string::npos);
     EXPECT_NE(response.find("\"text\": \"Can not switch from HTTP to HTTPS sockets using the same address and port.\""),
               std::string::npos);
 
@@ -4058,7 +4058,7 @@ TEST_F(HttpsCtrlChannelDhcpv6Test, handleHttpsToHttpSwitch) {
     ASSERT_TRUE(HttpCommandMgr::instance().getHttpListener()->getTlsContext());
     EXPECT_EQ(context, HttpCommandMgr::instance().getHttpListener()->getTlsContext().get());
 
-    EXPECT_NE(response.find("\"result\": 1"), std::string::npos);
+    EXPECT_NE(response.find("\"result\": 5"), std::string::npos);
     EXPECT_NE(response.find("\"text\": \"Can not switch from HTTPS to HTTP sockets using the same address and port.\""),
               std::string::npos);
 

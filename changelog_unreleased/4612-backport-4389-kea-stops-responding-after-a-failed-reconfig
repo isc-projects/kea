@@ -1,0 +1,6 @@
+[func]		tmark,razvan
+	The kea servers return a new status ("result" with value 5) for
+	commands which have failed and have partially altered the running
+	configuration. The rollback mechanism was not able to restore
+	the previous configuration.
+	(Gitlab #4612, #4389)

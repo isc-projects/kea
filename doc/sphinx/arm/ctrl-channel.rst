@@ -164,6 +164,9 @@ following general status codes are currently supported:
 -  ``4`` - the well-formed command has been processed but the requested
    changes could not be applied, because they were in conflict with the
    server state or its notion of the configuration.
+-  ``5`` - the command processed has failed and the configuration has been
+   partially altered. The rollback mechanism was not able to restore the previous
+   configuration.
 
 For example, a well-formed command that requests a subnet that exists
 in a server's configuration returns the result 0. If the server encounters

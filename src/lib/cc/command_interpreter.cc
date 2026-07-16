@@ -125,7 +125,6 @@ parseAnswer(int &rcode, const ConstElementPtr& msg) {
     return (msg->get(CONTROL_TEXT));
 }
 
-
 std::string
 answerToText(const ConstElementPtr& msg) {
     if (!msg) {

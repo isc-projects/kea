@@ -414,10 +414,12 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
         // potential file or syslog configured in the upcoming configuration.
         CfgMgr::instance().getCurrentCfg()->applyLoggingCfg();
 
-        // Not initial configuration so someone can believe we reverted
-        // to the previous configuration. It is not the case so be clear
-        // about this.
-        LOG_FATAL(dhcp4_logger, DHCP4_CONFIG_UNRECOVERABLE_ERROR);
+        if (rcode == CONTROL_RESULT_FATAL_ERROR) {
+            // Not initial configuration so someone can believe we reverted
+            // to the previous configuration. It is not the case so be clear
+            // about this.
+            LOG_FATAL(dhcp4_logger, DHCP4_CONFIG_UNRECOVERABLE_ERROR);
+        }
     }
 
     /// Let postponed hook initializations run.
@@ -425,6 +427,9 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
         // Handle events registered by hooks using external IOService objects.
         IOServiceMgr::instance().pollIOServices();
     } catch (const std::exception& ex) {
+        if (rcode == CONTROL_RESULT_FATAL_ERROR) {
+            return (result);
+        }
         std::ostringstream err;
         err << "Error initializing hooks: "
             << ex.what();
@@ -1214,12 +1219,6 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_RECEIVED)
         .arg(srv->redactConfig(config)->str());
 
-    // Destroy lease manager before hooks unload.
-    LeaseMgrFactory::destroy();
-
-    // Destroy host manager before hooks unload.
-    HostMgr::create();
-
     ConstElementPtr answer = configureDhcp4Server(*srv, config);
 
     // Check that configuration was successful. If not, do not reopen sockets
@@ -1227,7 +1226,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     try {
         int rcode = 0;
         isc::config::parseAnswer(rcode, answer);
-        if (rcode != 0) {
+        if (rcode != CONTROL_RESULT_SUCCESS) {
             return (answer);
         }
     } catch (const std::exception& ex) {
