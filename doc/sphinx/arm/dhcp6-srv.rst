@@ -4970,6 +4970,12 @@ The ``reservations-global``, ``reservations-in-subnet`` and
   ``.Dhcp6["shared-networks"][].subnet6[]["reservations-out-of-pool"]`` (highest
   priority: overrides all others)
 
+.. note::
+
+    Reservations are mutually exclusive. In any given situation, only the
+    highest priority reservation and its attributes (e.g. ``hostname``,
+    ``client-classes`` etc) will apply to the server's response.
+
 To decide which flags to use, the following decision diagram may be useful:
 
 ::
