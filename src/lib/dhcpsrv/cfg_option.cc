@@ -77,6 +77,10 @@ OptionDescriptor::allowedForClientClasses(const ClientClasses& cclasses) const {
     return (client_classes_.intersects(cclasses));
 }
 
+std::set<std::string> CfgOption::multiple_encapsulating_spaces_ = {
+    V6_NTP_SERVER_SPACE
+};
+
 CfgOption::CfgOption()
     : encapsulated_(false) {
 }
@@ -325,24 +329,28 @@ CfgOption::encapsulateInternal(const OptionPtr& option) {
     // Get encapsulated option space for the option.
     const std::string& encap_space = option->getEncapsulatedSpace();
     // Empty value means that no option space is encapsulated.
-    if (!encap_space.empty()) {
-        if (encap_space == DHCP4_OPTION_SPACE || encap_space == DHCP6_OPTION_SPACE) {
-            return;
+    if (encap_space.empty()) {
+        return;
+    }
+    if (encap_space == DHCP4_OPTION_SPACE || encap_space == DHCP6_OPTION_SPACE) {
+        return;
+    }
+    // Retrieve all options from the encapsulated option space.
+    OptionContainerPtr encap_options = getAll(encap_space);
+    for (auto const& encap_opt : *encap_options) {
+        if (option.get() == encap_opt.option_.get()) {
+            // Avoid recursion by not adding options to themselves.
+            continue;
         }
-        // Retrieve all options from the encapsulated option space.
-        OptionContainerPtr encap_options = getAll(encap_space);
-        for (auto const& encap_opt : *encap_options) {
-            if (option.get() == encap_opt.option_.get()) {
-                // Avoid recursion by not adding options to themselves.
-                continue;
-            }
 
-            // Add sub-option if there isn't one added already.
-            if (!option->getOption(encap_opt.option_->getType())) {
-                option->addOption(encap_opt.option_);
-            }
-            encapsulateInternal(encap_opt.option_);
+        // Add sub-option if there isn't one added already, or
+        // if encapsulating space is a multiple exception.
+        OptionPtr existing = option->getOption(encap_opt.option_->getType());
+        if (!existing ||
+            (multiple_encapsulating_spaces_.count(encap_space) > 0)) {
+            option->addOption(encap_opt.option_);
         }
+        encapsulateInternal(encap_opt.option_);
     }
 }
 

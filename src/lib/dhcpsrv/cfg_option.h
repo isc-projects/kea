@@ -26,6 +26,7 @@
 #include <boost/shared_ptr.hpp>
 #include <stdint.h>
 #include <list>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -602,6 +603,10 @@ public:
     bool isEncapsulated() const {
         return (encapsulated_);
     }
+
+    /// @brief Option spaces which can encapsulate mutiple sub-options
+    /// of the same type.
+    static std::set<std::string> multiple_encapsulating_spaces_;
 
     /// @brief Returns all options for the specified option space.
     ///

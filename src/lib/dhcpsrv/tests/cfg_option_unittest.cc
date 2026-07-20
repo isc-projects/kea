@@ -801,6 +801,46 @@ TEST_F(CfgOptionTest, encapsulate) {
     }
 }
 
+// This test verifies that multiple encapsulating spaces are supported,
+TEST_F(CfgOptionTest, multipleEncapsulatingSpaces) {
+    CfgOption cfg;
+
+    // Add a ntp-server option.
+    OptionPtr ntp_server(new Option(Option::V6, D6O_NTP_SERVER));
+    ntp_server->setEncapsulatedSpace(V6_NTP_SERVER_SPACE);
+    ASSERT_NO_THROW(cfg.add(ntp_server, false, false, DHCP6_OPTION_SPACE));
+
+    // Get ntp-server-address sub-option definition.
+    OptionDefinitionPtr def =
+        LibDHCP::getOptionDef(V6_NTP_SERVER_SPACE, NTP_SUBOPTION_SRV_ADDR);
+    ASSERT_TRUE(def);
+
+    // Add sub-options for 2001:db8::77 and 2001:db8::88.
+    IOAddress addr1("2001:db8::77");
+    auto const& buf1 = addr1.toBytes();
+    OptionCustomPtr sub1(new OptionCustom(*def, Option::V6, buf1));
+    ASSERT_NO_THROW(cfg.add(sub1, false, false, V6_NTP_SERVER_SPACE));
+    IOAddress addr2("2001:db8::88");
+    auto const& buf2 = addr2.toBytes();
+    OptionCustomPtr sub2(new OptionCustom(*def, Option::V6, buf2));
+    ASSERT_NO_THROW(cfg.add(sub2, false, false, V6_NTP_SERVER_SPACE));
+
+    // Encapsulate.
+    ASSERT_NO_THROW(cfg.encapsulate());
+
+    // Check we have ntp-server with 2 (not 1) sub-options.
+    OptionDescriptor desc = cfg.get(DHCP6_OPTION_SPACE, D6O_NTP_SERVER);
+    OptionPtr opt = desc.option_;
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(D6O_NTP_SERVER, opt->getType());
+    EXPECT_EQ(V6_NTP_SERVER_SPACE, opt->getEncapsulatedSpace());
+    auto const& subs = opt->getOptions();
+    ASSERT_EQ(2U, subs.size());
+    for (auto const& sub : subs) {
+        EXPECT_EQ(NTP_SUBOPTION_SRV_ADDR, sub.first);
+    }
+}
+
 // This test verifies that an option can be deleted from the configuration.
 TEST_F(CfgOptionTest, deleteOptions) {
     CfgOption cfg;
