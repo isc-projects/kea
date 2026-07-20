@@ -425,16 +425,6 @@ public:
     /// Note: There is no constructor that takes option_name, as it would
     /// introduce complex dependency of the libkea-eval on libdhcpsrv.
     ///
-    /// @param option_code code of the option to be represented.
-    /// @param rep_type Token representation type.
-    TokenOption(const uint16_t option_code, const RepresentationType& rep_type)
-        : option_path_({ option_code }), representation_type_(rep_type) {}
-
-    /// @brief Constructor that takes an option code as a parameter
-    ///
-    /// Note: There is no constructor that takes option_name, as it would
-    /// introduce complex dependency of the libkea-eval on libdhcpsrv.
-    ///
     /// @param option_codes option hierarchy of the option to be represented.
     /// @param rep_type Token representation type.
     TokenOption(const std::vector<uint16_t>& option_codes, const RepresentationType& rep_type)

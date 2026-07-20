@@ -446,6 +446,10 @@ TokenOption::evaluate(Pkt& pkt, ValueStack& values) {
         tmp << "option[" << c << "]";
     }
 
+    if (tmp.str().empty()) {
+        tmp << "(none)";
+    }
+
     // Log what we pushed, both exists and textual are simple text
     // and can be output directly.  We also include the code number
     // of the requested option.

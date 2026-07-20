@@ -1257,6 +1257,57 @@ TEST_F(TokenTest, integerToText) {
     EXPECT_TRUE(checkFile());
 }
 
+TEST_F(TokenTest, optionEmptyCodeList) {
+    TokenPtr found;
+    ASSERT_NO_THROW(found.reset(new TokenOption({ }, TokenOption::TEXTUAL)));
+    testEvaluate(found, *pkt4_, values_);
+    // There should be 1 values evaluated.
+    ASSERT_EQ(1U, values_.size());
+    // This is a stack, so the pop order is inversed. We should get the empty
+    // string first.
+    EXPECT_EQ("", values_.top());
+    values_.pop();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OPTION", "Pushing (none) with value ''", pkt4_->getLabel());
+    EXPECT_TRUE(checkFile());
+}
+
+TEST_F(TokenTest, optionEmptyCodeListHex) {
+    TokenPtr found;
+    ASSERT_NO_THROW(found.reset(new TokenOption({ }, TokenOption::HEXADECIMAL)));
+    testEvaluate(found, *pkt4_, values_);
+    // There should be 1 values evaluated.
+    ASSERT_EQ(1U, values_.size());
+    // This is a stack, so the pop order is inversed. We should get the empty
+    // string first.
+    EXPECT_EQ("", values_.top());
+    values_.pop();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OPTION", "Pushing (none) with value 0x", pkt4_->getLabel());
+    EXPECT_TRUE(checkFile());
+}
+
+TEST_F(TokenTest, optionEmptyCodeListExists) {
+    TokenPtr found;
+    ASSERT_NO_THROW(found.reset(new TokenOption({ }, TokenOption::EXISTS)));
+    testEvaluate(found, *pkt4_, values_);
+    // There should be 1 values evaluated.
+    ASSERT_EQ(1U, values_.size());
+    // This is a stack, so the pop order is inversed. We should get the empty
+    // string first.
+    EXPECT_EQ("false", values_.top());
+    values_.pop();
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_OPTION", "Pushing (none) with value 'false'", pkt4_->getLabel());
+    EXPECT_TRUE(checkFile());
+}
+
 // This test checks if a token representing an option value is able to extract
 // the option from an IPv4 packet and properly store the option's value.
 TEST_F(TokenTest, optionString4) {
