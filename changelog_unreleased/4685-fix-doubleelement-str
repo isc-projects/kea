@@ -1,0 +1,4 @@
+[bug]		fdupont
+	The from JSON double value to string no longer produces
+	an incorrect output when there is only an exponent part.
+	(Gitlab #4685, #4493)

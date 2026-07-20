@@ -101,6 +101,7 @@ TEST(Element, toAndFromJson) {
     sv.push_back("-1");
     sv.push_back("-1.234");
     sv.push_back("-123.456");
+    sv.push_back("1e+30");
     // We should confirm that our string handling is 8-bit clean.
     // At one point we were using char-length data and comparing to EOF,
     // which means that character '\xFF' would not parse properly.
@@ -183,6 +184,10 @@ TEST(Element, toAndFromJson) {
     EXPECT_EQ("0.01", Element::fromJSON("1.0e-2")->str());
     EXPECT_EQ("0.012", Element::fromJSON("1.2e-2")->str());
     EXPECT_EQ("0.012", Element::fromJSON("1.2E-2")->str());
+    EXPECT_EQ("1e+30", Element::fromJSON("1e30")->str());
+    EXPECT_EQ("1e+30", Element::fromJSON("1E30")->str());
+    EXPECT_EQ("1e+30", Element::fromJSON("1E+30")->str());
+    EXPECT_EQ("1e-30", Element::fromJSON("1E-30")->str());
     EXPECT_EQ("\"\"", Element::fromJSON("  \n \t \r \f \b \"\" \n \f \t \r \b")->str());
     EXPECT_EQ("{  }", Element::fromJSON("{  \n  \r \t  \b \f }")->str());
     EXPECT_EQ("[  ]", Element::fromJSON("[  \n  \r \f \t  \b  ]")->str());

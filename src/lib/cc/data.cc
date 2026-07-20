@@ -907,12 +907,12 @@ DoubleElement::toJSON(std::ostream& ss, unsigned) const {
     // zeros, however this produces strings without decimal points
     // for whole number values.  When reparsed this will create
     // IntElements not DoubleElements.  Rather than used a fixed
-    // precision, we'll just tack on an ".0" when the decimal point
-    // is missing.
+    // precision, we'll just tack on an ".0" when there is no
+    // fractional nor exponent parts.
     ostringstream val_ss;
     val_ss << doubleValue();
     ss << val_ss.str();
-    if (val_ss.str().find_first_of('.') == string::npos) {
+    if (val_ss.str().find_first_of(".eE") == string::npos) {
         ss << ".0";
     }
 }
