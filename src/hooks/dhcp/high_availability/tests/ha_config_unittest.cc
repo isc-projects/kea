@@ -606,7 +606,7 @@ TEST_F(HAConfigTest, largeHeartbeatDelay) {
         "    {"
         "        \"this-server-name\": \"server1\","
         "        \"mode\": \"load-balancing\","
-        "        \"heartbeat-delay\": 65536,"
+        "        \"heartbeat-delay\": 4294967296,"
         "        \"peers\": ["
         "            {"
         "                \"name\": \"server1\","
@@ -623,7 +623,7 @@ TEST_F(HAConfigTest, largeHeartbeatDelay) {
         "        ]"
         "    }"
         "]",
-        "'heartbeat-delay' must not be greater than 65535");
+        "'heartbeat-delay' must not be greater than 4294967295");
 }
 
 // There must be at least two servers provided.
