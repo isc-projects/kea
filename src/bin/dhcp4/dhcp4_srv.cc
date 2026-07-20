@@ -2976,6 +2976,15 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
                 return;
             }
 
+            try {
+                label_count = OptionDataTypeUtil::getLabelCount(tmp);
+            } catch (const std::exception& exc) {
+                LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_SANITIZED_HOSTNAME_MALFORMED)
+                    .arg(ex.getQuery()->getLabel())
+                    .arg(exc.what());
+                return;
+            }
+
             hostname = tmp;
         }
 

@@ -1173,7 +1173,8 @@ TEST_F(D2ClientMgrParamsTest, sanitizeFqdnV4) {
                                       scenario.client_name_, scenario.name_type_);
             Option4ClientFqdn response(request);
 
-            mgr.adjustDomainName<Option4ClientFqdn>(request, response, *ddns_params_);
+            ASSERT_NO_THROW_LOG(mgr.adjustDomainName<Option4ClientFqdn>
+                                (request, response, *ddns_params_));
             EXPECT_EQ(scenario.expected_name_, response.getDomainName());
             EXPECT_EQ(Option4ClientFqdn::FULL, response.getDomainNameType());
         }
@@ -1258,7 +1259,8 @@ TEST_F(D2ClientMgrParamsTest, sanitizeFqdnV6) {
             Option6ClientFqdn request(0, scenario.client_name_, scenario.name_type_);
             Option6ClientFqdn response(request);
 
-            mgr.adjustDomainName<Option6ClientFqdn>(request, response, *ddns_params_);
+            ASSERT_NO_THROW_LOG(mgr.adjustDomainName<Option6ClientFqdn>
+                                (request, response, *ddns_params_));
             EXPECT_EQ(scenario.expected_name_, response.getDomainName());
             EXPECT_EQ(Option6ClientFqdn::FULL, response.getDomainNameType());
         }
@@ -1282,6 +1284,13 @@ TEST_F(D2ClientMgrParamsTest, adjustDomainNameV4ScrubbedEmpty) {
     Option4ClientFqdn response(request);
     ASSERT_THROW_MSG(mgr.adjustDomainName<Option4ClientFqdn>(request, response, *ddns_params_),
                      FQDNScrubbedEmpty, "___.");
+
+    Option4ClientFqdn request2(0, Option4ClientFqdn::RCODE_CLIENT(),
+                              "aaa.___.bbb", Option4ClientFqdn::FULL);
+
+    Option4ClientFqdn response2(request2);
+    ASSERT_THROW_MSG(mgr.adjustDomainName<Option4ClientFqdn>(request2, response2, *ddns_params_),
+                     FQDNScrubbedEmpty, "aaa.___.bbb.");
 }
 
 /// @brief Tests adjustDomainName template method with Option4ClientFqdn
@@ -1300,6 +1309,12 @@ TEST_F(D2ClientMgrParamsTest, adjustDomainNameV6ScrubbedEmpty) {
     Option6ClientFqdn response(request);
     ASSERT_THROW_MSG(mgr.adjustDomainName<Option6ClientFqdn>(request, response, *ddns_params_),
                      FQDNScrubbedEmpty, "___.");
+
+    Option6ClientFqdn request2(0, "aaa.___.bbb", Option6ClientFqdn::FULL);
+
+    Option6ClientFqdn response2(request2);
+    ASSERT_THROW_MSG(mgr.adjustDomainName<Option6ClientFqdn>(request2, response2, *ddns_params_),
+                     FQDNScrubbedEmpty, "aaa.___.bbb.");
 }
 
 } // end of anonymous namespace

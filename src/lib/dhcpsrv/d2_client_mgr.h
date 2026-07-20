@@ -528,7 +528,8 @@ D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp, const DdnsParams& ddn
             }
 
             std::string clean_name = ss.str();
-            if (clean_name.empty() || clean_name == ".") {
+            if (clean_name.empty() || clean_name == "." ||
+               (clean_name.find("..") != std::string::npos)) {
                 isc_throw(FQDNScrubbedEmpty, client_name);
             }
 

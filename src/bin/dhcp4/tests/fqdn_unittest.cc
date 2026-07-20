@@ -3204,6 +3204,22 @@ TEST_F(NameDhcpv4SrvTest, hostnameScrubbedEmpty) {
 
     // Hostname should not be in the response.
     ASSERT_FALSE(resp->getOption(DHO_HOST_NAME));
+
+    // Set the hostname option.
+    ASSERT_NO_THROW(client.includeHostname("aaa.___.bbb"));
+
+    // Send the DHCPDISCOVER and make sure that the server responded.
+    ASSERT_NO_THROW(client.doDiscover());
+    resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
+
+    // Should have logged that it was scrubbed empty.
+    log = "DHCP4_SANITIZED_HOSTNAME_MALFORMED";
+    EXPECT_EQ(1U, countFile(log));
+
+    // Hostname should not be in the response.
+    ASSERT_FALSE(resp->getOption(DHO_HOST_NAME));
 }
 
 // Verifies that when the FQDN option is scrubbed empty it is logged
@@ -3231,6 +3247,5 @@ TEST_F(NameDhcpv4SrvTest, fqdnScrubbedEmpty) {
     // Hostname should not be in the response.
     ASSERT_FALSE(resp->getOption(DHO_FQDN));
 }
-
 
 } // end of anonymous namespace
