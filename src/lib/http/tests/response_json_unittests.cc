@@ -118,7 +118,7 @@ TEST_F(HttpResponseJsonTest, responseWithContent) {
         "Content-Length: " << json_string_from_json_.length() << "\r\n"
         "Content-Type: application/json\r\n"
         "Date: " << response.getDateHeaderValue() << "\r\n\r\n"
-                    << json_string_from_json_;
+                 << json_string_from_json_;
     EXPECT_EQ(response_string.str(), response.toString());
 }
 
@@ -140,7 +140,7 @@ TEST_F(HttpResponseJsonTest, responseWithContent2) {
         "Content-Length: " << json2_string_from_json_.length() << "\r\n"
         "Content-Type: application/json\r\n"
         "Date: " << response.getDateHeaderValue() << "\r\n\r\n"
-                    << json2_string_from_json_;
+                 << json2_string_from_json_;
     EXPECT_EQ(response_string.str(), response.toString());
 }
 

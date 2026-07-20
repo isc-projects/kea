@@ -143,7 +143,7 @@ HttpResponse::resetContentLength() {
     if (getDirection() != HttpMessage::OUTBOUND) {
         return;
     }
-    // A previous header must be pesent.
+    // A previous header must be present.
     if (!headers_.count("content-length")) {
         return;
     }
