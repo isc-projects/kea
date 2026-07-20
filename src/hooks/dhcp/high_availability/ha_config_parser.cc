@@ -184,7 +184,7 @@ HAConfigParser::parseOne(const HAConfigMapperPtr& config_storage,
     rel_config->setDelayedUpdatesLimit(delayed_updates_limit);
 
     // Get 'heartbeat-delay'.
-    uint32_t heartbeat_delay = getAndValidateInteger<uint16_t>(config, "heartbeat-delay");
+    uint32_t heartbeat_delay = getAndValidateInteger<uint32_t>(config, "heartbeat-delay");
     rel_config->setHeartbeatDelay(heartbeat_delay);
 
     // Get 'max-response-delay'.
@@ -192,7 +192,7 @@ HAConfigParser::parseOne(const HAConfigMapperPtr& config_storage,
     rel_config->setMaxResponseDelay(max_response_delay);
 
     // Get 'max-ack-delay'.
-    uint32_t max_ack_delay = getAndValidateInteger<uint16_t>(config, "max-ack-delay");
+    uint32_t max_ack_delay = getAndValidateInteger<uint32_t>(config, "max-ack-delay");
     rel_config->setMaxAckDelay(max_ack_delay);
 
     // Get 'max-unacked-clients'.
