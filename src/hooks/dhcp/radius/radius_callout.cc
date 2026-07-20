@@ -629,6 +629,10 @@ int lease4_renew(CalloutHandle& handle) {
     }
     Lease4Ptr lease;
     handle.getArgument("lease4", lease);
+    // Do nothing on reuse.
+    if (!lease || (lease->reuseable_valid_lft_ > 0)) {
+        return (CONTROL_RESULT_SUCCESS);
+    }
     try {
         // Start the Accounting-Request transmission.
         RadiusAcctHandlerPtr handler = impl.acct_->buildAcct(lease, EVENT_RENEW);
@@ -803,6 +807,10 @@ int lease6_renew(CalloutHandle& handle) {
     }
     Lease6Ptr lease;
     handle.getArgument("lease6", lease);
+    // Do nothing on reuse.
+    if (!lease || (lease->reuseable_valid_lft_ > 0)) {
+        return (CONTROL_RESULT_SUCCESS);
+    }
     try {
         RadiusAcctHandlerPtr handler = impl.acct_->buildAcct(lease, EVENT_RENEW);
         if (!handler) {
@@ -835,6 +843,10 @@ int lease6_rebind(CalloutHandle& handle) {
     }
     Lease6Ptr lease;
     handle.getArgument("lease6", lease);
+    // Do nothing on reuse.
+    if (!lease || (lease->reuseable_valid_lft_ > 0)) {
+        return (CONTROL_RESULT_SUCCESS);
+    }
     try {
         RadiusAcctHandlerPtr handler = impl.acct_->buildAcct(lease, EVENT_REBIND);
         if (!handler) {

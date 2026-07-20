@@ -379,12 +379,16 @@ public:
     void testLease4SelectFake();
     void testLease4Select();
     void testLease4Renew();
+    void testLease4Reuse();
     void testLease4Release();
     void testLease4Decline();
     void testLease4Expire();
     void testLease6SelectFake();
     void testLease6Select();
     void testLease6Renew();
+    void testLease6Reuse();
+    void testLease6Rebind();
+    void testLease6Reuse2();
     void testLease6Release();
     void testLease6Decline();
     void testLease6Expire();
@@ -2819,6 +2823,25 @@ void AccountingTest::testLease4Renew() {
     EXPECT_EQ(0, ret);
 }
 
+/// Verify that lease4_renew hook on a reuse sends nothing.
+void AccountingTest::testLease4Reuse() {
+    CalloutHandle handle(manager_);
+    bool fake_allocation = false;
+    handle.setArgument("fake_allocation", fake_allocation);
+    IOAddress addr = IOAddress("192.0.2.2");
+    vector<uint8_t> hw = { 0x20, 0xe5, 0x2a, 0xb8, 0x15, 0x16 };
+    HWAddrPtr hwaddr(new HWAddr(hw, 1));
+    vector<uint8_t> id = { 0x01, 0x02, 0x03, 0x06 };
+    ClientIdPtr clientid(new ClientId(id));
+    Lease4Ptr lease(new Lease4(addr, hwaddr, clientid, 4, 1, 4));
+    lease->reuseable_valid_lft_ = 10;
+    handle.setArgument("lease4", lease);
+
+    int ret(-1);
+    ASSERT_NO_THROW(ret = lease4_renew(handle));
+    EXPECT_EQ(0, ret);
+}
+
 /// Verify that lease4_release hook sends a STOP.
 void AccountingTest::testLease4Release() {
     CalloutHandle handle(manager_);
@@ -2927,6 +2950,65 @@ void AccountingTest::testLease6Renew() {
 
     int ret(-1);
     ASSERT_NO_THROW(ret = lease6_renew(handle));
+    EXPECT_EQ(0, ret);
+}
+
+/// Verify that lease6_renew hook on a reuse sends nothing.
+void AccountingTest::testLease6Reuse() {
+    CalloutHandle handle(manager_);
+    bool fake_allocation = false;
+    handle.setArgument("fake_allocation", fake_allocation);
+    IOAddress addr = IOAddress("2001:db8::123c");
+    vector<uint8_t> hw = { 0x20, 0xe5, 0x2a, 0xb8, 0x15, 0x16 };
+    HWAddrPtr hwaddr(new HWAddr(hw, 1));
+    vector<uint8_t> id = { 0x01, 0x02, 0x03, 0x06 };
+    DuidPtr duid(new DUID(id));
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid, 0x12345678,
+                               1, 2, 4, hwaddr));
+    lease->reuseable_valid_lft_ = 10;
+    handle.setArgument("lease6", lease);
+
+    int ret(-1);
+    ASSERT_NO_THROW(ret = lease6_renew(handle));
+    EXPECT_EQ(0, ret);
+}
+
+/// Verify that lease6_rebind hook sends a ALIVE.
+void AccountingTest::testLease6Rebind() {
+    CalloutHandle handle(manager_);
+    bool fake_allocation = false;
+    handle.setArgument("fake_allocation", fake_allocation);
+    IOAddress addr = IOAddress("2001:db8::1235");
+    vector<uint8_t> hw = { 0x20, 0xe5, 0x2a, 0xb8, 0x15, 0x14 };
+    HWAddrPtr hwaddr(new HWAddr(hw, 1));
+    vector<uint8_t> id = { 0x01, 0x02, 0x03, 0x04 };
+    DuidPtr duid(new DUID(id));
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid, 0x12345678,
+                               1, 2, 4, hwaddr));
+    handle.setArgument("lease6", lease);
+
+    int ret(-1);
+    ASSERT_NO_THROW(ret = lease6_rebind(handle));
+    EXPECT_EQ(0, ret);
+}
+
+/// Verify that lease6_rebind hook on a reuse sends nothing.
+void AccountingTest::testLease6Reuse2() {
+    CalloutHandle handle(manager_);
+    bool fake_allocation = false;
+    handle.setArgument("fake_allocation", fake_allocation);
+    IOAddress addr = IOAddress("2001:db8::123c");
+    vector<uint8_t> hw = { 0x20, 0xe5, 0x2a, 0xb8, 0x15, 0x16 };
+    HWAddrPtr hwaddr(new HWAddr(hw, 1));
+    vector<uint8_t> id = { 0x01, 0x02, 0x03, 0x06 };
+    DuidPtr duid(new DUID(id));
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid, 0x12345678,
+                               1, 2, 4, hwaddr));
+    lease->reuseable_valid_lft_ = 10;
+    handle.setArgument("lease6", lease);
+
+    int ret(-1);
+    ASSERT_NO_THROW(ret = lease6_rebind(handle));
     EXPECT_EQ(0, ret);
 }
 
@@ -3479,6 +3561,17 @@ TEST_F(AccountingTest, lease4Renew) {
     ASSERT_EQ(1U, status_types_.size());
     EXPECT_EQ(PW_STATUS_ALIVE, status_types_[0]);
 }
+TEST_F(AccountingTest, lease4Reuse) {
+    startServer();
+
+    testLease4Reuse();
+    // Need to send something to the server...
+    testLease4Renew();
+
+    waitForServerToFinish();
+
+    EXPECT_EQ(1U, status_types_.size());
+}
 TEST_F(AccountingTest, lease4Release) {
     startServer();
 
@@ -3531,6 +3624,38 @@ TEST_F(AccountingTest, lease6Renew) {
 
     ASSERT_EQ(1U, status_types_.size());
     EXPECT_EQ(PW_STATUS_ALIVE, status_types_[0]);
+}
+TEST_F(AccountingTest, lease6Reuse) {
+    startServer();
+
+    testLease6Reuse();
+    // Need to send something to the server...
+    testLease6Renew();
+
+    waitForServerToFinish();
+
+    EXPECT_EQ(1U, status_types_.size());
+}
+TEST_F(AccountingTest, lease6Rebind) {
+    startServer();
+
+    testLease6Rebind();
+
+    waitForServerToFinish();
+
+    ASSERT_EQ(1U, status_types_.size());
+    EXPECT_EQ(PW_STATUS_ALIVE, status_types_[0]);
+}
+TEST_F(AccountingTest, lease6Reuse2) {
+    startServer();
+
+    testLease6Reuse2();
+    // Need to send something to the server...
+    testLease6Rebind();
+
+    waitForServerToFinish();
+
+    EXPECT_EQ(1U, status_types_.size());
 }
 TEST_F(AccountingTest, lease6Release) {
     startServer();
