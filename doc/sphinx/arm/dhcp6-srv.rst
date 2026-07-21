@@ -737,7 +737,8 @@ placed in a ``hosts-databases`` list.
 
    The previous keyword ``hosts-database`` which takes one database
    configuration only is deprecated and will be rejected by a future release.
-
+   It is translated to ``hosts-databases`` when returned by ``config-get``
+   or output by ``config-write``.
 
 Next, the name of the database to hold the reservations must be set;
 this is the name used when the lease database was created (see
