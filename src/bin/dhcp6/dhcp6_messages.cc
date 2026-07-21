@@ -215,7 +215,7 @@ const char* values[] = {
     "DHCP6_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION", "%1: client packet has been assigned to the following classes: %2",
     "DHCP6_CLASS_ASSIGNED", "%1: client packet has been assigned to the following class: %2",
     "DHCP6_CLASS_UNCONFIGURED", "%1: client packet belongs to an unconfigured class: %2",
-    "DHCP6_CLIENT_FQDN_SCRUBBED_EMPTY", "%1: sanitizing client's FQDN option '%2' yielded an empty string",
+    "DHCP6_CLIENT_FQDN_SCRUBBED_EMPTY", "%1: sanitizing client's FQDN option '%2' yielded an empty  name or an empty label within the name",
     "DHCP6_CONFIG_COMPLETE", "DHCPv6 server has completed configuration: %1",
     "DHCP6_CONFIG_HOSTS_DATABASE_DEPRECATED", "the \"host-database\" keyword will be deprecated",
     "DHCP6_CONFIG_LOAD_FAIL", "configuration error using file: %1, reason: %2",

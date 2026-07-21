@@ -154,12 +154,13 @@ which cannot be found in the configuration. Either a hook written
 before the classification was added to Kea is used, or class naming is
 inconsistent.
 
-% DHCP6_CLIENT_FQDN_SCRUBBED_EMPTY %1: sanitizing client's FQDN option '%2' yielded an empty string
+% DHCP6_CLIENT_FQDN_SCRUBBED_EMPTY %1: sanitizing client's FQDN option '%2' yielded an empty  name or an empty label within the name
 Logged at debug log level 50.
 This debug message is issued when the result of sanitizing the
-FQDN option(39) sent by the client is an empty string. When this occurs
-the server will ignore the FQDN option. The arguments include the
-client and the FQDN option it sent.
+FQDN option(39) sent by the client is an empty name or an empty label
+within the name (e.g. "aaa..bbb.com"). When this occurs the server will
+ignore the FQDN option. The arguments include the client and the
+FQDN option it sent.
 
 % DHCP6_CONFIG_COMPLETE DHCPv6 server has completed configuration: %1
 This is an informational message announcing the successful processing of a
