@@ -1,3 +1,8 @@
+2391.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 3.0.4
+	stable release.
+	(Gitlab #4684)
+
 2390.	[bug]		razvan
 	Properly handle lease allocation if client reserved lease is not
 	available because the hook has decided to skip the lease.
