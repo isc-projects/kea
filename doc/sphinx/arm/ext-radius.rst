@@ -305,7 +305,8 @@ At the service level, three sections can be configured:
 - The ``max-pending-requests`` positive integer (default ``0``) limits the
   number of pending RADIUS requests. It is supported only by the access service.
   The value ``0`` means no limit; ``64`` is a recommended setting.
-  Note since Kea 3.3.0 the list of UDP pending exchanges is limited to 200
+  Note since Kea 3.3.0 the list of UDP pending exchanges is limited to
+  the greatest of 200 and the half of the file descriptor soft limit
   elements because each exchange is associated with a file descriptor.
 
 - The ``idle-timer-interval`` positive integer (default ``0``) specifies

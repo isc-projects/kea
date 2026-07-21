@@ -12,6 +12,7 @@
 #include <radius.h>
 #include <attribute_test.h>
 #include <gtest/gtest.h>
+#include <iostream>
 #include <sstream>
 
 using namespace isc;
@@ -24,6 +25,13 @@ using namespace std;
 using namespace std::chrono;
 
 namespace {
+
+// Verify the exchangeListMaxSize is correctly initialized.
+TEST(TestExchange, exchangeListMaxSize) {
+    ASSERT_LE(200U, UdpClient::exchangeListMaxSize);
+    std::cout << "UdpClient::exchangeListMaxSize is "
+              << UdpClient::exchangeListMaxSize << endl;
+}
 
 // Verify the async constructor.
 TEST(TestExchange, async) {

@@ -104,8 +104,8 @@ public:
     /// false otherwise.
     bool checkExchangeListRoom();
 
-    /// @brief Exchange List Maximum Size (currently 200).
-    static const size_t exchangeListMaxSize;
+    /// @brief Exchange List Maximum Size (currently the max(200,soft_limit/2))
+    static size_t exchangeListMaxSize;
 
 private:
     /// @brief Pointer to IOService.

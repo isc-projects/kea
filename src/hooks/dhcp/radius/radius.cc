@@ -18,8 +18,8 @@
 #include <radius_log.h>
 #include <radius_parsers.h>
 #include <radius_tls.h>
-
 #include <exception>
+#include <sys/resource.h>
 
 using namespace std;
 using namespace isc;
@@ -33,10 +33,27 @@ using namespace isc::util;
 namespace isc {
 namespace radius {
 
-#ifndef RADIUS_UDP_EXCHANGE_LIST_MAX_SIZE
-#define RADIUS_UDP_EXCHANGE_LIST_MAX_SIZE 200
-#endif
-const size_t UdpClient::exchangeListMaxSize = RADIUS_UDP_EXCHANGE_LIST_MAX_SIZE;
+size_t UdpClient::exchangeListMaxSize = 200;
+
+namespace {
+
+// Initializer class.
+class Dummy {
+public:
+    Dummy() {
+        struct rlimit rlimit;
+        memset(&rlimit, 0, sizeof(rlimit));
+        if (getrlimit(RLIMIT_NOFILE, &rlimit) == 0) {
+            if (rlimit.rlim_cur / 2 > 200) {
+                UdpClient::exchangeListMaxSize = rlimit.rlim_cur / 2;
+            }
+        }
+    }
+};
+
+// Create one global object.
+Dummy myDummy;
+} // end of anonymous namespace
 
 UdpClient::UdpClient(const IOServicePtr& io_service, unsigned thread_pool_size)
     : io_service_(io_service), thread_pool_size_(thread_pool_size) {
