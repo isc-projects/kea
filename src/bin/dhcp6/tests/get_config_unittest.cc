@@ -72,7 +72,6 @@ namespace {
 ///@{
 /// @brief extracted configurations
 const char* EXTRACTED_CONFIGS[] = {
-/// put this after const char* EXTRACTED_CONFIGS[] = {
     // CONFIGURATION 0
 "{\n"
 "        \"interfaces-config\": {\n"
@@ -820,6 +819,32 @@ const char* EXTRACTED_CONFIGS[] = {
 "        },\n"
 "        \"option-data\": [\n"
 "            {\n"
+"                \"name\": \"ntp-server\"\n"
+"            },\n"
+"            {\n"
+"                \"data\": \"2001:db8::77\",\n"
+"                \"name\": \"ntp-server-address\",\n"
+"                \"space\": \"v6-ntp-server-suboptions\"\n"
+"            },\n"
+"            {\n"
+"                \"data\": \"2001:db8::88\",\n"
+"                \"name\": \"ntp-server-address\",\n"
+"                \"space\": \"v6-ntp-server-suboptions\"\n"
+"            }\n"
+"        ],\n"
+"        \"preferred-lifetime\": 3000,\n"
+"        \"rebind-timer\": 2000,\n"
+"        \"renew-timer\": 1000,\n"
+"        \"valid-lifetime\": 4000\n"
+"    }\n",
+    // CONFIGURATION 29
+"{\n"
+"        \"interfaces-config\": {\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
+"        \"option-data\": [\n"
+"            {\n"
 "                \"csv-format\": false,\n"
 "                \"data\": \"AB\",\n"
 "                \"name\": \"subscriber-id\"\n"
@@ -853,7 +878,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 29
+    // CONFIGURATION 30
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -898,7 +923,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 30
+    // CONFIGURATION 31
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -932,7 +957,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 31
+    // CONFIGURATION 32
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -997,7 +1022,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 32
+    // CONFIGURATION 33
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1035,7 +1060,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 33
+    // CONFIGURATION 34
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1073,7 +1098,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 34
+    // CONFIGURATION 35
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"eth0\" ],\n"
@@ -1084,7 +1109,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 35
+    // CONFIGURATION 36
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"eth0\", \"eth1\", \"*\" ],\n"
@@ -1095,7 +1120,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 36
+    // CONFIGURATION 37
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1123,7 +1148,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 37
+    // CONFIGURATION 38
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1151,7 +1176,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 38
+    // CONFIGURATION 39
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1203,7 +1228,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 39
+    // CONFIGURATION 40
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1237,7 +1262,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 40
+    // CONFIGURATION 41
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1279,7 +1304,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 41
+    // CONFIGURATION 42
 "{\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": true,\n"
@@ -1311,7 +1336,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 42
+    // CONFIGURATION 43
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1398,7 +1423,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 43
+    // CONFIGURATION 44
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1438,7 +1463,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 44
+    // CONFIGURATION 45
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1451,7 +1476,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"subnet6\": [ ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 45
+    // CONFIGURATION 46
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1464,7 +1489,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"subnet6\": [ ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 46
+    // CONFIGURATION 47
 "{\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -1552,7 +1577,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 47
+    // CONFIGURATION 48
 "{\n"
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
@@ -1585,7 +1610,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 48
+    // CONFIGURATION 49
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1593,7 +1618,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        },\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
-    // CONFIGURATION 49
+    // CONFIGURATION 50
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1606,7 +1631,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"subnet6\": [ ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 50
+    // CONFIGURATION 51
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1614,7 +1639,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        },\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
-    // CONFIGURATION 51
+    // CONFIGURATION 52
 "{\n"
 "        \"decline-probation-period\": 12345,\n"
 "        \"interfaces-config\": {\n"
@@ -1623,7 +1648,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        },\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
-    // CONFIGURATION 52
+    // CONFIGURATION 53
 "{\n"
 "        \"expired-leases-processing\": {\n"
 "            \"flush-reclaimed-timer-wait-time\": 35,\n"
@@ -1639,7 +1664,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        },\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
-    // CONFIGURATION 53
+    // CONFIGURATION 54
 "{\n"
 "        \"client-classes\": [\n"
 "            {\n"
@@ -1672,7 +1697,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 54
+    // CONFIGURATION 55
 "{\n"
 "        \"client-classes\": [\n"
 "            {\n"
@@ -1701,7 +1726,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "            }\n"
 "        ]\n"
 "    }\n",
-    // CONFIGURATION 55
+    // CONFIGURATION 56
 "{\n"
 "        \"client-classes\": [\n"
 "            {\n"
@@ -1732,28 +1757,6 @@ const char* EXTRACTED_CONFIGS[] = {
 "            }\n"
 "        ]\n"
 "    }\n",
-    // CONFIGURATION 56
-"{\n"
-"        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ],\n"
-"            \"re-detect\": false\n"
-"        },\n"
-"        \"preferred-lifetime\": 3000,\n"
-"        \"rebind-timer\": 2000,\n"
-"        \"renew-timer\": 1000,\n"
-"        \"subnet6\": [\n"
-"            {\n"
-"                \"id\": 1,\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"pool\": \"2001:db8::/64\"\n"
-"                    }\n"
-"                ],\n"
-"                \"subnet\": \"2001:db8::/32\"\n"
-"            }\n"
-"        ],\n"
-"        \"valid-lifetime\": 4000\n"
-"    }\n",
     // CONFIGURATION 57
 "{\n"
 "        \"interfaces-config\": {\n"
@@ -1768,8 +1771,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
-"                        \"pool\": \"2001:db8::/64\",\n"
-"                        \"user-context\": { }\n"
+"                        \"pool\": \"2001:db8::/64\"\n"
 "                    }\n"
 "                ],\n"
 "                \"subnet\": \"2001:db8::/32\"\n"
@@ -1792,12 +1794,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"pool\": \"2001:db8::/64\",\n"
-"                        \"user-context\": {\n"
-"                            \"lw4over6-bind-prefix-len\": 56,\n"
-"                            \"lw4over6-sharing-ratio\": 64,\n"
-"                            \"lw4over6-sysports-exclude\": true,\n"
-"                            \"lw4over6-v4-pool\": \"192.0.2.0/24\"\n"
-"                        }\n"
+"                        \"user-context\": { }\n"
 "                    }\n"
 "                ],\n"
 "                \"subnet\": \"2001:db8::/32\"\n"
@@ -1847,7 +1844,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "                \"id\": 1,\n"
 "                \"pools\": [\n"
 "                    {\n"
-"                        \"pool\": \"2001:db8:: - 2001:db8::ffff:ffff:ffff:ffff\",\n"
+"                        \"pool\": \"2001:db8::/64\",\n"
 "                        \"user-context\": {\n"
 "                            \"lw4over6-bind-prefix-len\": 56,\n"
 "                            \"lw4over6-sharing-ratio\": 64,\n"
@@ -1873,6 +1870,34 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"subnet6\": [\n"
 "            {\n"
 "                \"id\": 1,\n"
+"                \"pools\": [\n"
+"                    {\n"
+"                        \"pool\": \"2001:db8:: - 2001:db8::ffff:ffff:ffff:ffff\",\n"
+"                        \"user-context\": {\n"
+"                            \"lw4over6-bind-prefix-len\": 56,\n"
+"                            \"lw4over6-sharing-ratio\": 64,\n"
+"                            \"lw4over6-sysports-exclude\": true,\n"
+"                            \"lw4over6-v4-pool\": \"192.0.2.0/24\"\n"
+"                        }\n"
+"                    }\n"
+"                ],\n"
+"                \"subnet\": \"2001:db8::/32\"\n"
+"            }\n"
+"        ],\n"
+"        \"valid-lifetime\": 4000\n"
+"    }\n",
+    // CONFIGURATION 62
+"{\n"
+"        \"interfaces-config\": {\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
+"        \"preferred-lifetime\": 3000,\n"
+"        \"rebind-timer\": 2000,\n"
+"        \"renew-timer\": 1000,\n"
+"        \"subnet6\": [\n"
+"            {\n"
+"                \"id\": 1,\n"
 "                \"pd-pools\": [\n"
 "                    {\n"
 "                        \"delegated-len\": 64,\n"
@@ -1885,7 +1910,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 62
+    // CONFIGURATION 63
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1910,7 +1935,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 63
+    // CONFIGURATION 64
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -1940,7 +1965,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 64
+    // CONFIGURATION 65
 "{\n"
 "        \"hosts-databases\": [\n"
 "            {\n"
@@ -1966,7 +1991,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"renew-timer\": 1000,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 65
+    // CONFIGURATION 66
 "{\n"
 "        \"client-classes\": [\n"
 "            {\n"
@@ -2125,7 +2150,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "            \"comment\": \"A DHCPv6 server\"\n"
 "        }\n"
 "    }\n",
-    // CONFIGURATION 66
+    // CONFIGURATION 67
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -2190,7 +2215,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 67
+    // CONFIGURATION 68
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -2241,7 +2266,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 68
+    // CONFIGURATION 69
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -2273,7 +2298,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 69
+    // CONFIGURATION 70
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -2306,7 +2331,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 70
+    // CONFIGURATION 71
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -2319,7 +2344,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"statistic-default-sample-count\": 10,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 71
+    // CONFIGURATION 72
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -2327,7 +2352,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        },\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
-    // CONFIGURATION 72
+    // CONFIGURATION 73
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -2340,7 +2365,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        },\n"
 "        \"subnet6\": [ ]\n"
 "    }\n",
-    // CONFIGURATION 73
+    // CONFIGURATION 74
 "{\n"
 "        \"client-classes\": [\n"
 "            {\n"
@@ -2372,7 +2397,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "            }\n"
 "        ]\n"
 "    }\n",
-    // CONFIGURATION 74
+    // CONFIGURATION 75
 "{\n"
 "        \"client-classes\": [\n"
 "            {\n"
@@ -2406,7 +2431,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "            }\n"
 "        ]\n"
 "    }\n",
-    // CONFIGURATION 75
+    // CONFIGURATION 76
 "{\n"
 "        \"ddns-conflict-resolution-mode\": \"no-check-with-dhcid\",\n"
 "        \"interfaces-config\": {\n"
@@ -2468,7 +2493,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 76
+    // CONFIGURATION 77
 "{\n"
 "        \"client-classes\": [\n"
 "            {\n"
@@ -2561,7 +2586,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 77
+    // CONFIGURATION 78
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -2579,7 +2604,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"subnet6\": [ ],\n"
 "        \"valid-lifetime\": 400\n"
 "    }\n",
-    // CONFIGURATION 78
+    // CONFIGURATION 79
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -2616,7 +2641,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 400\n"
 "    }\n",
-    // CONFIGURATION 79
+    // CONFIGURATION 80
 "{\n"
 "        \"client-classes\": [\n"
 "            {\n"
@@ -2633,7 +2658,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"subnet6\": [ ],\n"
 "        \"valid-lifetime\": 400\n"
 "    }\n",
-    // CONFIGURATION 80
+    // CONFIGURATION 81
 "{\n"
 "        \"interfaces-config\": {\n"
 "            \"interfaces\": [ \"*\" ],\n"
@@ -2670,7 +2695,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 400\n"
 "    }\n",
-    // CONFIGURATION 81
+    // CONFIGURATION 82
 "{\n"
 "        \"ddns-ttl-percent\": 0.75,\n"
 "        \"shared-networks\": [\n"
@@ -2688,7 +2713,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 82
+    // CONFIGURATION 83
 "{\n"
 "        \"ddns-ttl\": 750,\n"
 "        \"shared-networks\": [\n"
@@ -2706,7 +2731,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 83
+    // CONFIGURATION 84
 "{\n"
 "        \"ddns-ttl-min\": 750,\n"
 "        \"shared-networks\": [\n"
@@ -2724,7 +2749,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 84
+    // CONFIGURATION 85
 "{\n"
 "        \"ddns-ttl-max\": 750,\n"
 "        \"shared-networks\": [\n"
@@ -2742,7 +2767,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 85
+    // CONFIGURATION 86
 "{\n"
 "        \"subnet6\": [\n"
 "            {\n"
@@ -2778,7 +2803,6 @@ const char* EXTRACTED_CONFIGS[] = {
 
 /// @brief unparsed configurations
 const char* UNPARSED_CONFIGS[] = {
-/// put this after const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 0
 "{\n"
 "        \"allocator\": \"iterative\",\n"
@@ -6522,6 +6546,126 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"option-data\": [\n"
 "            {\n"
 "                \"always-send\": false,\n"
+"                \"code\": 56,\n"
+"                \"csv-format\": false,\n"
+"                \"data\": \"\",\n"
+"                \"name\": \"ntp-server\",\n"
+"                \"never-send\": false,\n"
+"                \"space\": \"dhcp6\"\n"
+"            },\n"
+"            {\n"
+"                \"always-send\": false,\n"
+"                \"code\": 1,\n"
+"                \"csv-format\": true,\n"
+"                \"data\": \"2001:db8::77\",\n"
+"                \"name\": \"ntp-server-address\",\n"
+"                \"never-send\": false,\n"
+"                \"space\": \"v6-ntp-server-suboptions\"\n"
+"            },\n"
+"            {\n"
+"                \"always-send\": false,\n"
+"                \"code\": 1,\n"
+"                \"csv-format\": true,\n"
+"                \"data\": \"2001:db8::88\",\n"
+"                \"name\": \"ntp-server-address\",\n"
+"                \"never-send\": false,\n"
+"                \"space\": \"v6-ntp-server-suboptions\"\n"
+"            }\n"
+"        ],\n"
+"        \"option-def\": [ ],\n"
+"        \"parked-packet-limit\": 256,\n"
+"        \"pd-allocator\": \"iterative\",\n"
+"        \"preferred-lifetime\": 3000,\n"
+"        \"rebind-timer\": 2000,\n"
+"        \"relay-supplied-options\": [ \"65\" ],\n"
+"        \"renew-timer\": 1000,\n"
+"        \"reservations-global\": false,\n"
+"        \"reservations-in-subnet\": true,\n"
+"        \"reservations-lookup-first\": false,\n"
+"        \"reservations-out-of-pool\": false,\n"
+"        \"sanity-checks\": {\n"
+"            \"extended-info-checks\": \"fix\",\n"
+"            \"lease-checks\": \"warn\"\n"
+"        },\n"
+"        \"server-id\": {\n"
+"            \"enterprise-id\": 0,\n"
+"            \"htype\": 0,\n"
+"            \"identifier\": \"\",\n"
+"            \"persist\": true,\n"
+"            \"time\": 0,\n"
+"            \"type\": \"LLT\"\n"
+"        },\n"
+"        \"server-tag\": \"\",\n"
+"        \"shared-networks\": [ ],\n"
+"        \"statistic-default-sample-age\": 0,\n"
+"        \"statistic-default-sample-count\": 20,\n"
+"        \"store-extended-info\": false,\n"
+"        \"subnet6\": [ ],\n"
+"        \"t1-percent\": 0.5,\n"
+"        \"t2-percent\": 0.8,\n"
+"        \"valid-lifetime\": 4000\n"
+"    }\n",
+    // CONFIGURATION 29
+"{\n"
+"        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
+"        \"cache-threshold\": 0.25,\n"
+"        \"calculate-tee-times\": true,\n"
+"        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
+"        \"ddns-generated-prefix\": \"myhost\",\n"
+"        \"ddns-override-client-update\": false,\n"
+"        \"ddns-override-no-update\": false,\n"
+"        \"ddns-qualifying-suffix\": \"\",\n"
+"        \"ddns-replace-client-name\": \"never\",\n"
+"        \"ddns-send-updates\": true,\n"
+"        \"ddns-update-on-renew\": false,\n"
+"        \"decline-probation-period\": 86400,\n"
+"        \"dhcp-ddns\": {\n"
+"            \"enable-updates\": false,\n"
+"            \"max-queue-size\": 1024,\n"
+"            \"ncr-format\": \"JSON\",\n"
+"            \"ncr-protocol\": \"UDP\",\n"
+"            \"sender-ip\": \"0.0.0.0\",\n"
+"            \"sender-port\": 0,\n"
+"            \"server-ip\": \"127.0.0.1\",\n"
+"            \"server-port\": 53001\n"
+"        },\n"
+"        \"dhcp-queue-control\": {\n"
+"            \"capacity\": 64,\n"
+"            \"enable-queue\": false,\n"
+"            \"queue-type\": \"kea-ring6\"\n"
+"        },\n"
+"        \"dhcp4o6-port\": 0,\n"
+"        \"early-global-reservations-lookup\": false,\n"
+"        \"expired-leases-processing\": {\n"
+"            \"flush-reclaimed-timer-wait-time\": 25,\n"
+"            \"hold-reclaimed-time\": 3600,\n"
+"            \"max-reclaim-leases\": 100,\n"
+"            \"max-reclaim-time\": 250,\n"
+"            \"reclaim-timer-wait-time\": 10,\n"
+"            \"unwarned-reclaim-cycles\": 5\n"
+"        },\n"
+"        \"hooks-libraries\": [ ],\n"
+"        \"host-reservation-identifiers\": [ \"hw-address\", \"duid\" ],\n"
+"        \"hostname-char-replacement\": \"\",\n"
+"        \"hostname-char-set\": \"[^A-Za-z0-9.-]\",\n"
+"        \"interfaces-config\": {\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
+"        \"ip-reservations-unique\": true,\n"
+"        \"lease-database\": {\n"
+"            \"type\": \"memfile\"\n"
+"        },\n"
+"        \"mac-sources\": [ \"any\" ],\n"
+"        \"multi-threading\": {\n"
+"            \"enable-multi-threading\": true,\n"
+"            \"packet-queue-size\": 64,\n"
+"            \"thread-pool-size\": 0\n"
+"        },\n"
+"        \"option-data\": [\n"
+"            {\n"
+"                \"always-send\": false,\n"
 "                \"code\": 38,\n"
 "                \"csv-format\": false,\n"
 "                \"data\": \"AB\",\n"
@@ -6615,7 +6759,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 29
+    // CONFIGURATION 30
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -6792,7 +6936,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 30
+    // CONFIGURATION 31
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -6936,7 +7080,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 31
+    // CONFIGURATION 32
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -7118,7 +7262,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 32
+    // CONFIGURATION 33
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -7260,7 +7404,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 33
+    // CONFIGURATION 34
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -7405,7 +7549,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 34
+    // CONFIGURATION 35
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -7497,7 +7641,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 35
+    // CONFIGURATION 36
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -7589,7 +7733,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 36
+    // CONFIGURATION 37
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -7714,7 +7858,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 37
+    // CONFIGURATION 38
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -7839,7 +7983,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 38
+    // CONFIGURATION 39
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -8063,7 +8207,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 39
+    // CONFIGURATION 40
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -8203,7 +8347,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 40
+    // CONFIGURATION 41
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -8351,7 +8495,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 41
+    // CONFIGURATION 42
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -8476,7 +8620,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 42
+    // CONFIGURATION 43
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -8746,7 +8890,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 43
+    // CONFIGURATION 44
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -8895,98 +9039,6 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 44
-"{\n"
-"        \"allocator\": \"iterative\",\n"
-"        \"allow-address-registration\": true,\n"
-"        \"cache-threshold\": 0.25,\n"
-"        \"calculate-tee-times\": true,\n"
-"        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
-"        \"ddns-generated-prefix\": \"myhost\",\n"
-"        \"ddns-override-client-update\": false,\n"
-"        \"ddns-override-no-update\": false,\n"
-"        \"ddns-qualifying-suffix\": \"\",\n"
-"        \"ddns-replace-client-name\": \"never\",\n"
-"        \"ddns-send-updates\": true,\n"
-"        \"ddns-update-on-renew\": false,\n"
-"        \"decline-probation-period\": 86400,\n"
-"        \"dhcp-ddns\": {\n"
-"            \"enable-updates\": false,\n"
-"            \"max-queue-size\": 1024,\n"
-"            \"ncr-format\": \"JSON\",\n"
-"            \"ncr-protocol\": \"UDP\",\n"
-"            \"sender-ip\": \"0.0.0.0\",\n"
-"            \"sender-port\": 0,\n"
-"            \"server-ip\": \"127.0.0.1\",\n"
-"            \"server-port\": 53001\n"
-"        },\n"
-"        \"dhcp-queue-control\": {\n"
-"            \"capacity\": 64,\n"
-"            \"enable-queue\": false,\n"
-"            \"queue-type\": \"kea-ring6\"\n"
-"        },\n"
-"        \"dhcp4o6-port\": 0,\n"
-"        \"early-global-reservations-lookup\": false,\n"
-"        \"expired-leases-processing\": {\n"
-"            \"flush-reclaimed-timer-wait-time\": 25,\n"
-"            \"hold-reclaimed-time\": 3600,\n"
-"            \"max-reclaim-leases\": 100,\n"
-"            \"max-reclaim-time\": 250,\n"
-"            \"reclaim-timer-wait-time\": 10,\n"
-"            \"unwarned-reclaim-cycles\": 5\n"
-"        },\n"
-"        \"hooks-libraries\": [ ],\n"
-"        \"host-reservation-identifiers\": [ \"hw-address\", \"duid\" ],\n"
-"        \"hostname-char-replacement\": \"\",\n"
-"        \"hostname-char-set\": \"[^A-Za-z0-9.-]\",\n"
-"        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ],\n"
-"            \"re-detect\": false\n"
-"        },\n"
-"        \"ip-reservations-unique\": true,\n"
-"        \"lease-database\": {\n"
-"            \"type\": \"memfile\"\n"
-"        },\n"
-"        \"mac-sources\": [ \"client-link-addr-option\", \"remote-id\", \"subscriber-id\" ],\n"
-"        \"multi-threading\": {\n"
-"            \"enable-multi-threading\": true,\n"
-"            \"packet-queue-size\": 64,\n"
-"            \"thread-pool-size\": 0\n"
-"        },\n"
-"        \"option-data\": [ ],\n"
-"        \"option-def\": [ ],\n"
-"        \"parked-packet-limit\": 256,\n"
-"        \"pd-allocator\": \"iterative\",\n"
-"        \"preferred-lifetime\": 3000,\n"
-"        \"rebind-timer\": 2000,\n"
-"        \"relay-supplied-options\": [ \"65\" ],\n"
-"        \"renew-timer\": 1000,\n"
-"        \"reservations-global\": false,\n"
-"        \"reservations-in-subnet\": true,\n"
-"        \"reservations-lookup-first\": false,\n"
-"        \"reservations-out-of-pool\": false,\n"
-"        \"sanity-checks\": {\n"
-"            \"extended-info-checks\": \"fix\",\n"
-"            \"lease-checks\": \"warn\"\n"
-"        },\n"
-"        \"server-id\": {\n"
-"            \"enterprise-id\": 0,\n"
-"            \"htype\": 0,\n"
-"            \"identifier\": \"\",\n"
-"            \"persist\": true,\n"
-"            \"time\": 0,\n"
-"            \"type\": \"LLT\"\n"
-"        },\n"
-"        \"server-tag\": \"\",\n"
-"        \"shared-networks\": [ ],\n"
-"        \"statistic-default-sample-age\": 0,\n"
-"        \"statistic-default-sample-count\": 20,\n"
-"        \"store-extended-info\": false,\n"
-"        \"subnet6\": [ ],\n"
-"        \"t1-percent\": 0.5,\n"
-"        \"t2-percent\": 0.8,\n"
-"        \"valid-lifetime\": 4000\n"
-"    }\n",
     // CONFIGURATION 45
 "{\n"
 "        \"allocator\": \"iterative\",\n"
@@ -9080,6 +9132,98 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
     // CONFIGURATION 46
+"{\n"
+"        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
+"        \"cache-threshold\": 0.25,\n"
+"        \"calculate-tee-times\": true,\n"
+"        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
+"        \"ddns-generated-prefix\": \"myhost\",\n"
+"        \"ddns-override-client-update\": false,\n"
+"        \"ddns-override-no-update\": false,\n"
+"        \"ddns-qualifying-suffix\": \"\",\n"
+"        \"ddns-replace-client-name\": \"never\",\n"
+"        \"ddns-send-updates\": true,\n"
+"        \"ddns-update-on-renew\": false,\n"
+"        \"decline-probation-period\": 86400,\n"
+"        \"dhcp-ddns\": {\n"
+"            \"enable-updates\": false,\n"
+"            \"max-queue-size\": 1024,\n"
+"            \"ncr-format\": \"JSON\",\n"
+"            \"ncr-protocol\": \"UDP\",\n"
+"            \"sender-ip\": \"0.0.0.0\",\n"
+"            \"sender-port\": 0,\n"
+"            \"server-ip\": \"127.0.0.1\",\n"
+"            \"server-port\": 53001\n"
+"        },\n"
+"        \"dhcp-queue-control\": {\n"
+"            \"capacity\": 64,\n"
+"            \"enable-queue\": false,\n"
+"            \"queue-type\": \"kea-ring6\"\n"
+"        },\n"
+"        \"dhcp4o6-port\": 0,\n"
+"        \"early-global-reservations-lookup\": false,\n"
+"        \"expired-leases-processing\": {\n"
+"            \"flush-reclaimed-timer-wait-time\": 25,\n"
+"            \"hold-reclaimed-time\": 3600,\n"
+"            \"max-reclaim-leases\": 100,\n"
+"            \"max-reclaim-time\": 250,\n"
+"            \"reclaim-timer-wait-time\": 10,\n"
+"            \"unwarned-reclaim-cycles\": 5\n"
+"        },\n"
+"        \"hooks-libraries\": [ ],\n"
+"        \"host-reservation-identifiers\": [ \"hw-address\", \"duid\" ],\n"
+"        \"hostname-char-replacement\": \"\",\n"
+"        \"hostname-char-set\": \"[^A-Za-z0-9.-]\",\n"
+"        \"interfaces-config\": {\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
+"        \"ip-reservations-unique\": true,\n"
+"        \"lease-database\": {\n"
+"            \"type\": \"memfile\"\n"
+"        },\n"
+"        \"mac-sources\": [ \"client-link-addr-option\", \"remote-id\", \"subscriber-id\" ],\n"
+"        \"multi-threading\": {\n"
+"            \"enable-multi-threading\": true,\n"
+"            \"packet-queue-size\": 64,\n"
+"            \"thread-pool-size\": 0\n"
+"        },\n"
+"        \"option-data\": [ ],\n"
+"        \"option-def\": [ ],\n"
+"        \"parked-packet-limit\": 256,\n"
+"        \"pd-allocator\": \"iterative\",\n"
+"        \"preferred-lifetime\": 3000,\n"
+"        \"rebind-timer\": 2000,\n"
+"        \"relay-supplied-options\": [ \"65\" ],\n"
+"        \"renew-timer\": 1000,\n"
+"        \"reservations-global\": false,\n"
+"        \"reservations-in-subnet\": true,\n"
+"        \"reservations-lookup-first\": false,\n"
+"        \"reservations-out-of-pool\": false,\n"
+"        \"sanity-checks\": {\n"
+"            \"extended-info-checks\": \"fix\",\n"
+"            \"lease-checks\": \"warn\"\n"
+"        },\n"
+"        \"server-id\": {\n"
+"            \"enterprise-id\": 0,\n"
+"            \"htype\": 0,\n"
+"            \"identifier\": \"\",\n"
+"            \"persist\": true,\n"
+"            \"time\": 0,\n"
+"            \"type\": \"LLT\"\n"
+"        },\n"
+"        \"server-tag\": \"\",\n"
+"        \"shared-networks\": [ ],\n"
+"        \"statistic-default-sample-age\": 0,\n"
+"        \"statistic-default-sample-count\": 20,\n"
+"        \"store-extended-info\": false,\n"
+"        \"subnet6\": [ ],\n"
+"        \"t1-percent\": 0.5,\n"
+"        \"t2-percent\": 0.8,\n"
+"        \"valid-lifetime\": 4000\n"
+"    }\n",
+    // CONFIGURATION 47
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -9412,7 +9556,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 47
+    // CONFIGURATION 48
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -9572,7 +9716,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 48
+    // CONFIGURATION 49
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -9661,7 +9805,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 49
+    // CONFIGURATION 50
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -9753,95 +9897,6 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 50
-"{\n"
-"        \"allocator\": \"iterative\",\n"
-"        \"allow-address-registration\": true,\n"
-"        \"cache-threshold\": 0.25,\n"
-"        \"calculate-tee-times\": true,\n"
-"        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
-"        \"ddns-generated-prefix\": \"myhost\",\n"
-"        \"ddns-override-client-update\": false,\n"
-"        \"ddns-override-no-update\": false,\n"
-"        \"ddns-qualifying-suffix\": \"\",\n"
-"        \"ddns-replace-client-name\": \"never\",\n"
-"        \"ddns-send-updates\": true,\n"
-"        \"ddns-update-on-renew\": false,\n"
-"        \"decline-probation-period\": 86400,\n"
-"        \"dhcp-ddns\": {\n"
-"            \"enable-updates\": false,\n"
-"            \"max-queue-size\": 1024,\n"
-"            \"ncr-format\": \"JSON\",\n"
-"            \"ncr-protocol\": \"UDP\",\n"
-"            \"sender-ip\": \"0.0.0.0\",\n"
-"            \"sender-port\": 0,\n"
-"            \"server-ip\": \"127.0.0.1\",\n"
-"            \"server-port\": 53001\n"
-"        },\n"
-"        \"dhcp-queue-control\": {\n"
-"            \"capacity\": 64,\n"
-"            \"enable-queue\": false,\n"
-"            \"queue-type\": \"kea-ring6\"\n"
-"        },\n"
-"        \"dhcp4o6-port\": 0,\n"
-"        \"early-global-reservations-lookup\": false,\n"
-"        \"expired-leases-processing\": {\n"
-"            \"flush-reclaimed-timer-wait-time\": 25,\n"
-"            \"hold-reclaimed-time\": 3600,\n"
-"            \"max-reclaim-leases\": 100,\n"
-"            \"max-reclaim-time\": 250,\n"
-"            \"reclaim-timer-wait-time\": 10,\n"
-"            \"unwarned-reclaim-cycles\": 5\n"
-"        },\n"
-"        \"hooks-libraries\": [ ],\n"
-"        \"host-reservation-identifiers\": [ \"hw-address\", \"duid\" ],\n"
-"        \"hostname-char-replacement\": \"\",\n"
-"        \"hostname-char-set\": \"[^A-Za-z0-9.-]\",\n"
-"        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ],\n"
-"            \"re-detect\": false\n"
-"        },\n"
-"        \"ip-reservations-unique\": true,\n"
-"        \"lease-database\": {\n"
-"            \"type\": \"memfile\"\n"
-"        },\n"
-"        \"mac-sources\": [ \"any\" ],\n"
-"        \"multi-threading\": {\n"
-"            \"enable-multi-threading\": true,\n"
-"            \"packet-queue-size\": 64,\n"
-"            \"thread-pool-size\": 0\n"
-"        },\n"
-"        \"option-data\": [ ],\n"
-"        \"option-def\": [ ],\n"
-"        \"parked-packet-limit\": 256,\n"
-"        \"pd-allocator\": \"iterative\",\n"
-"        \"relay-supplied-options\": [ \"65\" ],\n"
-"        \"reservations-global\": false,\n"
-"        \"reservations-in-subnet\": true,\n"
-"        \"reservations-lookup-first\": false,\n"
-"        \"reservations-out-of-pool\": false,\n"
-"        \"sanity-checks\": {\n"
-"            \"extended-info-checks\": \"fix\",\n"
-"            \"lease-checks\": \"warn\"\n"
-"        },\n"
-"        \"server-id\": {\n"
-"            \"enterprise-id\": 0,\n"
-"            \"htype\": 0,\n"
-"            \"identifier\": \"\",\n"
-"            \"persist\": true,\n"
-"            \"time\": 0,\n"
-"            \"type\": \"LLT\"\n"
-"        },\n"
-"        \"server-tag\": \"\",\n"
-"        \"shared-networks\": [ ],\n"
-"        \"statistic-default-sample-age\": 0,\n"
-"        \"statistic-default-sample-count\": 20,\n"
-"        \"store-extended-info\": false,\n"
-"        \"subnet6\": [ ],\n"
-"        \"t1-percent\": 0.5,\n"
-"        \"t2-percent\": 0.8,\n"
-"        \"valid-lifetime\": 7200\n"
-"    }\n",
     // CONFIGURATION 51
 "{\n"
 "        \"allocator\": \"iterative\",\n"
@@ -9856,7 +9911,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
-"        \"decline-probation-period\": 12345,\n"
+"        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
 "            \"max-queue-size\": 1024,\n"
@@ -9945,6 +10000,95 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"ddns-replace-client-name\": \"never\",\n"
 "        \"ddns-send-updates\": true,\n"
 "        \"ddns-update-on-renew\": false,\n"
+"        \"decline-probation-period\": 12345,\n"
+"        \"dhcp-ddns\": {\n"
+"            \"enable-updates\": false,\n"
+"            \"max-queue-size\": 1024,\n"
+"            \"ncr-format\": \"JSON\",\n"
+"            \"ncr-protocol\": \"UDP\",\n"
+"            \"sender-ip\": \"0.0.0.0\",\n"
+"            \"sender-port\": 0,\n"
+"            \"server-ip\": \"127.0.0.1\",\n"
+"            \"server-port\": 53001\n"
+"        },\n"
+"        \"dhcp-queue-control\": {\n"
+"            \"capacity\": 64,\n"
+"            \"enable-queue\": false,\n"
+"            \"queue-type\": \"kea-ring6\"\n"
+"        },\n"
+"        \"dhcp4o6-port\": 0,\n"
+"        \"early-global-reservations-lookup\": false,\n"
+"        \"expired-leases-processing\": {\n"
+"            \"flush-reclaimed-timer-wait-time\": 25,\n"
+"            \"hold-reclaimed-time\": 3600,\n"
+"            \"max-reclaim-leases\": 100,\n"
+"            \"max-reclaim-time\": 250,\n"
+"            \"reclaim-timer-wait-time\": 10,\n"
+"            \"unwarned-reclaim-cycles\": 5\n"
+"        },\n"
+"        \"hooks-libraries\": [ ],\n"
+"        \"host-reservation-identifiers\": [ \"hw-address\", \"duid\" ],\n"
+"        \"hostname-char-replacement\": \"\",\n"
+"        \"hostname-char-set\": \"[^A-Za-z0-9.-]\",\n"
+"        \"interfaces-config\": {\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
+"        \"ip-reservations-unique\": true,\n"
+"        \"lease-database\": {\n"
+"            \"type\": \"memfile\"\n"
+"        },\n"
+"        \"mac-sources\": [ \"any\" ],\n"
+"        \"multi-threading\": {\n"
+"            \"enable-multi-threading\": true,\n"
+"            \"packet-queue-size\": 64,\n"
+"            \"thread-pool-size\": 0\n"
+"        },\n"
+"        \"option-data\": [ ],\n"
+"        \"option-def\": [ ],\n"
+"        \"parked-packet-limit\": 256,\n"
+"        \"pd-allocator\": \"iterative\",\n"
+"        \"relay-supplied-options\": [ \"65\" ],\n"
+"        \"reservations-global\": false,\n"
+"        \"reservations-in-subnet\": true,\n"
+"        \"reservations-lookup-first\": false,\n"
+"        \"reservations-out-of-pool\": false,\n"
+"        \"sanity-checks\": {\n"
+"            \"extended-info-checks\": \"fix\",\n"
+"            \"lease-checks\": \"warn\"\n"
+"        },\n"
+"        \"server-id\": {\n"
+"            \"enterprise-id\": 0,\n"
+"            \"htype\": 0,\n"
+"            \"identifier\": \"\",\n"
+"            \"persist\": true,\n"
+"            \"time\": 0,\n"
+"            \"type\": \"LLT\"\n"
+"        },\n"
+"        \"server-tag\": \"\",\n"
+"        \"shared-networks\": [ ],\n"
+"        \"statistic-default-sample-age\": 0,\n"
+"        \"statistic-default-sample-count\": 20,\n"
+"        \"store-extended-info\": false,\n"
+"        \"subnet6\": [ ],\n"
+"        \"t1-percent\": 0.5,\n"
+"        \"t2-percent\": 0.8,\n"
+"        \"valid-lifetime\": 7200\n"
+"    }\n",
+    // CONFIGURATION 53
+"{\n"
+"        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
+"        \"cache-threshold\": 0.25,\n"
+"        \"calculate-tee-times\": true,\n"
+"        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
+"        \"ddns-generated-prefix\": \"myhost\",\n"
+"        \"ddns-override-client-update\": false,\n"
+"        \"ddns-override-no-update\": false,\n"
+"        \"ddns-qualifying-suffix\": \"\",\n"
+"        \"ddns-replace-client-name\": \"never\",\n"
+"        \"ddns-send-updates\": true,\n"
+"        \"ddns-update-on-renew\": false,\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
 "            \"enable-updates\": false,\n"
@@ -10020,7 +10164,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 53
+    // CONFIGURATION 54
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -10159,7 +10303,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 54
+    // CONFIGURATION 55
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -10289,7 +10433,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 55
+    // CONFIGURATION 56
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -10421,131 +10565,6 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 56
-"{\n"
-"        \"allocator\": \"iterative\",\n"
-"        \"allow-address-registration\": true,\n"
-"        \"cache-threshold\": 0.25,\n"
-"        \"calculate-tee-times\": true,\n"
-"        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
-"        \"ddns-generated-prefix\": \"myhost\",\n"
-"        \"ddns-override-client-update\": false,\n"
-"        \"ddns-override-no-update\": false,\n"
-"        \"ddns-qualifying-suffix\": \"\",\n"
-"        \"ddns-replace-client-name\": \"never\",\n"
-"        \"ddns-send-updates\": true,\n"
-"        \"ddns-update-on-renew\": false,\n"
-"        \"decline-probation-period\": 86400,\n"
-"        \"dhcp-ddns\": {\n"
-"            \"enable-updates\": false,\n"
-"            \"max-queue-size\": 1024,\n"
-"            \"ncr-format\": \"JSON\",\n"
-"            \"ncr-protocol\": \"UDP\",\n"
-"            \"sender-ip\": \"0.0.0.0\",\n"
-"            \"sender-port\": 0,\n"
-"            \"server-ip\": \"127.0.0.1\",\n"
-"            \"server-port\": 53001\n"
-"        },\n"
-"        \"dhcp-queue-control\": {\n"
-"            \"capacity\": 64,\n"
-"            \"enable-queue\": false,\n"
-"            \"queue-type\": \"kea-ring6\"\n"
-"        },\n"
-"        \"dhcp4o6-port\": 0,\n"
-"        \"early-global-reservations-lookup\": false,\n"
-"        \"expired-leases-processing\": {\n"
-"            \"flush-reclaimed-timer-wait-time\": 25,\n"
-"            \"hold-reclaimed-time\": 3600,\n"
-"            \"max-reclaim-leases\": 100,\n"
-"            \"max-reclaim-time\": 250,\n"
-"            \"reclaim-timer-wait-time\": 10,\n"
-"            \"unwarned-reclaim-cycles\": 5\n"
-"        },\n"
-"        \"hooks-libraries\": [ ],\n"
-"        \"host-reservation-identifiers\": [ \"hw-address\", \"duid\" ],\n"
-"        \"hostname-char-replacement\": \"\",\n"
-"        \"hostname-char-set\": \"[^A-Za-z0-9.-]\",\n"
-"        \"interfaces-config\": {\n"
-"            \"interfaces\": [ \"*\" ],\n"
-"            \"re-detect\": false\n"
-"        },\n"
-"        \"ip-reservations-unique\": true,\n"
-"        \"lease-database\": {\n"
-"            \"type\": \"memfile\"\n"
-"        },\n"
-"        \"mac-sources\": [ \"any\" ],\n"
-"        \"multi-threading\": {\n"
-"            \"enable-multi-threading\": true,\n"
-"            \"packet-queue-size\": 64,\n"
-"            \"thread-pool-size\": 0\n"
-"        },\n"
-"        \"option-data\": [ ],\n"
-"        \"option-def\": [ ],\n"
-"        \"parked-packet-limit\": 256,\n"
-"        \"pd-allocator\": \"iterative\",\n"
-"        \"preferred-lifetime\": 3000,\n"
-"        \"rebind-timer\": 2000,\n"
-"        \"relay-supplied-options\": [ \"65\" ],\n"
-"        \"renew-timer\": 1000,\n"
-"        \"reservations-global\": false,\n"
-"        \"reservations-in-subnet\": true,\n"
-"        \"reservations-lookup-first\": false,\n"
-"        \"reservations-out-of-pool\": false,\n"
-"        \"sanity-checks\": {\n"
-"            \"extended-info-checks\": \"fix\",\n"
-"            \"lease-checks\": \"warn\"\n"
-"        },\n"
-"        \"server-id\": {\n"
-"            \"enterprise-id\": 0,\n"
-"            \"htype\": 0,\n"
-"            \"identifier\": \"\",\n"
-"            \"persist\": true,\n"
-"            \"time\": 0,\n"
-"            \"type\": \"LLT\"\n"
-"        },\n"
-"        \"server-tag\": \"\",\n"
-"        \"shared-networks\": [ ],\n"
-"        \"statistic-default-sample-age\": 0,\n"
-"        \"statistic-default-sample-count\": 20,\n"
-"        \"store-extended-info\": false,\n"
-"        \"subnet6\": [\n"
-"            {\n"
-"                \"allocator\": \"iterative\",\n"
-"                \"cache-threshold\": 0.25,\n"
-"                \"calculate-tee-times\": true,\n"
-"                \"id\": 1,\n"
-"                \"max-preferred-lifetime\": 3000,\n"
-"                \"max-valid-lifetime\": 4000,\n"
-"                \"min-preferred-lifetime\": 3000,\n"
-"                \"min-valid-lifetime\": 4000,\n"
-"                \"option-data\": [ ],\n"
-"                \"pd-allocator\": \"iterative\",\n"
-"                \"pd-pools\": [ ],\n"
-"                \"pools\": [\n"
-"                    {\n"
-"                        \"option-data\": [ ],\n"
-"                        \"pool\": \"2001:db8::/64\"\n"
-"                    }\n"
-"                ],\n"
-"                \"preferred-lifetime\": 3000,\n"
-"                \"rapid-commit\": false,\n"
-"                \"rebind-timer\": 2000,\n"
-"                \"relay\": {\n"
-"                    \"ip-addresses\": [ ]\n"
-"                },\n"
-"                \"renew-timer\": 1000,\n"
-"                \"reservations\": [ ],\n"
-"                \"store-extended-info\": false,\n"
-"                \"subnet\": \"2001:db8::/32\",\n"
-"                \"t1-percent\": 0.5,\n"
-"                \"t2-percent\": 0.8,\n"
-"                \"valid-lifetime\": 4000\n"
-"            }\n"
-"        ],\n"
-"        \"t1-percent\": 0.5,\n"
-"        \"t2-percent\": 0.8,\n"
-"        \"valid-lifetime\": 4000\n"
-"    }\n",
     // CONFIGURATION 57
 "{\n"
 "        \"allocator\": \"iterative\",\n"
@@ -10649,8 +10668,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"pools\": [\n"
 "                    {\n"
 "                        \"option-data\": [ ],\n"
-"                        \"pool\": \"2001:db8::/64\",\n"
-"                        \"user-context\": { }\n"
+"                        \"pool\": \"2001:db8::/64\"\n"
 "                    }\n"
 "                ],\n"
 "                \"preferred-lifetime\": 3000,\n"
@@ -10776,12 +10794,7 @@ const char* UNPARSED_CONFIGS[] = {
 "                    {\n"
 "                        \"option-data\": [ ],\n"
 "                        \"pool\": \"2001:db8::/64\",\n"
-"                        \"user-context\": {\n"
-"                            \"lw4over6-bind-prefix-len\": 56,\n"
-"                            \"lw4over6-sharing-ratio\": 64,\n"
-"                            \"lw4over6-sysports-exclude\": true,\n"
-"                            \"lw4over6-v4-pool\": \"192.0.2.0/24\"\n"
-"                        }\n"
+"                        \"user-context\": { }\n"
 "                    }\n"
 "                ],\n"
 "                \"preferred-lifetime\": 3000,\n"
@@ -11164,6 +11177,137 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"min-valid-lifetime\": 4000,\n"
 "                \"option-data\": [ ],\n"
 "                \"pd-allocator\": \"iterative\",\n"
+"                \"pd-pools\": [ ],\n"
+"                \"pools\": [\n"
+"                    {\n"
+"                        \"option-data\": [ ],\n"
+"                        \"pool\": \"2001:db8::/64\",\n"
+"                        \"user-context\": {\n"
+"                            \"lw4over6-bind-prefix-len\": 56,\n"
+"                            \"lw4over6-sharing-ratio\": 64,\n"
+"                            \"lw4over6-sysports-exclude\": true,\n"
+"                            \"lw4over6-v4-pool\": \"192.0.2.0/24\"\n"
+"                        }\n"
+"                    }\n"
+"                ],\n"
+"                \"preferred-lifetime\": 3000,\n"
+"                \"rapid-commit\": false,\n"
+"                \"rebind-timer\": 2000,\n"
+"                \"relay\": {\n"
+"                    \"ip-addresses\": [ ]\n"
+"                },\n"
+"                \"renew-timer\": 1000,\n"
+"                \"reservations\": [ ],\n"
+"                \"store-extended-info\": false,\n"
+"                \"subnet\": \"2001:db8::/32\",\n"
+"                \"t1-percent\": 0.5,\n"
+"                \"t2-percent\": 0.8,\n"
+"                \"valid-lifetime\": 4000\n"
+"            }\n"
+"        ],\n"
+"        \"t1-percent\": 0.5,\n"
+"        \"t2-percent\": 0.8,\n"
+"        \"valid-lifetime\": 4000\n"
+"    }\n",
+    // CONFIGURATION 62
+"{\n"
+"        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
+"        \"cache-threshold\": 0.25,\n"
+"        \"calculate-tee-times\": true,\n"
+"        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
+"        \"ddns-generated-prefix\": \"myhost\",\n"
+"        \"ddns-override-client-update\": false,\n"
+"        \"ddns-override-no-update\": false,\n"
+"        \"ddns-qualifying-suffix\": \"\",\n"
+"        \"ddns-replace-client-name\": \"never\",\n"
+"        \"ddns-send-updates\": true,\n"
+"        \"ddns-update-on-renew\": false,\n"
+"        \"decline-probation-period\": 86400,\n"
+"        \"dhcp-ddns\": {\n"
+"            \"enable-updates\": false,\n"
+"            \"max-queue-size\": 1024,\n"
+"            \"ncr-format\": \"JSON\",\n"
+"            \"ncr-protocol\": \"UDP\",\n"
+"            \"sender-ip\": \"0.0.0.0\",\n"
+"            \"sender-port\": 0,\n"
+"            \"server-ip\": \"127.0.0.1\",\n"
+"            \"server-port\": 53001\n"
+"        },\n"
+"        \"dhcp-queue-control\": {\n"
+"            \"capacity\": 64,\n"
+"            \"enable-queue\": false,\n"
+"            \"queue-type\": \"kea-ring6\"\n"
+"        },\n"
+"        \"dhcp4o6-port\": 0,\n"
+"        \"early-global-reservations-lookup\": false,\n"
+"        \"expired-leases-processing\": {\n"
+"            \"flush-reclaimed-timer-wait-time\": 25,\n"
+"            \"hold-reclaimed-time\": 3600,\n"
+"            \"max-reclaim-leases\": 100,\n"
+"            \"max-reclaim-time\": 250,\n"
+"            \"reclaim-timer-wait-time\": 10,\n"
+"            \"unwarned-reclaim-cycles\": 5\n"
+"        },\n"
+"        \"hooks-libraries\": [ ],\n"
+"        \"host-reservation-identifiers\": [ \"hw-address\", \"duid\" ],\n"
+"        \"hostname-char-replacement\": \"\",\n"
+"        \"hostname-char-set\": \"[^A-Za-z0-9.-]\",\n"
+"        \"interfaces-config\": {\n"
+"            \"interfaces\": [ \"*\" ],\n"
+"            \"re-detect\": false\n"
+"        },\n"
+"        \"ip-reservations-unique\": true,\n"
+"        \"lease-database\": {\n"
+"            \"type\": \"memfile\"\n"
+"        },\n"
+"        \"mac-sources\": [ \"any\" ],\n"
+"        \"multi-threading\": {\n"
+"            \"enable-multi-threading\": true,\n"
+"            \"packet-queue-size\": 64,\n"
+"            \"thread-pool-size\": 0\n"
+"        },\n"
+"        \"option-data\": [ ],\n"
+"        \"option-def\": [ ],\n"
+"        \"parked-packet-limit\": 256,\n"
+"        \"pd-allocator\": \"iterative\",\n"
+"        \"preferred-lifetime\": 3000,\n"
+"        \"rebind-timer\": 2000,\n"
+"        \"relay-supplied-options\": [ \"65\" ],\n"
+"        \"renew-timer\": 1000,\n"
+"        \"reservations-global\": false,\n"
+"        \"reservations-in-subnet\": true,\n"
+"        \"reservations-lookup-first\": false,\n"
+"        \"reservations-out-of-pool\": false,\n"
+"        \"sanity-checks\": {\n"
+"            \"extended-info-checks\": \"fix\",\n"
+"            \"lease-checks\": \"warn\"\n"
+"        },\n"
+"        \"server-id\": {\n"
+"            \"enterprise-id\": 0,\n"
+"            \"htype\": 0,\n"
+"            \"identifier\": \"\",\n"
+"            \"persist\": true,\n"
+"            \"time\": 0,\n"
+"            \"type\": \"LLT\"\n"
+"        },\n"
+"        \"server-tag\": \"\",\n"
+"        \"shared-networks\": [ ],\n"
+"        \"statistic-default-sample-age\": 0,\n"
+"        \"statistic-default-sample-count\": 20,\n"
+"        \"store-extended-info\": false,\n"
+"        \"subnet6\": [\n"
+"            {\n"
+"                \"allocator\": \"iterative\",\n"
+"                \"cache-threshold\": 0.25,\n"
+"                \"calculate-tee-times\": true,\n"
+"                \"id\": 1,\n"
+"                \"max-preferred-lifetime\": 3000,\n"
+"                \"max-valid-lifetime\": 4000,\n"
+"                \"min-preferred-lifetime\": 3000,\n"
+"                \"min-valid-lifetime\": 4000,\n"
+"                \"option-data\": [ ],\n"
+"                \"pd-allocator\": \"iterative\",\n"
 "                \"pd-pools\": [\n"
 "                    {\n"
 "                        \"delegated-len\": 64,\n"
@@ -11192,7 +11336,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 62
+    // CONFIGURATION 63
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -11320,7 +11464,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 63
+    // CONFIGURATION 64
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -11453,7 +11597,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 64
+    // CONFIGURATION 65
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -11560,7 +11704,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 65
+    // CONFIGURATION 66
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -11842,7 +11986,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        },\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 66
+    // CONFIGURATION 67
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -12077,7 +12221,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 67
+    // CONFIGURATION 68
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -12280,7 +12424,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 68
+    // CONFIGURATION 69
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -12437,7 +12581,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 69
+    // CONFIGURATION 70
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -12594,7 +12738,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 70
+    // CONFIGURATION 71
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -12686,7 +12830,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 71
+    // CONFIGURATION 72
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -12775,7 +12919,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 72
+    // CONFIGURATION 73
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -12864,7 +13008,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 73
+    // CONFIGURATION 74
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -12997,7 +13141,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 74
+    // CONFIGURATION 75
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -13132,7 +13276,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 7200\n"
 "    }\n",
-    // CONFIGURATION 75
+    // CONFIGURATION 76
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -13373,7 +13517,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 76
+    // CONFIGURATION 77
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -13621,7 +13765,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 77
+    // CONFIGURATION 78
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -13723,7 +13867,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 400\n"
 "    }\n",
-    // CONFIGURATION 78
+    // CONFIGURATION 79
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -13876,7 +14020,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 400\n"
 "    }\n",
-    // CONFIGURATION 79
+    // CONFIGURATION 80
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -13974,7 +14118,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 400\n"
 "    }\n",
-    // CONFIGURATION 80
+    // CONFIGURATION 81
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -14127,7 +14271,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 400\n"
 "    }\n",
-    // CONFIGURATION 81
+    // CONFIGURATION 82
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -14261,7 +14405,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 82
+    // CONFIGURATION 83
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -14395,7 +14539,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 83
+    // CONFIGURATION 84
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -14529,7 +14673,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 84
+    // CONFIGURATION 85
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
@@ -14663,7 +14807,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        \"t2-percent\": 0.8,\n"
 "        \"valid-lifetime\": 4000\n"
 "    }\n",
-    // CONFIGURATION 85
+    // CONFIGURATION 86
 "{\n"
 "        \"allocator\": \"iterative\",\n"
 "        \"allow-address-registration\": true,\n"
