@@ -18,6 +18,7 @@
 #include <util/state_model.h>
 #include <util/multi_threading_mgr.h>
 #include <testutils/gtest_utils.h>
+#include <limits>
 #include <string>
 
 using namespace isc;
@@ -601,29 +602,37 @@ TEST_F(HAConfigTest, negativeHeartbeatDelay) {
 
 // Error should be returned when heartbeat-delay is too large.
 TEST_F(HAConfigTest, largeHeartbeatDelay) {
-    testInvalidConfig(
-        "["
-        "    {"
-        "        \"this-server-name\": \"server1\","
-        "        \"mode\": \"load-balancing\","
-        "        \"heartbeat-delay\": 4294967296,"
-        "        \"peers\": ["
-        "            {"
-        "                \"name\": \"server1\","
-        "                \"url\": \"http://127.0.0.1:8080/\","
-        "                \"role\": \"primary\","
-        "                \"auto-failover\": false"
-        "            },"
-        "            {"
-        "                \"name\": \"server2\","
-        "                \"url\": \"http://127.0.0.1:8080/\","
-        "                \"role\": \"secondary\","
-        "                \"auto-failover\": true"
-        "            }"
-        "        ]"
-        "    }"
-        "]",
-        "'heartbeat-delay' must not be greater than 4294967295");
+    int64_t heartbeat_delay_max = std::numeric_limits<uint32_t>::max();
+    if (heartbeat_delay_max > std::numeric_limits<long>::max()) {
+        heartbeat_delay_max = std::numeric_limits<long>::max();
+    }
+    std::stringstream ss;
+    ss << "[";
+    ss << "    {";
+    ss << "        \"this-server-name\": \"server1\",";
+    ss << "        \"mode\": \"load-balancing\",";
+    ss << "        \"heartbeat-delay\": ";
+    ss << (heartbeat_delay_max + 1) << ",";
+    ss << "        \"peers\": [";
+    ss << "            {";
+    ss << "                \"name\": \"server1\",";
+    ss << "                \"url\": \"http://127.0.0.1:8080/\",";
+    ss << "                \"role\": \"primary\",";
+    ss << "                \"auto-failover\": false";
+    ss << "            },";
+    ss << "            {";
+    ss << "                \"name\": \"server2\",";
+    ss << "                \"url\": \"http://127.0.0.1:8080/\",";
+    ss << "                \"role\": \"secondary\",";
+    ss << "                \"auto-failover\": true";
+    ss << "            }";
+    ss << "        ]";
+    ss << "    }";
+    ss << "]";
+    std::stringstream msg;
+    msg << "'heartbeat-delay' must not be greater than "
+        << heartbeat_delay_max;
+    testInvalidConfig(ss.str(), msg.str());
 }
 
 // There must be at least two servers provided.

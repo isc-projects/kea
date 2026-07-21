@@ -184,7 +184,21 @@ HAConfigParser::parseOne(const HAConfigMapperPtr& config_storage,
     rel_config->setDelayedUpdatesLimit(delayed_updates_limit);
 
     // Get 'heartbeat-delay'.
-    uint32_t heartbeat_delay = getAndValidateInteger<uint32_t>(config, "heartbeat-delay");
+    // Can't use getAndValidateInteger for uint32_t because it is used
+    // as a timer interval which is a long so can have a smaller limit.
+    int64_t heartbeat_delay_max = std::numeric_limits<uint32_t>::max();
+    if (heartbeat_delay_max > std::numeric_limits<long>::max()) {
+        heartbeat_delay_max = std::numeric_limits<long>::max();
+    }
+    int64_t heartbeat_delay64 = getInteger(config, "heartbeat-delay");
+    if (heartbeat_delay64 < 0) {
+        isc_throw(ConfigError, "'heartbeat-delay' must not be negative");
+    }
+    if (heartbeat_delay64 > heartbeat_delay_max) {
+        isc_throw(ConfigError, "'heartbeat-delay' must not be greater than "
+                  << heartbeat_delay_max);
+    }
+    uint32_t heartbeat_delay = static_cast<uint32_t>(heartbeat_delay64);
     rel_config->setHeartbeatDelay(heartbeat_delay);
 
     // Get 'max-response-delay'.
