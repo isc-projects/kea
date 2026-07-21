@@ -936,6 +936,11 @@ private:
     /// @param option which encapsulated options.
     void encapsulateInternal(const OptionPtr& option);
 
+    /// @brief Undo encapsulation for an option.
+    ///
+    /// @param option which decapsulated options.
+    void decapsulateInternal(const OptionPtr& option);
+
     /// @brief Merges data from two option containers.
     ///
     /// This method merges options from one option container to another

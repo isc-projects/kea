@@ -1,0 +1,8 @@
+[func]		fdupont
+	Changed the way sub-options are encapsulated for
+	special option spaces to allow multiple suboptions
+	with the same code point. Currently only the
+	"v6-ntp-server-suboptions" space of the DHCPv6
+	"ntp-server" is special but if this feature is
+	useful for other spaces it can be made configurable.
+	(Gitlab #4496)

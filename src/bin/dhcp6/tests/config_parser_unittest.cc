@@ -3841,6 +3841,79 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
     EXPECT_EQ(111U, option_foo2->getType());
 }
 
+// The v6-ntp-server-suboptions space is special because it allows
+// multiple sub-options of the same type.
+TEST_F(Dhcp6ParserTest, optionDataNtpServer) {
+        string config = "{ " + genIfaceConfig() + ","
+        "\"preferred-lifetime\": 3000,"
+        "\"valid-lifetime\": 4000,"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"ntp-server\""
+        " },"
+        " {"
+        "    \"name\": \"ntp-server-address\","
+        "    \"space\": \"v6-ntp-server-suboptions\","
+        "    \"data\": \"2001:db8::77\""
+        " },"
+        " {"
+        "    \"name\": \"ntp-server-address\","
+        "    \"space\": \"v6-ntp-server-suboptions\","
+        "    \"data\": \"2001:db8::88\""
+        " } ]"
+        "}";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+        // We should have one option available.
+    OptionContainerPtr options =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
+    ASSERT_TRUE(options);
+    ASSERT_EQ(1U, options->size());
+
+    // Get the option.
+    OptionDescriptor desc =
+        CfgMgr::instance().getStagingCfg()->getCfgOption()->get(DHCP6_OPTION_SPACE, D6O_NTP_SERVER);
+    EXPECT_TRUE(desc.option_);
+    EXPECT_EQ(D6O_NTP_SERVER, desc.option_->getType());
+
+    // This option should comprise two sub-options.
+    auto const& subs = desc.option_->getOptions();
+    ASSERT_EQ(2U, subs.size());
+
+    // Check sub-options.
+    bool got_first = false;
+    bool got_second = false;
+    IOAddress addr1("2001:db8::77");
+    IOAddress addr2("2001:db8::88");
+    auto const buf1 = addr1.toBytes();
+    auto const buf2 = addr2.toBytes();
+    for (auto const& sub : subs) {
+        ASSERT_EQ(NTP_SUBOPTION_SRV_ADDR, sub.first);
+        ASSERT_TRUE(sub.second);
+        ASSERT_EQ(NTP_SUBOPTION_SRV_ADDR, sub.second->getType());
+        if (sub.second->getData() == buf1) {
+            EXPECT_FALSE(got_first);
+            got_first = true;
+        } else if (sub.second->getData() == buf2) {
+            EXPECT_FALSE(got_second);
+            got_second = true;
+        } else {
+            FAIL() << "unexpected content of " << sub.second->toText();
+        }
+    }
+    EXPECT_TRUE(got_first);
+    EXPECT_TRUE(got_second);
+}
+
 // Goal of this test is to verify options configuration
 // for a single subnet. In particular this test checks
 // that local options configuration overrides global

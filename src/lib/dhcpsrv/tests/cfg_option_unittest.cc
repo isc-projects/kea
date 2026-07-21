@@ -839,6 +839,15 @@ TEST_F(CfgOptionTest, multipleEncapsulatingSpaces) {
     for (auto const& sub : subs) {
         EXPECT_EQ(NTP_SUBOPTION_SRV_ADDR, sub.first);
     }
+
+    // Encapsulate again.
+    ASSERT_NO_THROW(cfg.encapsulate());
+
+    // Check we have ntp-server with still 2 (not 4) sub-options.
+    desc = cfg.get(DHCP6_OPTION_SPACE, D6O_NTP_SERVER);
+    opt = desc.option_;
+    ASSERT_TRUE(opt);
+    ASSERT_EQ(2U, opt->getOptions().size());
 }
 
 // This test verifies that an option can be deleted from the configuration.

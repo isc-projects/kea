@@ -335,6 +335,14 @@ CfgOption::encapsulateInternal(const OptionPtr& option) {
     if (encap_space == DHCP4_OPTION_SPACE || encap_space == DHCP6_OPTION_SPACE) {
         return;
     }
+    // Handle multiple encapsulating spaces.
+    bool multiple_encapsulating = false;
+    if (multiple_encapsulating_spaces_.count(encap_space) > 0) {
+        multiple_encapsulating = true;
+        // Cleanup the option so encapsulate() can be called again.
+        decapsulateInternal(option);
+    }
+
     // Retrieve all options from the encapsulated option space.
     OptionContainerPtr encap_options = getAll(encap_space);
     for (auto const& encap_opt : *encap_options) {
@@ -346,11 +354,20 @@ CfgOption::encapsulateInternal(const OptionPtr& option) {
         // Add sub-option if there isn't one added already, or
         // if encapsulating space is a multiple exception.
         OptionPtr existing = option->getOption(encap_opt.option_->getType());
-        if (!existing ||
-            (multiple_encapsulating_spaces_.count(encap_space) > 0)) {
+        if (multiple_encapsulating |
+            !option->getOption(encap_opt.option_->getType())) {
             option->addOption(encap_opt.option_);
         }
         encapsulateInternal(encap_opt.option_);
+    }
+}
+
+void
+CfgOption::decapsulateInternal(const OptionPtr& option) {
+    // Dereference any existing sub options.
+    auto sub_options = option->getOptions();
+    for (auto const& sub : sub_options) {
+        option->delOption(sub.second->getType());
     }
 }
 
@@ -505,16 +522,8 @@ CfgOption::del(const uint64_t id) {
         // Get all options for the option space.
         auto const& options = getAll(space_name);
         for (auto const& option_it : *options) {
-            if (!option_it.option_) {
-                continue;
-            }
-
-            // For each option within the option space we need to dereference
-            // any existing sub options.
-            auto sub_options = option_it.option_->getOptions();
-            for (auto const& sub : sub_options) {
-                // Dereference sub option.
-                option_it.option_->delOption(sub.second->getType());
+            if (option_it.option_) {
+                decapsulateInternal(option_it.option_);
             }
         }
     }
