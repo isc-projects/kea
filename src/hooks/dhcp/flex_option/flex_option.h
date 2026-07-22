@@ -134,6 +134,36 @@ public:
             return (class_);
         }
 
+        /// @brief Set source.
+        ///
+        /// @param source_is_query true if the source is the query,
+        /// false otherwise.
+        void setSource(bool source_is_query) {
+            source_is_query_ = source_is_query;
+        }
+
+        /// @brief Get source.
+        ///
+        /// @return true if the source is the query, false otherwise.
+        bool getSource() const {
+            return (source_is_query_);
+        }
+
+        /// @brief Set destination.
+        ///
+        /// @param dest_is_response true if the destination is the response,
+        /// false otherwise.
+        void setDestination(bool dest_is_response) {
+            dest_is_response_ = dest_is_response;
+        }
+
+        /// @brief Get destination.
+        ///
+        /// @return true if the destination is the response, false otherwise.
+        bool getDestination() const {
+            return (dest_is_response_);
+        }
+
     private:
         /// @brief The code.
         uint16_t code_;
@@ -153,6 +183,12 @@ public:
 
         /// @brief The client class aka guard name.
         isc::dhcp::ClientClass class_;
+
+        /// @brief The source is the query flag (default true).
+        bool source_is_query_;
+
+        /// @brief The destination is the response flag (default true).
+        bool dest_is_response_;
     };
 
     /// @brief The type of shared pointers to option config.
@@ -286,6 +322,13 @@ public:
     template <typename PktType>
     void process(isc::dhcp::Option::Universe universe,
                  PktType query, PktType response) {
+        // Handle the case where the source is the response and
+        // there is a TokenMember in an expression.
+        if (query && response && need_copy_classes_to_response_) {
+            for (auto const& cclass : query->getClasses()) {
+                response->addClass(cclass);
+            }
+        }
         for (auto const& pair : getOptionConfigMap()) {
             for (const OptionConfigPtr& opt_cfg : pair.second) {
                 const isc::dhcp::ClientClass& client_class =
@@ -296,10 +339,15 @@ public:
                         continue;
                     }
                 }
+                PktType source = (opt_cfg->getSource() ? query : response);
+                PktType dest = (opt_cfg->getDestination() ? response : query);
+                if (!source || !dest) {
+                    continue;
+                }
                 std::string value;
                 isc::dhcp::OptionBuffer buffer;
                 uint16_t code = opt_cfg->getCode();
-                isc::dhcp::OptionPtr opt = response->getOption(code);
+                isc::dhcp::OptionPtr opt = dest->getOption(code);
                 isc::dhcp::OptionDefinitionPtr def = opt_cfg->getOptionDef();
                 switch (opt_cfg->getAction()) {
                 case NONE:
@@ -311,7 +359,7 @@ public:
                     }
                     // Do nothing is the expression evaluates to empty.
                     value = isc::dhcp::evaluateString(*opt_cfg->getExpr(),
-                                                      *query);
+                                                      *source);
                     if (value.empty()) {
                         break;
                     }
@@ -326,13 +374,13 @@ public:
                                                         buffer));
                     }
                     // Add the option.
-                    response->addOption(opt);
+                    dest->addOption(opt);
                     logAction(ADD, code, value);
                     break;
                 case SUPERSEDE:
                     // Do nothing is the expression evaluates to empty.
                     value = isc::dhcp::evaluateString(*opt_cfg->getExpr(),
-                                                      *query);
+                                                      *source);
                     if (value.empty()) {
                         break;
                     }
@@ -349,11 +397,11 @@ public:
                                                         buffer));
                     }
                     // Remove the option if already there.
-                    while (response->getOption(code)) {
-                        response->delOption(code);
+                    while (dest->getOption(code)) {
+                        dest->delOption(code);
                     }
                     // Add the option.
-                    response->addOption(opt);
+                    dest->addOption(opt);
                     logAction(SUPERSEDE, code, value);
                     break;
                 case REMOVE:
@@ -362,12 +410,12 @@ public:
                         break;
                     }
                     // Do nothing is the expression evaluates to false.
-                    if (!isc::dhcp::evaluateBool(*opt_cfg->getExpr(), *query)) {
+                    if (!isc::dhcp::evaluateBool(*opt_cfg->getExpr(), *source)) {
                         break;
                     }
                     // Remove the option.
-                    while (response->getOption(code)) {
-                        response->delOption(code);
+                    while (dest->getOption(code)) {
+                        dest->delOption(code);
                     }
                     logAction(REMOVE, code, "");
                     break;
@@ -395,9 +443,14 @@ public:
                         continue;
                     }
                 }
+                PktType source = (sub_cfg->getSource() ? query : response);
+                PktType dest = (sub_cfg->getDestination() ? response : query);
+                if (!source || !dest) {
+                    continue;
+                }
                 std::string value;
                 isc::dhcp::OptionBuffer buffer;
-                isc::dhcp::OptionPtr opt = response->getOption(opt_code);
+                isc::dhcp::OptionPtr opt = dest->getOption(opt_code);
                 isc::dhcp::OptionPtr sub;
                 isc::dhcp::OptionDefinitionPtr def = sub_cfg->getOptionDef();
                 uint32_t vendor_id = sub_cfg->getVendorId();
@@ -411,7 +464,7 @@ public:
                     }
                     // Do nothing is the expression evaluates to empty.
                     value = isc::dhcp::evaluateString(*sub_cfg->getExpr(),
-                                                      *query);
+                                                      *source);
                     if (value.empty()) {
                         break;
                     }
@@ -443,7 +496,7 @@ public:
                             opt.reset(new isc::dhcp::OptionVendor(universe,
                                                                   vendor_id));
                         }
-                        response->addOption(opt);
+                        dest->addOption(opt);
                         if (vendor_id) {
                             logAction(ADD, opt_code, vendor_id);
                         } else {
@@ -461,7 +514,7 @@ public:
                     }
                     // Do nothing is the expression evaluates to empty.
                     value = isc::dhcp::evaluateString(*sub_cfg->getExpr(),
-                                                      *query);
+                                                      *source);
                     if (value.empty()) {
                         break;
                     }
@@ -495,7 +548,7 @@ public:
                             opt.reset(new isc::dhcp::OptionVendor(universe,
                                                                   vendor_id));
                         }
-                        response->addOption(opt);
+                        dest->addOption(opt);
                         if (vendor_id) {
                             logAction(ADD, opt_code, vendor_id);
                         } else {
@@ -517,7 +570,7 @@ public:
                         break;
                     }
                     // Do nothing is the expression evaluates to false.
-                    if (!isc::dhcp::evaluateBool(*sub_cfg->getExpr(), *query)) {
+                    if (!isc::dhcp::evaluateBool(*sub_cfg->getExpr(), *source)) {
                         break;
                     }
                     // Check vendor id mismatch.
@@ -532,7 +585,7 @@ public:
                     // Remove the empty container when wanted.
                     if ((sub_cfg->getContainerAction() == REMOVE) &&
                         opt->getOptions().empty()) {
-                        response->delOption(opt_code);
+                        dest->delOption(opt_code);
                         logAction(REMOVE, opt_code, "");
                     }
                     break;
@@ -615,6 +668,9 @@ private:
 
     /// @brief The sub-option config map of maps.
     SubOptionConfigMapMap sub_option_config_map_;
+
+    /// @brief The copy classes from query to response flag (default false).
+    bool need_copy_classes_to_response_;
 
     /// @brief Parse an option config.
     ///

@@ -35,6 +35,12 @@ namespace {
 
 /// @brief Structure that holds registered hook indexes.
 struct TestHooks {
+    /// @brief Index of pkt4_receive callout.
+    int hook_index_pkt4_receive_;
+
+    /// @brief Index of pkt6_receive callout.
+    int hook_index_pkt6_receive_;
+
     /// @brief Index of pkt4_send callout.
     int hook_index_pkt4_send_;
 
@@ -45,6 +51,8 @@ struct TestHooks {
     ///
     /// The constructor registers hook points for callout tests.
     TestHooks() {
+        hook_index_pkt4_receive_ = HooksManager::registerHook("pkt4_receive");
+        hook_index_pkt6_receive_ = HooksManager::registerHook("pkt6_receive");
         hook_index_pkt4_send_ = HooksManager::registerHook("pkt4_send");
         hook_index_pkt6_send_ = HooksManager::registerHook("pkt6_send");
     }
@@ -85,6 +93,98 @@ public:
 
     HookLibsCollection libraries_;
 };
+
+// Simple test which exercises the pkt4_receive callout.
+TEST_F(CalloutTest, pkt4Receive) {
+    // Prepare load() parameters.
+    ElementPtr params = Element::createMap();
+    ElementPtr options = Element::createList();
+    params->set("options", options);
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(DHO_HOST_NAME);
+    option->set("code", code);
+    ElementPtr add = Element::create(string("'abc'"));
+    option->set("add", add);
+    ElementPtr dest = Element::create(string("query"));
+    option->set("destination", dest);
+
+    // Set family and proc name.
+    CfgMgr::instance().setFamily(AF_INET);
+    Daemon::setProcName("kea-dhcp4");
+
+    // Load the library.
+    addLib(FLEX_OPTION_LIB_SO, params);
+    loadLibs();
+
+    // Prepare packets.
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    EXPECT_FALSE(query->getOption(DHO_HOST_NAME));
+
+    // Get and setup the callout handle.
+    EXPECT_TRUE(HooksManager::calloutsPresent(testHooks.hook_index_pkt4_receive_));
+    CalloutHandlePtr handle = HooksManager::createCalloutHandle();
+    handle->setArgument("query4", query);
+
+    // Execute the callout.
+    EXPECT_NO_THROW(HooksManager::callCallouts(testHooks.hook_index_pkt4_receive_,
+                                               *handle));
+    EXPECT_EQ(0, handle->getStatus());
+
+    // Check the result.
+    OptionPtr opt = query->getOption(DHO_HOST_NAME);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(DHO_HOST_NAME, opt->getType());
+    const OptionBuffer& buffer = opt->getData();
+    ASSERT_EQ(3U, buffer.size());
+    EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
+}
+
+// Simple test which exercises the pkt6_receive callout.
+TEST_F(CalloutTest, pkt6Receive) {
+    // Prepare load() parameters.
+    ElementPtr params = Element::createMap();
+    ElementPtr options = Element::createList();
+    params->set("options", options);
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(D6O_BOOTFILE_URL);
+    option->set("code", code);
+    ElementPtr supersede = Element::create(string("'abc'"));
+    option->set("supersede", supersede);
+    ElementPtr dest = Element::create(string("query"));
+    option->set("destination", dest);
+
+    // Set family and proc name.
+    CfgMgr::instance().setFamily(AF_INET6);
+    Daemon::setProcName("kea-dhcp6");
+
+    // Load the library.
+    addLib(FLEX_OPTION_LIB_SO, params);
+    loadLibs();
+
+    // Prepare packets.
+    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
+    EXPECT_FALSE(query->getOption(D6O_BOOTFILE_URL));
+
+    // Get and setup the callout handle.
+    EXPECT_TRUE(HooksManager::calloutsPresent(testHooks.hook_index_pkt6_receive_));
+    CalloutHandlePtr handle = HooksManager::createCalloutHandle();
+    handle->setArgument("query6", query);
+
+    // Execute the callout.
+    EXPECT_NO_THROW(HooksManager::callCallouts(testHooks.hook_index_pkt6_receive_,
+                                               *handle));
+    EXPECT_EQ(0, handle->getStatus());
+
+    // Check the result.
+    OptionPtr opt = query->getOption(D6O_BOOTFILE_URL);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(D6O_BOOTFILE_URL, opt->getType());
+    const OptionBuffer& buffer = opt->getData();
+    ASSERT_EQ(3U, buffer.size());
+    EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
+}
 
 // Simple test which exercises the pkt4_send callout.
 TEST_F(CalloutTest, pkt4Send) {

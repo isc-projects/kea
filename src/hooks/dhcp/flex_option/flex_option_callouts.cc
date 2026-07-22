@@ -35,6 +35,84 @@ using namespace isc::process;
 // issues related to namespaces.
 extern "C" {
 
+/// @brief This callout is called at the "pkt4_receive" hook.
+///
+/// It retrieves v4 query packet, and then adds, supersedes or removes
+/// option values in the query according to evaluated expressions.
+///
+/// @param handle CalloutHandle.
+///
+/// @return 0 upon success, non-zero otherwise
+int pkt4_receive(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if ((status == CalloutHandle::NEXT_STEP_SKIP) ||
+        (status == CalloutHandle::NEXT_STEP_DROP)) {
+        return (0);
+    }
+
+    // Sanity.
+    if (!impl) {
+        return (0);
+    }
+
+    // Get the parameters.
+    Pkt4Ptr query;
+    handle.getArgument("query4", query);
+
+    if (!query) {
+        return (0);
+    }
+
+    try {
+        impl->process<Pkt4Ptr>(Option::V4, query, Pkt4Ptr());
+    } catch (const std::exception& ex) {
+        LOG_ERROR(flex_option_logger, FLEX_OPTION_PROCESS_ERROR)
+            .arg(query->getLabel())
+            .arg(ex.what());
+    }
+
+    return (0);
+}
+
+/// @brief This callout is called at the "pkt6_receive" hook.
+///
+/// It retrieves v6 query packet, and then adds, supersedes or removes
+/// option values in the query according to evaluated expressions.
+///
+/// @param handle CalloutHandle.
+///
+/// @return 0 upon success, non-zero otherwise
+int pkt6_receive(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if ((status == CalloutHandle::NEXT_STEP_SKIP) ||
+        (status == CalloutHandle::NEXT_STEP_DROP)) {
+        return (0);
+    }
+
+    // Sanity.
+    if (!impl) {
+        return (0);
+    }
+
+    // Get the parameters.
+    Pkt6Ptr query;
+    handle.getArgument("query6", query);
+
+    if (!query) {
+        return (0);
+    }
+
+    try {
+        impl->process<Pkt6Ptr>(Option::V6, query, Pkt6Ptr());
+    } catch (const std::exception& ex) {
+        LOG_ERROR(flex_option_logger, FLEX_OPTION_PROCESS_ERROR)
+            .arg(query->getLabel())
+            .arg(ex.what());
+    }
+
+    return (0);
+}
+
 /// @brief This callout is called at the "pkt4_send" hook.
 ///
 /// It retrieves v4 query and response packets, and then adds, supersedes
@@ -63,6 +141,9 @@ int pkt4_send(CalloutHandle& handle) {
 
     if (status == CalloutHandle::NEXT_STEP_SKIP) {
         isc_throw(InvalidOperation, "packet pack already handled");
+    }
+    if (!query || !response) {
+        return (0);
     }
 
     try {
@@ -96,15 +177,18 @@ int pkt6_send(CalloutHandle& handle) {
         return (0);
     }
 
-    if (status == CalloutHandle::NEXT_STEP_SKIP) {
-        isc_throw(InvalidOperation, "packet pack already handled");
-    }
-
     // Get the parameters.
     Pkt6Ptr query;
     Pkt6Ptr response;
     handle.getArgument("query6", query);
     handle.getArgument("response6", response);
+
+    if (status == CalloutHandle::NEXT_STEP_SKIP) {
+        isc_throw(InvalidOperation, "packet pack already handled");
+    }
+    if (!query || !response) {
+        return (0);
+    }
 
     try {
         impl->process<Pkt6Ptr>(Option::V6, query, response);

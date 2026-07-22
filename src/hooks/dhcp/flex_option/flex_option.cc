@@ -85,6 +85,8 @@ const SimpleKeywords FlexOptionImpl::OPTION_PARAMETERS = {
     { "remove",        Element::string },
     { "sub-options",   Element::list },
     { "client-class",  Element::string },
+    { "source",        Element::string },
+    { "destination",   Element::string },
     { "comment",       Element::string }
 };
 
@@ -104,7 +106,8 @@ const SimpleKeywords FlexOptionImpl::SUB_OPTION_PARAMETERS = {
 
 FlexOptionImpl::OptionConfig::OptionConfig(uint16_t code,
                                            OptionDefinitionPtr def)
-    : code_(code), def_(def), action_(NONE), class_("") {
+    : code_(code), def_(def), action_(NONE), class_(""),
+      source_is_query_(true), dest_is_response_(true) {
 }
 
 FlexOptionImpl::OptionConfig::~OptionConfig() {
@@ -123,12 +126,13 @@ FlexOptionImpl::SubOptionConfig::SubOptionConfig(uint16_t code,
 FlexOptionImpl::SubOptionConfig::~SubOptionConfig() {
 }
 
-FlexOptionImpl::FlexOptionImpl() {
+FlexOptionImpl::FlexOptionImpl() : need_copy_classes_to_response_(false) {
 }
 
 FlexOptionImpl::~FlexOptionImpl() {
     sub_option_config_map_.clear();
     option_config_map_.clear();
+    need_copy_classes_to_response_ = false;
 }
 
 void
@@ -176,6 +180,8 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
     ConstElementPtr csv_format_elem = option->get("csv-format");
     ConstElementPtr class_elem = option->get("client-class");
     ConstElementPtr sub_options = option->get("sub-options");
+    ConstElementPtr source_elem = option->get("source");
+    ConstElementPtr dest_elem = option->get("destination");
     if (!code_elem && !name_elem) {
         isc_throw(BadValue, "'code' or 'name' must be specified: "
                   << option->str());
@@ -279,6 +285,52 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
         opt_cfg->setClass(class_elem->stringValue());
     }
 
+    // opt_cfg default source is the query.
+    if (source_elem) {
+        string source = source_elem->stringValue();
+        if (source == "query") {
+            opt_cfg->setSource(true);
+        } else if (source == "response") {
+            opt_cfg->setSource(false);
+        } else {
+            isc_throw(BadValue, "unknown source '" << source
+                      << "', valid values are 'query' and 'response'");
+        }
+    }
+
+    // opt_cfg default destination is the response.
+    if (dest_elem) {
+        string dest = dest_elem->stringValue();
+        if (dest == "query") {
+            opt_cfg->setDestination(false);
+        } else if (dest == "response") {
+            opt_cfg->setDestination(true);
+        } else {
+            isc_throw(BadValue, "unknown destination '" << dest
+                      << "', valid values are 'response' and 'query'");
+        }
+    }
+
+    // Consistency: if the destination is the query the source must be
+    // the query too.
+    if (!opt_cfg->getDestination() && !opt_cfg->getSource()) {
+      isc_throw(BadValue, "destination 'query' requires source 'query'");
+    }
+
+    // Not working as expected: the destination is the query and classes
+    // are used.
+    if (!opt_cfg->getDestination() && !opt_cfg->getClass().empty()) {
+        // LOG
+    }
+    if (!opt_cfg->getDestination() && opt_cfg->getExpr()) {
+        for (auto const& tok : *opt_cfg->getExpr()) {
+            if (boost::dynamic_pointer_cast<TokenMember>(tok)) {
+                // LOG
+                break;
+            }
+        }
+    }
+
     // opt_cfg initial action is NONE.
     if (sub_options) {
         string action;
@@ -310,6 +362,19 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
         // returning a reference to it.
         OptionConfigList& opt_lst = option_config_map_[code];
         opt_lst.push_back(opt_cfg);
+    }
+
+    // Check if we have to copy classes from the query to the response.
+    if (need_copy_classes_to_response_ ||
+        opt_cfg->getSource() ||
+        !opt_cfg->getExpr()) {
+        return;
+    }
+    for (auto const& tok : *opt_cfg->getExpr()) {
+        if (boost::dynamic_pointer_cast<TokenMember>(tok)) {
+            need_copy_classes_to_response_ = true;
+            break;
+        }
     }
 }
 
@@ -449,6 +514,10 @@ FlexOptionImpl::parseSubOption(ConstElementPtr sub_option,
     if (class_elem) {
         sub_cfg->setClass(class_elem->stringValue());
     }
+
+    // Inherit source and destination.
+    sub_cfg->setSource(opt_cfg->getSource());
+    sub_cfg->setDestination(opt_cfg->getDestination());
 
     // sub_cfg initial action is NONE.
     parseAction(sub_option, sub_cfg, universe,
