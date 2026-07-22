@@ -404,6 +404,12 @@ public:
         return (subclasses_);
     }
 
+    /// @brief Simple copy of classes from another packet.
+    ///
+    /// @note To be used by the flex option hook.
+    /// @param other the other packet.
+    void copyClasses(const Pkt& other);
+
     /// @brief Unparsed data (in received packets).
     ///
     /// @warning This public member is accessed by derived

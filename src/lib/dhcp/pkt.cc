@@ -151,6 +151,15 @@ Pkt::addSubClass(const ClientClass& class_def, const ClientClass& subclass) {
 }
 
 void
+Pkt::copyClasses(const Pkt& other) {
+    for (auto const& cclass : other.classes_) {
+        if (!classes_.contains(cclass)) {
+            classes_.insert(cclass);
+        }
+    }
+}
+
+void
 Pkt::updateTimestamp() {
     timestamp_ = boost::posix_time::microsec_clock::universal_time();
 }

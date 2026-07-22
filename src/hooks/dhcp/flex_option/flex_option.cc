@@ -320,12 +320,16 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
     // Not working as expected: the destination is the query and classes
     // are used.
     if (!opt_cfg->getDestination() && !opt_cfg->getClass().empty()) {
-        // LOG
+        LOG_WARN(flex_option_logger, FLEX_OPTION_CONFIG_USELESS_CLASS)
+            .arg(code)
+            .arg(opt_cfg->getClass());
     }
     if (!opt_cfg->getDestination() && opt_cfg->getExpr()) {
         for (auto const& tok : *opt_cfg->getExpr()) {
             if (boost::dynamic_pointer_cast<TokenMember>(tok)) {
-                // LOG
+                LOG_WARN(flex_option_logger, FLEX_OPTION_CONFIG_USELESS_MEMBER)
+                    .arg(code)
+                    .arg(opt_cfg->getText());
                 break;
             }
         }

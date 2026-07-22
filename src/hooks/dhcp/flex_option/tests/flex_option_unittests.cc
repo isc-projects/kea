@@ -889,6 +889,32 @@ TEST_F(FlexOptionTest, processEmpty) {
     EXPECT_EQ(response_txt, response->toText());
 }
 
+// Verify that response processing does nothing with no response.
+TEST_F(FlexOptionTest, processNoResponse) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(DHO_HOST_NAME);
+    option->set("code", code);
+    ElementPtr add = Element::create(string("'abc'"));
+    option->set("add", add);
+
+    option = Element::createMap();
+    options->add(option);
+    code = Element::create(DHO_DOMAIN_SEARCH);
+    option->set("code", code);
+    add = Element::create(string("'example.com'"));
+    option->set("add", add);
+    // fqdn option data is parsed using option definition in csv format.
+    option->set("csv-format", Element::create(true));
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, Pkt4Ptr()));
+}
+
 // Verify that NONE action really does nothing.
 TEST_F(FlexOptionTest, processNone) {
     CfgMgr::instance().setFamily(AF_INET6);
@@ -1581,6 +1607,278 @@ TEST_F(FlexOptionTest, optionConfigGuardMatch) {
 
     EXPECT_EQ(response_txt, response->toText());
     EXPECT_FALSE(response->getOption(D6O_BOOTFILE_URL));
+}
+
+// Verify that an unknown source keyword is rejected.
+TEST_F(FlexOptionTest, unknownSource) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr add = Element::create(string("'ab'"));
+    option->set("add", add);
+    ElementPtr code = Element::create(123);
+    option->set("code", code);
+    ElementPtr source = Element::create(string("foo"));
+    option->set("source", source);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    string expected = "unknown source 'foo', ";
+    expected += "valid values are 'query' and 'response'";
+    EXPECT_EQ(expected, impl_->getErrMsg());
+}
+
+// Verify that the default source is 'query'.
+TEST_F(FlexOptionTest, defaultSource) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr add = Element::create(string("'abc'"));
+    option->set("add", add);
+    ElementPtr code = Element::create(DHO_HOST_NAME);
+    option->set("code", code);
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    auto map = impl_->getOptionConfigMap();
+    FlexOptionImpl::OptionConfigList opt_lst;
+    ASSERT_NO_THROW(opt_lst = map.at(DHO_HOST_NAME));
+    ASSERT_FALSE(opt_lst.empty());
+    EXPECT_EQ(1U, opt_lst.size());
+    FlexOptionImpl::OptionConfigPtr opt_cfg;
+    ASSERT_NO_THROW(opt_cfg = opt_lst.front());
+
+    ASSERT_TRUE(opt_cfg);
+    EXPECT_EQ(DHO_HOST_NAME, opt_cfg->getCode());
+    EXPECT_EQ(FlexOptionImpl::ADD, opt_cfg->getAction());
+    EXPECT_EQ("'abc'", opt_cfg->getText());
+    EXPECT_TRUE(opt_cfg->getSource());
+}
+
+// Verify that the source can be set to 'query'.
+TEST_F(FlexOptionTest, querySource) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr add = Element::create(string("'abc'"));
+    option->set("add", add);
+    ElementPtr code = Element::create(DHO_HOST_NAME);
+    option->set("code", code);
+    ElementPtr source = Element::create(string("query"));
+    option->set("source", source);
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    auto map = impl_->getOptionConfigMap();
+    FlexOptionImpl::OptionConfigList opt_lst;
+    ASSERT_NO_THROW(opt_lst = map.at(DHO_HOST_NAME));
+    ASSERT_FALSE(opt_lst.empty());
+    EXPECT_EQ(1U, opt_lst.size());
+    FlexOptionImpl::OptionConfigPtr opt_cfg;
+    ASSERT_NO_THROW(opt_cfg = opt_lst.front());
+
+    ASSERT_TRUE(opt_cfg);
+    EXPECT_EQ(DHO_HOST_NAME, opt_cfg->getCode());
+    EXPECT_EQ(FlexOptionImpl::ADD, opt_cfg->getAction());
+    EXPECT_EQ("'abc'", opt_cfg->getText());
+    EXPECT_TRUE(opt_cfg->getSource());
+}
+
+// Verify that the source can be set to 'response'.
+TEST_F(FlexOptionTest, responseSource) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr add = Element::create(string("'abc'"));
+    option->set("add", add);
+    ElementPtr code = Element::create(DHO_HOST_NAME);
+    option->set("code", code);
+    ElementPtr source = Element::create(string("response"));
+    option->set("source", source);
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    auto map = impl_->getOptionConfigMap();
+    FlexOptionImpl::OptionConfigList opt_lst;
+    ASSERT_NO_THROW(opt_lst = map.at(DHO_HOST_NAME));
+    ASSERT_FALSE(opt_lst.empty());
+    EXPECT_EQ(1U, opt_lst.size());
+    FlexOptionImpl::OptionConfigPtr opt_cfg;
+    ASSERT_NO_THROW(opt_cfg = opt_lst.front());
+
+    ASSERT_TRUE(opt_cfg);
+    EXPECT_EQ(DHO_HOST_NAME, opt_cfg->getCode());
+    EXPECT_EQ(FlexOptionImpl::ADD, opt_cfg->getAction());
+    EXPECT_EQ("'abc'", opt_cfg->getText());
+    EXPECT_FALSE(opt_cfg->getSource());
+}
+
+// Verify that an unknown destination keyword is rejected.
+TEST_F(FlexOptionTest, unknownDestination) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr add = Element::create(string("'ab'"));
+    option->set("add", add);
+    ElementPtr code = Element::create(123);
+    option->set("code", code);
+    ElementPtr dest = Element::create(string("foo"));
+    option->set("destination", dest);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    string expected = "unknown destination 'foo', ";
+    expected += "valid values are 'response' and 'query'";
+    EXPECT_EQ(expected, impl_->getErrMsg());
+}
+
+// Verify that the default destination is 'response'.
+TEST_F(FlexOptionTest, defaultDestination) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr add = Element::create(string("'abc'"));
+    option->set("add", add);
+    ElementPtr code = Element::create(DHO_HOST_NAME);
+    option->set("code", code);
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    auto map = impl_->getOptionConfigMap();
+    FlexOptionImpl::OptionConfigList opt_lst;
+    ASSERT_NO_THROW(opt_lst = map.at(DHO_HOST_NAME));
+    ASSERT_FALSE(opt_lst.empty());
+    EXPECT_EQ(1U, opt_lst.size());
+    FlexOptionImpl::OptionConfigPtr opt_cfg;
+    ASSERT_NO_THROW(opt_cfg = opt_lst.front());
+
+    ASSERT_TRUE(opt_cfg);
+    EXPECT_EQ(DHO_HOST_NAME, opt_cfg->getCode());
+    EXPECT_EQ(FlexOptionImpl::ADD, opt_cfg->getAction());
+    EXPECT_EQ("'abc'", opt_cfg->getText());
+    EXPECT_TRUE(opt_cfg->getDestination());
+}
+
+// Verify that the destination can be set to 'response'.
+TEST_F(FlexOptionTest, responseDestination) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr add = Element::create(string("'abc'"));
+    option->set("add", add);
+    ElementPtr code = Element::create(DHO_HOST_NAME);
+    option->set("code", code);
+    ElementPtr dest = Element::create(string("response"));
+    option->set("destination", dest);
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    auto map = impl_->getOptionConfigMap();
+    FlexOptionImpl::OptionConfigList opt_lst;
+    ASSERT_NO_THROW(opt_lst = map.at(DHO_HOST_NAME));
+    ASSERT_FALSE(opt_lst.empty());
+    EXPECT_EQ(1U, opt_lst.size());
+    FlexOptionImpl::OptionConfigPtr opt_cfg;
+    ASSERT_NO_THROW(opt_cfg = opt_lst.front());
+
+    ASSERT_TRUE(opt_cfg);
+    EXPECT_EQ(DHO_HOST_NAME, opt_cfg->getCode());
+    EXPECT_EQ(FlexOptionImpl::ADD, opt_cfg->getAction());
+    EXPECT_EQ("'abc'", opt_cfg->getText());
+    EXPECT_TRUE(opt_cfg->getDestination());
+}
+
+// Verify that the destination can be set to 'query'.
+TEST_F(FlexOptionTest, queryDestination) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr add = Element::create(string("'abc'"));
+    option->set("add", add);
+    ElementPtr code = Element::create(DHO_HOST_NAME);
+    option->set("code", code);
+    ElementPtr dest = Element::create(string("query"));
+    option->set("destination", dest);
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    auto map = impl_->getOptionConfigMap();
+    FlexOptionImpl::OptionConfigList opt_lst;
+    ASSERT_NO_THROW(opt_lst = map.at(DHO_HOST_NAME));
+    ASSERT_FALSE(opt_lst.empty());
+    EXPECT_EQ(1U, opt_lst.size());
+    FlexOptionImpl::OptionConfigPtr opt_cfg;
+    ASSERT_NO_THROW(opt_cfg = opt_lst.front());
+
+    ASSERT_TRUE(opt_cfg);
+    EXPECT_EQ(DHO_HOST_NAME, opt_cfg->getCode());
+    EXPECT_EQ(FlexOptionImpl::ADD, opt_cfg->getAction());
+    EXPECT_EQ("'abc'", opt_cfg->getText());
+    EXPECT_FALSE(opt_cfg->getDestination());
+}
+
+// Verify that destination query and source response combo is rejected.
+TEST_F(FlexOptionTest, badSourceDestination) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr add = Element::create(string("'ab'"));
+    option->set("add", add);
+    ElementPtr code = Element::create(123);
+    option->set("code", code);
+    ElementPtr source = Element::create(string("response"));
+    option->set("source", source);
+    ElementPtr dest = Element::create(string("query"));
+    option->set("destination", dest);
+    EXPECT_THROW(impl_->testConfigure(options), BadValue);
+    string expected = "destination 'query' requires source 'query'";
+    EXPECT_EQ(expected, impl_->getErrMsg());
+}
+
+// Verify that the query can be processed.
+TEST_F(FlexOptionTest, processQuery) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(DHO_HOST_NAME);
+    option->set("code", code);
+    ElementPtr add = Element::create(string("'abc'"));
+    option->set("add", add);
+    ElementPtr dest = Element::create(string("query"));
+    option->set("destination", dest);
+
+    option = Element::createMap();
+    options->add(option);
+    code = Element::create(DHO_DOMAIN_SEARCH);
+    option->set("code", code);
+    add = Element::create(string("'example.com'"));
+    option->set("add", add);
+    // fqdn option data is parsed using option definition in csv format.
+    option->set("csv-format", Element::create(true));
+    option->set("destination", dest);
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    EXPECT_FALSE(query->getOption(DHO_HOST_NAME));
+    EXPECT_FALSE(query->getOption(DHO_DOMAIN_SEARCH));
+
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, Pkt4Ptr()));
+
+    OptionPtr opt = query->getOption(DHO_HOST_NAME);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(DHO_HOST_NAME, opt->getType());
+    const OptionBuffer& buffer = opt->getData();
+    ASSERT_EQ(3U, buffer.size());
+    EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
+
+    opt = query->getOption(DHO_DOMAIN_SEARCH);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(DHO_DOMAIN_SEARCH, opt->getType());
+    const OptionBuffer& buffer_fqdn = opt->getData();
+    ASSERT_EQ(13U, buffer_fqdn.size());
+    EXPECT_EQ(7U, buffer_fqdn[0]);
+    EXPECT_EQ(0, memcmp(&buffer_fqdn[1], "example", 7));
+    EXPECT_EQ(3U, buffer_fqdn[8]);
+    EXPECT_EQ(0, memcmp(&buffer_fqdn[9], "com", 3));
+    EXPECT_EQ(0U, buffer_fqdn[12]);
 }
 
 } // end of anonymous namespace

@@ -325,9 +325,7 @@ public:
         // Handle the case where the source is the response and
         // there is a TokenMember in an expression.
         if (query && response && need_copy_classes_to_response_) {
-            for (auto const& cclass : query->getClasses()) {
-                response->addClass(cclass);
-            }
+            response->copyClasses(*query);
         }
         for (auto const& pair : getOptionConfigMap()) {
             for (const OptionConfigPtr& opt_cfg : pair.second) {

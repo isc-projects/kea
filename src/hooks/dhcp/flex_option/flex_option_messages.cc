@@ -4,6 +4,8 @@
 #include <log/message_types.h>
 #include <log/message_initializer.h>
 
+extern const isc::log::MessageID FLEX_OPTION_CONFIG_USELESS_CLASS = "FLEX_OPTION_CONFIG_USELESS_CLASS";
+extern const isc::log::MessageID FLEX_OPTION_CONFIG_USELESS_MEMBER = "FLEX_OPTION_CONFIG_USELESS_MEMBER";
 extern const isc::log::MessageID FLEX_OPTION_LOAD_ERROR = "FLEX_OPTION_LOAD_ERROR";
 extern const isc::log::MessageID FLEX_OPTION_PROCESS_ADD = "FLEX_OPTION_PROCESS_ADD";
 extern const isc::log::MessageID FLEX_OPTION_PROCESS_CLIENT_CLASS = "FLEX_OPTION_PROCESS_CLIENT_CLASS";
@@ -20,6 +22,8 @@ extern const isc::log::MessageID FLEX_OPTION_UNLOAD = "FLEX_OPTION_UNLOAD";
 namespace {
 
 const char* values[] = {
+    "FLEX_OPTION_CONFIG_USELESS_CLASS", "For the option '%1' the client class '%2' is required before classification for a 'query' destination",
+    "FLEX_OPTION_CONFIG_USELESS_MEMBER", "For the option '%1' the  member expression '%2' is evaluated before classification for a 'query' destination",
     "FLEX_OPTION_LOAD_ERROR", "loading Flex Option hooks library failed: %1",
     "FLEX_OPTION_PROCESS_ADD", "Added the option code %1 with value %2",
     "FLEX_OPTION_PROCESS_CLIENT_CLASS", "Skip processing of the option code %1 for class '%2'",

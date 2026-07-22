@@ -9,6 +9,19 @@ This error message indicates an error during loading the Flex Option
 hooks library. The details of the error are provided as argument of
 the log message.
 
+% FLEX_OPTION_CONFIG_USELESS_CLASS For the option '%1' the client class '%2' is required before classification for a 'query' destination
+This warning message indicates the config specifies a class requirement
+when the destination is the query but the callout point for patching
+queries is before the classification so it will very likely not work
+as expected. The code of the option and the client class are displayed.
+
+% FLEX_OPTION_CONFIG_USELESS_MEMBER For the option '%1' the  member expression '%2' is evaluated before classification for a 'query' destination
+This warning message indicates the config specifies an expression
+with a member clause when the destination is the query but the callout point
+for patching queries is before the classification so it will very likely
+not work as expected. The code of the option and the expression are
+displayed.
+
 % FLEX_OPTION_PROCESS_ADD Added the option code %1 with value %2
 Logged at debug log level 40.
 This debug message is printed when an option was added into the response
