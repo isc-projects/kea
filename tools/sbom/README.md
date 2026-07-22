@@ -25,7 +25,7 @@ meson compile --verbose -C build
 
 # Run the script
 cd tools/sbom
-python3 meson2spdx.py -b ../../build -o sbom.spdx.json -r ../../kea
+python3 meson2spdx.py -b ../../build -o sbom.spdx.json -r ../..
 
 # Output in meson2spdx/sbom.spdx.json from the above command
 cat sbom.spdx.json
