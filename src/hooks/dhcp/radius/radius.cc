@@ -37,14 +37,15 @@ size_t UdpClient::exchangeListMaxSize = 200;
 
 namespace {
 
-// Initializer class.
-class Dummy {
+/// @brief Initializer class.
+class ExchangeLimitInit {
 public:
-    Dummy() {
+    /// @brief Constructor.
+    ExchangeLimitInit() {
         struct rlimit rlimit;
         memset(&rlimit, 0, sizeof(rlimit));
         if (getrlimit(RLIMIT_NOFILE, &rlimit) == 0) {
-            if (rlimit.rlim_cur / 2 > 200) {
+            if (rlimit.rlim_cur / 2 > UdpClient::exchangeListMaxSize) {
                 UdpClient::exchangeListMaxSize = rlimit.rlim_cur / 2;
             }
         }
@@ -52,7 +53,7 @@ public:
 };
 
 // Create one global object.
-Dummy myDummy;
+ExchangeLimitInit init;
 } // end of anonymous namespace
 
 UdpClient::UdpClient(const IOServicePtr& io_service, unsigned thread_pool_size)
