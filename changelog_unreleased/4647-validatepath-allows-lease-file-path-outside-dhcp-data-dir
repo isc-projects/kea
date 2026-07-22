@@ -1,0 +1,6 @@
+[bug]		wlodek
+	PathChecker::validatePath() now rejects "." and ".." file names,
+	which previously bypassed parent-directory checks and could resolve
+	paths outside the configured data directory (e.g. memfile lease
+	database name "..").
+	(Gitlab #4647)

@@ -392,6 +392,33 @@ TEST_F(PathCheckerTest, validatePathEnforcePath) {
         string("invalid path specified: '../kea', supported path is '" +
                def_path + "'"),
         true
+    },
+    {
+        // Bare ".." escapes the supported path via empty parent.
+        __LINE__,
+        "..",
+        "",
+        string("invalid path specified: '..', supported path is '" +
+               def_path + "'"),
+        true
+    },
+    {
+        // Bare "." refers to the supported directory itself.
+        __LINE__,
+        ".",
+        "",
+        string("invalid path specified: '.', supported path is '" +
+               def_path + "'"),
+        true
+    },
+    {
+        // Supported path plus ".." also escapes despite matching parent.
+        __LINE__,
+        def_path + "/..",
+        "",
+        string("invalid path specified: '..', supported path is '" +
+               def_path + "'"),
+        true
     }
     };
 
@@ -480,6 +507,24 @@ TEST_F(PathCheckerTest, validatePathEnforcePathFalse) {
         "",
         string("path: '' has no filename"),
         false
+    },
+    {
+        // Bare ".." escapes the supported path via empty parent.
+        __LINE__,
+        "..",
+        "",
+        string("invalid path specified: '..', supported path is '" +
+               def_path + "'"),
+        true
+    },
+    {
+        // Supported path plus ".." also escapes despite matching parent.
+        __LINE__,
+        def_path + "/..",
+        "",
+        string("invalid path specified: '..', supported path is '" +
+               def_path + "'"),
+        true
     }
     };
 

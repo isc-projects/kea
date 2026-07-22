@@ -566,6 +566,14 @@ TEST_F(MemfileLeaseMgrTest, defaultDataDir) {
 
     ASSERT_THROW_MSG(lease_mgr.reset(new Memfile_LeaseMgr(pmap)),
                      file::SecurityError, os.str());
+
+    // Bare ".." must not resolve outside the data directory.
+    pmap["name"] = "..";
+    std::ostringstream os2;
+    os2 << "invalid path specified: '..', supported path is '"
+        << CfgMgr::instance().getDataDir() << "'";
+    ASSERT_THROW_MSG(lease_mgr.reset(new Memfile_LeaseMgr(pmap)),
+                     file::SecurityError, os2.str());
 }
 
 /// @brief Verifies that the supported path may be overridden with

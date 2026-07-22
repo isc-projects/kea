@@ -257,6 +257,8 @@ public:
     /// is validated against the supported path. If they match, the function returns
     /// the validated path. If the input path contains only a file name the function
     /// returns valid path using the supported path and the input path name.
+    /// File names "." and ".." are rejected because they would otherwise escape
+    /// or refer to the supported directory itself.
     ///
     /// @param input_path_str file path to validate.
     /// @param enforce_path If true throw SecurityError when validation against the
