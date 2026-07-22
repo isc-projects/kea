@@ -747,6 +747,38 @@ TEST(Element, listElement) {
     EXPECT_ANY_THROW(el->set(3, Element::create(0)));
 }
 
+// Verifies that ListElement::remove() is a no-op for out-of-range indices
+// rather than invoking undefined behavior (Gitlab #4636).
+TEST(Element, listElementRemoveOutOfRange) {
+    ElementPtr el = Element::fromJSON("[ 1, 2 ]");
+    ASSERT_EQ(2, static_cast<int>(el->size()));
+
+    // Index past the end should be a no-op.
+    EXPECT_NO_THROW(el->remove(5));
+    EXPECT_EQ(2, static_cast<int>(el->size()));
+    EXPECT_EQ("[ 1, 2 ]", el->str());
+
+    // Index equal to size should be a no-op.
+    EXPECT_NO_THROW(el->remove(2));
+    EXPECT_EQ(2, static_cast<int>(el->size()));
+    EXPECT_EQ("[ 1, 2 ]", el->str());
+
+    // Negative index should be a no-op.
+    EXPECT_NO_THROW(el->remove(-1));
+    EXPECT_EQ(2, static_cast<int>(el->size()));
+    EXPECT_EQ("[ 1, 2 ]", el->str());
+
+    // Empty list: any remove should be a no-op.
+    ElementPtr empty = Element::createList();
+    EXPECT_NO_THROW(empty->remove(0));
+    EXPECT_TRUE(empty->empty());
+
+    // In-range remove still works.
+    EXPECT_NO_THROW(el->remove(0));
+    EXPECT_EQ(1, static_cast<int>(el->size()));
+    EXPECT_EQ(2, el->get(0)->intValue());
+}
+
 TEST(Element, mapElement) {
     // this function checks the specific functions for ListElements
     ElementPtr el = Element::fromJSON("{ \"name\": \"foo\", "

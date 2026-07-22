@@ -456,7 +456,7 @@ public:
     virtual void add(ElementPtr element);
 
     /// @brief Removes the element at the given position. If the index is out
-    /// of nothing happens.
+    /// of bounds, nothing happens.
     /// @param i The index of the element to remove.
     virtual void remove(const int i);
 
@@ -925,7 +925,14 @@ public:
     }
     void add(ElementPtr e) { l.push_back(e); }
     using Element::remove;
-    void remove(int i) { l.erase(l.begin() + i); }
+    /// @brief Removes the element at the given position.
+    ///
+    /// If the index is out of bounds, nothing happens.
+    void remove(int i) {
+        if (i >= 0 && static_cast<size_t>(i) < l.size()) {
+            l.erase(l.begin() + i);
+        }
+    }
     void toJSON(std::ostream& ss,
                 unsigned level = MAX_NESTING_LEVEL) const;
     size_t size() const { return (l.size()); }
