@@ -1,0 +1,5 @@
+[bug]		wlodek
+	Fixed IOFetch so asynchronous I/O failures invoke the
+	completion callback with IO_ERROR instead of hanging when
+	no timeout is configured.
+	(Gitlab #4633)

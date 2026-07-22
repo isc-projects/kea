@@ -207,7 +207,14 @@ IOFetch::operator()(boost::system::error_code ec, size_t length) {
     // operations result in EINPROGRESS. This doesn't necessarily
     // indicate an issue. Thus, we continue as if no error occurred.
     } else if (ec && (ec.value() != boost::asio::error::in_progress)) {
-        logIOFailure(ec);
+        // operation_aborted is expected when stop() cancels outstanding
+        // I/O; stop() (or an earlier completion) already invokes the
+        // user callback. Other I/O errors must complete the fetch so
+        // callers without a timeout do not hang indefinitely.
+        if (ec != boost::asio::error::operation_aborted) {
+            logIOFailure(ec);
+            stop(IO_ERROR);
+        }
         return;
     }
 
@@ -329,6 +336,11 @@ IOFetch::stop(Result result) {
                 LOG_DEBUG(logger, DBG_IMPORTANT, ASIODNS_FETCH_STOPPED).
                     arg(data_->remote_snd->getAddress().toText()).
                     arg(data_->remote_snd->getPort());
+                break;
+
+            case IO_ERROR:
+                // The originating ASIO error was already reported by
+                // logIOFailure(); avoid treating this as an unknown result.
                 break;
 
             default:

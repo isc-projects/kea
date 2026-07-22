@@ -61,6 +61,7 @@ public:
         TIME_OUT = 1,      // Failure, fetch timed out
         STOPPED = 2,       // Control code, fetch has been stopped
         NOTSET = 3,        // For testing, indicates value not set
+        IO_ERROR = 4       // Failure, asynchronous I/O returned an error
     };
 
     /// @brief Convert enum to string.
@@ -74,6 +75,7 @@ public:
             "TIME_OUT",
             "STOPPED",
             "NOTSET",
+            "IO_ERROR",
         };
         static std::string const unknown("UNKNOWN");
         return (result < text_vector.size() ? text_vector[result] : unknown);

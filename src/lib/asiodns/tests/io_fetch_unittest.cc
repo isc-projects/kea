@@ -544,6 +544,38 @@ public:
         EXPECT_TRUE(run_);
     }
 
+    /// \brief TCP I/O error completion test
+    ///
+    /// Connect to a closed local port so the asynchronous open fails with
+    /// connection refused. The completion callback must run with IO_ERROR
+    /// even when no timeout is configured (wait = -1).
+    ///
+    /// \param wait Timeout passed to IOFetch (-1 means no timeout).
+    void tcpIoErrorTest(int wait) {
+        protocol_ = IOFetch::TCP;
+        expected_ = IOFetch::IO_ERROR;
+        run_ = false;
+
+        OutputBufferPtr buff(new OutputBuffer(512));
+        IOFetch fetch(IOFetch::TCP, service_, question_, IOAddress(TEST_HOST),
+                      TEST_PORT, buff, this, wait);
+
+        // Watchdog: without the fix, wait=-1 never completes and run() hangs.
+        timer_.expires_after(std::chrono::milliseconds(2000));
+        timer_.async_wait([this](const boost::system::error_code& error) {
+            if (!error && !run_) {
+                ADD_FAILURE() << "IOFetch callback was not invoked within "
+                                 "watchdog timeout";
+                service_->stop();
+            }
+        });
+
+        service_->post(fetch);
+        service_->run();
+        timer_.cancel();
+        EXPECT_TRUE(run_);
+    }
+
     /// \brief Send/Receive Test
     ///
     /// Send a query to the server then receives a response.
@@ -683,7 +715,28 @@ TEST_F(IOFetchTest, TcpPrematureStop) {
 }
 
 TEST_F(IOFetchTest, TcpTimeout) {
+    // Accept the TCP connection but never reply so the fetch timer fires.
+    // Connecting to a closed port completes with IO_ERROR (covered by
+    // TcpIoError*); this test needs a silent peer to exercise TIME_OUT.
+    tcp_socket_.reset(new tcp::socket(service_->getInternalIOService()));
+    tcp_acceptor_.reset(new tcp::acceptor(service_->getInternalIOService(),
+                                          tcp::endpoint(tcp::v4(), TEST_PORT)));
+    tcp_acceptor_->async_accept(*tcp_socket_,
+                                [](const boost::system::error_code&) {
+                                    // Intentionally do not respond.
+                                });
     timeoutTest(IOFetch::TCP, tcp_fetch_);
+    tcp_socket_->close();
+}
+
+// Connection refused with no timeout must still complete via IO_ERROR.
+TEST_F(IOFetchTest, TcpIoErrorNoTimeout) {
+    tcpIoErrorTest(-1);
+}
+
+// Connection refused with a timeout must report IO_ERROR, not TIME_OUT.
+TEST_F(IOFetchTest, TcpIoErrorWithTimeout) {
+    tcpIoErrorTest(5000);
 }
 
 // Test with values at or near 2, then at or near the chunk size (16 and 32
