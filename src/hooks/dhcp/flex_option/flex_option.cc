@@ -324,16 +324,6 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
             .arg(code)
             .arg(opt_cfg->getClass());
     }
-    if (!opt_cfg->getDestination() && opt_cfg->getExpr()) {
-        for (auto const& tok : *opt_cfg->getExpr()) {
-            if (boost::dynamic_pointer_cast<TokenMember>(tok)) {
-                LOG_WARN(flex_option_logger, FLEX_OPTION_CONFIG_USELESS_MEMBER)
-                    .arg(code)
-                    .arg(opt_cfg->getText());
-                break;
-            }
-        }
-    }
 
     // opt_cfg initial action is NONE.
     if (sub_options) {
@@ -366,6 +356,19 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
         // returning a reference to it.
         OptionConfigList& opt_lst = option_config_map_[code];
         opt_lst.push_back(opt_cfg);
+    }
+
+    // Not working as expected: the destination is the query and
+    // TokenMember is used.
+    if (!opt_cfg->getDestination() && opt_cfg->getExpr()) {
+        for (auto const& tok : *opt_cfg->getExpr()) {
+            if (boost::dynamic_pointer_cast<TokenMember>(tok)) {
+                LOG_WARN(flex_option_logger, FLEX_OPTION_CONFIG_USELESS_MEMBER)
+                    .arg(code)
+                    .arg(opt_cfg->getText());
+                break;
+            }
+        }
     }
 
     // Check if we have to copy classes from the query to the response.
@@ -523,6 +526,15 @@ FlexOptionImpl::parseSubOption(ConstElementPtr sub_option,
     sub_cfg->setSource(opt_cfg->getSource());
     sub_cfg->setDestination(opt_cfg->getDestination());
 
+    // Not working as expected: the destination is the query and classes
+    // are used.
+    if (!opt_cfg->getDestination() && !sub_cfg->getClass().empty()) {
+        LOG_WARN(flex_option_logger, FLEX_OPTION_CONFIG_SUB_USELESS_CLASS)
+            .arg(code)
+            .arg(opt_cfg->getCode())
+            .arg(sub_cfg->getClass());
+    }
+
     // sub_cfg initial action is NONE.
     parseAction(sub_option, sub_cfg, universe,
                 "add", ADD, EvalContext::PARSER_STRING);
@@ -533,6 +545,21 @@ FlexOptionImpl::parseSubOption(ConstElementPtr sub_option,
 
     if (sub_cfg->getAction() == NONE) {
         isc_throw(BadValue, "no action: " << sub_option->str());
+    }
+
+    // Not working as expected: the destination is the query and
+    // TokenMember is used.
+    if (!opt_cfg->getDestination() && sub_cfg->getExpr()) {
+        for (auto const& tok : *sub_cfg->getExpr()) {
+            if (boost::dynamic_pointer_cast<TokenMember>(tok)) {
+                LOG_WARN(flex_option_logger,
+                         FLEX_OPTION_CONFIG_SUB_USELESS_MEMBER)
+                    .arg(code)
+                    .arg(opt_cfg->getCode())
+                    .arg(sub_cfg->getText());
+                break;
+            }
+        }
     }
 
     ConstElementPtr container_add = sub_option->get("container-add");
@@ -558,6 +585,20 @@ FlexOptionImpl::parseSubOption(ConstElementPtr sub_option,
                   << " was already specified");
     }
     sub_map[code] = sub_cfg;
+
+    // Check if we have to copy classes from the query to the response.
+    if (need_copy_classes_to_response_ ||
+        opt_cfg->getSource() ||
+        !sub_cfg->getExpr()) {
+        return;
+    }
+    for (auto const& tok : *sub_cfg->getExpr()) {
+        if (boost::dynamic_pointer_cast<TokenMember>(tok)) {
+            need_copy_classes_to_response_ = true;
+            break;
+        }
+    }
+
 }
 
 void

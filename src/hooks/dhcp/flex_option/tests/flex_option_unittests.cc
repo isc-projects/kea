@@ -16,6 +16,7 @@
 #include <eval/eval_context.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>
+#include <testutils/log_utils.h>
 
 #include <tests/test_flex_option.h>
 #include <gtest/gtest.h>
@@ -25,6 +26,7 @@ using namespace std;
 using namespace isc;
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using namespace isc::eval;
 using namespace isc::hooks;
 using namespace isc::flex_option;
@@ -1879,6 +1881,153 @@ TEST_F(FlexOptionTest, processQuery) {
     EXPECT_EQ(3U, buffer_fqdn[8]);
     EXPECT_EQ(0, memcmp(&buffer_fqdn[9], "com", 3));
     EXPECT_EQ(0U, buffer_fqdn[12]);
+}
+
+// Verify that the source is followed: derived from processFullTest:
+//  - the source is set to response
+//  - the trigger option is added to the response
+TEST_F(FlexOptionTest, processSource) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(DHO_BOOT_FILE_NAME);
+    option->set("code", code);
+    string expr = "ifelse(option[host-name].exists,";
+    expr += "concat(option[host-name].text,'.boot'),'')";
+    ElementPtr add = Element::create(expr);
+    option->set("add", add);
+    ElementPtr source = Element::create(string("response"));
+    option->set("source", source);
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
+    OptionStringPtr str(new OptionString(Option::V4, DHO_HOST_NAME, "foo"));
+    response->addOption(str);
+    EXPECT_FALSE(query->getOption(DHO_HOST_NAME));
+    EXPECT_FALSE(response->getOption(DHO_BOOT_FILE_NAME));
+
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
+
+    OptionPtr opt = response->getOption(DHO_BOOT_FILE_NAME);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(DHO_BOOT_FILE_NAME, opt->getType());
+    const OptionBuffer& buffer = opt->getData();
+    ASSERT_EQ(8U, buffer.size());
+    EXPECT_EQ(0, memcmp(&buffer[0], "foo.boot", 8));
+}
+
+// Verify that a member in the expression works with the response source.
+TEST_F(FlexOptionTest, processMemberSource) {
+    CfgMgr::instance().setFamily(AF_INET6);
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(D6O_BOOTFILE_URL);
+    option->set("code", code);
+    ElementPtr remove = Element::create(string("member('foobar')"));
+    option->set("remove", remove);
+    ElementPtr source = Element::create(string("response"));
+    option->set("source", source);
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
+    query->addClass("foobar");
+    Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
+    string response_txt = response->toText();
+    OptionStringPtr str(new OptionString(Option::V6, D6O_BOOTFILE_URL, "http"));
+    response->addOption(str);
+
+    EXPECT_NO_THROW(impl_->process<Pkt6Ptr>(Option::V6, query, response));
+
+    EXPECT_EQ(response_txt, response->toText());
+    EXPECT_FALSE(response->getOption(D6O_BOOTFILE_URL));
+    // No magic: we simply copied classes from query to response...
+    EXPECT_TRUE(response->inClass("foobar"));
+}
+
+/// @brief Test fixture for testing warnings from the Flex Option library.
+class FlexOptionLogTest : public LogContentTest {
+public:
+    /// @brief Constructor.
+    FlexOptionLogTest() {
+        impl_.reset(new TestFlexOptionImpl());
+        CfgMgr::instance().setFamily(AF_INET);
+    }
+
+    /// @brief Destructor.
+    virtual ~FlexOptionLogTest() {
+        LibDHCP::clearRuntimeOptionDefs();
+        CfgMgr::instance().setFamily(AF_INET);
+        impl_.reset();
+    }
+
+    /// @brief Flex Option implementation.
+    TestFlexOptionImplPtr impl_;
+};
+
+// Verify that client-classes does not trigger a warning by default.
+TEST_F(FlexOptionLogTest, noWarning) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr add = Element::create(string("'abc'"));
+    option->set("add", add);
+    ElementPtr code = Element::create(DHO_HOST_NAME);
+    option->set("code", code);
+    option->set("client-class", Element::create(string("foobar")));
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    EXPECT_EQ(0U, countFile("FLEX_OPTION_CONFIG_USELESS_CLASS"));
+    EXPECT_EQ(0U, countFile("FLEX_OPTION_CONFIG_USELESS_MEMBER"));
+}
+
+// Verify that client-classes triggers a warning with query destination.
+TEST_F(FlexOptionLogTest, classWarning) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr add = Element::create(string("'abc'"));
+    option->set("add", add);
+    ElementPtr code = Element::create(DHO_HOST_NAME);
+    option->set("code", code);
+    option->set("client-class", Element::create(string("foobar")));
+    ElementPtr dest = Element::create(string("query"));
+    option->set("destination", dest);
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    string expected = "FLEX_OPTION_CONFIG_USELESS_CLASS ";
+    expected += "For the option code 12 the client class foobar is ";
+    expected += "required before classification for a query destination";
+    EXPECT_EQ(1U, countFile(expected));
+    EXPECT_EQ(0U, countFile("FLEX_OPTION_CONFIG_USELESS_MEMBER"));
+}
+
+// Verify that client-classes does not trigger a warning by default.
+TEST_F(FlexOptionLogTest, memberWarning) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr remove = Element::create(string("member('foobar')"));
+    option->set("remove", remove);
+    ElementPtr code = Element::create(DHO_HOST_NAME);
+    option->set("code", code);
+    ElementPtr dest = Element::create(string("query"));
+    option->set("destination", dest);
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    EXPECT_EQ(0U, countFile("FLEX_OPTION_CONFIG_USELESS_CLASS"));
+    string expected = "FLEX_OPTION_CONFIG_USELESS_MEMBER ";
+    expected += "For the option code 12 the member expression ";
+    expected += "member('foobar') is ";
+    expected += "evaluated before classification for a query destination";
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 } // end of anonymous namespace

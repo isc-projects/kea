@@ -9,13 +9,27 @@ This error message indicates an error during loading the Flex Option
 hooks library. The details of the error are provided as argument of
 the log message.
 
-% FLEX_OPTION_CONFIG_USELESS_CLASS For the option '%1' the client class '%2' is required before classification for a 'query' destination
+% FLEX_OPTION_CONFIG_SUB_USELESS_CLASS For the sub-option code %1 in option code %2 the client class %3 is required before classification for a query destination
 This warning message indicates the config specifies a class requirement
 when the destination is the query but the callout point for patching
 queries is before the classification so it will very likely not work
-as expected. The code of the option and the client class are displayed.
+as expected. The codes of the sub-option and option, and the client
+class name are displayed.
 
-% FLEX_OPTION_CONFIG_USELESS_MEMBER For the option '%1' the  member expression '%2' is evaluated before classification for a 'query' destination
+% FLEX_OPTION_CONFIG_SUB_USELESS_MEMBER For the sub-option code %1 in option code %2 the member expression %3 is evaluated before classification for a query destination
+This warning message indicates the config specifies an expression
+with a member clause when the destination is the query but the callout point
+for patching queries is before the classification so it will very likely
+not work as expected. The code of the sub-option and option, and the
+expression are displayed.
+
+% FLEX_OPTION_CONFIG_USELESS_CLASS For the option code %1 the client class %2 is required before classification for a query destination
+This warning message indicates the config specifies a class requirement
+when the destination is the query but the callout point for patching
+queries is before the classification so it will very likely not work
+as expected. The code of the option and the client class name are displayed.
+
+% FLEX_OPTION_CONFIG_USELESS_MEMBER For the option code %1 the member expression %2 is evaluated before classification for a query destination
 This warning message indicates the config specifies an expression
 with a member clause when the destination is the query but the callout point
 for patching queries is before the classification so it will very likely

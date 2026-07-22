@@ -12,6 +12,6 @@ dhcp_flex_option_lib_tests = executable(
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
-    link_with: [dhcp_flex_option_archive] + LIBS_BUILT_SO_FAR,
+    link_with: [dhcp_flex_option_archive, kea_testutils_lib] + LIBS_BUILT_SO_FAR,
 )
 test('dhcp-flex-option-lib-tests', dhcp_flex_option_lib_tests, protocol: 'gtest')

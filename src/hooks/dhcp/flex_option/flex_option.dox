@@ -99,6 +99,16 @@ The sole parameter is a options list of options with:
    definition.
  - @b client-class - Specifies the guard i.e. the client class the query
    must belong to.
+ - @b source - Specifies what is the source for expression evaluation.
+   The default is the query but this can be changed to the response.
+   Note that if an expression includes a member clause the query classes
+   are copied to the response to make this to work.
+ - @b destination - Specifies what is the destination of option changes.
+   The default is the response but this can be changed to the query.
+   Note the change is performed before the classification so
+   @ client-class or a member clause in expression is very likely
+   to not work as expected. A warning is emitted when this situation
+   is detected when the configuration is parsed.
 
 Note for the rare options which can be empty this mechanism does not work.
 The proposed solution in this case is to use a client class to set the
@@ -121,7 +131,9 @@ decodes the option configurations. @ref unload() free the configuration.
 
 Kea engine checks if the library has functions that match known hook point
 names. This library has two such functions: @ref pkt4_send and @ref pkt6_send,
-all located in flex_option_callouts.cc.
+all located in flex_option_callouts.cc. The @b destination feature added
+@ref pkt4_receive and @ref pkt6_receive, of course only the query is passed
+when they are called.
 
 kea-dhcp4 server calls @ref pkt4_send (and kea-dhcp6 @ref pkt6_send) with
 the query and response packets. For each configured option and sub-option

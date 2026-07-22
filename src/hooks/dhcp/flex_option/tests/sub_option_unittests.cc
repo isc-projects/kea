@@ -19,6 +19,7 @@
 #include <eval/eval_context.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>
+#include <testutils/log_utils.h>
 
 #include <tests/test_flex_option.h>
 #include <gtest/gtest.h>
@@ -29,6 +30,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using namespace isc::eval;
 using namespace isc::hooks;
 using namespace isc::flex_option;
@@ -1079,6 +1081,43 @@ TEST_F(FlexSubOptionTest, subOptionConfigComplex) {
 }
 
 // Empty sub-option config list doing nothing is the same as empty option list.
+
+// Verify that response processing does nothing with no response.
+TEST_F(FlexSubOptionTest, subProcessNoResponse) {
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-container", 222,
+                                                 DHCP4_OPTION_SPACE, "empty",
+                                                 "my-space"));
+    defs.addItem(def);
+    OptionDefinitionPtr sdef(new OptionDefinition("my-option", 1, "my-space",
+                                                  "fqdn", true));
+    defs.addItem(sdef);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(222);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr add = Element::create(string("'example.com'"));
+    sub_option->set("add", add);
+    ElementPtr name = Element::create(string("my-option"));
+    sub_option->set("name", name);
+    sub_option->set("csv-format", Element::create(true));
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, Pkt4Ptr()));
+}
 
 // Verify that NONE action really does nothing.
 TEST_F(FlexSubOptionTest, subProcessNone) {
@@ -3168,6 +3207,329 @@ TEST_F(FlexSubOptionTest, subOptionConfigGuardSubOptiondMatch) {
     const OptionBuffer& buffer = sub->getData();
     ASSERT_EQ(3U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
+}
+
+// Verify that ADD action adds the specified sub-option in an already
+// existing container option with a query destination.
+TEST_F(FlexSubOptionTest, subProcessQuery) {
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-container", 222,
+                                                 DHCP4_OPTION_SPACE, "empty",
+                                                 "my-space"));
+    defs.addItem(def);
+    OptionDefinitionPtr sdef(new OptionDefinition("my-option", 1, "my-space",
+                                                  "string"));
+    defs.addItem(sdef);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(222);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr dest = Element::create(string("query"));
+    option->set("destination", dest);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr add = Element::create(string("'abc'"));
+    sub_option->set("add", add);
+    ElementPtr name = Element::create(string("my-option"));
+    sub_option->set("name", name);
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    OptionPtr container(new Option(Option::V4, 222));
+    query->addOption(container);
+    EXPECT_TRUE(query->getOption(222));
+
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, Pkt4Ptr()));
+
+    // Only one option with code 222.
+    EXPECT_EQ(1U, query->options_.count(222));
+
+    OptionPtr opt = query->getOption(222);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(222U, opt->getType());
+    OptionPtr sub = opt->getOption(1);
+    ASSERT_TRUE(sub);
+    EXPECT_EQ(1U, sub->getType());
+    const OptionBuffer& buffer = sub->getData();
+    ASSERT_EQ(3U, buffer.size());
+    EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
+
+    // Only one sub-option.
+    auto const& opts = opt->getOptions();
+    EXPECT_EQ(1U, opts.size());
+}
+
+// Verify that ADD action adds the specified sub-option in an already
+// existing container option with a query destination.
+TEST_F(FlexSubOptionTest, subProcessSource) {
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-container", 222,
+                                                 DHCP4_OPTION_SPACE, "empty",
+                                                 "my-space"));
+    defs.addItem(def);
+    OptionDefinitionPtr sdef(new OptionDefinition("my-option", 1, "my-space",
+                                                  "string"));
+    defs.addItem(sdef);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(222);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    string expr = "ifelse(option[host-name].exists,";
+    expr += "concat(option[host-name].text,'.boot'),'')";
+    ElementPtr add = Element::create(expr);
+    sub_option->set("add", add);
+    ElementPtr name = Element::create(string("my-option"));
+    sub_option->set("name", name);
+    ElementPtr source = Element::create(string("response"));
+    option->set("source", source);
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
+    OptionStringPtr str(new OptionString(Option::V4, DHO_HOST_NAME, "foo"));
+    response->addOption(str);
+    OptionPtr container(new Option(Option::V4, 222));
+    response->addOption(container);
+    EXPECT_TRUE(response->getOption(222));
+
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
+
+    // Only one option with code 222.
+    EXPECT_EQ(1U, response->options_.count(222));
+
+    OptionPtr opt = response->getOption(222);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(222U, opt->getType());
+    OptionPtr sub = opt->getOption(1);
+    ASSERT_TRUE(sub);
+    EXPECT_EQ(1U, sub->getType());
+    const OptionBuffer& buffer = sub->getData();
+    ASSERT_EQ(8U, buffer.size());
+    EXPECT_EQ(0, memcmp(&buffer[0], "foo.boot", 3));
+
+    // Only one sub-option.
+    auto const& opts = opt->getOptions();
+    EXPECT_EQ(1U, opts.size());
+}
+
+// Verify that a member in the expression works with the response source.
+TEST_F(FlexSubOptionTest, subProcessMemberSource) {
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-container", 222,
+                                                 DHCP4_OPTION_SPACE, "empty",
+                                                 "my-space"));
+    defs.addItem(def);
+    OptionDefinitionPtr sdef(new OptionDefinition("my-option", 1, "my-space",
+                                                  "string"));
+    defs.addItem(sdef);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(222);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr source = Element::create(string("response"));
+    option->set("source", source);
+
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr remove = Element::create(string("member('foobar')"));
+    sub_option->set("remove", remove);
+    ElementPtr name = Element::create(string("my-option"));
+    sub_option->set("name", name);
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    query->addClass("foobar");
+    Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
+    string response_txt = response->toText();
+    OptionPtr container(new Option(Option::V4, 222));
+    response->addOption(container);
+    EXPECT_TRUE(response->getOption(222));
+    OptionStringPtr str(new OptionString(Option::V4, 1, "xyzt"));
+    container->addOption(str);
+
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
+
+    EXPECT_EQ(response_txt, response->toText());
+    EXPECT_FALSE(response->getOption(222));
+    // No magic: we simply copied classes from query to response...
+    EXPECT_TRUE(response->inClass("foobar"));
+}
+
+/// @brief Test fixture for testing warnings from the Flex Option library.
+class FlexSubOptionLogTest : public LogContentTest {
+public:
+    /// @brief Constructor.
+    FlexSubOptionLogTest() {
+        impl_.reset(new TestFlexOptionImpl());
+        CfgMgr::instance().setFamily(AF_INET);
+    }
+
+    /// @brief Destructor.
+    virtual ~FlexSubOptionLogTest() {
+        LibDHCP::clearRuntimeOptionDefs();
+        CfgMgr::instance().setFamily(AF_INET);
+        impl_.reset();
+    }
+
+    /// @brief Flex Option implementation.
+    TestFlexOptionImplPtr impl_;
+};
+
+// Verify that client-classes does not trigger a warning by default.
+TEST_F(FlexSubOptionLogTest, noWarning) {
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-container", 222,
+                                                 DHCP4_OPTION_SPACE, "empty",
+                                                 "my-space"));
+    defs.addItem(def);
+    OptionDefinitionPtr sdef(new OptionDefinition("my-option", 1, "my-space",
+                                                  "string"));
+    defs.addItem(sdef);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(222);
+    option->set("code", code);
+
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr add = Element::create(string("'abc'"));
+    sub_option->set("add", add);
+    ElementPtr name = Element::create(string("my-option"));
+    sub_option->set("name", name);
+    sub_option->set("client-class", Element::create(string("foobar")));
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    EXPECT_EQ(0U, countFile("FLEX_OPTION_CONFIG_USELESS_CLASS"));
+    EXPECT_EQ(0U, countFile("FLEX_OPTION_CONFIG_USELESS_MEMBER"));
+    EXPECT_EQ(0U, countFile("FLEX_OPTION_CONFIG_SUB_USELESS_CLASS"));
+    EXPECT_EQ(0U, countFile("FLEX_OPTION_CONFIG_SUB_USELESS_MEMBER"));
+}
+
+// Verify that client-classes triggers a warning with query destination.
+TEST_F(FlexSubOptionLogTest, classWarning) {
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-container", 222,
+                                                 DHCP4_OPTION_SPACE, "empty",
+                                                 "my-space"));
+    defs.addItem(def);
+    OptionDefinitionPtr sdef(new OptionDefinition("my-option", 1, "my-space",
+                                                  "string"));
+    defs.addItem(sdef);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(222);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr dest = Element::create(string("query"));
+    option->set("destination", dest);
+
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr add = Element::create(string("'abc'"));
+    sub_option->set("add", add);
+    ElementPtr name = Element::create(string("my-option"));
+    sub_option->set("name", name);
+    sub_option->set("client-class", Element::create(string("foobar")));
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    EXPECT_EQ(0U, countFile("FLEX_OPTION_CONFIG_USELESS_CLASS"));
+    EXPECT_EQ(0U, countFile("FLEX_OPTION_CONFIG_USELESS_MEMBER"));
+    string expected = "FLEX_OPTION_CONFIG_SUB_USELESS_CLASS ";
+    expected += "For the sub-option code 1 in option code 222 ";
+    expected += "the client class foobar is ";
+    expected += "required before classification for a query destination";
+    EXPECT_EQ(1U, countFile(expected));
+    EXPECT_EQ(0U, countFile("FLEX_OPTION_CONFIG_SUB_USELESS_MEMBER"));
+}
+
+// Verify that client-classes does not trigger a warning by default.
+TEST_F(FlexSubOptionLogTest, memberWarning) {
+    OptionDefSpaceContainer defs;
+    OptionDefinitionPtr def(new OptionDefinition("my-container", 222,
+                                                 DHCP4_OPTION_SPACE, "empty",
+                                                 "my-space"));
+    defs.addItem(def);
+    OptionDefinitionPtr sdef(new OptionDefinition("my-option", 1, "my-space",
+                                                  "string"));
+    defs.addItem(sdef);
+    EXPECT_NO_THROW(LibDHCP::setRuntimeOptionDefs(defs));
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(222);
+    option->set("code", code);
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
+    ElementPtr dest = Element::create(string("query"));
+    option->set("destination", dest);
+
+    ElementPtr sub_option = Element::createMap();
+    sub_options->add(sub_option);
+    ElementPtr space = Element::create(string("my-space"));
+    sub_option->set("space", space);
+    ElementPtr remove = Element::create(string("member('foobar')"));
+    sub_option->set("remove", remove);
+    ElementPtr name = Element::create(string("my-option"));
+    sub_option->set("name", name);
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    EXPECT_EQ(0U, countFile("FLEX_OPTION_CONFIG_USELESS_CLASS"));
+    EXPECT_EQ(0U, countFile("FLEX_OPTION_CONFIG_USELESS_MEMBER"));
+    EXPECT_EQ(0U, countFile("FLEX_OPTION_CONFIG_SUB_USELESS_CLASS"));
+    string expected = "FLEX_OPTION_CONFIG_SUB_USELESS_MEMBER ";
+    expected += "For the sub-option code 1 in option code 222 ";
+    expected += "the member expression member('foobar') is ";
+    expected += "evaluated before classification for a query destination";
+    EXPECT_EQ(1U, countFile(expected));
 }
 
 } // end of anonymous namespace

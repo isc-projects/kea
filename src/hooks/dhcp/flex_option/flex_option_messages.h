@@ -5,6 +5,8 @@
 
 #include <log/message_types.h>
 
+extern const isc::log::MessageID FLEX_OPTION_CONFIG_SUB_USELESS_CLASS;
+extern const isc::log::MessageID FLEX_OPTION_CONFIG_SUB_USELESS_MEMBER;
 extern const isc::log::MessageID FLEX_OPTION_CONFIG_USELESS_CLASS;
 extern const isc::log::MessageID FLEX_OPTION_CONFIG_USELESS_MEMBER;
 extern const isc::log::MessageID FLEX_OPTION_LOAD_ERROR;
