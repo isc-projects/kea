@@ -604,7 +604,7 @@ public:
         return (encapsulated_);
     }
 
-    /// @brief Option spaces which can encapsulate mutiple sub-options
+    /// @brief Option spaces which can encapsulate multiple sub-options
     /// of the same type.
     static std::set<std::string> multiple_encapsulating_spaces_;
 

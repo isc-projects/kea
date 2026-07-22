@@ -353,8 +353,7 @@ CfgOption::encapsulateInternal(const OptionPtr& option) {
 
         // Add sub-option if there isn't one added already, or
         // if encapsulating space is a multiple exception.
-        OptionPtr existing = option->getOption(encap_opt.option_->getType());
-        if (multiple_encapsulating |
+        if (multiple_encapsulating ||
             !option->getOption(encap_opt.option_->getType())) {
             option->addOption(encap_opt.option_);
         }

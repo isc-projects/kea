@@ -801,7 +801,7 @@ TEST_F(CfgOptionTest, encapsulate) {
     }
 }
 
-// This test verifies that multiple encapsulating spaces are supported,
+// This test verifies that multiple encapsulating spaces are supported.
 TEST_F(CfgOptionTest, multipleEncapsulatingSpaces) {
     CfgOption cfg;
 

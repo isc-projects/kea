@@ -3873,7 +3873,7 @@ TEST_F(Dhcp6ParserTest, optionDataNtpServer) {
     ASSERT_TRUE(status);
     checkResult(status, 0);
 
-        // We should have one option available.
+    // We should have one option available.
     OptionContainerPtr options =
         CfgMgr::instance().getStagingCfg()->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_TRUE(options);
