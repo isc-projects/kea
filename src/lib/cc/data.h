@@ -997,11 +997,15 @@ public:
 
     /// @brief Remove the i-th element from the map.
     ///
+    /// If the index is out of bounds, nothing happens.
+    ///
     /// @param i the position of the element you want to remove
     void remove(int const i) override {
-        auto it(m.begin());
-        std::advance(it, i);
-        m.erase(it);
+        if (i >= 0 && static_cast<size_t>(i) < m.size()) {
+            auto it(m.begin());
+            std::advance(it, i);
+            m.erase(it);
+        }
     }
 
     bool contains(const std::string& s) const override {
