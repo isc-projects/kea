@@ -1872,6 +1872,7 @@ TEST_F(FlexOptionTest, processSource) {
     option->set("add", add);
     ElementPtr source = Element::create(string("response"));
     option->set("source", source);
+
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
@@ -1905,6 +1906,7 @@ TEST_F(FlexOptionTest, processMemberSource) {
     option->set("remove", remove);
     ElementPtr source = Element::create(string("response"));
     option->set("source", source);
+
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
