@@ -216,6 +216,32 @@ TEST_F(ConfigTestKeaV6, emptyKeaDhcp6) {
     EXPECT_TRUE(verify(emptyTreeKeaDhcp6));
 }
 
+// Regression: getConfig must not crash when interfaces-config is absent.
+TEST_F(ConfigTestKeaV4, getConfigWithoutInterfacesConfig) {
+    ASSERT_NO_THROW_LOG(load(subnetTwoPoolsJson4));
+    ConstElementPtr json;
+    ASSERT_NO_THROW_LOG(json = getJSON());
+    ASSERT_TRUE(json);
+    ConstElementPtr dhcp4 = json->get("Dhcp4");
+    ASSERT_TRUE(dhcp4);
+    EXPECT_FALSE(dhcp4->get("interfaces-config"));
+    ASSERT_TRUE(dhcp4->get("subnet4"));
+    EXPECT_EQ(1, dhcp4->get("subnet4")->size());
+}
+
+// Regression: getConfig must not crash when interfaces-config is absent.
+TEST_F(ConfigTestKeaV6, getConfigWithoutInterfacesConfig) {
+    ASSERT_NO_THROW_LOG(load(subnetTimersJson6));
+    ConstElementPtr json;
+    ASSERT_NO_THROW_LOG(json = getJSON());
+    ASSERT_TRUE(json);
+    ConstElementPtr dhcp6 = json->get("Dhcp6");
+    ASSERT_TRUE(dhcp6);
+    EXPECT_FALSE(dhcp6->get("interfaces-config"));
+    ASSERT_TRUE(dhcp6->get("subnet6"));
+    EXPECT_EQ(1, dhcp6->get("subnet6")->size());
+}
+
 // Check subnet with two pools with ietf-dhcpv6-server model.
 // Validation will fail because the current model has a vendor-info
 // container with a mandatory ent-num leaf and no presence flag,

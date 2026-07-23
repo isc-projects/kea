@@ -1,0 +1,5 @@
+[bug]		wlodek
+	Fixed a null ElementPtr dereference in
+	TranslatorConfig::getInterfacesKea when the YANG
+	config has no interfaces-config node.
+	(Gitlab #4667)

@@ -157,22 +157,24 @@ TranslatorConfig::getConfigControlKea(DataNode const& data_node) {
 
 ElementPtr
 TranslatorConfig::getInterfacesKea(DataNode const& config) {
-    ElementPtr result;
     optional<DataNode> const& interfaces_config_optional(config.findPath("interfaces-config"));
-    if (interfaces_config_optional) {
-        DataNode const interfaces_config(*interfaces_config_optional);
-        result = Element::createMap();
-
-        checkAndGetLeaf(result, interfaces_config, "dhcp-socket-type");
-        checkAndGetLeaf(result, interfaces_config, "interfaces");
-        checkAndGetLeaf(result, interfaces_config, "outbound-interface");
-        checkAndGetLeaf(result, interfaces_config, "re-detect");
-        checkAndGetLeaf(result, interfaces_config, "service-sockets-max-retries");
-        checkAndGetLeaf(result, interfaces_config, "service-sockets-require-all");
-        checkAndGetLeaf(result, interfaces_config, "service-sockets-retry-wait-time");
-
-        checkAndGetAndJsonifyLeaf(result, interfaces_config, "user-context");
+    if (!interfaces_config_optional) {
+        return (ElementPtr());
     }
+
+    DataNode const interfaces_config(*interfaces_config_optional);
+    ElementPtr result = Element::createMap();
+
+    checkAndGetLeaf(result, interfaces_config, "dhcp-socket-type");
+    checkAndGetLeaf(result, interfaces_config, "interfaces");
+    checkAndGetLeaf(result, interfaces_config, "outbound-interface");
+    checkAndGetLeaf(result, interfaces_config, "re-detect");
+    checkAndGetLeaf(result, interfaces_config, "service-sockets-max-retries");
+    checkAndGetLeaf(result, interfaces_config, "service-sockets-require-all");
+    checkAndGetLeaf(result, interfaces_config, "service-sockets-retry-wait-time");
+
+    checkAndGetAndJsonifyLeaf(result, interfaces_config, "user-context");
+
     return (result->empty() ? ElementPtr() : result);
 }
 
