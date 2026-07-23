@@ -454,6 +454,50 @@ TEST_F(NameTest, fromWire) {
     EXPECT_EQ(3U, nameFactoryFromWire("name_fromWire1", 25).getLabelCount());
 }
 
+// Build a wire buffer with a root label at offset 0 and a chain of
+// compression pointers at offsets 2, 4, ..., 2*hops.  Parsing from the
+// last pointer follows exactly `hops` compression pointers to ".".
+std::vector<uint8_t>
+makeCompressionPointerChain(unsigned int hops) {
+    std::vector<uint8_t> data((hops * 2) + 2, 0);
+    data[0] = 0x00; // root
+    for (unsigned int i = 1; i <= hops; ++i) {
+        const size_t pos = static_cast<size_t>(i) * 2;
+        const uint16_t target = static_cast<uint16_t>((i - 1) * 2);
+        data[pos] = 0xc0 | ((target >> 8) & 0x3f);
+        data[pos + 1] = target & 0xff;
+    }
+    return (data);
+}
+
+TEST_F(NameTest, fromWireCompressionPointerLoop) {
+    // Cyclic compression pointers must not hang; they must fail fast.
+    const uint8_t cycle[] = { 0xc0, 0x02, 0xc0, 0x00 };
+    InputBuffer buf(cycle, sizeof(cycle));
+    EXPECT_THROW({ Name name(buf); }, DNSMessageFORMERR);
+}
+
+TEST_F(NameTest, fromWireCompressionPointerHopLimit) {
+    // Exactly MAX_WIRE hops is still accepted (matches BIND-style limit).
+    {
+        std::vector<uint8_t> data = makeCompressionPointerChain(Name::MAX_WIRE);
+        InputBuffer buf(&data[0], data.size());
+        buf.setPosition(Name::MAX_WIRE * 2);
+        Name name(buf);
+        EXPECT_EQ(".", name.toText());
+    }
+
+    // One hop beyond MAX_WIRE must be rejected to bound decompression work
+    // and defeat pointer-loop DoS even if other checks are bypassed.
+    {
+        std::vector<uint8_t> data =
+            makeCompressionPointerChain(Name::MAX_WIRE + 1);
+        InputBuffer buf(&data[0], data.size());
+        buf.setPosition((Name::MAX_WIRE + 1) * 2);
+        EXPECT_THROW({ Name name(buf); }, DNSMessageFORMERR);
+    }
+}
+
 TEST_F(NameTest, copyConstruct) {
     Name copy(example_name);
     EXPECT_EQ(copy, example_name);

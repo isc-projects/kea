@@ -403,6 +403,7 @@ Name::Name(InputBuffer& buffer, bool downcase) {
     unsigned int current = buffer.getPosition();
     unsigned int pos_begin = current;
     unsigned int biggest_pointer = current;
+    unsigned int ptr_hops = 0;
 
     // Make the compiler happy; this is not required.
     // XXX: bad style in that we initialize it with a dummy value and define
@@ -462,6 +463,10 @@ Name::Name(InputBuffer& buffer, bool downcase) {
             new_current += c;
             if (--n != 0) {
                 break;
+            }
+            if (++ptr_hops > Name::MAX_WIRE) {
+                isc_throw(DNSMessageFORMERR,
+                          "compression pointer loop or too many hops");
             }
             if (new_current >= biggest_pointer) {
                 isc_throw(DNSMessageFORMERR,
