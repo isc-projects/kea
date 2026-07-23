@@ -15,6 +15,7 @@
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 
+#include <list>
 #include <sstream>
 
 using namespace boost::asio::ip;
@@ -653,6 +654,62 @@ TEST(TcpConnectionWriteCallback, wouldBlockDoesNotConsumeWireData) {
         EXPECT_EQ(original_size, response->getWireDataSize())
             << "wire data consumed on " << ec.message();
     }
+};
+
+/// @brief Exposes @c TcpConnection::postData for unit testing.
+class PostDataTestConnection : public TcpConnection {
+public:
+    PostDataTestConnection(const IOServicePtr& io_service,
+                           const TcpConnectionAcceptorPtr& acceptor,
+                           TcpConnectionPool& connection_pool)
+        : TcpConnection(io_service, acceptor, TlsContextPtr(), connection_pool,
+                        TcpConnectionAcceptorCallback(),
+                        TcpConnectionFilterCallback(),
+                        IDLE_TIMEOUT) {
+    }
+
+    using TcpConnection::postData;
+
+    virtual TcpRequestPtr createRequest() {
+        return (TcpStreamRequestPtr(new TcpStreamRequest()));
+    }
+
+    virtual void requestReceived(TcpRequestPtr request) {
+        TcpStreamRequestPtr stream_req =
+            boost::dynamic_pointer_cast<TcpStreamRequest>(request);
+        ASSERT_TRUE(stream_req);
+        ASSERT_NO_THROW(stream_req->unpack());
+        received_.push_back(stream_req->getRequestString());
+    }
+
+    virtual bool responseSent(TcpResponsePtr) {
+        return (true);
+    }
+
+    std::list<std::string> received_;
+};
+
+// Verifies that postData keeps unconsumed bytes when a single read
+// contains more than one length-prefixed message (Gitlab #4660).
+TEST(TcpConnectionPostData, coalescedMessagesAreNotDiscarded) {
+    IOServicePtr io_service(new IOService());
+    TcpConnectionAcceptorPtr acceptor(new TcpConnectionAcceptor(io_service));
+    TcpConnectionPool pool;
+    PostDataTestConnection conn(io_service, acceptor, pool);
+
+    // Two complete messages in one buffer: "1234" and "567".
+    WireData input_data = {
+        0x00, 0x04, 0x31, 0x32, 0x33, 0x34,
+        0x00, 0x03, 0x35, 0x36, 0x37
+    };
+
+    TcpRequestPtr request = conn.createRequest();
+    ASSERT_NO_THROW(request = conn.postData(request, input_data));
+    EXPECT_TRUE(input_data.empty());
+    ASSERT_EQ(2U, conn.received_.size());
+    auto it = conn.received_.begin();
+    EXPECT_EQ("1234", *it++);
+    EXPECT_EQ("567", *it);
 }
 
 }

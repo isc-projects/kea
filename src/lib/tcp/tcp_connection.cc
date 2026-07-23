@@ -397,9 +397,10 @@ TcpConnection::postData(TcpRequestPtr request, WireData& input_data) {
     if (length) {
         // Add data to the current request.
         size_t bytes_used = request->postBuffer(static_cast<void*>(input_data.data()), length);
-        // Remove bytes used.
+        // Remove only the bytes consumed; leftover data may belong to the
+        // next pipelined message in the same read.
         bytes_left = length - bytes_used;
-        input_data.erase(input_data.begin(), input_data.begin() + length);
+        input_data.erase(input_data.begin(), input_data.begin() + bytes_used);
     }
 
     if (request->needData()) {

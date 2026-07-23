@@ -1,0 +1,4 @@
+[bug]		wlodek
+	Fixed TcpConnection::postData to erase only
+	bytes consumed so coalesced messages are not lost.
+	(Gitlab #4660)
