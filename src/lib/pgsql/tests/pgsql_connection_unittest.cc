@@ -584,6 +584,53 @@ TEST_F(PgSqlConnectionTest, savepoints) {
     ASSERT_NO_THROW_LOG(testSelect(three_rows, 0, 10));
 }
 
+// Tests that single quotes and backslashes in quoted libpq connection
+// parameter values are escaped. Uses a fixture-free TEST so it does not
+// require a live PostgreSQL connection.
+TEST(PgSqlConnParameters, escapeQuotesAndBackslashes) {
+    DatabaseConnection::ParameterMap parameters;
+    parameters["name"] = "db'name";
+    parameters["user"] = "us'er";
+    parameters["password"] = "pass'word\\x";
+    parameters["host"] = "ho'st";
+
+    PgSqlConnection conn(parameters);
+    std::string conn_params;
+    ASSERT_NO_THROW_LOG(conn_params = conn.getConnParameters());
+
+    EXPECT_NE(std::string::npos, conn_params.find("host = 'ho''st'"))
+        << conn_params;
+    EXPECT_NE(std::string::npos, conn_params.find("user = 'us''er'"))
+        << conn_params;
+    EXPECT_NE(std::string::npos,
+              conn_params.find("password = 'pass''word\\\\x'"))
+        << conn_params;
+    EXPECT_NE(std::string::npos, conn_params.find("dbname = 'db''name'"))
+        << conn_params;
+}
+
+// Tests that an embedded quote cannot inject additional libpq keywords.
+TEST(PgSqlConnParameters, escapePreventsKeywordInjection) {
+    DatabaseConnection::ParameterMap parameters;
+    parameters["name"] = "keatest";
+    parameters["user"] = "keatest";
+    parameters["password"] = "keatest' sslmode=disable";
+    parameters["host"] = "localhost";
+
+    PgSqlConnection conn(parameters);
+    std::string conn_params;
+    ASSERT_NO_THROW_LOG(conn_params = conn.getConnParameters());
+
+    // Unescaped form must not appear: that would close the password early.
+    EXPECT_EQ(std::string::npos,
+              conn_params.find("password = 'keatest' sslmode"))
+        << conn_params;
+    // Escaped form keeps the injected text inside the password value.
+    EXPECT_NE(std::string::npos,
+              conn_params.find("password = 'keatest'' sslmode=disable'"))
+        << conn_params;
+}
+
 // Tests that invalid port value causes an error.
 TEST_F(PgSqlConnectionTest, portInvalid) {
     std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,

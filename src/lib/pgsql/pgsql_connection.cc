@@ -26,6 +26,31 @@ using namespace std;
 namespace isc {
 namespace db {
 
+namespace {
+
+/// @brief Escapes a value for a quoted libpq keyword/value connection string.
+///
+/// libpq requires single quotes and backslashes inside single-quoted values
+/// to be escaped. Quotes are doubled (' -> '') and backslashes are doubled.
+/// See https://www.postgresql.org/docs/current/libpq-connect.html
+///
+/// @param value Unescaped parameter value.
+/// @return Escaped value safe to place between single quotes.
+std::string
+escapePgSqlConnValue(const std::string& value) {
+    std::string escaped;
+    escaped.reserve(value.size());
+    for (const char ch : value) {
+        if (ch == '\\' || ch == '\'') {
+            escaped.push_back(ch);
+        }
+        escaped.push_back(ch);
+    }
+    return (escaped);
+}
+
+} // end of anonymous namespace
+
 std::string PgSqlConnection::KEA_ADMIN_ = KEA_ADMIN;
 
 // Default connection timeout
@@ -342,7 +367,7 @@ PgSqlConnection::getConnParametersInternal(bool logging) {
         // No host. Fine, we'll use "localhost"
     }
 
-    dbconnparameters += "host = '" + shost + "'" ;
+    dbconnparameters += "host = '" + escapePgSqlConnValue(shost) + "'";
 
     unsigned int port = 0;
     try {
@@ -362,7 +387,7 @@ PgSqlConnection::getConnParametersInternal(bool logging) {
     string suser;
     try {
         suser = getParameter("user");
-        dbconnparameters += " user = '" + suser + "'";
+        dbconnparameters += " user = '" + escapePgSqlConnValue(suser) + "'";
     } catch(...) {
         // No user. Fine, we'll use NULL
     }
@@ -370,7 +395,7 @@ PgSqlConnection::getConnParametersInternal(bool logging) {
     string spassword;
     try {
         spassword = getParameter("password");
-        dbconnparameters += " password = '" + spassword + "'";
+        dbconnparameters += " password = '" + escapePgSqlConnValue(spassword) + "'";
     } catch(...) {
         // No password. Fine, we'll use NULL
     }
@@ -382,7 +407,7 @@ PgSqlConnection::getConnParametersInternal(bool logging) {
     string sname;
     try {
         sname = getParameter("name");
-        dbconnparameters += " dbname = '" + sname + "'";
+        dbconnparameters += " dbname = '" + escapePgSqlConnValue(sname) + "'";
     } catch(...) {
         // No database name.  Throw a "NoDatabaseName" exception
         isc_throw(NoDatabaseName, "must specify a name for the database");
