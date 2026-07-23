@@ -12,9 +12,9 @@ be used in config-database[s].
 
 % DATABASE_INVALID_ACCESS invalid database access string: %1
 This is logged when an attempt has been made to parse a database access string
-and the attempt ended in error.  The access string in question - which
-should be of the form 'keyword=value keyword=value...' is included in
-the message.
+and the attempt ended in error.  A redacted form of the access string - which
+should be of the form 'keyword=value keyword=value...' with any password
+replaced by asterisks - is included in the message.
 
 % DATABASE_MYSQL_COMMIT committing to MySQL database
 The code has issued a commit call.  All outstanding transactions will be

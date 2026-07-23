@@ -11,12 +11,14 @@
 #include <database/database_connection.h>
 #include <database/dbaccess_parser.h>
 #include <exceptions/exceptions.h>
+#include <testutils/log_utils.h>
 #include <gtest/gtest.h>
 
 #include <functional>
 
 using namespace isc::data;
 using namespace isc::db;
+using namespace isc::dhcp::test;
 using namespace isc::util;
 namespace ph = std::placeholders;
 
@@ -431,6 +433,35 @@ TEST(DatabaseConnectionTest, parseQuotedDefaultPassword) {
 
     std::string bad = "user=me password='1234' name=kea type=mysql";
     EXPECT_THROW(DatabaseConnection::parse(bad), DefaultCredential);
+}
+
+/// @brief Test fixture capturing logs emitted by DatabaseConnection::parse.
+class DatabaseConnectionParseLogTest : public LogContentTest {
+};
+
+// Verifies that parse() failure for a quoted default password logs a redacted
+// access string and never writes the cleartext password.
+TEST_F(DatabaseConnectionParseLogTest, parseErrorDoesNotLogCleartextPassword) {
+    std::string bad = "user=me password='1234' name=kea type=mysql";
+    EXPECT_THROW(DatabaseConnection::parse(bad), DefaultCredential);
+
+    EXPECT_EQ(1U, countFile("DATABASE_INVALID_ACCESS"));
+    EXPECT_EQ(1U, countFile("password=*****"));
+    EXPECT_EQ(0U, countFile("password='1234'"));
+    EXPECT_EQ(0U, countFile("password=1234"));
+    EXPECT_EQ(0U, countFile("'1234'"));
+}
+
+// Verifies that a mid-parse failure after an unquoted password was accepted
+// still redacts the password in the error log.
+TEST_F(DatabaseConnectionParseLogTest, parseInvalidTokenDoesNotLogCleartextPassword) {
+    std::string bad = "user=me password=s3cret name=kea badtoken";
+    EXPECT_THROW(DatabaseConnection::parse(bad), isc::InvalidParameter);
+
+    EXPECT_EQ(1U, countFile("DATABASE_INVALID_ACCESS"));
+    EXPECT_EQ(1U, countFile("password=*****"));
+    EXPECT_EQ(0U, countFile("password=s3cret"));
+    EXPECT_EQ(0U, countFile("s3cret"));
 }
 
 /// @brief redactedAccessString test

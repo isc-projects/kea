@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,9 +61,11 @@ DatabaseConnection::parse(const std::string& dbaccess) {
                 // at the position of ending apostrophe.
                 auto password = dba.substr(password_pos + password_prefix.length(),
                                            password_end_pos - password_pos - password_prefix.length());
+                // Store the password before credential checks so a failure can still
+                // be logged via redactedAccessString() without exposing the secret.
+                mapped_tokens.insert(make_pair("password", password));
                 // Refuse default passwords.
                 DefaultCredentials::check(password);
-                mapped_tokens.insert(make_pair("password", password));
 
                 // We need to erase the password from the access string because the generic
                 // algorithm parsing other parameters requires that there are no whitespaces
@@ -95,8 +97,9 @@ DatabaseConnection::parse(const std::string& dbaccess) {
                 }
             }
         } catch (const std::exception& ex) {
-            // We'd obscure the password if we could parse the access string.
-            DB_LOG_ERROR(DB_INVALID_ACCESS).arg(dbaccess);
+            // Never log the raw access string: it may contain a cleartext password.
+            // redactedAccessString() replaces any parsed password with asterisks.
+            DB_LOG_ERROR(DB_INVALID_ACCESS).arg(redactedAccessString(mapped_tokens));
             throw;
         }
     }

@@ -1,0 +1,5 @@
+[bug]		wlodek
+	DatabaseConnection::parse() now logs a redacted
+	access string on failure, avoiding cleartext
+	passwords in ERROR logs.
+	(Gitlab #4643)
