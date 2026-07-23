@@ -110,7 +110,9 @@ public:
     /// @param position The new position (offset from the beginning of
     /// the buffer).
     void setPosition(size_t position) {
-        if (base_ + position > end_) {
+        // Compare sizes, not pointers: base_ + position can wrap and
+        // incorrectly pass the former pointer-based check.
+        if (position > getLength()) {
             isc_throw(OutOfRange,
                       "InputBuffer::setPosition position is too large");
         }
@@ -123,7 +125,7 @@ public:
     /// @details If the remaining length of the buffer is smaller than 8-bit,
     /// an exception of class @c isc::OutOfRange will be thrown.
     uint8_t peekUint8() {
-        if (current_ + sizeof(uint8_t) > end_) {
+        if (sizeof(uint8_t) > getLength() - getPosition()) {
             isc_throw(OutOfRange,
                       "InputBuffer::peekUint8 read beyond end of buffer");
         }
@@ -147,7 +149,7 @@ public:
     /// @details If the remaining length of the buffer is smaller than 16-bit,
     /// an exception of class @c isc::OutOfRange will be thrown.
     uint16_t peekUint16() {
-        if (current_ + sizeof(uint16_t) > end_) {
+        if (sizeof(uint16_t) > getLength() - getPosition()) {
             isc_throw(OutOfRange,
                       "InputBuffer::peekUint16 read beyond end of buffer");
         }
@@ -175,7 +177,7 @@ public:
     /// @details If the remaining length of the buffer is smaller than 32-bit,
     /// an exception of class @c isc::OutOfRange will be thrown.
     uint32_t peekUint32() {
-        if (current_ + sizeof(uint32_t) > end_) {
+        if (sizeof(uint32_t) > getLength() - getPosition()) {
             isc_throw(OutOfRange,
                       "InputBuffer::peekUint32 read beyond end of buffer");
         }
@@ -208,7 +210,9 @@ public:
     /// than the specified length, an exception of class @c isc::OutOfRange
     /// will be thrown.
     void peekData(void* data, size_t len) {
-        if (current_ + len > end_) {
+        // Compare remaining size to len; pointer addition can wrap for
+        // very large len values and bypass the check.
+        if (len > getLength() - getPosition()) {
             isc_throw(OutOfRange,
                       "InputBuffer::peekData read beyond end of buffer");
         }
@@ -239,7 +243,7 @@ public:
     /// @param data Reference to a buffer (data will be stored there).
     /// @param len Size specified number of bytes to read in a vector.
     void peekVector(std::vector<uint8_t>& data, size_t len) {
-        if (current_ + len > end_) {
+        if (len > getLength() - getPosition()) {
             isc_throw(OutOfRange,
                       "InputBuffer::peekVector read beyond end of buffer");
         }

@@ -131,6 +131,21 @@ TEST_F(BufferTest, inputBufferException) {
     ASSERT_THROW(ibuffer.readVector(datav, sizeof(vdata)), isc::OutOfRange);
 }
 
+// Oversized position/length values must not wrap pointer arithmetic and
+// bypass bounds checks (see Gitlab #4666).
+TEST_F(BufferTest, inputBufferOverflowBounds) {
+    const size_t huge = static_cast<size_t>(-1);
+
+    ASSERT_THROW(ibuffer.setPosition(huge), isc::OutOfRange);
+    ASSERT_EQ(0U, ibuffer.getPosition());
+
+    ASSERT_THROW(ibuffer.peekData(vdata, huge), isc::OutOfRange);
+    ASSERT_THROW(ibuffer.readData(vdata, huge), isc::OutOfRange);
+    ASSERT_THROW(ibuffer.peekVector(datav, huge), isc::OutOfRange);
+    ASSERT_THROW(ibuffer.readVector(datav, huge), isc::OutOfRange);
+    ASSERT_EQ(0U, ibuffer.getPosition());
+}
+
 TEST_F(BufferTest, outputBufferExtend) {
     ASSERT_EQ(0U, obuffer.getCapacity());
     ASSERT_EQ(0U, obuffer.getLength());
