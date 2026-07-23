@@ -202,6 +202,194 @@ public:
     }
 };
 
+/// @brief Connection that injects a fatal socket write error once.
+///
+/// Records whether the output buffer was consumed by fallthrough after
+/// @c stopThisConnection() and how many @c doWrite() calls were scheduled
+/// while handling the injected error.
+class HttpConnectionWriteFatalError : public HttpConnection {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// @param io_service IO service to be used by the connection.
+    /// @param acceptor Pointer to the TCP acceptor object used to listen for
+    /// new HTTP connections.
+    /// @param tls_context TLS context.
+    /// @param connection_pool Connection pool in which this connection is
+    /// stored.
+    /// @param response_creator Pointer to the response creator object used to
+    /// create HTTP response from the HTTP request received.
+    /// @param callback Callback invoked when new connection is accepted.
+    /// @param request_timeout Configured timeout for a HTTP request.
+    /// @param idle_timeout Timeout after which persistent HTTP connection is
+    /// closed by the server.
+    HttpConnectionWriteFatalError(const IOServicePtr& io_service,
+                                  const HttpAcceptorPtr& acceptor,
+                                  const TlsContextPtr& tls_context,
+                                  HttpConnectionPoolPtr connection_pool,
+                                  const HttpResponseCreatorPtr& response_creator,
+                                  const HttpAcceptorCallback& callback,
+                                  const long request_timeout,
+                                  const long idle_timeout)
+        : HttpConnection(io_service, acceptor, tls_context, connection_pool,
+                         response_creator, callback, request_timeout,
+                         idle_timeout) {
+    }
+
+    /// @brief Resets static instrumentation state used by tests.
+    static void resetTestState() {
+        injected_ = false;
+        output_size_before_ = 0;
+        output_size_after_ = 0;
+        do_write_during_inject_ = 0;
+    }
+
+    /// @brief Callback invoked when data is sent over the socket.
+    ///
+    /// On the first invocation injects @c connection_reset with a non-zero
+    /// length so fallthrough would incorrectly consume output data.
+    ///
+    /// @param transaction Pointer to the transaction for which the callback
+    /// is invoked.
+    /// @param ec Error code.
+    /// @param length Length of the data sent.
+    virtual void socketWriteCallback(HttpConnection::TransactionPtr transaction,
+                                     boost::system::error_code ec,
+                                     size_t length) {
+        if (!injected_) {
+            injected_ = true;
+            output_size_before_ = transaction->getOutputBufSize();
+            ASSERT_GT(output_size_before_, size_t(0));
+            injecting_ = true;
+            HttpConnection::socketWriteCallback(transaction,
+                boost::asio::error::connection_reset, 1);
+            injecting_ = false;
+            output_size_after_ = transaction->getOutputBufSize();
+            return;
+        }
+        HttpConnection::socketWriteCallback(transaction, ec, length);
+    }
+
+    /// @brief Counts @c doWrite calls while the fatal error is injected.
+    ///
+    /// @param transaction Pointer to the transaction for which the write
+    /// operation should be performed.
+    virtual void doWrite(HttpConnection::TransactionPtr transaction) {
+        if (injecting_) {
+            ++do_write_during_inject_;
+        }
+        HttpConnection::doWrite(transaction);
+    }
+
+    static inline bool injected_ = false;
+    static inline size_t output_size_before_ = 0;
+    static inline size_t output_size_after_ = 0;
+    static inline size_t do_write_during_inject_ = 0;
+
+private:
+
+    bool injecting_ = false;
+};
+
+/// @brief Connection that injects @c would_block on the first write once.
+///
+/// Records whether the output buffer was consumed and how many @c doWrite()
+/// calls were scheduled while handling the injected retryable error.
+class HttpConnectionWriteWouldBlock : public HttpConnection {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// @param io_service IO service to be used by the connection.
+    /// @param acceptor Pointer to the TCP acceptor object used to listen for
+    /// new HTTP connections.
+    /// @param tls_context TLS context.
+    /// @param connection_pool Connection pool in which this connection is
+    /// stored.
+    /// @param response_creator Pointer to the response creator object used to
+    /// create HTTP response from the HTTP request received.
+    /// @param callback Callback invoked when new connection is accepted.
+    /// @param request_timeout Configured timeout for a HTTP request.
+    /// @param idle_timeout Timeout after which persistent HTTP connection is
+    /// closed by the server.
+    HttpConnectionWriteWouldBlock(const IOServicePtr& io_service,
+                                  const HttpAcceptorPtr& acceptor,
+                                  const TlsContextPtr& tls_context,
+                                  HttpConnectionPoolPtr connection_pool,
+                                  const HttpResponseCreatorPtr& response_creator,
+                                  const HttpAcceptorCallback& callback,
+                                  const long request_timeout,
+                                  const long idle_timeout)
+        : HttpConnection(io_service, acceptor, tls_context, connection_pool,
+                         response_creator, callback, request_timeout,
+                         idle_timeout) {
+    }
+
+    /// @brief Resets static instrumentation state used by tests.
+    static void resetTestState() {
+        injected_ = false;
+        output_size_before_ = 0;
+        output_size_after_ = 0;
+        do_write_during_inject_ = 0;
+    }
+
+    /// @brief Callback invoked when data is sent over the socket.
+    ///
+    /// On the first invocation accounts for bytes already written by the
+    /// completed send, then injects @c would_block with a non-zero length so
+    /// fallthrough would incorrectly consume remaining output data and/or
+    /// schedule duplicate writes.
+    ///
+    /// @param transaction Pointer to the transaction for which the callback
+    /// is invoked.
+    /// @param ec Error code.
+    /// @param length Length of the data sent.
+    virtual void socketWriteCallback(HttpConnection::TransactionPtr transaction,
+                                     boost::system::error_code ec,
+                                     size_t length) {
+        if (!injected_) {
+            injected_ = true;
+            // The underlying socket already wrote 'length' bytes. Consume them
+            // before probing the would-block path so the retry does not
+            // retransmit data the client has already received.
+            if (length > transaction->getOutputBufSize()) {
+                length = transaction->getOutputBufSize();
+            }
+            transaction->consumeOutputBuf(length);
+
+            output_size_before_ = transaction->getOutputBufSize();
+            injecting_ = true;
+            HttpConnection::socketWriteCallback(transaction,
+                boost::asio::error::would_block, 1);
+            injecting_ = false;
+            output_size_after_ = transaction->getOutputBufSize();
+            return;
+        }
+        HttpConnection::socketWriteCallback(transaction, ec, length);
+    }
+
+    /// @brief Counts @c doWrite calls while would-block is injected.
+    ///
+    /// @param transaction Pointer to the transaction for which the write
+    /// operation should be performed.
+    virtual void doWrite(HttpConnection::TransactionPtr transaction) {
+        if (injecting_) {
+            ++do_write_during_inject_;
+        }
+        HttpConnection::doWrite(transaction);
+    }
+
+    static inline bool injected_ = false;
+    static inline size_t output_size_before_ = 0;
+    static inline size_t output_size_after_ = 0;
+    static inline size_t do_write_during_inject_ = 0;
+
+private:
+
+    bool injecting_ = false;
+};
+
 /// @brief Pointer to the TestHttp[s]Client.
 typedef boost::shared_ptr<BaseTestHttpClient> TestClientPtr;
 
@@ -367,6 +555,70 @@ public:
 
         // Injecting unexpected data should not result in an exception.
         ASSERT_NO_THROW(runIOService());
+
+        ASSERT_EQ(1U, clients_.size());
+        auto client = *clients_.begin();
+        ASSERT_TRUE(client);
+        EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
+    }
+
+    /// @brief Verifies fatal write errors stop the connection without
+    /// scheduling further writes or consuming the output buffer.
+    void testWriteFatalError() {
+        HttpConnectionWriteFatalError::resetTestState();
+
+        std::string request = "POST /foo/bar HTTP/1.1\r\n"
+            "Content-Type: application/json\r\n"
+            "Content-Length: 3\r\n\r\n"
+            "{ }";
+
+        HttpListenerCustom<HttpConnectionWriteFatalError>
+            listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                     server_context_, factory_,
+                     HttpListener::RequestTimeout(REQUEST_TIMEOUT),
+                     HttpListener::IdleTimeout(IDLE_TIMEOUT));
+
+        ASSERT_NO_THROW(listener.start());
+        ASSERT_NO_THROW(startRequest(request));
+        // The server closes the connection on the injected write error, so the
+        // client may never complete reading a response. Bound the wait.
+        ASSERT_NO_THROW(runIOService(1000));
+
+        ASSERT_TRUE(HttpConnectionWriteFatalError::injected_);
+        EXPECT_EQ(HttpConnectionWriteFatalError::output_size_before_,
+                  HttpConnectionWriteFatalError::output_size_after_);
+        EXPECT_EQ(0U, HttpConnectionWriteFatalError::do_write_during_inject_);
+
+        ASSERT_EQ(1U, clients_.size());
+        auto client = *clients_.begin();
+        ASSERT_TRUE(client);
+        EXPECT_TRUE(client->isConnectionClosed());
+    }
+
+    /// @brief Verifies would-block write errors retry exactly once and do
+    /// not consume output buffer bytes that were not written.
+    void testWriteWouldBlock() {
+        HttpConnectionWriteWouldBlock::resetTestState();
+
+        std::string request = "POST /foo/bar HTTP/1.1\r\n"
+            "Content-Type: application/json\r\n"
+            "Content-Length: 3\r\n\r\n"
+            "{ }";
+
+        HttpListenerCustom<HttpConnectionWriteWouldBlock>
+            listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                     server_context_, factory_,
+                     HttpListener::RequestTimeout(REQUEST_TIMEOUT),
+                     HttpListener::IdleTimeout(IDLE_TIMEOUT));
+
+        ASSERT_NO_THROW(listener.start());
+        ASSERT_NO_THROW(startRequest(request));
+        ASSERT_NO_THROW(runIOService());
+
+        ASSERT_TRUE(HttpConnectionWriteWouldBlock::injected_);
+        EXPECT_EQ(HttpConnectionWriteWouldBlock::output_size_before_,
+                  HttpConnectionWriteWouldBlock::output_size_after_);
+        EXPECT_EQ(1U, HttpConnectionWriteWouldBlock::do_write_during_inject_);
 
         ASSERT_EQ(1U, clients_.size());
         auto client = *clients_.begin();

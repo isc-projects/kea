@@ -309,9 +309,12 @@ protected:
     ///
     /// In case of error the connection is stopped.
     ///
+    /// This method is virtual so it can be overridden in unit tests to
+    /// observe write scheduling on error paths.
+    ///
     /// @param transaction Pointer to the transaction for which the write
     /// operation should be performed.
-    void doWrite(TransactionPtr transaction);
+    virtual void doWrite(TransactionPtr transaction);
 
     /// @brief Sends HTTP response asynchronously.
     ///

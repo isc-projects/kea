@@ -613,14 +613,14 @@ HttpConnection::socketWriteCallback(HttpConnection::TransactionPtr transaction,
         } else if ((ec.value() != boost::asio::error::try_again) &&
                    (ec.value() != boost::asio::error::would_block)) {
             stopThisConnection();
+            return;
 
         // We got EWOULDBLOCK or EAGAIN which indicate that we may be able to
-        // read something from the socket on the next attempt.
+        // write something to the socket on the next attempt. Make sure we
+        // don't consume any buffer in case there is any garbage passed in
+        // length.
         } else {
-            // Sending is in progress, so push back the timeout.
-            setupRequestTimer(transaction);
-
-            doWrite(transaction);
+            length = 0;
         }
     }
 
