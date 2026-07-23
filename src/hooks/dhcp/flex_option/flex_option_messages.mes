@@ -20,7 +20,7 @@ class name are displayed.
 This warning message indicates the config specifies an expression
 with a member clause when the destination is the query but the callout point
 for patching queries is before the classification so it will very likely
-not work as expected. The code of the sub-option and option, and the
+not work as expected. The codes of the sub-option and option, and the
 expression are displayed.
 
 % FLEX_OPTION_CONFIG_USELESS_CLASS For the option code %1 the client class %2 is required before classification for a query destination

@@ -102,11 +102,11 @@ The sole parameter is a options list of options with:
  - @b source - Specifies what is the source for expression evaluation.
    The default is the query but this can be changed to the response.
    Note that if an expression includes a member clause the query classes
-   are copied to the response to make this to work.
+   are copied to the response to make this work.
  - @b destination - Specifies what is the destination of option changes.
    The default is the response but this can be changed to the query.
    Note the change is performed before the classification so
-   @ client-class or a member clause in expression is very likely
+   @b client-class or a member clause in expression is very likely
    to not work as expected. A warning is emitted when this situation
    is detected when the configuration is parsed.
 

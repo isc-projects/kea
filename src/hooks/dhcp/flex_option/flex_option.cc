@@ -314,7 +314,7 @@ FlexOptionImpl::parseOptionConfig(ConstElementPtr option) {
     // Consistency: if the destination is the query the source must be
     // the query too.
     if (!opt_cfg->getDestination() && !opt_cfg->getSource()) {
-      isc_throw(BadValue, "destination 'query' requires source 'query'");
+        isc_throw(BadValue, "destination 'query' requires source 'query'");
     }
 
     // Not working as expected: the destination is the query and classes
@@ -598,7 +598,6 @@ FlexOptionImpl::parseSubOption(ConstElementPtr sub_option,
             break;
         }
     }
-
 }
 
 void

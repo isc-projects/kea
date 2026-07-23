@@ -2008,7 +2008,7 @@ TEST_F(FlexOptionLogTest, classWarning) {
     EXPECT_EQ(0U, countFile("FLEX_OPTION_CONFIG_USELESS_MEMBER"));
 }
 
-// Verify that client-classes does not trigger a warning by default.
+// Verify that TokenMember triggers a warning with query destination.
 TEST_F(FlexOptionLogTest, memberWarning) {
     ElementPtr options = Element::createList();
     ElementPtr option = Element::createMap();

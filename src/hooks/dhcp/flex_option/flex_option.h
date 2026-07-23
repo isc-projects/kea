@@ -592,7 +592,6 @@ public:
         }
     }
 
-
     /// @brief Log the client class for option.
     ///
     /// @param client_class The client class aka guard name.

@@ -1115,7 +1115,6 @@ TEST_F(FlexSubOptionTest, subProcessNoResponse) {
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
-
     EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, Pkt4Ptr()));
 }
 
@@ -3488,7 +3487,7 @@ TEST_F(FlexSubOptionLogTest, classWarning) {
     EXPECT_EQ(0U, countFile("FLEX_OPTION_CONFIG_SUB_USELESS_MEMBER"));
 }
 
-// Verify that client-classes does not trigger a warning by default.
+// Verify that TokenMember triggers a warning with query destination.
 TEST_F(FlexSubOptionLogTest, memberWarning) {
     OptionDefSpaceContainer defs;
     OptionDefinitionPtr def(new OptionDefinition("my-container", 222,
