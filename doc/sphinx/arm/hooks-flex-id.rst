@@ -41,7 +41,25 @@ identifier.
 
 The library can be loaded similarly to other hook libraries. It
 supports the following parameters: ``identifier-expression``, ``replace-client-id``,
-and ``ignore-iaid``:
+``ignore-iaid`` (v6 only), and ``cid-as-rfc4361-duid`` (v4 only):
+
+::
+
+   "Dhcp4": {
+       "hooks-libraries": [
+           {
+               "library": "libdhcp_flex_id.so",
+               "parameters": {
+                   "identifier-expression": "expression",
+                   "replace-client-id": false,
+                   "cid-as-rfc4361-duid": true
+               }
+           },
+           ...
+       ]
+   }
+
+or
 
 ::
 
@@ -58,6 +76,7 @@ and ``ignore-iaid``:
            ...
        ]
    }
+
 
 The flexible identifier library supports both DHCPv4 and DHCPv6.
 
@@ -292,3 +311,73 @@ part of the expression.
     the flexible identifier feature is disabled. Kea versions prior to 3.1.2 require
     a value for ``identifier-expression`` but accept the empty string value. As of
     Kea 3.1.2, the parameter is optional.
+
+The ``cid-as-rfc4361-duid`` Flag
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+`RFC 4361 <https://datatracker.ietf.org/doc/html/rfc4361>`
+describes a mechanism by v4 clients and v6 clients in a dual stack mechanism
+can both maintain DNS entries for the same FQDN.  This is achieved by having the v4
+client embed its v6 counterpart's DUID within its own client identifier (Option 60).
+This value can than be used to generate a DHCID which matches the DHCID generated
+for the v6 client.  For cases where it is not feasible to modify a client such that
+they can send an RFC 4361 compliant identifier, using flex-id with
+``cid-as-rfc-4361-duid`` enabled can provide a path forward.
+
+By default v4 flex-id is the result of the ``identifier expression``
+prefixed with a one byte value of 0x00 which servers as the identifier type.
+
+However, when ``cid-as-rfc4361-duid`` is true, the flex-id is the result the
+``identifier expression`` prefixed with a one byte value of 0xFF for the
+rfc4361 id type followed by a four-byte zero value for IAID.
+
+For example, if the identfier expression is "pkt4.mac" and the client's hardware
+address is "01:02:03:04:05:06", by default flex-id generated will be "00:01:02:03:04:05:06".
+If ``cid-as-rfc4361-duid`` is true, the flex-id generated will be
+"FF:00:00:00:00:01:02:03:04:05:06".
+
+In order for the flex-id to be used to generate the v4 client's DHCID for DNS updates
+then the ``replace-client-id`` flag must also be true.
+
+The following configuration snippets show how flex-id could be used for both
+v4 and v6 clients such that they end up with matching DHCIDs. In this example
+the v6 clients are relayed and the relay has been configured to populate
+option[79] to convey the client's mac address.  In order to get matching DHCIDs
+then, both the v4 and v6 clients must use flex-id to replace their client ids.
+The v6 client's flex-id configuration would look like this:
+
+::
+{
+   "Dhcp6": {
+       "hooks-libraries": [
+           {
+               "library": "libdhcp_flex_id.so",
+               "parameters": {
+                    "identifier-expression": "substring(relay6[0].option[79].hex, 2, all)",
+                    "ignore-iaid": true
+               }
+           },
+           ...
+       ]
+   }
+}
+
+For v6, flex-ids are always prefixed with a two-byte type value of zero. These two
+bytes need to be accounted for in the v4 flex-id expression as is shown below:
+
+::
+{
+   "Dhcp4": {
+       "hooks-libraries": [
+           {
+               "library": "libdhcp_flex_id.so",
+               "parameters": {
+                   "identifier-expression": "concat(0x0000, pkt4.mac)",
+                   "replace-client-id": true,
+                   "cid-as-rfc4361-duid": true
+               }
+           },
+           ...
+       ]
+   }
+}

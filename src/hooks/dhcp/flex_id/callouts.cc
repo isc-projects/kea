@@ -40,6 +40,7 @@ namespace {
 bool flex_id_apply_to_leases = false;
 Expression flex_id_expr;
 bool flex_id_ignore_iaid = false;
+bool flex_id_cid_as_rfc4361_duid = false;
 
 }
 
@@ -64,18 +65,22 @@ void parseAndStoreExpression(bool v6, const std::string& expr) {
 
 void storeConfiguration(bool v6, const std::string& expr,
                         const bool apply_to_leases,
-                        const bool ignore_iaid) {
+                        const bool ignore_iaid,
+                        const bool cid_as_rfc4361_duid /* = false */) {
+
     flex_id_apply_to_leases = apply_to_leases;
     if (!expr.empty()) {
         parseAndStoreExpression(v6, expr);
     }
     flex_id_ignore_iaid = ignore_iaid;
+    flex_id_cid_as_rfc4361_duid = cid_as_rfc4361_duid;
 }
 
 void clearConfiguration() {
     flex_id_apply_to_leases = false;
     flex_id_expr.clear();
     flex_id_ignore_iaid = false;
+    flex_id_cid_as_rfc4361_duid = false;
 }
 
 /// @brief Retrieves flexible identifier from the context or computes it.
@@ -207,8 +212,14 @@ int pkt4_receive(CalloutHandle& handle) {
             static_cast<void>(pkt->delOption(DHO_DHCP_CLIENT_IDENTIFIER));
         }
 
-        // Use 0 as a client identifier type.
-        OptionBuffer buf(1, 0);
+        OptionBuffer buf;
+        if (flex_id_cid_as_rfc4361_duid) {
+            // Type = 255 followed 4-byte dummy iaid.
+            buf.assign({ 0xFF, 0, 0, 0, 0 });
+        } else {
+            // Use 0 as a client identifier type.
+            buf.push_back(0);
+        }
 
         // Create new client identifier from the flex-id.
         buf.insert(buf.end(), id.begin(), id.end());

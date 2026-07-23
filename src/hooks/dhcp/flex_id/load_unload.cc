@@ -132,11 +132,31 @@ int load(LibraryHandle& handle) {
             }
         }
 
+        // cid-as-duid indicates if v4 CID should be formatted as DUID/RFC 4361
+        bool cid_as_rfc4361_duid = false;
+        if (!v6) {
+            data::ConstElementPtr tmp = handle.getParameter("cid-as-rfc4361-duid");
+            if (tmp) {
+                // It must be a boolean value.
+                if (tmp->getType() != Element::boolean) {
+                    LOG_ERROR(flex_id_logger, FLEX_ID_CID_AS_RFC4361_DUID_JSON_TYPE)
+                        .arg(Element::typeToName(tmp->getType()));
+                    return (1);
+                }
+
+                cid_as_rfc4361_duid = tmp->boolValue();
+                if (cid_as_rfc4361_duid) {
+                    LOG_DEBUG(flex_id_logger, DBGLVL_TRACE_BASIC,
+                              FLEX_ID_CID_AS_RFC4361_DUID_ENABLED);
+                }
+            }
+        }
+
         // Remove any old expressions that may have been stored.
         clearConfiguration();
 
         // Store specified expression.
-        storeConfiguration(v6, expr, replace_client_id, ignore_iaid);
+        storeConfiguration(v6, expr, replace_client_id, ignore_iaid, cid_as_rfc4361_duid);
     } catch (const std::exception& ex) {
         // Log the error and return failure.
         LOG_ERROR(flex_id_logger, FLEX_ID_LOAD_ERROR)

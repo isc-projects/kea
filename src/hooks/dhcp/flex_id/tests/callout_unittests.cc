@@ -190,6 +190,28 @@ public:
         }
     }
 
+    void cidAsRfc4361DuidTest(const std::string& expr,
+                              bool cid_as_rfc4361_duid,
+                              const std::vector<uint8_t>& exp_client_id) {
+        isc::flex_id::storeConfiguration(false, expr, true, false,
+                                         cid_as_rfc4361_duid);
+        CalloutHandle handle(getCalloutManager());
+
+        // Set query.
+        handle.setArgument("query4", pkt4_);
+
+        // Execute pkt4_receive callout.
+        int ret;
+        ASSERT_NO_THROW(ret = pkt4_receive(handle));
+        EXPECT_EQ(0, ret);
+
+        OptionPtr client_id = pkt4_->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+        ASSERT_TRUE(client_id);
+
+        const OptionBuffer& client_id_buf = client_id->getData();
+        ASSERT_EQ(exp_client_id, client_id_buf);
+    }
+
     /// @brief Tests pkt4_send callout.
     ///
     /// @param original_client_id Client identifier to be stored in the context.
@@ -985,6 +1007,24 @@ TEST_F(CalloutTest, ignoreIAIDTestOneIANATooManyIAPD) {
 // Verifies that enabled ignore-iaid with multiple IANAs and one IAPD works as expected.
 TEST_F(CalloutTest, ignoreIAIDTestTooMankeIANAOneIAPD) {
     ignoreIAIDTest(true, 2, 1);
+}
+
+// Verifies that pkt4_receive callout uses RFC 4361 format
+// to create client identifier option when cid-as-rfc4361-duid
+// is true.
+TEST_F(CalloutTest, cidAsRfc4361DuidEnabled) {
+    string expr = "option[100].hex";
+    std::vector<uint8_t> expected_cid = { 0xFF, 0, 0, 0, 0, 'h', 'u', 'n', 'd', 'r', 'e', 'd', '4' };
+    cidAsRfc4361DuidTest(expr, true, expected_cid);
+}
+
+// Verifies that pkt4_receive callout does not use RFC 4361
+// format to create client identifier option when cid-as-rfc4361-duid
+// is false.
+TEST_F(CalloutTest, cidAsRfc4361DuidDisabled) {
+    string expr = "option[100].hex";
+    std::vector<uint8_t> expected_cid = { 0, 'h', 'u', 'n', 'd', 'r', 'e', 'd', '4' };
+    cidAsRfc4361DuidTest(expr, false, expected_cid);
 }
 
 } // end of anonymous namespace

@@ -4,6 +4,8 @@
 #include <log/message_types.h>
 #include <log/message_initializer.h>
 
+extern const isc::log::MessageID FLEX_ID_CID_AS_RFC4361_DUID_ENABLED = "FLEX_ID_CID_AS_RFC4361_DUID_ENABLED";
+extern const isc::log::MessageID FLEX_ID_CID_AS_RFC4361_DUID_JSON_TYPE = "FLEX_ID_CID_AS_RFC4361_DUID_JSON_TYPE";
 extern const isc::log::MessageID FLEX_ID_EXPRESSION_EVALUATED = "FLEX_ID_EXPRESSION_EVALUATED";
 extern const isc::log::MessageID FLEX_ID_EXPRESSION_EVALUATED_NP = "FLEX_ID_EXPRESSION_EVALUATED_NP";
 extern const isc::log::MessageID FLEX_ID_EXPRESSION_HEX = "FLEX_ID_EXPRESSION_HEX";
@@ -27,6 +29,8 @@ extern const isc::log::MessageID FLEX_ID_USED_AS_DUID = "FLEX_ID_USED_AS_DUID";
 namespace {
 
 const char* values[] = {
+    "FLEX_ID_CID_AS_RFC4361_DUID_ENABLED", "cid-as-rfc4361-duid is true.",
+    "FLEX_ID_CID_AS_RFC4361_DUID_JSON_TYPE", "the cid-as-rfc4361-duid is %1 but expected boolean value",
     "FLEX_ID_EXPRESSION_EVALUATED", "Expression evaluated for packet to \"%1\" (size: %2)",
     "FLEX_ID_EXPRESSION_EVALUATED_NP", "Expression evaluated for packet to 0x%1 (size: %2)",
     "FLEX_ID_EXPRESSION_HEX", "evaluated expression in hexadecimal form \"%1\"",

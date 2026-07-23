@@ -5,6 +5,8 @@
 
 #include <log/message_types.h>
 
+extern const isc::log::MessageID FLEX_ID_CID_AS_RFC4361_DUID_ENABLED;
+extern const isc::log::MessageID FLEX_ID_CID_AS_RFC4361_DUID_JSON_TYPE;
 extern const isc::log::MessageID FLEX_ID_EXPRESSION_EVALUATED;
 extern const isc::log::MessageID FLEX_ID_EXPRESSION_EVALUATED_NP;
 extern const isc::log::MessageID FLEX_ID_EXPRESSION_HEX;

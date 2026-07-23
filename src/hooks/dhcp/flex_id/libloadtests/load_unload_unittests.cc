@@ -122,4 +122,23 @@ TEST_F(FlexIdLibLoadTest, badIgnoreIAID) {
     validDaemonTest("kea-dhcp6", AF_INET6, params);
 }
 
+// Simple test that checks the library parsing of cid-as-rfc4361-duid value.
+TEST_F(FlexIdLibLoadTest, parseCidAsRfc4361Duid) {
+    // Prepare parameters for the callout parameters library.
+    // Needs to include identifier-expression or load fails because it's required.
+    ElementPtr params = Element::createMap();
+    params->set("identifier-expression", Element::create("'somestring'"));
+
+    // Bad cid-as-rfc4361-duid is ignored in v6.
+    params->set("cid-as-rfc4361-duid", Element::create("foobar"));
+    validDaemonTest("kea-dhcp6", AF_INET6, params);
+
+    // Bad cid-as-rfc4361-duid is not ignored in v4.
+    invalidDaemonTest("kea-dhcp4", AF_INET, params);
+
+    // Valid cid-as-rfc4361-duid is accepted in v4.
+    params->set("cid-as-rfc4361-duid", Element::create(true));
+    validDaemonTest("kea-dhcp4", AF_INET, params);
+}
+
 } // end of anonymous namespace

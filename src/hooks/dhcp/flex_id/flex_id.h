@@ -21,9 +21,12 @@ namespace flex_id {
 /// @param apply_to_leases Indicates if flexible identifier should be used to
 /// replace client supplied client identifier or DUID.
 /// @param ignore_iaid Indicates if IAID should be ignored.
+/// @param cid_as_rfc4361_duid format v4 id expression results
+/// as an RFC4361 embedded duid.  Ignored for v6 packets.
 void storeConfiguration(bool v6, const std::string& expr,
                         const bool apply_to_leases,
-                        const bool ignore_iaid);
+                        const bool ignore_iaid,
+                        const bool cid_as_rfc4361_duid = false);
 
 /// @brief Clears stored configuration.
 ///
