@@ -1,0 +1,7 @@
+[func]		fdupont
+	Extended the flex-option hook library with two new
+	per option parameters: the 'source' parameter allows
+	to use the response packet for expression evaluation,
+	the 'destination' parameter allows to apply option
+	modification on an incoming query after unpacking.
+	(Gitlab #4143)

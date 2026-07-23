@@ -15,6 +15,14 @@ before it is sent to the client. The three actions currently supported are
     :ischooklib:`libdhcp_flex_option.so` is part of the open source code and is
     available to every Kea user.
 
+.. note::
+
+    Since Kea 3.3.0 this library has been extended to act on options
+    of an incoming query packet during its parsing so the early stages
+    of processing. This allows for instance to remove an annoying option
+    or to add a missing one when the situation is easy to recognize using
+    an expression. See :ref:`hooks-flex-option-extensions` for more details.
+
 The syntax used for the action expressions is the same syntax used
 for client classification and the Flexible Identifier hook library;
 see either :ref:`classification-using-expressions` or :ref:`hooks-flex-id`
@@ -69,6 +77,12 @@ expression.
 If (and only if) the **query** includes a ``host-name`` option (code 12), a
 ``boot-file-name`` option (code 67) is added to the response with the host name
 followed by ``.boot`` for content.
+
+.. note::
+
+    Since Kea 3.3.0 this library has been extended to optionally use the
+    response (vs the query) to evaluate expressions for more flexibility.
+    See :ref:`hooks-flex-option-extensions` for more details.
 
 A commonly discussed use case is modifying the DHCPv4 subnet mask option
 (code 1). The following example demonstrates that capability, as all ingress
@@ -194,3 +208,41 @@ encapsulates the ``vendor-encapsulated-options`` space.
         ]
     }
  }
+
+.. _hooks-flex-option-extensions:
+
+Flexibles Option Extensions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Kea 3.3.0 extended the Flexible Option library with two new option
+parameters:
+
+- ``source`` - specifies the packet which is used for evaluating
+  expressions. It defaults to ``query`` but can also be set to
+  ``response``. When a ``sub-options`` is used the source is
+  inherited from the parent entry. The query is still use for
+  the ``client-class`` parameter. When an expression includes
+  a ``member`` clause classes are copied from the query to the
+  response.
+
+- ``destination`` - specifies what is the packet where options
+  are modified. It defaults to ``response`` but can also be set
+  to ``query``. When a ``sub-options`` is used the destination
+  is inherited from the parent entry.
+
+Of course setting ``source`` to ``response`` and ``destination``
+to ``query`` in the same entry does not make sense and raises
+an error at library load time.
+
+.. note::
+
+    Modifying the query i.e. when ``destination`` is set to ``query``
+    is done after unpacking for incoming query options but before the
+    classification step. This puts some constraints on what can be done.
+
+    The ``client-class`` parameter or a ``member`` clause in an expression
+    is very likely to not work as expected. A warning is emitted
+    at load time when this is detected.
+
+    Options with deferred unpacking are available only in their
+    binary form.
