@@ -18,6 +18,7 @@
 
 #include <functional>
 #include <algorithm>
+#include <sstream>
 
 using namespace std;
 using namespace isc;
@@ -1201,7 +1202,8 @@ TEST_F(NameChangeUDPTest, roundTripTestMultiThreading) {
 }
 
 // Tests error handling of a failure to mark the watch socket ready, when
-// sendRequest() is called.
+// sendRequest() is called.  markReady failure after asyncSend is logged and
+// does not throw; the in-flight send still completes via the IO callback.
 TEST_F(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequest) {
     IOAddress ip_address(TEST_ADDRESS);
     IOServicePtr io_service(new IOService());
@@ -1220,16 +1222,17 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequest) {
     // Tamper with the watch socket by closing the select-fd.
     close(sender.getSelectFd());
 
-    // Send should fail as we interfered by closing the select-fd.
-    ASSERT_THROW(sender.sendRequest(ncr), util::WatchSocketError);
-
-    // Verify we didn't invoke the handler.
-    EXPECT_EQ(0, ncr_handler->pass_count_);
-    EXPECT_EQ(0, ncr_handler->error_count_);
-
-    // Request remains in the queue. Technically it was sent but its
-    // completion handler won't get called.
+    // Send should still queue and initiate async IO despite markReady failure.
+    ASSERT_NO_THROW(sender.sendRequest(ncr));
+    EXPECT_TRUE(sender.isSendInProgress());
     EXPECT_EQ(1U, sender.getQueueSize());
+
+    // Completion handling should finish the in-flight send.
+    ASSERT_NO_THROW(sender.runReadyIO());
+    EXPECT_EQ(1, ncr_handler->pass_count_);
+    EXPECT_EQ(0, ncr_handler->error_count_);
+    EXPECT_FALSE(sender.isSendInProgress());
+    EXPECT_EQ(0U, sender.getQueueSize());
 }
 
 // Tests error handling of a failure to mark the watch socket ready, when
@@ -1255,16 +1258,17 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequestMultiThreading)
     // Tamper with the watch socket by closing the select-fd.
     close(sender.getSelectFd());
 
-    // Send should fail as we interfered by closing the select-fd.
-    ASSERT_THROW(sender.sendRequest(ncr), util::WatchSocketError);
-
-    // Verify we didn't invoke the handler.
-    EXPECT_EQ(0, ncr_handler->pass_count_);
-    EXPECT_EQ(0, ncr_handler->error_count_);
-
-    // Request remains in the queue. Technically it was sent but its
-    // completion handler won't get called.
+    // Send should still queue and initiate async IO despite markReady failure.
+    ASSERT_NO_THROW(sender.sendRequest(ncr));
+    EXPECT_TRUE(sender.isSendInProgress());
     EXPECT_EQ(1U, sender.getQueueSize());
+
+    // Completion handling should finish the in-flight send.
+    ASSERT_NO_THROW(sender.runReadyIO());
+    EXPECT_EQ(1, ncr_handler->pass_count_);
+    EXPECT_EQ(0, ncr_handler->error_count_);
+    EXPECT_FALSE(sender.isSendInProgress());
+    EXPECT_EQ(0U, sender.getQueueSize());
 }
 
 // Tests error handling of a failure to mark the watch socket ready, when
@@ -1291,19 +1295,20 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequest) {
     // Tamper with the watch socket by closing the select-fd.
     close (sender.getSelectFd());
 
-    // Run one handler. This should execute the send completion handler
-    // after sending the first message.  Doing completion handling, we will
-    // attempt to queue the second message which should fail.
+    // First completion should succeed and initiate the second send even if
+    // markReady fails for the follow-on send.
     ASSERT_NO_THROW(sender.runReadyIO());
-
-    // Verify handler got called twice. First request should have be sent
-    // without error, second call should have failed to send due to watch
-    // socket markReady failure.
     EXPECT_EQ(1, ncr_handler->pass_count_);
-    EXPECT_EQ(1, ncr_handler->error_count_);
-
-    // The second request should still be in the queue.
+    EXPECT_EQ(0, ncr_handler->error_count_);
+    EXPECT_TRUE(sender.isSendInProgress());
     EXPECT_EQ(1U, sender.getQueueSize());
+
+    // Complete the second in-flight send.
+    ASSERT_NO_THROW(sender.runReadyIO());
+    EXPECT_EQ(2, ncr_handler->pass_count_);
+    EXPECT_EQ(0, ncr_handler->error_count_);
+    EXPECT_FALSE(sender.isSendInProgress());
+    EXPECT_EQ(0U, sender.getQueueSize());
 }
 
 // Tests error handling of a failure to mark the watch socket ready, when
@@ -1333,23 +1338,25 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequestMultiThreading) 
     // Tamper with the watch socket by closing the select-fd.
     close (sender.getSelectFd());
 
-    // Run one handler. This should execute the send completion handler
-    // after sending the first message.  Doing completion handling, we will
-    // attempt to queue the second message which should fail.
+    // First completion should succeed and initiate the second send even if
+    // markReady fails for the follow-on send.
     ASSERT_NO_THROW(sender.runReadyIO());
-
-    // Verify handler got called twice. First request should have be sent
-    // without error, second call should have failed to send due to watch
-    // socket markReady failure.
     EXPECT_EQ(1, ncr_handler->pass_count_);
-    EXPECT_EQ(1, ncr_handler->error_count_);
-
-    // The second request should still be in the queue.
+    EXPECT_EQ(0, ncr_handler->error_count_);
+    EXPECT_TRUE(sender.isSendInProgress());
     EXPECT_EQ(1U, sender.getQueueSize());
+
+    // Complete the second in-flight send.
+    ASSERT_NO_THROW(sender.runReadyIO());
+    EXPECT_EQ(2, ncr_handler->pass_count_);
+    EXPECT_EQ(0, ncr_handler->error_count_);
+    EXPECT_FALSE(sender.isSendInProgress());
+    EXPECT_EQ(0U, sender.getQueueSize());
 }
 
 // Tests error handling of a failure to clear the watch socket during
-// completion handling.
+// completion handling.  clearReady failure closes the watch socket; the
+// follow-on markReady failure is logged and the second send still completes.
 TEST_F(NameChangeUDPSenderBasicTest, watchSocketBadRead) {
     IOAddress ip_address(TEST_ADDRESS);
     IOServicePtr io_service(new IOService());
@@ -1383,17 +1390,19 @@ TEST_F(NameChangeUDPSenderBasicTest, watchSocketBadRead) {
     // Run one handler. This should execute the send completion handler
     // after sending the message.  Doing completion handling clearing the
     // watch socket should fail, which will close the socket, but not
-    // result in a throw.
+    // result in a throw.  The next send is still initiated.
     ASSERT_NO_THROW(sender.runReadyIO());
-
-    // Verify handler got called twice. First request should have be sent
-    // without error, second call should have failed to send due to watch
-    // socket markReady failure.
     EXPECT_EQ(1, ncr_handler->pass_count_);
-    EXPECT_EQ(1, ncr_handler->error_count_);
-
-    // The second request should still be in the queue.
+    EXPECT_EQ(0, ncr_handler->error_count_);
+    EXPECT_TRUE(sender.isSendInProgress());
     EXPECT_EQ(1U, sender.getQueueSize());
+
+    // Complete the second in-flight send.
+    ASSERT_NO_THROW(sender.runReadyIO());
+    EXPECT_EQ(2, ncr_handler->pass_count_);
+    EXPECT_EQ(0, ncr_handler->error_count_);
+    EXPECT_FALSE(sender.isSendInProgress());
+    EXPECT_EQ(0U, sender.getQueueSize());
 }
 
 // Tests error handling of a failure to clear the watch socket during
@@ -1431,20 +1440,83 @@ TEST_F(NameChangeUDPSenderBasicTest, watchSocketBadReadMultiThreading) {
     ASSERT_EQ((read (select_fd, &buf, 1)), 1);
     ASSERT_NE(util::WatchSocket::MARKER, buf);
 
-    // Run one handler. This should execute the send completion handler
-    // after sending the message.  Doing completion handling clearing the
-    // watch socket should fail, which will close the socket, but not
-    // result in a throw.
+    // Run one handler. clearReady fails and closes the watch socket; the
+    // next send is still initiated despite markReady failure.
     ASSERT_NO_THROW(sender.runReadyIO());
+    EXPECT_EQ(1, ncr_handler->pass_count_);
+    EXPECT_EQ(0, ncr_handler->error_count_);
+    EXPECT_TRUE(sender.isSendInProgress());
+    EXPECT_EQ(1U, sender.getQueueSize());
 
-    // Verify handler got called twice. First request should have be sent
-    // without error, second call should have failed to send due to watch
-    // socket markReady failure.
+    // Complete the second in-flight send.
+    ASSERT_NO_THROW(sender.runReadyIO());
+    EXPECT_EQ(2, ncr_handler->pass_count_);
+    EXPECT_EQ(0, ncr_handler->error_count_);
+    EXPECT_FALSE(sender.isSendInProgress());
+    EXPECT_EQ(0U, sender.getQueueSize());
+}
+
+// Verifies that a doSend() failure (oversized serialized NCR) does not
+// permanently stall the send queue.  Without the fix, ncr_to_send_ remains
+// set after putData throws and subsequent sendNext() calls return early.
+TEST_F(NameChangeUDPSenderBasicTest, oversizedNcrDoesNotStallSendQueue) {
+    IOAddress ip_address(TEST_ADDRESS);
+    IOServicePtr io_service(new IOService());
+    SimpleSendHandlerPtr ncr_handler(new SimpleSendHandler());
+
+    NameChangeUDPSender sender(ip_address, 0, ip_address, LISTENER_PORT,
+                               FMT_JSON, ncr_handler, 100, true);
+    ASSERT_NO_THROW(sender.startSending(io_service));
+    ASSERT_TRUE(sender.amSending());
+
+    // Build an NCR whose JSON wire form exceeds SEND_BUF_MAX (4096).
+    // Length prefix (2) + JSON must be larger than the UDP send buffer.
+    std::string big_dhcid(4200, 'A');
+    // DHCID hex requires an even number of digits.
+    if ((big_dhcid.size() % 2) != 0) {
+        big_dhcid.push_back('B');
+    }
+
+    std::ostringstream oss;
+    oss << "{"
+        << " \"change-type\" : 0 ,"
+        << " \"forward-change\" : true ,"
+        << " \"reverse-change\" : false ,"
+        << " \"fqdn\" : \"walah.walah.com\" ,"
+        << " \"ip-address\" : \"192.168.2.1\" ,"
+        << " \"dhcid\" : \"" << big_dhcid << "\" ,"
+        << " \"lease-length\" : 1300,"
+        << " \"conflict-resolution-mode\": \"check-with-dhcid\""
+        << "}";
+
+    NameChangeRequestPtr oversized;
+    ASSERT_NO_THROW(oversized = NameChangeRequest::fromJSON(oss.str()));
+    isc::util::OutputBuffer check_buf(64);
+    ASSERT_NO_THROW(oversized->toFormat(FMT_JSON, check_buf));
+    // SEND_BUF_MAX equals UDPSocket MIN_SIZE (4096); avoid ODR-use of the
+    // in-class static const by comparing against the known limit.
+    ASSERT_GT(check_buf.getLength(), static_cast<size_t>(4096));
+
+    // Queueing the oversized request should not throw; the send handler
+    // receives ERROR and the queue must not remain blocked.
+    ASSERT_NO_THROW(sender.sendRequest(oversized));
+    EXPECT_EQ(1, ncr_handler->error_count_);
+    EXPECT_EQ(0, ncr_handler->pass_count_);
+    EXPECT_FALSE(sender.isSendInProgress());
+    EXPECT_EQ(0U, sender.getQueueSize());
+
+    // A normal-sized request must still send successfully afterwards.
+    NameChangeRequestPtr ncr;
+    ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[0]));
+    ASSERT_NO_THROW(sender.sendRequest(ncr));
+    EXPECT_TRUE(sender.isSendInProgress());
+    EXPECT_EQ(1U, sender.getQueueSize());
+
+    ASSERT_NO_THROW(sender.runReadyIO());
     EXPECT_EQ(1, ncr_handler->pass_count_);
     EXPECT_EQ(1, ncr_handler->error_count_);
-
-    // The second request should still be in the queue.
-    EXPECT_EQ(1U, sender.getQueueSize());
+    EXPECT_FALSE(sender.isSendInProgress());
+    EXPECT_EQ(0U, sender.getQueueSize());
 }
 
 } // end of anonymous namespace

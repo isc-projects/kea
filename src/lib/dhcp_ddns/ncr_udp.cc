@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -317,11 +317,16 @@ NameChangeUDPSender::doSend(NameChangeRequestPtr& ncr) {
                        send_callback_->getDataSource().get(), *send_callback_);
 
     // Set IO ready marker so sender activity is visible to select() or poll().
-    // Note, if this call throws it will manifest itself as a throw from
-    // from sendRequest() which the application calls directly and is documented
-    // as throwing exceptions; or caught inside invokeSendHandler() which
-    // will invoke the application's send_handler with an error status.
-    watch_socket_->markReady();
+    // The async send is already queued.  If marking the watch socket fails,
+    // do not throw: NameChangeSender would otherwise leave ncr_to_send_ set
+    // (or race with the completion handler after recovery).  Log and rely on
+    // send completion to finish the in-progress request.
+    try {
+        watch_socket_->markReady();
+    } catch (const std::exception& ex) {
+        LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_NCR_UDP_SEND_ERROR)
+                  .arg(ex.what());
+    }
 }
 
 void

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -294,8 +294,19 @@ NameChangeSender::sendNext() {
        // If a send were to hang and we timed it out, then timeout
        // handler need to cycle thru open/close ?
 
-       // Call implementation dependent send.
-       doSend(ncr_to_send_);
+       // Call implementation dependent send.  If doSend throws before an
+       // asynchronous send is started (for example because the serialized
+       // NCR exceeds the UDP send buffer), clear the in-progress marker and
+       // discard the request so the queue cannot permanently stall.
+       try {
+           doSend(ncr_to_send_);
+       } catch (const std::exception& ex) {
+           LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_NCR_SEND_NEXT_ERROR)
+                     .arg(ex.what());
+           send_queue_.pop_front();
+           // Use the internal path: sendNext() may already run under lock.
+           invokeSendHandlerInternal(ERROR);
+       }
     }
 }
 
