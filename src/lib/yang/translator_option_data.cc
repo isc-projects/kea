@@ -191,9 +191,10 @@ TranslatorOptionDataList::setOptionDataListKea(string const& xpath,
         }
 
         ostringstream keys;
-        keys << xpath << "/option-data[code='" << code <<
-                "'][space='" << space <<
-                "'][data='" << data << "']";
+        keys << xpath << "/option-data[code="
+             << quoteXPathValue(to_string(code)) << "][space="
+             << quoteXPathValue(space) << "][data="
+             << quoteXPathValue(data) << "]";
         setOptionData(keys.str(), option);
     }
 }

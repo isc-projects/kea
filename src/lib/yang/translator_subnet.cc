@@ -416,13 +416,13 @@ void
 TranslatorSubnets::setSubnetsIetf6(string const& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
         ElementPtr subnet = elem->getNonConst(i);
-        ostringstream range;
-        range << xpath << "/network-range[network-range-id='";
         ConstElementPtr id = subnet->get("id");
         if (!id) {
             isc_throw(BadValue, "subnet without id: " << elem->str());
         }
-        range << id->intValue() << "']";
+        ostringstream range;
+        range << xpath << "/network-range[network-range-id="
+              << quoteXPathValue(to_string(id->intValue())) << "]";
         setSubnet(range.str(), subnet);
     }
 }
@@ -436,8 +436,9 @@ TranslatorSubnets::setSubnetsKea(string const& xpath, ConstElementPtr elem,
             isc_throw(BadValue, "subnet without id: " << subnet->str());
         }
         ostringstream prefix;
-        prefix << xpath << "/" << subsel << "[id='"
-               << subnet->get("id")->intValue() << "']";
+        prefix << xpath << "/" << subsel << "[id="
+               << quoteXPathValue(to_string(subnet->get("id")->intValue()))
+               << "]";
         setSubnet(prefix.str(), subnet);
     }
 }

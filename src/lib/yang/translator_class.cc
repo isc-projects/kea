@@ -212,7 +212,7 @@ TranslatorClasses::setClassesKea(string const& xpath, ConstElementPtr elem) {
         }
         string name = cclass->get("name")->stringValue();
         ostringstream key;
-        key << xpath << "/client-class[name='" << name << "']";
+        key << xpath << "/client-class[name=" << quoteXPathValue(name) << "]";
         setClass(key.str(), cclass);
     }
 }

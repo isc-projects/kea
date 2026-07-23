@@ -120,4 +120,23 @@ TEST_F(TranslatorClassesTestv6, set) {
     EXPECT_TRUE(cclass->equals(*got->get(0)));
 }
 
+// Regression (#4668): client-class names with embedded quotes round-trip.
+TEST_F(TranslatorClassesTestv6, setNameWithQuote) {
+    const string& xpath = "/kea-dhcp6-server:config";
+    ElementPtr classes = Element::createList();
+    ElementPtr cclass = Element::createMap();
+    cclass->set("name", Element::create("fo'o"));
+    cclass->set("test", Element::create("''==''"));
+    cclass->set("only-in-additional-list", Element::create(false));
+    classes->add(cclass);
+    EXPECT_NO_THROW_LOG(translator_->setClasses(xpath, classes));
+
+    ConstElementPtr got;
+    EXPECT_NO_THROW_LOG(got = translator_->getClassesFromAbsoluteXpath(xpath));
+    ASSERT_TRUE(got);
+    ASSERT_EQ(Element::list, got->getType());
+    ASSERT_EQ(1U, got->size());
+    EXPECT_TRUE(cclass->equals(*got->get(0)));
+}
+
 }  // namespace

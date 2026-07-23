@@ -206,7 +206,7 @@ TranslatorDatabases::setDatabasesKea(string const& xpath,
         }
         string type = database->get("type")->stringValue();
         ostringstream key;
-        key << xpath << "[database-type='" << type << "']";
+        key << xpath << "[database-type=" << quoteXPathValue(type) << "]";
         setDatabase(key.str(), database, /* has_mandatory_key = */ true);
     }
 }

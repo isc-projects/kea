@@ -373,6 +373,21 @@ public:
                                    std::string const& yang_name,
                                    libyang::LeafBaseType const type);
 
+    /// @brief Quote a value for use in an XPath predicate literal.
+    ///
+    /// XPath 1.0 string literals cannot escape the quote character used to
+    /// delimit them. Values that contain a single quote are wrapped in double
+    /// quotes; all other values are wrapped in single quotes. Values that
+    /// contain both quote characters cannot be represented as a single XPath
+    /// literal and cause @c BadValue to be thrown.
+    ///
+    /// @param value Unquoted string to embed in an XPath predicate.
+    ///
+    /// @return The value including surrounding quotes, e.g. 'foo' or "a'b".
+    ///
+    /// @throw BadValue if @p value contains both single and double quotes.
+    static std::string quoteXPathValue(std::string const& value);
+
     /// @brief Translate basic value from the given YANG data node to JSON element.
     ///
     /// @param data_node the YANG data node

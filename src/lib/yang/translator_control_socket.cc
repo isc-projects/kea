@@ -207,7 +207,7 @@ TranslatorControlSocket::setControlSocketsKea(string const& xpath,
         }
         string type = control_socket->get("socket-type")->stringValue();
         ostringstream key;
-        key << xpath << "[socket-type='" << type << "']";
+        key << xpath << "[socket-type=" << quoteXPathValue(type) << "]";
         setControlSocketKea(key.str(), control_socket, /* has_mandatory_key = */ true);
     }
 }
@@ -281,9 +281,11 @@ TranslatorControlSocket::setControlSocketAuthenticationClients(string const& xpa
             password_file_str = password_file->stringValue();
         }
         ostringstream key;
-        key << xpath << "[user='" << user_str << "'][password='" << password_str
-                     << "'][user-file='" << user_file_str << "'][password-file='"
-                     << password_file_str << "']";
+        key << xpath << "[user=" << quoteXPathValue(user_str)
+            << "][password=" << quoteXPathValue(password_str)
+            << "][user-file=" << quoteXPathValue(user_file_str)
+            << "][password-file=" << quoteXPathValue(password_file_str)
+            << "]";
         setControlSocketAuthenticationClient(key.str(), client);
     }
 }
@@ -308,7 +310,7 @@ TranslatorControlSocket::setControlSocketHttpHeaders(const std::string& xpath,
             isc_throw(BadValue, "http header without name: " << header->str());
         }
         ostringstream key;
-        key << xpath << "[name='" << name->stringValue() << "']";
+        key << xpath << "[name=" << quoteXPathValue(name->stringValue()) << "]";
         setControlSocketHttpHeader(key.str(), header);
     }
 }

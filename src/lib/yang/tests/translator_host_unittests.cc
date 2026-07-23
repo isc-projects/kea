@@ -189,4 +189,29 @@ TEST_F(TranslatorHostsTestv6, getMany) {
               "\"ip-addresses\": [ \"2001:db8::2\" ] } ]");
 }
 
+// Regression (#4668): host identifiers with embedded single quotes must
+// round-trip through JSON→YANG without breaking the XPath predicate.
+TEST_F(TranslatorHostsTestv4, setIdentifierWithQuote) {
+    const string& xpath =
+        "/kea-dhcp4-server:config/subnet4[id='111']";
+    string const v_subnet("10.0.0.0/24");
+    const string& subnet = xpath + "/subnet";
+    EXPECT_NO_THROW_LOG(sess_->setItem(subnet, v_subnet));
+    sess_->applyChanges();
+
+    ElementPtr hosts = Element::createList();
+    ElementPtr host = Element::createMap();
+    host->set("flex-id", Element::create("aa'bb"));
+    host->set("ip-address", Element::create("10.0.0.1"));
+    hosts->add(host);
+    EXPECT_NO_THROW_LOG(translator_->setHosts(xpath, hosts));
+
+    ConstElementPtr got;
+    EXPECT_NO_THROW_LOG(got = translator_->getHostsFromAbsoluteXpath(xpath));
+    ASSERT_TRUE(got);
+    ASSERT_EQ(Element::list, got->getType());
+    ASSERT_EQ(1U, got->size());
+    EXPECT_TRUE(host->equals(*got->get(0)));
+}
+
 }  // anonymous namespace

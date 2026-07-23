@@ -176,8 +176,9 @@ TranslatorOptionDefList::setOptionDefListKea(string const& xpath,
         }
         string space = def->get("space")->stringValue();
         ostringstream keys;
-        keys << xpath << "/option-def[code='" << code
-            << "'][space='" << space << "']";
+        keys << xpath << "/option-def[code="
+             << quoteXPathValue(to_string(code)) << "][space="
+             << quoteXPathValue(space) << "]";
         setOptionDef(keys.str(), def);
     }
 }

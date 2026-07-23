@@ -334,7 +334,8 @@ TranslatorPools::setPoolsById(string const& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
         ElementPtr pool = elem->getNonConst(i);
         ostringstream prefix;
-        prefix << xpath << "/address-pool[pool-id='" << i << "']";
+        prefix << xpath << "/address-pool[pool-id="
+               << quoteXPathValue(to_string(i)) << "]";
         setPool(prefix.str(), pool);
     }
 }
@@ -353,8 +354,9 @@ TranslatorPools::setPoolsByAddresses(string const& xpath,
         string end_addr;
         getAddresses(pref, start_addr, end_addr);
         ostringstream prefix;
-        prefix << xpath << "/pool[start-address='" << start_addr
-               << "'][end-address='" << end_addr << "']";
+        prefix << xpath << "/pool[start-address="
+               << quoteXPathValue(start_addr) << "][end-address="
+               << quoteXPathValue(end_addr) << "]";
         setPool(prefix.str(), pool);
     }
 }

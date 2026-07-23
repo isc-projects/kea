@@ -327,7 +327,8 @@ TranslatorPdPools::setPdPoolsId(string const& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
         ElementPtr pool = elem->getNonConst(i);
         ostringstream prefix;
-        prefix << xpath << "/pd-pool[pool-id='" << i << "']";
+        prefix << xpath << "/pd-pool[pool-id="
+               << quoteXPathValue(to_string(i)) << "]";
         setPdPool(prefix.str(), pool);
     }
 }
@@ -341,10 +342,12 @@ TranslatorPdPools::setPdPoolsPrefix(string const& xpath,
             isc_throw(BadValue, "pd-pool requires prefix and prefix length: "
                       << pool->str());
         }
+        ostringstream prefix_value;
+        prefix_value << pool->get("prefix")->stringValue() << "/"
+                     << pool->get("prefix-len")->intValue();
         ostringstream prefix;
-        prefix << xpath << "/pd-pool[prefix='"
-               << pool->get("prefix")->stringValue() << "/"
-               << pool->get("prefix-len")->intValue() << "']";
+        prefix << xpath << "/pd-pool[prefix="
+               << quoteXPathValue(prefix_value.str()) << "]";
         setPdPool(prefix.str(), pool);
     }
 }

@@ -559,4 +559,26 @@ TEST_F(TranslatorOptionDataListTestv6, emptyDataKeysOnly) {
     expectEqWithDiff(expected, got);
 }
 
+// Regression (#4668): option-data keys with embedded quotes round-trip.
+TEST_F(TranslatorOptionDataListTestv4, setSpaceWithQuote) {
+    string const xpath("/kea-dhcp4-server:config");
+    ElementPtr const options(Element::fromJSON(R"([
+      {
+        "code": 100,
+        "space": "dn's",
+        "data": "12121212",
+        "csv-format": false,
+        "always-send": false,
+        "never-send": false
+      }
+    ])"));
+    EXPECT_NO_THROW_LOG(translator_->setOptionDataList(xpath, options));
+
+    ConstElementPtr got;
+    EXPECT_NO_THROW_LOG(got = translator_->getOptionDataListFromAbsoluteXpath(xpath));
+    ASSERT_TRUE(got);
+    ASSERT_EQ(1U, got->size());
+    expectEqWithDiff(options->get(0), got->get(0));
+}
+
 }  // namespace

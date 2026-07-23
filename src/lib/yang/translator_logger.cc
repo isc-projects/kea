@@ -133,7 +133,8 @@ TranslatorLogger::setOutputOptions(string const& xpath, ConstElementPtr elem) {
         }
         string output = option->get("output")->stringValue();
         ostringstream key;
-        key << xpath << "/output-option[output='" << output << "']";
+        key << xpath << "/output-option[output=" << quoteXPathValue(output)
+            << "]";
         setOutputOption(key.str(), option);
     }
 }
@@ -199,7 +200,7 @@ TranslatorLoggers::setLoggersKea(string const& xpath, ConstElementPtr elem) {
         }
         string name = logger->get("name")->stringValue();
         ostringstream key;
-        key << xpath << "/logger[name='" << name << "']";
+        key << xpath << "/logger[name=" << quoteXPathValue(name) << "]";
         setLogger(key.str(), logger);
     }
 }

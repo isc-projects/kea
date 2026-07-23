@@ -285,4 +285,19 @@ TEST(YangReprTest, verifyConfigs) {
     }
 }
 
+// Regression (#4668): XPath predicate literals must be quoted safely.
+TEST(TranslatorQuoteXPathValue, quotesPlainAndSpecialValues) {
+    EXPECT_EQ("'foo'", Translator::quoteXPathValue("foo"));
+    EXPECT_EQ("'a\"b'", Translator::quoteXPathValue("a\"b"));
+    EXPECT_EQ("\"a'b\"", Translator::quoteXPathValue("a'b"));
+    EXPECT_EQ("''", Translator::quoteXPathValue(""));
+}
+
+// Regression (#4668): values with both quote styles cannot be a single literal.
+TEST(TranslatorQuoteXPathValue, rejectsMixedQuotes) {
+    EXPECT_THROW_MSG(Translator::quoteXPathValue("a'b\"c"), BadValue,
+                     "XPath literal contains both single and double "
+                     "quotes and cannot be safely quoted: a'b\"c");
+}
+
 }  // namespace

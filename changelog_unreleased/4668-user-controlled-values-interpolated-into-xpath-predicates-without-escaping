@@ -1,0 +1,5 @@
+[bug]		wlodek
+	Quoted YANG XPath list-key predicates safely so
+	configuration values containing quotes no longer
+	break or retarget sysrepo paths.
+	(Gitlab #4668)

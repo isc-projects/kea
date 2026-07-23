@@ -211,8 +211,8 @@ TranslatorHosts::setHostsKea(string const& xpath, ConstElementPtr elem) {
                       << host->str());
         }
         ostringstream key;
-        key << xpath << "/host[identifier-type='" << id_type
-            << "'][identifier='" << id->stringValue() << "']";
+        key << xpath << "/host[identifier-type=" << quoteXPathValue(id_type)
+            << "][identifier=" << quoteXPathValue(id->stringValue()) << "]";
         setHost(key.str(), host);
     }
 }

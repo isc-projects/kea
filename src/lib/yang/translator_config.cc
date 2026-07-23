@@ -622,8 +622,8 @@ TranslatorConfig::setServerKeaDhcpCommon(string const& xpath,
                 continue;
             }
             ostringstream hook_lib;
-            hook_lib << xpath << "/hook-library[library='"
-                     << name->stringValue() << "']";
+            hook_lib << xpath << "/hook-library[library="
+                     << quoteXPathValue(name->stringValue()) << "]";
             string const hook_xpath(hook_lib.str());
             setItem(hook_xpath, ElementPtr(), LeafBaseType::Unknown);
             checkAndStringifyAndSetLeaf(lib, hook_xpath, "parameters");

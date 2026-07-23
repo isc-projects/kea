@@ -309,7 +309,7 @@ TranslatorSharedNetworks::setSharedNetworksKea(string const& xpath,
         }
         string name = network->get("name")->stringValue();
         ostringstream key;
-        key<< xpath << "/shared-network[name='" << name << "']";
+        key << xpath << "/shared-network[name=" << quoteXPathValue(name) << "]";
         setSharedNetwork(key.str(), network);
     }
 }

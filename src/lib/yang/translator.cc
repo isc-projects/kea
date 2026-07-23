@@ -28,6 +28,20 @@ Translator::Translator(Session session, const string& model)
     : session_(session), model_(model) {
 }
 
+string
+Translator::quoteXPathValue(string const& value) {
+    bool const has_single(value.find('\'') != string::npos);
+    bool const has_double(value.find('"') != string::npos);
+    if (has_single && has_double) {
+        isc_throw(BadValue, "XPath literal contains both single and double "
+                  "quotes and cannot be safely quoted: " << value);
+    }
+    if (has_single) {
+        return ("\"" + value + "\"");
+    }
+    return ("'" + value + "'");
+}
+
 void
 Translator::checkAndGetLeaf(ElementPtr& storage,
                             DataNode const& data_node,
