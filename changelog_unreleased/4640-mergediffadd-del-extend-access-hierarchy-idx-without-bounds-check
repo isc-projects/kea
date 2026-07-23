@@ -1,0 +1,4 @@
+[bug]		wlodek
+	Fixed mergeDiffAdd/Del and extend to bounds-check
+	hierarchy descriptors before indexing.
+	(Gitlab #4640)

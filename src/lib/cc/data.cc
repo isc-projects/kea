@@ -1314,27 +1314,30 @@ mergeDiffAdd(ElementPtr& element, ElementPtr& other,
         ElementPtr new_elements = Element::createList();
         for (auto const& right : other->listValue()) {
             // Check if we have any description of the key in the configuration
-            // hierarchy.
-            auto f = hierarchy[idx].find(key);
-            if (f != hierarchy[idx].end()) {
-                bool found = false;
-                ElementPtr mutable_right = boost::const_pointer_cast<Element>(right);
-                for (auto const& left : element->listValue()) {
-                    ElementPtr mutable_left = boost::const_pointer_cast<Element>(left);
-                    // Check if the elements refer to the same configuration
-                    // entity.
-                    if (f->second.match_(mutable_left, mutable_right)) {
-                        found = true;
-                        mergeDiffAdd(mutable_left, mutable_right, hierarchy,
-                                     key, idx, level - 1);
+            // hierarchy. Missing or too-shallow descriptors are treated as a
+            // flat list append.
+            if (idx < hierarchy.size()) {
+                auto f = hierarchy[idx].find(key);
+                if (f != hierarchy[idx].end()) {
+                    bool found = false;
+                    ElementPtr mutable_right = boost::const_pointer_cast<Element>(right);
+                    for (auto const& left : element->listValue()) {
+                        ElementPtr mutable_left = boost::const_pointer_cast<Element>(left);
+                        // Check if the elements refer to the same configuration
+                        // entity.
+                        if (f->second.match_(mutable_left, mutable_right)) {
+                            found = true;
+                            mergeDiffAdd(mutable_left, mutable_right, hierarchy,
+                                         key, idx, level - 1);
+                        }
                     }
+                    if (!found) {
+                        new_elements->add(right);
+                    }
+                    continue;
                 }
-                if (!found) {
-                    new_elements->add(right);
-                }
-            } else {
-                new_elements->add(right);
             }
+            new_elements->add(right);
         }
         // Finally add the new elements.
         for (auto const& right : new_elements->listValue()) {
@@ -1382,27 +1385,33 @@ mergeDiffDel(ElementPtr& element, ElementPtr& other,
             for (uint32_t iter = 0; iter < element->listValue().size();) {
                 bool removed = false;
                 // Check if we have any description of the key in the
-                // configuration hierarchy.
-                auto f = hierarchy[idx].find(key);
-                if (f != hierarchy[idx].end()) {
-                    ElementPtr mutable_left = boost::const_pointer_cast<Element>(element->listValue().at(iter));
-                    // Check if the elements refer to the same configuration
-                    // entity.
-                    if (f->second.match_(mutable_left, mutable_right)) {
-                        // Check if the user supplied data only contains
-                        // identification information, so the intent is to
-                        // delete the element, not just element data.
-                        if (f->second.no_data_(mutable_right)) {
-                            element->remove(iter);
-                            removed = true;
-                        } else {
-                            mergeDiffDel(mutable_left, mutable_right,
-                                         hierarchy, key, idx, level - 1);
-                            if (mutable_left->empty()) {
+                // configuration hierarchy. Missing or too-shallow descriptors
+                // fall back to equality-based removal.
+                if (idx < hierarchy.size()) {
+                    auto f = hierarchy[idx].find(key);
+                    if (f != hierarchy[idx].end()) {
+                        ElementPtr mutable_left = boost::const_pointer_cast<Element>(element->listValue().at(iter));
+                        // Check if the elements refer to the same configuration
+                        // entity.
+                        if (f->second.match_(mutable_left, mutable_right)) {
+                            // Check if the user supplied data only contains
+                            // identification information, so the intent is to
+                            // delete the element, not just element data.
+                            if (f->second.no_data_(mutable_right)) {
                                 element->remove(iter);
                                 removed = true;
+                            } else {
+                                mergeDiffDel(mutable_left, mutable_right,
+                                             hierarchy, key, idx, level - 1);
+                                if (mutable_left->empty()) {
+                                    element->remove(iter);
+                                    removed = true;
+                                }
                             }
                         }
+                    } else if (element->listValue().at(iter)->equals(*value)) {
+                        element->remove(iter);
+                        removed = true;
                     }
                 } else if (element->listValue().at(iter)->equals(*value)) {
                     element->remove(iter);
@@ -1436,13 +1445,15 @@ mergeDiffDel(ElementPtr& element, ElementPtr& other,
                     } else {
                         // Check if we have any description of the key in the
                         // configuration hierarchy.
-                        auto f = hierarchy[idx].find(key);
-                        if (f != hierarchy[idx].end()) {
-                            // Check if the key is used for element
-                            // identification.
-                            if (f->second.is_key_(current_key)) {
-                                // Store the key parameter.
-                                new_elements->set(current_key, mutable_element);
+                        if (idx < hierarchy.size()) {
+                            auto f = hierarchy[idx].find(key);
+                            if (f != hierarchy[idx].end()) {
+                                // Check if the key is used for element
+                                // identification.
+                                if (f->second.is_key_(current_key)) {
+                                    // Store the key parameter.
+                                    new_elements->set(current_key, mutable_element);
+                                }
                             }
                         }
                         element->remove(current_key);
@@ -1477,7 +1488,10 @@ extend(const std::string& container, const std::string& extension,
     if (element->getType() == Element::list) {
         for (auto const& right : other->listValue()) {
             // Check if we have any description of the key in the configuration
-            // hierarchy.
+            // hierarchy. Missing or too-shallow descriptors skip matching.
+            if (idx >= hierarchy.size()) {
+                continue;
+            }
             auto f = hierarchy[idx].find(key);
             if (f != hierarchy[idx].end()) {
                 ElementPtr mutable_right = boost::const_pointer_cast<Element>(right);
