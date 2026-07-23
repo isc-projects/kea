@@ -3224,10 +3224,11 @@ TEST_F(FlexSubOptionTest, subProcessQuery) {
     options->add(option);
     ElementPtr code = Element::create(222);
     option->set("code", code);
-    ElementPtr sub_options = Element::createList();
-    option->set("sub-options", sub_options);
     ElementPtr dest = Element::create(string("query"));
     option->set("destination", dest);
+
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
 
     ElementPtr sub_option = Element::createMap();
     sub_options->add(sub_option);
@@ -3284,10 +3285,11 @@ TEST_F(FlexSubOptionTest, subProcessSource) {
     options->add(option);
     ElementPtr code = Element::create(222);
     option->set("code", code);
-    ElementPtr sub_options = Element::createList();
-    option->set("sub-options", sub_options);
     ElementPtr source = Element::create(string("response"));
     option->set("source", source);
+
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
 
     ElementPtr sub_option = Element::createMap();
     sub_options->add(sub_option);
@@ -3348,10 +3350,11 @@ TEST_F(FlexSubOptionTest, subProcessMemberSource) {
     options->add(option);
     ElementPtr code = Element::create(222);
     option->set("code", code);
-    ElementPtr sub_options = Element::createList();
-    option->set("sub-options", sub_options);
     ElementPtr source = Element::create(string("response"));
     option->set("source", source);
+
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
 
     ElementPtr sub_option = Element::createMap();
     sub_options->add(sub_option);
@@ -3400,6 +3403,7 @@ TEST_F(FlexSubOptionTest, subProcessReceive4) {
     options->add(option);
     ElementPtr code = Element::create(222);
     option->set("code", code);
+
     ElementPtr sub_options = Element::createList();
     option->set("sub-options", sub_options);
 
@@ -3439,6 +3443,7 @@ TEST_F(FlexSubOptionTest, subProcessReceive6) {
     options->add(option);
     ElementPtr code = Element::create(D6O_VENDOR_OPTS);
     option->set("code", code);
+
     ElementPtr sub_options = Element::createList();
     option->set("sub-options", sub_options);
 
@@ -3480,10 +3485,11 @@ TEST_F(FlexSubOptionTest, subProcessSend4) {
     options->add(option);
     ElementPtr code = Element::create(222);
     option->set("code", code);
-    ElementPtr sub_options = Element::createList();
-    option->set("sub-options", sub_options);
     ElementPtr dest = Element::create(string("query"));
     option->set("destination", dest);
+
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
 
     ElementPtr sub_option = Element::createMap();
     sub_options->add(sub_option);
@@ -3524,10 +3530,11 @@ TEST_F(FlexSubOptionTest, subProcessSend6) {
     options->add(option);
     ElementPtr code = Element::create(D6O_VENDOR_OPTS);
     option->set("code", code);
-    ElementPtr sub_options = Element::createList();
-    option->set("sub-options", sub_options);
     ElementPtr dest = Element::create(string("query"));
     option->set("destination", dest);
+
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
 
     ElementPtr sub_option = Element::createMap();
     sub_options->add(sub_option);
@@ -3593,6 +3600,7 @@ TEST_F(FlexSubOptionLogTest, noWarning) {
 
     ElementPtr sub_options = Element::createList();
     option->set("sub-options", sub_options);
+
     ElementPtr sub_option = Element::createMap();
     sub_options->add(sub_option);
     ElementPtr space = Element::create(string("my-space"));
@@ -3629,10 +3637,11 @@ TEST_F(FlexSubOptionLogTest, classWarning) {
     options->add(option);
     ElementPtr code = Element::create(222);
     option->set("code", code);
-    ElementPtr sub_options = Element::createList();
-    option->set("sub-options", sub_options);
     ElementPtr dest = Element::create(string("query"));
     option->set("destination", dest);
+
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
 
     ElementPtr sub_option = Element::createMap();
     sub_options->add(sub_option);
@@ -3674,10 +3683,11 @@ TEST_F(FlexSubOptionLogTest, memberWarning) {
     options->add(option);
     ElementPtr code = Element::create(222);
     option->set("code", code);
-    ElementPtr sub_options = Element::createList();
-    option->set("sub-options", sub_options);
     ElementPtr dest = Element::create(string("query"));
     option->set("destination", dest);
+
+    ElementPtr sub_options = Element::createList();
+    option->set("sub-options", sub_options);
 
     ElementPtr sub_option = Element::createMap();
     sub_options->add(sub_option);
