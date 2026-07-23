@@ -1227,13 +1227,25 @@ TEST(Element, copy) {
     EXPECT_TRUE(elem->equals(*Element::fromJSON("\"bar\"")));
     EXPECT_FALSE(elem->equals(*copied));
 
+    // BigIntElement (values outside int64_t range)
+    ElementPtr deep;
+    elem = Element::create(int128_t("9999999999999999999"));
+    EXPECT_EQ(Element::bigint, elem->getType());
+    ASSERT_NO_THROW(copied = copy(elem, 0));
+    EXPECT_TRUE(elem->equals(*copied));
+    EXPECT_EQ(elem->bigIntValue(), copied->bigIntValue());
+    ASSERT_NO_THROW(deep = copy(elem));
+    EXPECT_TRUE(elem->equals(*deep));
+    ASSERT_NO_THROW(elem->setValue(int128_t("8888888888888888888")));
+    EXPECT_FALSE(elem->equals(*copied));
+    EXPECT_FALSE(elem->equals(*deep));
+
     elem.reset(new ListElement());
     ElementPtr item = ElementPtr(new IntElement(1));
     elem->add(item);
     EXPECT_TRUE(elem->equals(*Element::fromJSON("[ 1 ]")));
     ASSERT_NO_THROW(copied = copy(elem, 0));
     EXPECT_TRUE(elem->equals(*copied));
-    ElementPtr deep;
     ASSERT_NO_THROW(deep = copy(elem));
     EXPECT_TRUE(elem->equals(*deep));
     ASSERT_NO_THROW(item = elem->getNonConst(0));

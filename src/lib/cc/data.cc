@@ -1528,6 +1528,8 @@ copy(ConstElementPtr from, unsigned level) {
     int from_type = from->getType();
     if (from_type == Element::integer) {
         return (ElementPtr(new IntElement(from->intValue(), pos)));
+    } else if (from_type == Element::bigint) {
+        return (ElementPtr(new BigIntElement(from->bigIntValue(), pos)));
     } else if (from_type == Element::real) {
         return (ElementPtr(new DoubleElement(from->doubleValue(), pos)));
     } else if (from_type == Element::boolean) {
