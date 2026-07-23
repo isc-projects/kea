@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -225,8 +225,9 @@ public:
     ///
     /// @param [out] row Object receiving the parsed CSV file.
     ///
-    /// @return true if row has been read and validated; false if validation
-    /// failed.
+    /// @return true if row has been read and validated; false if the
+    /// underlying read failed or validation failed. On read failure the
+    /// contents of @c row are left unchanged.
     bool next(CSVRow& row);
 
     /// @brief Returns the schema version of the physical file

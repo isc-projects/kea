@@ -123,9 +123,13 @@ VersionedCSVFile::getVersionedColumn(const size_t index) const {
 bool
 VersionedCSVFile::next(CSVRow& row) {
     setReadMsg("success");
-    // Use base class to physical read the row, but skip its row
-    // validation
-    CSVFile::next(row, true);
+    // Use base class to physically read the row, but skip its row
+    // validation. Propagate I/O and stream failures: on error the
+    // base class leaves 'row' unchanged, so continuing would validate
+    // stale contents and incorrectly report success.
+    if (!CSVFile::next(row, true)) {
+        return (false);
+    }
     if (row == CSVFile::EMPTY_ROW()) {
         return(true);
     }

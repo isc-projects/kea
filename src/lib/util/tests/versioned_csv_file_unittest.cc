@@ -498,4 +498,39 @@ TEST_F(VersionedCSVFileTest, rowChecking) {
     EXPECT_FALSE(csv->next(row));
 }
 
+// Verifies that VersionedCSVFile::next() propagates CSVFile::next()
+// failures. Closing the stream after a successful read leaves the
+// previous row intact while the base class returns false; the
+// versioned wrapper must not treat that stale row as a new success.
+// See Gitlab #4664.
+TEST_F(VersionedCSVFileTest, nextPropagatesReadFailure) {
+    writeFile("animal,color,age\n"
+              "cat,black,2\n"
+              "lion,yellow,17\n");
+
+    boost::scoped_ptr<VersionedCSVFile> csv(new VersionedCSVFile(testfile_));
+    ASSERT_NO_THROW(csv->addColumn("animal", "2.0", ""));
+    ASSERT_NO_THROW(csv->addColumn("color", "2.0", "grey"));
+    ASSERT_NO_THROW(csv->addColumn("age", "2.0", "0"));
+    ASSERT_NO_THROW(csv->open());
+
+    CSVRow row;
+    ASSERT_TRUE(csv->next(row));
+    EXPECT_EQ("cat", row.readAt(0));
+    EXPECT_EQ("black", row.readAt(1));
+    EXPECT_EQ("2", row.readAt(2));
+
+    // Simulate a subsequent read failure: stream is unusable, but
+    // 'row' still holds the previously read valid contents.
+    ASSERT_NO_THROW(csv->close());
+    EXPECT_FALSE(csv->next(row));
+    EXPECT_NE(std::string::npos, csv->getReadMsg().find("NULL stream"));
+
+    // Stale row contents must remain unchanged (base class does not
+    // clear the row on failure).
+    EXPECT_EQ("cat", row.readAt(0));
+    EXPECT_EQ("black", row.readAt(1));
+    EXPECT_EQ("2", row.readAt(2));
+}
+
 } // end of anonymous namespace
