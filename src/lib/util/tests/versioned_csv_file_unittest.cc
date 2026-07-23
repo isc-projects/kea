@@ -533,4 +533,44 @@ TEST_F(VersionedCSVFileTest, nextPropagatesReadFailure) {
     EXPECT_EQ("2", row.readAt(2));
 }
 
+// Verifies that invalid rows during schema downgrade are rejected.
+// See Gitlab #4663.
+TEST_F(VersionedCSVFileTest, downGradeRowChecking) {
+    // Schema 2.0 with an older file that has an extra header column,
+    // plus invalid data rows that are too short or too long.
+    writeFile("animal,color,age\n"
+              "cat,red,5\n"
+              "onlyone\n"
+              "a,b,c,d\n"
+              "lion,green,8\n");
+
+    boost::scoped_ptr<VersionedCSVFile> csv(new VersionedCSVFile(testfile_));
+    ASSERT_NO_THROW(csv->addColumn("animal", "1.0", ""));
+    ASSERT_NO_THROW(csv->addColumn("color", "2.0", "blue"));
+
+    ASSERT_NO_THROW(csv->open());
+    EXPECT_EQ(VersionedCSVFile::NEEDS_DOWNGRADE, csv->getInputSchemaState());
+
+    CSVRow row;
+    // First row is a valid downgrade (extra column trimmed).
+    ASSERT_TRUE(csv->next(row));
+    EXPECT_EQ("cat", row.readAt(0));
+    EXPECT_EQ("red", row.readAt(1));
+
+    // Too few columns for the current schema.
+    EXPECT_FALSE(csv->next(row));
+    EXPECT_NE(std::string::npos,
+              csv->getReadMsg().find("too few columns to downgrade"));
+
+    // Too many columns for the input header.
+    EXPECT_FALSE(csv->next(row));
+    EXPECT_NE(std::string::npos,
+              csv->getReadMsg().find("too many columns to downgrade"));
+
+    // Final row is again a valid downgrade.
+    ASSERT_TRUE(csv->next(row));
+    EXPECT_EQ("lion", row.readAt(0));
+    EXPECT_EQ("green", row.readAt(1));
+}
+
 } // end of anonymous namespace

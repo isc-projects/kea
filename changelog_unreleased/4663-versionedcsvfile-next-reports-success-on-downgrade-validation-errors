@@ -1,0 +1,4 @@
+[bug]		wlodek
+	VersionedCSVFile::next now returns false when a row
+	fails column-count checks during schema downgrade.
+	(Gitlab #4663)
