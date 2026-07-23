@@ -211,8 +211,8 @@ encapsulates the ``vendor-encapsulated-options`` space.
 
 .. _hooks-flex-option-extensions:
 
-Flexibles Option Extensions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Flexible Option Extensions
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Kea 3.3.0 extended the Flexible Option library with two new option
 parameters:
