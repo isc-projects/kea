@@ -891,32 +891,6 @@ TEST_F(FlexOptionTest, processEmpty) {
     EXPECT_EQ(response_txt, response->toText());
 }
 
-// Verify that response processing does nothing with no response.
-TEST_F(FlexOptionTest, processNoResponse) {
-    ElementPtr options = Element::createList();
-    ElementPtr option = Element::createMap();
-    options->add(option);
-    ElementPtr code = Element::create(DHO_HOST_NAME);
-    option->set("code", code);
-    ElementPtr add = Element::create(string("'abc'"));
-    option->set("add", add);
-
-    option = Element::createMap();
-    options->add(option);
-    code = Element::create(DHO_DOMAIN_SEARCH);
-    option->set("code", code);
-    add = Element::create(string("'example.com'"));
-    option->set("add", add);
-    // fqdn option data is parsed using option definition in csv format.
-    option->set("csv-format", Element::create(true));
-
-    EXPECT_NO_THROW(impl_->testConfigure(options));
-    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
-
-    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
-    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, Pkt4Ptr()));
-}
-
 // Verify that NONE action really does nothing.
 TEST_F(FlexOptionTest, processNone) {
     CfgMgr::instance().setFamily(AF_INET6);
@@ -1947,6 +1921,123 @@ TEST_F(FlexOptionTest, processMemberSource) {
     EXPECT_FALSE(response->getOption(D6O_BOOTFILE_URL));
     // No magic: we simply copied classes from query to response...
     EXPECT_TRUE(response->inClass("foobar"));
+}
+
+// Verify that response processing is not done on the pkt4_receive callout.
+TEST_F(FlexOptionTest, processReceive4) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(DHO_HOST_NAME);
+    option->set("code", code);
+    ElementPtr add = Element::create(string("'abc'"));
+    option->set("add", add);
+
+    option = Element::createMap();
+    options->add(option);
+    code = Element::create(DHO_DOMAIN_SEARCH);
+    option->set("code", code);
+    add = Element::create(string("'example.com'"));
+    option->set("add", add);
+    // fqdn option data is parsed using option definition in csv format.
+    option->set("csv-format", Element::create(true));
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    string query_txt = query->toText();
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, Pkt4Ptr()));
+
+    // Nothing was done.
+    EXPECT_EQ(query_txt, query->toText());
+}
+
+// Verify that response processing is not done on the pkt6_receive callout.
+TEST_F(FlexOptionTest, processReceive6) {
+    CfgMgr::instance().setFamily(AF_INET6);
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(D6O_BOOTFILE_URL);
+    option->set("code", code);
+    ElementPtr add = Element::create(string("'abc'"));
+    option->set("add", add);
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
+    string query_txt = query->toText();
+    EXPECT_NO_THROW(impl_->process<Pkt6Ptr>(Option::V6, query, Pkt6Ptr()));
+
+    // Nothing was done.
+    EXPECT_EQ(query_txt, query->toText());
+}
+
+// Verify that query processing is not done on the pkt4_send callout.
+TEST_F(FlexOptionTest, processSend4) {
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(DHO_HOST_NAME);
+    option->set("code", code);
+    ElementPtr add = Element::create(string("'abc'"));
+    option->set("add", add);
+    ElementPtr dest = Element::create(string("query"));
+    option->set("destination", dest);
+
+    option = Element::createMap();
+    options->add(option);
+    code = Element::create(DHO_DOMAIN_SEARCH);
+    option->set("code", code);
+    add = Element::create(string("'example.com'"));
+    option->set("add", add);
+    // fqdn option data is parsed using option definition in csv format.
+    option->set("csv-format", Element::create(true));
+    option->set("destination", dest);
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    Pkt4Ptr response(new Pkt4(DHCPOFFER, 12345));
+    string query_txt = query->toText();
+    string response_txt = response->toText();
+    EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
+
+    // Nothing was done.
+    EXPECT_EQ(query_txt, query->toText());
+    EXPECT_EQ(response_txt, response->toText());
+}
+
+// Verify that query processing is not done on the pkt6_send callout.
+TEST_F(FlexOptionTest, processSend6) {
+    CfgMgr::instance().setFamily(AF_INET6);
+
+    ElementPtr options = Element::createList();
+    ElementPtr option = Element::createMap();
+    options->add(option);
+    ElementPtr code = Element::create(D6O_BOOTFILE_URL);
+    option->set("code", code);
+    ElementPtr add = Element::create(string("'abc'"));
+    option->set("add", add);
+    ElementPtr dest = Element::create(string("query"));
+    option->set("destination", dest);
+
+    EXPECT_NO_THROW(impl_->testConfigure(options));
+    EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
+
+    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 12345));
+    Pkt6Ptr response(new Pkt6(DHCPV6_ADVERTISE, 12345));
+    string query_txt = query->toText();
+    string response_txt = response->toText();
+    EXPECT_NO_THROW(impl_->process<Pkt6Ptr>(Option::V6, query, response));
+
+    // Nothing was done.
+    EXPECT_EQ(query_txt, query->toText());
+    EXPECT_EQ(response_txt, response->toText());
 }
 
 /// @brief Test fixture for testing warnings from the Flex Option library.

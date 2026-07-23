@@ -329,6 +329,10 @@ public:
         }
         for (auto const& pair : getOptionConfigMap()) {
             for (const OptionConfigPtr& opt_cfg : pair.second) {
+                if (!opt_cfg->getDestination() && response) {
+                    // Called by send but in a receive entry.
+                    continue;
+                }
                 const isc::dhcp::ClientClass& client_class =
                     opt_cfg->getClass();
                 if (!client_class.empty()) {
@@ -423,6 +427,10 @@ public:
         for (auto const& pair : getSubOptionConfigMap()) {
             for (auto const& sub_pair : pair.second) {
                 const SubOptionConfigPtr& sub_cfg = sub_pair.second;
+                if (!sub_cfg->getDestination() && response) {
+                    // Called by send but in a receive entry.
+                    continue;
+                }
                 uint16_t sub_code = sub_cfg->getCode();
                 uint16_t opt_code = sub_cfg->getContainerCode();
                 const isc::dhcp::ClientClass& opt_class =
