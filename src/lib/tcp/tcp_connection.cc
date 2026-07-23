@@ -454,9 +454,11 @@ TcpConnection::socketWriteCallback(TcpResponsePtr response,
             return;
 
         // We got EWOULDBLOCK or EAGAIN which indicate that we may be able to
-        // read something from the socket on the next attempt.
+        // write something to the socket on the next attempt. Just make sure
+        // we don't consume wire data now in case there is any garbage
+        // passed in length.
         } else {
-            doWrite(response);
+            length = 0;
         }
     }
 

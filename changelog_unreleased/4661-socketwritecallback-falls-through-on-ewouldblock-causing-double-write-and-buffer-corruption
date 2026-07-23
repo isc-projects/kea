@@ -1,0 +1,5 @@
+[bug]		wlodek
+	Fixed TcpConnection::socketWriteCallback so
+	EWOULDBLOCK/EAGAIN does not consume wire data
+	or double-schedule the async send.
+	(Gitlab #4661)

@@ -8,8 +8,11 @@
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
+#include <tcp/tcp_connection_pool.h>
+#include <tcp/tcp_stream_msg.h>
 #include <tcp_test_listener.h>
 
+#include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 
 #include <sstream>
@@ -590,6 +593,65 @@ TEST(TcpStreamRequst, postBufferTest) {
             ASSERT_NO_THROW(recvd_request->unpack());
             EXPECT_EQ(*exp_string++, recvd_request->getRequestString());
         }
+    }
+}
+
+/// @brief Exposes @c TcpConnection::socketWriteCallback for unit testing.
+class WriteCallbackTestConnection : public TcpConnection {
+public:
+    WriteCallbackTestConnection(const IOServicePtr& io_service,
+                                const TcpConnectionAcceptorPtr& acceptor,
+                                TcpConnectionPool& connection_pool)
+        : TcpConnection(io_service, acceptor, TlsContextPtr(), connection_pool,
+                        TcpConnectionAcceptorCallback(),
+                        TcpConnectionFilterCallback(),
+                        IDLE_TIMEOUT) {
+    }
+
+    using TcpConnection::socketWriteCallback;
+
+    virtual TcpRequestPtr createRequest() {
+        return (TcpStreamRequestPtr(new TcpStreamRequest()));
+    }
+
+    virtual void requestReceived(TcpRequestPtr) {
+    }
+
+    virtual bool responseSent(TcpResponsePtr) {
+        return (true);
+    }
+};
+
+// Verifies that EWOULDBLOCK / EAGAIN on write does not consume wire
+// data (Gitlab #4661). Without the fix, the handler falls through into
+// consumeWireData with a stale length and corrupts the response buffer.
+TEST(TcpConnectionWriteCallback, wouldBlockDoesNotConsumeWireData) {
+    IOServicePtr io_service(new IOService());
+    TcpConnectionAcceptorPtr acceptor(new TcpConnectionAcceptor(io_service));
+    TcpConnectionPool pool;
+    boost::shared_ptr<WriteCallbackTestConnection> conn(
+        new WriteCallbackTestConnection(io_service, acceptor, pool));
+
+    TcpStreamResponsePtr response(new TcpStreamResponse());
+    response->setResponseData("abcdef");
+    response->pack();
+    const size_t original_size = response->getWireDataSize();
+    ASSERT_GT(original_size, 0U);
+
+    // Non-zero length would corrupt the buffer if the handler fell
+    // through into consumeWireData after would_block / try_again.
+    const boost::system::error_code codes[] = {
+        boost::asio::error::would_block,
+        boost::asio::error::try_again
+    };
+    for (const auto& ec : codes) {
+        response->setResponseData("abcdef");
+        response->pack();
+        ASSERT_EQ(original_size, response->getWireDataSize());
+        ASSERT_NO_THROW(conn->socketWriteCallback(response, ec,
+                                                  original_size));
+        EXPECT_EQ(original_size, response->getWireDataSize())
+            << "wire data consumed on " << ec.message();
     }
 }
 
