@@ -120,34 +120,41 @@ NameChangeListener::invokeRecvHandler(const Result result,
     }
 
     // Start the next IO layer asynchronous receive.
-    // In the event the handler above intervened and decided to stop listening
-    // we need to check that first.
-    if (amListening()) {
-        try {
-            receiveNext();
-        } catch (const isc::Exception& isc_ex) {
-            // It is possible though unlikely, for doReceive to fail without
-            // scheduling the read. While, unlikely, it does mean the callback
-            // will not get called with a failure. A throw here would surface
-            // at the IOService::run (or run variant) invocation.  So we will
-            // close the window by invoking the application handler with
-            // a failed result, and let the application layer sort it out.
-            LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_NCR_RECV_NEXT_ERROR)
-                      .arg(isc_ex.what());
+    scheduleNextReceive();
+}
 
-            // Call the registered application layer handler.
-            // Surround the invocation with a try-catch. The invoked handler is
-            // not supposed to throw, but in the event it does we will at least
-            // report it.
-            NameChangeRequestPtr empty;
-            try {
-                io_pending_ = false;
-                (*recv_handler_)(ERROR, empty);
-            } catch (const std::exception& std_ex) {
-                LOG_ERROR(dhcp_ddns_logger,
-                          DHCP_DDNS_UNCAUGHT_NCR_RECV_HANDLER_ERROR)
-                          .arg(std_ex.what());
-            }
+void
+NameChangeListener::scheduleNextReceive() {
+    // In the event the application handler decided to stop listening
+    // we need to check that first.
+    if (!amListening()) {
+        return;
+    }
+
+    try {
+        receiveNext();
+    } catch (const isc::Exception& isc_ex) {
+        // It is possible though unlikely, for doReceive to fail without
+        // scheduling the read. While, unlikely, it does mean the callback
+        // will not get called with a failure. A throw here would surface
+        // at the IOService::run (or run variant) invocation.  So we will
+        // close the window by invoking the application handler with
+        // a failed result, and let the application layer sort it out.
+        LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_NCR_RECV_NEXT_ERROR)
+                  .arg(isc_ex.what());
+
+        // Call the registered application layer handler.
+        // Surround the invocation with a try-catch. The invoked handler is
+        // not supposed to throw, but in the event it does we will at least
+        // report it.
+        NameChangeRequestPtr empty;
+        try {
+            io_pending_ = false;
+            (*recv_handler_)(ERROR, empty);
+        } catch (const std::exception& std_ex) {
+            LOG_ERROR(dhcp_ddns_logger,
+                      DHCP_DDNS_UNCAUGHT_NCR_RECV_HANDLER_ERROR)
+                      .arg(std_ex.what());
         }
     }
 }

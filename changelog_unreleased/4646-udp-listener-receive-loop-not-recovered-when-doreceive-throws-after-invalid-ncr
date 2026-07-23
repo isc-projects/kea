@@ -1,0 +1,5 @@
+[bug]		wlodek
+	Protect UDP listener re-arm after invalid NCR
+	so a doReceive() failure notifies the application
+	instead of leaving the receive loop stalled.
+	(Gitlab #4646)

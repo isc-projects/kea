@@ -273,6 +273,16 @@ protected:
     /// wise.
     void invokeRecvHandler(const Result result, NameChangeRequestPtr& ncr);
 
+    /// @brief Schedules the next asynchronous receive if still listening.
+    ///
+    /// Invokes receiveNext() inside a try/catch. If doReceive() throws, the
+    /// error is logged and the application handler is invoked with ERROR so
+    /// the exception does not escape an ASIO completion callback and stall
+    /// the receive loop. Callers that re-arm without notifying the
+    /// application of a received message (e.g. after invalid NCR content)
+    /// must use this method rather than calling receiveNext() directly.
+    void scheduleNextReceive();
+
     /// @brief Abstract method which opens the IO source for reception.
     ///
     /// The derivation uses this method to perform the steps needed to

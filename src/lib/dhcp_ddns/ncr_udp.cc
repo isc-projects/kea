@@ -176,9 +176,11 @@ NameChangeUDPListener::receiveCompletionHandler(const bool successful,
             isc::stats::StatsMgr::instance().addValue("ncr-invalid",
                                                       static_cast<int64_t>(1));
 
-            // Queue up the next receive.
-            // NOTE: We must call the base class, NEVER doReceive
-            receiveNext();
+            // Queue up the next receive via the shared protected path so a
+            // doReceive() failure notifies the application with ERROR rather
+            // than escaping the ASIO completion handler and stalling the loop.
+            // NOTE: We must call the base class helper, NEVER doReceive.
+            scheduleNextReceive();
             return;
         }
     } else {

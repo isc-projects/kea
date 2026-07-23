@@ -381,8 +381,8 @@ public:
     /// status and a pointer to the new NCR.
     ///
     /// If the buffer contains invalid data such that construction fails,
-    /// the method will log the failure and then call doReceive() to start a
-    /// initiate the next receive.
+    /// the method will log the failure and then call scheduleNextReceive()
+    /// to initiate the next receive.
     ///
     /// If the indicator denotes failure the method will log the failure and
     /// notify the application layer by calling invokeRecvHandler() with

@@ -11,6 +11,7 @@
 #include <asiolink/interval_timer.h>
 #include <dhcp_ddns/ncr_io.h>
 #include <dhcp_ddns/ncr_udp.h>
+#include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <util/ready_check.h>
 
@@ -153,9 +154,11 @@ class NameChangeUDPListenerTestHandler : public virtual NameChangeListener::Requ
 public:
     NameChangeListener::Result result_;
     NameChangeRequestPtr received_ncr_;
+    int call_count_;
 
     /// @brief Constructor
-    NameChangeUDPListenerTestHandler() : result_(NameChangeListener::SUCCESS) {
+    NameChangeUDPListenerTestHandler()
+        : result_(NameChangeListener::SUCCESS), call_count_(0) {
     }
 
     /// @brief RequestReceiveHandler operator implementation for receiving NCRs.
@@ -166,6 +169,7 @@ public:
     virtual void operator ()(const NameChangeListener::Result result,
                              NameChangeRequestPtr& ncr) {
         // save the result and the NCR we received
+        ++call_count_;
         result_ = result;
         received_ncr_ = ncr;
     }
@@ -228,6 +232,17 @@ public:
                            ncr_buffer.getLength()), listener_endpoint);
     }
 
+    /// @brief Sends raw UDP payload to the listener without NCR validation.
+    void sendRaw(const std::string& payload) {
+        boost::asio::ip::udp::socket
+            udp_socket(io_service_->getInternalIOService(), boost::asio::ip::udp::v4());
+        boost::asio::ip::udp::endpoint
+            listener_endpoint(boost::asio::ip::make_address(TEST_ADDRESS),
+                              LISTENER_PORT);
+        udp_socket.send_to(boost::asio::buffer(payload.data(), payload.size()),
+                           listener_endpoint);
+    }
+
     /// @brief Handler invoked when test timeout is hit
     ///
     /// This callback stops all running (hanging) tasks on IO service.
@@ -273,6 +288,84 @@ TEST_F(NameChangeUDPListenerTest, basicReceiveTests) {
 
     // Verify that IO pending is false, after cancel event occurs.
     EXPECT_NO_THROW(io_service_->runOne());
+    EXPECT_FALSE(listener_->isIoPending());
+}
+
+/// @brief UDP listener that can throw from doReceive() on demand.
+class ThrowingReArmUDPListener : public NameChangeUDPListener {
+public:
+    ThrowingReArmUDPListener(const IOAddress& ip_address, const uint32_t port,
+                             const NameChangeFormat format,
+                             RequestReceiveHandlerPtr ncr_recv_handler,
+                             const bool reuse_address = false)
+        : NameChangeUDPListener(ip_address, port, format, ncr_recv_handler,
+                                reuse_address),
+          throw_next_(false) {
+    }
+
+    virtual void doReceive() {
+        if (throw_next_) {
+            throw_next_ = false;
+            isc_throw(NcrUDPError, "simulated doReceive failure");
+        }
+        NameChangeUDPListener::doReceive();
+    }
+
+    bool throw_next_;
+};
+
+// Verifies that an invalid NCR is discarded without notifying the
+// application, listening continues, and a subsequent valid NCR is delivered.
+TEST_F(NameChangeUDPListenerTest, invalidNcrThenValidContinues) {
+    isc::stats::StatsMgr::instance().setValue("ncr-invalid",
+                                              static_cast<int64_t>(0));
+
+    ASSERT_NO_THROW(listener_->startListening(io_service_));
+    ASSERT_TRUE(listener_->amListening());
+    ASSERT_TRUE(listener_->isIoPending());
+
+    ASSERT_NO_THROW(sendRaw("{ not-valid-json"));
+    ASSERT_NO_THROW(io_service_->runOne());
+
+    // Invalid content must not invoke the application receive handler.
+    EXPECT_EQ(0, handle_->call_count_);
+    EXPECT_TRUE(listener_->amListening());
+    EXPECT_TRUE(listener_->isIoPending());
+
+    isc::stats::ObservationPtr obs =
+        isc::stats::StatsMgr::instance().getObservation("ncr-invalid");
+    ASSERT_TRUE(obs);
+    EXPECT_EQ(1, obs->getInteger().first);
+
+    ASSERT_NO_THROW(sendNcr(valid_msgs[0]));
+    ASSERT_NO_THROW(io_service_->runOne());
+
+    EXPECT_EQ(1, handle_->call_count_);
+    EXPECT_EQ(NameChangeListener::SUCCESS, handle_->result_);
+    EXPECT_TRUE(checkSendVsReceived(sent_ncr_, handle_->received_ncr_));
+}
+
+// Verifies that a doReceive() throw while re-arming after an invalid NCR
+// notifies the application with ERROR instead of escaping the callback.
+TEST_F(NameChangeUDPListenerTest, invalidNcrReArmDoReceiveThrowNotifiesError) {
+    IOAddress addr(TEST_ADDRESS);
+    boost::shared_ptr<ThrowingReArmUDPListener> throwing_listener(
+        new ThrowingReArmUDPListener(addr, LISTENER_PORT, FMT_JSON,
+                                     handle_, true));
+    listener_ = throwing_listener;
+
+    ASSERT_NO_THROW(listener_->startListening(io_service_));
+    ASSERT_TRUE(listener_->amListening());
+
+    // Next doReceive() (re-arm after invalid NCR) will throw.
+    throwing_listener->throw_next_ = true;
+
+    ASSERT_NO_THROW(sendRaw("{ not-valid-json"));
+    ASSERT_NO_THROW(io_service_->runOne());
+
+    EXPECT_EQ(1, handle_->call_count_);
+    EXPECT_EQ(NameChangeListener::ERROR, handle_->result_);
+    EXPECT_FALSE(handle_->received_ncr_);
     EXPECT_FALSE(listener_->isIoPending());
 }
 

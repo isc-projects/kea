@@ -31,7 +31,7 @@ const char* values[] = {
     "DHCP_DDNS_INVALID_NCR", "application received an invalid DNS update request: %1",
     "DHCP_DDNS_NCR_FLUSH_IO_ERROR", "DHCP-DDNS Last send before stopping did not complete successfully: %1",
     "DHCP_DDNS_NCR_LISTEN_CLOSE_ERROR", "application encountered an error while closing the listener used to receive NameChangeRequests : %1",
-    "DHCP_DDNS_NCR_RECV_NEXT_ERROR", "application could not initiate the next read following a request receive.",
+    "DHCP_DDNS_NCR_RECV_NEXT_ERROR", "application could not initiate the next read following a request receive: %1",
     "DHCP_DDNS_NCR_SEND_CLOSE_ERROR", "DHCP-DDNS client encountered an error while closing the sender connection used to send NameChangeRequests: %1",
     "DHCP_DDNS_NCR_SEND_NEXT_ERROR", "DHCP-DDNS client could not initiate the next request send following send completion: %1",
     "DHCP_DDNS_NCR_UDP_CLEAR_READY_ERROR", "NCR UDP watch socket failed to clear: %1",

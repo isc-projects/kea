@@ -24,11 +24,11 @@ during the course of error recovery or during normal shutdown procedure.  In
 either case the error is unlikely to impair the application's ability to
 process requests but it should be reported for analysis.
 
-% DHCP_DDNS_NCR_RECV_NEXT_ERROR application could not initiate the next read following a request receive.
+% DHCP_DDNS_NCR_RECV_NEXT_ERROR application could not initiate the next read following a request receive: %1
 This is an error message indicating that NameChangeRequest listener could not
-start another read after receiving a request.  While possible, this is highly
-unlikely and is probably a programmatic error.  The application should recover
-on its own.
+start another read after receiving a request. While possible, this is highly
+unlikely and is probably a programmatic error. The application should recover
+on its own. The error is given in the message.
 
 % DHCP_DDNS_NCR_SEND_CLOSE_ERROR DHCP-DDNS client encountered an error while closing the sender connection used to send NameChangeRequests: %1
 This is an error message that indicates the DHCP-DDNS client was unable to
