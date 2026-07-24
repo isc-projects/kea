@@ -133,7 +133,7 @@ HttpConnection::shutdownCallback(const boost::system::error_code&) {
     if (closed_) {
         return;
     }
-    if (use_external_ && registered_) {
+    if (registered_) {
         IfaceMgr::instance().deleteExternalSocket(tls_socket_->getNative());
         closeWatchSocket();
         registered_ = false;
@@ -150,7 +150,7 @@ HttpConnection::shutdown() {
     }
     request_timer_.cancel();
     if (tcp_socket_) {
-        if (use_external_ && registered_) {
+        if (registered_) {
             IfaceMgr::instance().deleteExternalSocket(tcp_socket_->getNative());
             closeWatchSocket();
             registered_ = false;
@@ -225,7 +225,7 @@ HttpConnection::close() {
     }
     request_timer_.cancel();
     if (tcp_socket_) {
-        if (use_external_ && registered_) {
+        if (registered_) {
             IfaceMgr::instance().deleteExternalSocket(tcp_socket_->getNative());
             closeWatchSocket();
             registered_ = false;
@@ -235,7 +235,7 @@ HttpConnection::close() {
         return;
     }
     if (tls_socket_) {
-        if (use_external_ && registered_) {
+        if (registered_) {
             IfaceMgr::instance().deleteExternalSocket(tls_socket_->getNative());
             closeWatchSocket();
             registered_ = false;
@@ -329,7 +329,7 @@ HttpConnection::doHandshake() {
                                 ph::_1)); // error
     try {
         tls_socket_->handshake(cb);
-        if (use_external_) {
+        if (registered_) {
             markWatchSocketReady();
         }
     } catch (const std::exception& ex) {
@@ -391,7 +391,7 @@ HttpConnection::doWrite(HttpConnection::TransactionPtr transaction) {
                 tcp_socket_->asyncSend(transaction->getOutputBufData(),
                                        transaction->getOutputBufSize(),
                                        cb);
-                if (use_external_) {
+                if (registered_) {
                     markWatchSocketReady();
                 }
                 return;
@@ -400,7 +400,7 @@ HttpConnection::doWrite(HttpConnection::TransactionPtr transaction) {
                 tls_socket_->asyncSend(transaction->getOutputBufData(),
                                        transaction->getOutputBufSize(),
                                        cb);
-                if (use_external_) {
+                if (registered_) {
                     markWatchSocketReady();
                 }
                 return;
@@ -479,7 +479,7 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
 
 void
 HttpConnection::handshakeCallback(const boost::system::error_code& ec) {
-    if (use_external_) {
+    if (registered_) {
         clearWatchSocket();
     }
     if (ec) {
@@ -599,7 +599,7 @@ HttpConnection::socketReadCallback(HttpConnection::TransactionPtr transaction,
 void
 HttpConnection::socketWriteCallback(HttpConnection::TransactionPtr transaction,
                                     boost::system::error_code ec, size_t length) {
-    if (use_external_) {
+    if (registered_) {
         clearWatchSocket();
     }
     if (ec) {
