@@ -79,7 +79,7 @@ HttpConnection::HttpConnection(const asiolink::IOServicePtr& io_service,
       acceptor_(acceptor), connection_pool_(connection_pool),
       response_creator_(response_creator), acceptor_callback_(callback),
       use_external_(false), watch_socket_(), defer_shutdown_(false),
-      closed_(false) {
+      closed_(false), registered_(false) {
     if (!tls_context) {
         tcp_socket_.reset(new asiolink::TCPSocket<SocketCallback>(io_service));
     } else {
@@ -133,10 +133,10 @@ HttpConnection::shutdownCallback(const boost::system::error_code&) {
     if (closed_) {
         return;
     }
-    if (use_external_) {
+    if (use_external_ && registered_) {
         IfaceMgr::instance().deleteExternalSocket(tls_socket_->getNative());
         closeWatchSocket();
-        use_external_ = false;
+        registered_ = false;
     }
 
     tls_socket_->close();
@@ -150,10 +150,10 @@ HttpConnection::shutdown() {
     }
     request_timer_.cancel();
     if (tcp_socket_) {
-        if (use_external_) {
+        if (use_external_ && registered_) {
             IfaceMgr::instance().deleteExternalSocket(tcp_socket_->getNative());
             closeWatchSocket();
-            use_external_ = false;
+            registered_ = false;
         }
         tcp_socket_->close();
         closed_ = true;
@@ -225,20 +225,20 @@ HttpConnection::close() {
     }
     request_timer_.cancel();
     if (tcp_socket_) {
-        if (use_external_) {
+        if (use_external_ && registered_) {
             IfaceMgr::instance().deleteExternalSocket(tcp_socket_->getNative());
             closeWatchSocket();
-            use_external_ = false;
+            registered_ = false;
         }
         tcp_socket_->close();
         closed_ = true;
         return;
     }
     if (tls_socket_) {
-        if (use_external_) {
+        if (use_external_ && registered_) {
             IfaceMgr::instance().deleteExternalSocket(tls_socket_->getNative());
             closeWatchSocket();
-            use_external_ = false;
+            registered_ = false;
         }
         tls_socket_->close();
         closed_ = true;
@@ -460,6 +460,7 @@ HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
         }
 
         if (use_external_) {
+            registered_ = true;
             auto& iface_mgr = IfaceMgr::instance();
             if (tcp_socket_) {
                 iface_mgr.addExternalSocket(tcp_socket_->getNative(), 0);

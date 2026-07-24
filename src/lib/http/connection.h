@@ -467,6 +467,10 @@ protected:
     /// @brief Flag which indicates if the connection was already closed
     /// to avoid multiple close calls.
     bool closed_;
+
+    /// @brief Flag which indicates if the connection file descriptor
+    /// was registered as an external socket.
+    bool registered_;
 };
 
 } // end of namespace isc::http
