@@ -1284,7 +1284,7 @@ def _install_libyang_from_sources(ignore_errors=False):
         execute('git clone https://github.com/CESNET/libyang.git ~/.hammer-tmp/libyang')
         execute(f'git checkout {version}', cwd='~/.hammer-tmp/libyang')
         execute('mkdir ~/.hammer-tmp/libyang/build')
-        execute('cmake -DBUILD_TESTING=OFF -DCMAKE_C_FLAGS="-Wno-incompatible-pointer-types" ..',
+        execute('cmake -DBUILD_TESTING=OFF -DCMAKE_C_FLAGS="-Wno-incompatible-pointer-types" -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ..',
                 cwd='~/.hammer-tmp/libyang/build')
         execute('make -j $(nproc || gnproc)', cwd='~/.hammer-tmp/libyang/build')
         execute('sudo make install', cwd='~/.hammer-tmp/libyang/build')
