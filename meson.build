@@ -1005,7 +1005,7 @@ if valgrind.found()
             '--xml=yes',
             '--xml-file=valgrind-results-%p.xml',
         ],
-        exclude_suites: ['python-tests', 'shell-tests'],
+        exclude_suites: ['python-tests', 'shell-tests', 'sudo-tests'],
     )
     add_test_setup(
         'valgrind_gen_suppressions',
@@ -1023,7 +1023,7 @@ if valgrind.found()
             '--xml=yes',
             '--xml-file=valgrind-supp-%p.xml',
         ],
-        exclude_suites: ['python-tests', 'shell-tests'],
+        exclude_suites: ['python-tests', 'shell-tests', 'sudo-tests'],
     )
 endif
 
