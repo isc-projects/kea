@@ -1,5 +1,9 @@
 Kea 3.3.0 (development) released on July 29, 2026
 
+2523.	[func]		fdupont
+	RADIUS accounting now ignores DHCPv4 lease reuses.
+	(Gitlab #4544)
+
 2522.	[func]		fdupont
 	Extended the flex-option hook library with two new
 	per option parameters: the 'source' parameter allows

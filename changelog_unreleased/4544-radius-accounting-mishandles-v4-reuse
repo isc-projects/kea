@@ -1,3 +1,0 @@
-[func]		fdupont
-	RADIUS accounting now ignores DHCPv4 lease reuses.
-	(Gitlab #4544)
