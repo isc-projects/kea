@@ -3981,11 +3981,12 @@ DHCP4_CLIENT_FQDN_SCRUBBED_EMPTY
 
 .. code-block:: text
 
-    %1: sanitizing client's FQDN option '%2' yielded an empty string
+    %1: sanitizing client's FQDN option '%2' yielded an empty name or an empty label within the name
 
 Logged at debug log level 50.
 This debug message is issued when the result of sanitizing the
-FQDN option(81) sent by the client is an empty string. When this occurs
+FQDN option(81) sent by the client is an empty name or an empty
+label within the name (e.g. "aaa..bbb.com"). When this occurs
 the server will ignore the FQDN option. The arguments include the
 client and the FQDN option it sent.
 
@@ -4033,13 +4034,14 @@ DHCP4_CLIENT_HOSTNAME_SCRUBBED_EMPTY
 
 .. code-block:: text
 
-    %1: sanitizing client's Hostname option '%2' yielded an empty string
+    %1: sanitizing client's Hostname option '%2' yielded an empty name or an empty label within the name
 
 Logged at debug log level 50.
 This debug message is issued when the result of sanitizing the
-hostname option(12) sent by the client is an empty string. When this occurs
-the server will ignore the hostname option. The arguments include the
-client and the hostname option it sent.
+hostname option(12) sent by the client is an empty name or an empty label
+within the name (e.g. "aaa..bbb"). When this occurs the server will ignore
+the hostname option. The arguments include the client and the
+hostname option it sent.
 
 DHCP4_CLIENT_NAME_PROC_FAIL
 ===========================
@@ -4066,6 +4068,18 @@ This is an informational message announcing the successful processing of a
 new configuration. It is output during server startup, and when an updated
 configuration is committed by the administrator.  Additional information
 may be provided.
+
+DHCP4_CONFIG_HOSTS_DATABASE_DEPRECATED
+======================================
+
+.. code-block:: text
+
+    the "host-database" keyword will be deprecated
+
+This warning message indicates the configuration still uses
+the "hosts-database", a keyword which is deprecated and will
+be rejected by a future release,. Please use "hosts-databases" instead
+and put the database configuration into a list.
 
 DHCP4_CONFIG_LOAD_FAIL
 ======================
@@ -4156,8 +4170,10 @@ DHCP4_DB_RECONNECT_DISABLED
 
     database reconnect is disabled: retries left: %1, reconnect wait time: %2, manager ID: %3, timer: %4
 
-This is an informational message indicating that connectivity to either the
-lease or host database or both and that automatic reconnect is not enabled.
+This is an error message indicating that connectivity to either the
+lease or host database or both was lost and that automatic reconnect is
+not enabled. Loss of connectivity is typically a network or database server
+issue.
 
 DHCP4_DB_RECONNECT_FAILED
 =========================
@@ -4168,8 +4184,7 @@ DHCP4_DB_RECONNECT_FAILED
 
 This error indicates that the server failed to reconnect to the lease and/or
 host database(s) after making the maximum configured number of reconnect
-attempts. This might cause the server to shut down as specified in the
-configuration. Loss of connectivity is typically a network or database server
+attempts. Loss of connectivity is typically a network or database server
 issue.
 
 DHCP4_DB_RECONNECT_LOST_CONNECTION
@@ -4492,7 +4507,7 @@ DHCP4_DYNAMIC_RECONFIGURATION_FAIL
 
     dynamic server reconfiguration failed with file: %1
 
-This is a fatal error message logged when the dynamic reconfiguration of the
+This is an error message logged when the dynamic reconfiguration of the
 DHCP server failed.
 
 DHCP4_DYNAMIC_RECONFIGURATION_SUCCESS
@@ -4517,6 +4532,42 @@ This debug message is issued when the server received an empty Hostname option
 from a client. Server does not process empty Hostname options and therefore
 option is skipped. The argument holds the client and transaction identification
 information.
+
+DHCP4_FATAL_DB_RECONNECT_DISABLED
+=================================
+
+.. code-block:: text
+
+    database reconnect is disabled: retries left: %1, reconnect wait time: %2, manager ID: %3, timer: %4
+
+This is an error message indicating that connectivity to either the
+lease or host database or both was lost and that automatic reconnect is
+not enabled. This causes the server to shut down as specified in the
+configuration. Loss of connectivity is typically a network or database server
+issue.
+
+DHCP4_FATAL_DB_RECONNECT_FAILED
+===============================
+
+.. code-block:: text
+
+    maximum number of database reconnect attempts: %1, has been exhausted without success, manager ID: %2, timer: %3
+
+This error indicates that the server failed to reconnect to the lease and/or
+host database(s) after making the maximum configured number of reconnect
+attempts. This causes the server to shut down as specified in the
+configuration. Loss of connectivity is typically a network or database server
+issue.
+
+DHCP4_FATAL_DYNAMIC_RECONFIGURATION_FAIL
+========================================
+
+.. code-block:: text
+
+    dynamic server reconfiguration failed with file: %1
+
+This is a fatal error message logged when the dynamic reconfiguration of the
+DHCP server failed.
 
 DHCP4_FATAL_OPEN_SOCKETS_FAILED
 ===============================
@@ -5671,6 +5722,20 @@ first argument includes the client and the transaction identification
 information. The second argument holds the IPv4 address which release
 was attempted.
 
+DHCP4_RELEASE_FAIL_NOT_ASSIGNED
+===============================
+
+.. code-block:: text
+
+    %1: client is trying to release the lease %2 which is in the %3 state
+
+Logged at debug log level 50.
+This debug message is issued when a client is trying to release the
+lease which is not in the default / assigned state e.g. kept for the client
+by the lease affinity feature in the released state. The first argument
+includes the client and the transaction identification information.
+The second argument specifies the leased address, the last one the lease state.
+
 DHCP4_RELEASE_FAIL_NO_LEASE
 ===========================
 
@@ -5809,6 +5874,19 @@ This warning is emitted when kea-dhcp4 is running as a root user.
 While the server will function fully, this mode of operation may
 expose your environment to security vulnerabilities and should
 only be used after careful consideration.
+
+DHCP4_SANITIZED_HOSTNAME_MALFORMED
+==================================
+
+.. code-block:: text
+
+    %1: hostname after sanitizing is malformed: %2
+
+Logged at debug log level 50.
+This debug message is issued when the value generated by the server after applying
+host name sanitization does not constitute a valid domain name.  The first argument
+includes the client and transaction identification information. The second argument
+contains a description of the data error.
 
 DHCP4_SECURITY_CHECKS_DISABLED
 ==============================
@@ -6371,13 +6449,14 @@ DHCP6_CLIENT_FQDN_SCRUBBED_EMPTY
 
 .. code-block:: text
 
-    %1: sanitizing client's FQDN option '%2' yielded an empty string
+    %1: sanitizing client's FQDN option '%2' yielded an empty  name or an empty label within the name
 
 Logged at debug log level 50.
 This debug message is issued when the result of sanitizing the
-FQDN option(39) sent by the client is an empty string. When this occurs
-the server will ignore the FQDN option. The arguments include the
-client and the FQDN option it sent.
+FQDN option(39) sent by the client is an empty name or an empty label
+within the name (e.g. "aaa..bbb.com"). When this occurs the server will
+ignore the FQDN option. The arguments include the client and the
+FQDN option it sent.
 
 DHCP6_CONFIG_COMPLETE
 =====================
@@ -6390,6 +6469,18 @@ This is an informational message announcing the successful processing of a
 new configuration. it is output during server startup, and when an updated
 configuration is committed by the administrator.  Additional information
 may be provided.
+
+DHCP6_CONFIG_HOSTS_DATABASE_DEPRECATED
+======================================
+
+.. code-block:: text
+
+    the "host-database" keyword will be deprecated
+
+This warning message indicates the configuration still uses
+the "hosts-database", a keyword which is deprecated and will
+be rejected by a future release,. Please use "hosts-databases" instead
+and put the database configuration into a list.
 
 DHCP6_CONFIG_LOAD_FAIL
 ======================
@@ -6493,8 +6584,10 @@ DHCP6_DB_RECONNECT_DISABLED
 
     database reconnect is disabled: retries left: %1, reconnect wait time: %2, manager ID: %3, timer: %4
 
-This is an informational message indicating that connectivity to either the
-lease or host database or both and that automatic reconnect is not enabled.
+This is an error message indicating that connectivity to either the
+lease or host database or both was lost and that automatic reconnect is
+not enabled. Loss of connectivity is typically a network or database server
+issue.
 
 DHCP6_DB_RECONNECT_FAILED
 =========================
@@ -6505,8 +6598,7 @@ DHCP6_DB_RECONNECT_FAILED
 
 This error indicates that the server failed to reconnect to the lease and/or
 host database(s) after making the maximum configured number of reconnect
-attempts. This might cause the server to shut down as specified in the
-configuration. Loss of connectivity is typically a network or database server
+attempts. Loss of connectivity is typically a network or database server
 issue.
 
 DHCP6_DB_RECONNECT_LOST_CONNECTION
@@ -6830,7 +6922,7 @@ DHCP6_DYNAMIC_RECONFIGURATION_FAIL
 
     dynamic server reconfiguration failed with file: %1
 
-This is a fatal error message logged when the dynamic reconfiguration of the
+This is an error message logged when the dynamic reconfiguration of the
 DHCP server failed.
 
 DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS
@@ -6842,6 +6934,42 @@ DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS
 
 This is info message logged when the dynamic reconfiguration of the DHCP server
 succeeded.
+
+DHCP6_FATAL_DB_RECONNECT_DISABLED
+=================================
+
+.. code-block:: text
+
+    database reconnect is disabled: retries left: %1, reconnect wait time: %2, manager ID: %3, timer: %4
+
+This is an error message indicating that connectivity to either the
+lease or host database or both was lost and that automatic reconnect is
+not enabled. This causes the server to shut down as specified in the
+configuration. Loss of connectivity is typically a network or database server
+issue.
+
+DHCP6_FATAL_DB_RECONNECT_FAILED
+===============================
+
+.. code-block:: text
+
+    maximum number of database reconnect attempts: %1, has been exhausted without success, manager ID: %2, timer: %3
+
+This error indicates that the server failed to reconnect to the lease and/or
+host database(s) after making the maximum configured number of reconnect
+attempts. This causes the server to shut down as specified in the
+configuration. Loss of connectivity is typically a network or database server
+issue.
+
+DHCP6_FATAL_DYNAMIC_RECONFIGURATION_FAIL
+========================================
+
+.. code-block:: text
+
+    dynamic server reconfiguration failed with file: %1
+
+This is a fatal error message logged when the dynamic reconfiguration of the
+DHCP server failed.
 
 DHCP6_FATAL_OPEN_SOCKETS_FAILED
 ===============================
@@ -8931,6 +9059,16 @@ DHCPSRV_CFGMGR_USE_UNICAST
 
 An info message issued when configuring the DHCP server to listen on the unicast
 address on the specific interface.
+
+DHCPSRV_CLASS_BAD_NAME
+======================
+
+.. code-block:: text
+
+    class name '%1' includes problematic characters: suggest to use '%2' instead
+
+The warning is emitted whenever a class is configured with a name which includes
+problematic characters. The name and an escaped proposal are displayed.
 
 DHCPSRV_CLASS_WITH_ADDITIONAL_AND_LIFETIMES
 ===========================================
@@ -11944,7 +12082,7 @@ EVAL_DEBUG_OPTION
 
 .. code-block:: text
 
-    %1: Pushing option %2 with value %3
+    %1: Pushing %2 with value %3
 
 Logged at debug log level 55.
 This debug message indicates that the given string representing the
@@ -12159,32 +12297,6 @@ string and an empty result will be pushed onto the stack.  The start,
 length and string are still popped from the stack and the result is
 still pushed.  The strings are displayed in hex.
 
-EVAL_DEBUG_SUB_OPTION
-=====================
-
-.. code-block:: text
-
-    %1: Pushing option %2 sub-option %3 with value %4
-
-This debug message indicates that the given string representing the
-value of the requested sub-option of the requested parent option is
-being pushed onto the value stack. The string may be the text or
-binary value of the string based on the representation type requested
-(.text or .hex) or "true" or "false" if the requested type is .exists.
-The codes are the parent option and the sub-option codes as requested
-in the classification statement.
-
-EVAL_DEBUG_SUB_OPTION_NO_OPTION
-===============================
-
-.. code-block:: text
-
-    %1: Requested option %2 sub-option %3, but the parent option is not present, pushing result %4
-
-This debug message indicates that the parent option was not found.
-The codes are the parent option and the sub-option codes as requested
-in the classification statement.
-
 EVAL_DEBUG_TOHEXSTRING
 ======================
 
@@ -12382,6 +12494,7 @@ FLEX_ID_EXPRESSION_EVALUATED_NP
 
     Expression evaluated for packet to 0x%1 (size: %2)
 
+Logged at debug log level 40.
 This debug message is printed every time a packet evaluation is successful.
 This means that the identifier expression has been generated. As it is
 not printable it is converted to hexadecimal.
@@ -12583,6 +12696,57 @@ supplied DUID from the received message and is inserting flexible identifier
 based DUID instead. The server will use this new DUID for processing the
 packet. The original DUID will be restored in the pkt6_send callout and
 sent back to the client.
+
+FLEX_OPTION_CONFIG_SUB_USELESS_CLASS
+====================================
+
+.. code-block:: text
+
+    For the sub-option code %1 in option code %2 the client class %3 is required before classification for a query destination
+
+This warning message indicates the config specifies a class requirement
+when the destination is the query but the callout point for patching
+queries is before the classification so it will very likely not work
+as expected. The codes of the sub-option and option, and the client
+class name are displayed.
+
+FLEX_OPTION_CONFIG_SUB_USELESS_MEMBER
+=====================================
+
+.. code-block:: text
+
+    For the sub-option code %1 in option code %2 the member expression %3 is evaluated before classification for a query destination
+
+This warning message indicates the config specifies an expression
+with a member clause when the destination is the query but the callout point
+for patching queries is before the classification so it will very likely
+not work as expected. The codes of the sub-option and option, and the
+expression are displayed.
+
+FLEX_OPTION_CONFIG_USELESS_CLASS
+================================
+
+.. code-block:: text
+
+    For the option code %1 the client class %2 is required before classification for a query destination
+
+This warning message indicates the config specifies a class requirement
+when the destination is the query but the callout point for patching
+queries is before the classification so it will very likely not work
+as expected. The code of the option and the client class name are displayed.
+
+FLEX_OPTION_CONFIG_USELESS_MEMBER
+=================================
+
+.. code-block:: text
+
+    For the option code %1 the member expression %2 is evaluated before classification for a query destination
+
+This warning message indicates the config specifies an expression
+with a member clause when the destination is the query but the callout point
+for patching queries is before the classification so it will very likely
+not work as expected. The code of the option and the expression are
+displayed.
 
 FLEX_OPTION_LOAD_ERROR
 ======================
@@ -17557,6 +17721,20 @@ This is an error message issued when the Legal Log library attempted to
 write a IPv4 lease entry to the legal store and the store instance
 has not been created.  This is a programmatic error and should not occur.
 
+LEGAL_LOG_LEASE4_RENDER_ERROR
+=============================
+
+.. code-block:: text
+
+    custom request/response-parser-format failed for lease %1 hwaddr %2 (%3); falling back to default format
+
+This error message is issued when an error occurs while evaluating a custom
+legal log message expression.  When this occurs the legal log library will
+then attempt to output an entry using the default expression.  This is most
+likely caused by an invalid expression such as attempting to evaluate
+uint32totext() on an uint8 byte option. The arguments provide the lease
+address, hardware address, and a description of the error.
+
 LEGAL_LOG_LEASE4_WRITE_ERROR
 ============================
 
@@ -17579,6 +17757,20 @@ LEGAL_LOG_LEASE6_NO_LEGAL_STORE
 This is an error message issued when the Legal Log library attempted to
 write a IPv6 lease entry to the legal store and the store instance has not been
 created.  This is a programmatic error and should not occur.
+
+LEGAL_LOG_LEASE6_RENDER_ERROR
+=============================
+
+.. code-block:: text
+
+    custom request/response-parser-format failed for lease %1 duid %2 (%3); falling back to default format
+
+This error message is issued when an error occurs while evaluating a custom
+legal log message expression.  When this occurs the legal log library will
+then attempt to output an entry using the default expression.  This is most
+likely caused by an invalid expression such as attempting to evaluate
+uint32totext() on an uint8 byte option. The arguments provide the lease
+address, duid, and a description of the error.
 
 LEGAL_LOG_LEASE6_WRITE_ERROR
 ============================
@@ -26111,6 +26303,16 @@ RADIUS_UDP_EXCHANGE_FAILED
 
 This error message is issued when an UDP exchange terminates with an error.
 The exchange identifier and the error return code are displayed.
+
+RADIUS_UDP_EXCHANGE_MAX_PENDING
+===============================
+
+.. code-block:: text
+
+    accounting UDP exchange can't be created because already more than %1 exchanges are pending
+
+This error message is issued when the number of pending UDP exchanges
+is too large when a new accounting request will be issued.
 
 RADIUS_UDP_EXCHANGE_OPEN_FAILED
 ===============================

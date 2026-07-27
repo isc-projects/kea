@@ -1,3 +1,171 @@
+Kea 3.3.0 (development) released on July 29, 2026
+
+2522.	[func]		fdupont
+	Extended the flex-option hook library with two new
+	per option parameters: the 'source' parameter allows
+	to use the response packet for expression evaluation,
+	the 'destination' parameter allows to apply option
+	modification on an incoming query after unpacking.
+	(Gitlab #4143)
+
+2521.	[bug]		mgodzina
+	Fixed HA configuration parser expecting a value
+	no bigger than 65535 in max-response-delay,
+	heartbeat-delay and max-ack-delay.
+	(Gitlab #4680)
+
+2520.	[func]		fdupont
+	Changed the way sub-options are encapsulated for
+	special option spaces to allow multiple suboptions
+	with the same code point. Currently only the
+	"v6-ntp-server-suboptions" space of the DHCPv6
+	"ntp-server" is special but if this feature is
+	useful for other spaces it can be made configurable.
+	(Gitlab #4496)
+
+2519.	[bug]		tmark
+	Kea now logs and drops host names and FQDNs
+	when host name sanitization results in
+	embedded empty labels (e.g. "aaa..bbb.com").
+	Applies to both kea-dhcp4 and kea-dhcp6.
+	Thank you to Qifan Zhang from Palo Alto Networks
+	for reporting the issue.
+	(Gitlab #4557)
+
+2518.	[func]		fdupont
+	The parameter 'hosts-database' is deprecated.
+	'hosts-databases' should be used instead.
+	(Gitlab #4309)
+
+2517.	[bug]		andrei
+	kea-lfc no longer removes values on the hwtype and hwaddr_source
+	columns from v6 lease files when the lease is not identified
+	through a hardware address (hwaddr column). This change allows
+	"kea-admin lease-upload" which calls kea-lfc, to work.
+	(Gitlab #4589)
+
+2516.	[bug]		fdupont
+	Fixed the length of FQDN data fields when parsing
+	custom options. Thank you to Qifan Zhang from
+	Palo Alto Networks for reporting the issue.
+	(Gitlab #4567)
+
+2515.	[bug]		fdupont
+	Set the broadcast flag in DHCPNAK responses to relayed
+	DHCPREQUEST queries as required by RFC 2131 4.3.2.
+	Thank you to Florian Krieger from Frauscher Sensor Technology
+	Group GmbH for reporting the issue.
+	(Gitlab #4424)
+
+2514.	[func]		fdupont
+	Improved parameter checking of lease commands.
+	(Gitlab #2260)
+
+2513.	[bug]		fdupont
+	Fixed incorrect handling of double DHCPv4 DHCPRELEASE
+	when the lease affinity feature is enabled, e.g.
+	leading to incorrect assigned statistics.
+	(Gitlab #4547)
+
+2512.	[bug]		fdupont
+	Removed spurious DHCP_RECEIVE4_UNKNOWN and
+	DHCP_RECEIVE6_UNKNOWN warnings sent for instance
+	when a command is received. This bug was introduced
+	in 3.2.0 release.
+	(Gitlab #4674)
+
+2511.	[bug]		fdupont
+	Corrected Bulk Lease Query processing e.g. now
+	return an error on bad dhcp-client-identifier option.
+	Thank you to Qifan Zhang from Palo Alto Networks for
+	reporting the issue.
+	(Gitlab #4549)
+
+2510.	[func]		mgodzina
+	Keactrl can now pass command line arguments to the servers.
+	Argument can be passed in the configuration file for each
+	server or globally from the command line for all servers.
+	(Gitlab #4630)
+
+2509.	[bug]		fdupont
+	Made parsing of DHCPv6 relayed messages stricter:
+	now truncated RELAY-FORW and RELAY-REPLY headers
+	cause the whole message to be dropped. Thank you to
+	Qifan Zhang from Palo Alto Networks for reporting
+	the issue.
+	(Gitlab #4560)
+
+2508.	[func]*		tmark
+	Unless "lenient-option-parsing" is true, Kea servers
+	will now drop packets which contain scalar options
+	whose length exceeds their defined length. Prior
+	to this the servers would attempt to parse the
+	option. Applies to both kea-dhcp4 and kea-dhcp6.
+	(Gitlab #4626)
+
+2507.	[func]		fdupont
+	Disallow lease query of leases with an empty hardware address.
+	(Gitlab #4578)
+
+2506.	[func]		fdupont
+	Made the parsing of the the iaprefix option stricter:
+	now it refuses too big prefix length values. Extended
+	the "lenient-option-parsing" compatibility flag to
+	replace such too big values by 128, the maximal one.
+	(Gitlab #4545)
+
+2505.	[func]		fdupont
+	No longer ignore subnet client-classes guards when
+	selecting a subnet for a DHCPv4-over-DHCPv6 query.
+	Thank you to Qifan Zhang from Palo Alto Networks for
+	reporting the issue.
+	(Gitlab #4556)
+
+2504.	[func]*		fdupont
+	Improved multiple line log records in forensic log files:
+	continuation lines, i.e. all lines before the last one of
+	the log record, get a hyphen instead a space after the
+	leading timestamp. This feature can be disabled e.g.
+	for backward compatibility by setting the new paramater
+	"mark-continuation-lines" to false in the hook library
+	configuration.
+	(Gitlab #4526)
+
+2503.	[func]*		fdupont
+	Generated client class names are now escaped to avoid
+	problematic characters i.e. not letter, not digit and
+	not in '!#$%&*+-./:?@^_|~'. The escape character is
+	the percent sign '%'.
+	When a configured client class name contains such
+	character a warning is emitted.
+	(Gitlab #2598)
+
+2502.	[func]		fdupont
+	Disable IP fragmentation for UDP/IPv4 sockets.
+	(Gitlab #4597)
+
+2501.	[func]		tmark
+	Changed legal log hook library to generate a legal
+	log entry using the default log expression when
+	a custom log expression results in an evaluation
+	error. Prior to this the library would emit an
+	error but not generate a legal log entry. Thank you
+	to Qifan Zhang from Palo Alto Networks for reporting
+	the issue.
+	(Gitlab #4563)
+
+2500.	[func]		fdupont
+	Disallow DHCPv4 DHCPLEASEQUERY queries sent using
+	DHCPv4-over-DHCPv6 as they can bypass the sender
+	access control. Thank you to Qifan Zhang from
+	Palo Alto Networks for reporting the issue.
+	(Gitlab #4531)
+
+2499.	[bug]		tmark
+	Improved handling of special characters
+	in values written to memfile lease database.
+	(Gitlab #4393)
+
 2498.	[func]		razvan
 	The kea-dhcp4, kea-dhcp6 or kea-dhcp-ddns daemons now exit if the
 	'-F' command line parameter is used and a critical failure is

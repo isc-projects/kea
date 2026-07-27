@@ -1,13 +1,8 @@
-# Copyright (C) 2019-2025 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2019-2026 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
-
-% FLEX_OPTION_LOAD_ERROR loading Flex Option hooks library failed: %1
-This error message indicates an error during loading the Flex Option
-hooks library. The details of the error are provided as argument of
-the log message.
 
 % FLEX_OPTION_CONFIG_SUB_USELESS_CLASS For the sub-option code %1 in option code %2 the client class %3 is required before classification for a query destination
 This warning message indicates the config specifies a class requirement
@@ -35,6 +30,11 @@ with a member clause when the destination is the query but the callout point
 for patching queries is before the classification so it will very likely
 not work as expected. The code of the option and the expression are
 displayed.
+
+% FLEX_OPTION_LOAD_ERROR loading Flex Option hooks library failed: %1
+This error message indicates an error during loading the Flex Option
+hooks library. The details of the error are provided as argument of
+the log message.
 
 % FLEX_OPTION_PROCESS_ADD Added the option code %1 with value %2
 Logged at debug log level 40.

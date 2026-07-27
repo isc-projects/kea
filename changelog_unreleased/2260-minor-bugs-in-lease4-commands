@@ -1,3 +1,0 @@
-[func]		fdupont
-	Improved parameter checking of lease commands.
-	(Gitlab #2260)

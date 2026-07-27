@@ -1,3 +1,0 @@
-[func]		fdupont
-	Disable IP fragmentation for UDP/IPv4 sockets.
-	(Gitlab #4597)

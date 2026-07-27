@@ -1,5 +1,0 @@
-[bug]		mgodzina
-	Fixed HA configuration parser expecting a value
-	no bigger than 65535 in max-response-delay,
-	heartbeat-delay and max-ack-delay.
-	(Gitlab #4680)

@@ -1,3 +1,0 @@
-[func]		fdupont
-	Disallow lease query of leases with an empty hardware address.
-	(Gitlab #4578)
