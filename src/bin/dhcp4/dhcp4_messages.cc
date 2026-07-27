@@ -362,7 +362,7 @@ const char* values[] = {
     "DHCP4_SECURITY_CHECKS_DISABLED", "Invoked with command line option -X, Security checks are disabled!!",
     "DHCP4_SERVER_FAILED", "server failed: %1",
     "DHCP4_SERVER_INITIATED_DECLINE", "%1: Lease for addr %2 has been found to be already in use. The lease will be unavailable for %3 seconds.",
-    "DHCP4_SERVER_INITIATED_DECLINE_ADD_FAILED", "%1: error adding a lease for address %2",
+    "DHCP4_SERVER_INITIATED_DECLINE_ADD_FAILED", "%1: error adding a lease for address %2: %3",
     "DHCP4_SERVER_INITIATED_DECLINE_RESOURCE_BUSY", "%1: error declining a lease for address %2",
     "DHCP4_SERVER_INITIATED_DECLINE_UPDATE_FAILED", "%1: error updating lease for address %2",
     "DHCP4_SHUTDOWN", "server shutdown",

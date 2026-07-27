@@ -1137,11 +1137,11 @@ supposed to use. The server will fully recover from this situation, but if
 the underlying problem of a misconfigured or rogue device is not solved, this
 address may be declined again in the future.
 
-% DHCP4_SERVER_INITIATED_DECLINE_ADD_FAILED %1: error adding a lease for address %2
+% DHCP4_SERVER_INITIATED_DECLINE_ADD_FAILED %1: error adding a lease for address %2: %3
 This error message indicates that the server failed to add a DECLINED lease to
 the lease store. The first argument includes the client and the transaction
 identification information. The second argument holds the IPv4 address for which
-the decline was attempted.
+the decline was attempted, the last one the error message.
 
 % DHCP4_SERVER_INITIATED_DECLINE_RESOURCE_BUSY %1: error declining a lease for address %2
 This error message indicates that while one server thread was attempting to mark

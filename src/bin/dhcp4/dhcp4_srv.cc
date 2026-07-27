@@ -4536,16 +4536,15 @@ Dhcpv4Srv::serverDecline(hooks::CalloutHandlePtr& callout_handle, Pkt4Ptr& query
         }
 
         if (!lease_exists) {
-            bool done;
             try {
-                done = LeaseMgrFactory::instance().addLease(lease);
+                if (!LeaseMgrFactory::instance().addLease(lease)) {
+                    isc_throw(Unexpected, "lease already exists");
+                }
             } catch (const Exception& ex) {
-                done = false;
-            }
-            if (!done) {
                 LOG_ERROR(lease4_logger, DHCP4_SERVER_INITIATED_DECLINE_ADD_FAILED)
                     .arg(query->getLabel())
-                    .arg(lease->addr_.toText());
+                    .arg(lease->addr_.toText())
+                    .arg(ex.what());
                 return;
             }
         }
