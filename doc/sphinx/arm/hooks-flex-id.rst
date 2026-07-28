@@ -340,14 +340,14 @@ In order for the flex-id to be used to generate the v4 client's DHCID for DNS up
 then the ``replace-client-id`` flag must also be true.
 
 The following configuration snippets show how flex-id could be used for both
-v4 and v6 clients such that they end up with matching DHCIDs. In this example
+v4 and v6 clients such that they end up with matching DHCIDs.  In this example
 the v6 clients are relayed and the relay has been configured to populate
 option[79] to convey the client's mac address.  In order to get matching DHCIDs
 then, both the v4 and v6 clients must use flex-id to replace their client ids.
 The v6 client's flex-id configuration would look like this:
 
 ::
-{
+
    "Dhcp6": {
        "hooks-libraries": [
            {
@@ -360,13 +360,12 @@ The v6 client's flex-id configuration would look like this:
            ...
        ]
    }
-}
 
 For v6, flex-ids are always prefixed with a two-byte type value of zero. These two
 bytes need to be accounted for in the v4 flex-id expression as is shown below:
 
 ::
-{
+
    "Dhcp4": {
        "hooks-libraries": [
            {
@@ -380,4 +379,11 @@ bytes need to be accounted for in the v4 flex-id expression as is shown below:
            ...
        ]
    }
-}
+
+In this way, the client-id in v4 can be specified as containing an RFC 4361 DUID,
+and the v6 client's DUID will be altered to match this using the hardware address
+sent in RFC 6939 option 79, and thus the DHCID created by both kea-dhcp4 and
+kea-dhcp6 for a client will match. This will make usage of either
+the ``check-with-dhcid`` or ``check-exists-with-dhcid`` modes of
+``ddns-conflict-resolution-mode`` possible in a dual stack environment
+when ddns updates are performed.
