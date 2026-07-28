@@ -315,7 +315,7 @@ part of the expression.
 The ``cid-as-rfc4361-duid`` Flag
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-`RFC 4361 <https://datatracker.ietf.org/doc/html/rfc4361>`
+`RFC 4361 <https://datatracker.ietf.org/doc/html/rfc4361>`__
 describes a mechanism by v4 clients and v6 clients in a dual stack mechanism
 can both maintain DNS entries for the same FQDN.  This is achieved by having the v4
 client embed its v6 counterpart's DUID within its own client identifier (Option 60).
@@ -382,8 +382,8 @@ bytes need to be accounted for in the v4 flex-id expression as is shown below:
 
 In this way, the client-id in v4 can be specified as containing an RFC 4361 DUID,
 and the v6 client's DUID will be altered to match this using the hardware address
-sent in RFC 6939 option 79, and thus the DHCID created by both kea-dhcp4 and
-kea-dhcp6 for a client will match. This will make usage of either
-the ``check-with-dhcid`` or ``check-exists-with-dhcid`` modes of
-``ddns-conflict-resolution-mode`` possible in a dual stack environment
+sent in  `RFC 6939 <https://datatracker.ietf.org/doc/html/rfc6939>`__ option 79,
+and thus the DHCID created by both kea-dhcp4 and kea-dhcp6 for a client will match.
+This will make usage of either the ``check-with-dhcid`` or ``check-exists-with-dhcid``
+modes of ``ddns-conflict-resolution-mode`` possible in a dual stack environment
 when ddns updates are performed.
