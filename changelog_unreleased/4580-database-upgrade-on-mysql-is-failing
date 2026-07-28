@@ -1,5 +1,5 @@
 [bug]		andrei
-	Fixed a theoretical issue with some very old upgrade scripts that
+	Fixed an issue with some very old upgrade scripts that
 	could have lead to split MySQL schemas - specifically on the
 	8.1->8.2 upgrade path, the array column would have not been
 	renamed to is_array, and on 9.6->10.0, the sever tag column would
