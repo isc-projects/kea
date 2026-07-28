@@ -1268,21 +1268,23 @@ def _install_gtest_sources():
 
 def _install_libyang_from_sources(ignore_errors=False):
     """Install libyang from sources."""
-    for prefix in ['/usr', '/usr/local']:
-        libyang_so_candidates = [f'{prefix}/lib/libyang.so', f'{prefix}/lib64/libyang.so']
-        libyang_header = f'{prefix}/include/libyang/version.h'
-        if (any(os.path.exists(i) for i in libyang_so_candidates) and os.path.exists(libyang_header) and
-                execute(f"grep -F '#define LY_VERSION_MAJOR 2' '{libyang_header}'", raise_error=False) == 0):
-            log.info('libyang is already installed at %s.', libyang_header)
-            return
+    version = '2.1.4'
 
-    version = 'v2.1.4'
+    libdirs = [f'{usr}/{lib}' for usr in ['/usr', '/usr/local'] for lib in ['lib', 'lib64']]
+    for libdir in libdirs:
+        pc_file = f'{libdir}/pkgconfig/libyang.pc'
+        if os.path.exists(pc_file):
+            with open(pc_file, encoding='utf-8') as file:
+                for line in file:
+                    if line.rstrip('\n') == f'Version: {version}':
+                        log.info('libyang is already installed: %s.', pc_file)
+                        return
 
     execute('rm -rf ~/.hammer-tmp')
     execute('mkdir -p ~/.hammer-tmp')
     try:
         execute('git clone https://github.com/CESNET/libyang.git ~/.hammer-tmp/libyang')
-        execute(f'git checkout {version}', cwd='~/.hammer-tmp/libyang')
+        execute(f'git checkout v{version}', cwd='~/.hammer-tmp/libyang')
         execute('mkdir ~/.hammer-tmp/libyang/build')
         cmd = 'cmake -DBUILD_TESTING=OFF -DCMAKE_C_FLAGS="-Wno-incompatible-pointer-types" \
                -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ..'
@@ -1302,15 +1304,17 @@ def _install_libyang_from_sources(ignore_errors=False):
 
 def _install_sysrepo_from_sources(ignore_errors=False):
     """Install sysrepo from sources."""
-    for prefix in ['/usr', '/usr/local']:
-        sysrepo_so_candidates = [f'{prefix}/lib/libsysrepo.so', f'{prefix}/lib64/libsysrepo.so']
-        sysrepo_header = f'{prefix}/include/sysrepo/version.h'
-        if (any(os.path.exists(i) for i in sysrepo_so_candidates) and os.path.exists(sysrepo_header) and
-                execute(f"grep -F '#define SR_VERSION_MAJOR 7' '{sysrepo_header}'", raise_error=False) == 0):
-            log.info('sysrepo is already installed at %s.', sysrepo_header)
-            return
+    version = '2.2.12'
 
-    version = 'v2.2.12'
+    libdirs = [f'{usr}/{lib}' for usr in ['/usr', '/usr/local'] for lib in ['lib', 'lib64']]
+    for libdir in libdirs:
+        pc_file = f'{libdir}/pkgconfig/sysrepo.pc'
+        if os.path.exists(pc_file):
+            with open(pc_file, encoding='utf-8') as file:
+                for line in file:
+                    if line.rstrip('\n') == f'Version: {version}':
+                        log.info('sysrepo is already installed: %s.', pc_file)
+                        return
 
     # Create repository for YANG modules and change ownership to current user.
     execute('sudo mkdir -p /etc/sysrepo')
@@ -1320,9 +1324,11 @@ def _install_sysrepo_from_sources(ignore_errors=False):
     execute('mkdir -p ~/.hammer-tmp')
     try:
         execute('git clone https://github.com/sysrepo/sysrepo.git ~/.hammer-tmp/sysrepo')
-        execute(f'git checkout {version}', cwd='~/.hammer-tmp/sysrepo')
+        execute(f'git checkout v{version}', cwd='~/.hammer-tmp/sysrepo')
         execute('mkdir ~/.hammer-tmp/sysrepo/build')
-        execute('cmake -DBUILD_TESTING=OFF -DREPO_PATH=/etc/sysrepo ..', cwd='~/.hammer-tmp/sysrepo/build')
+
+        cmd = 'cmake -DBUILD_TESTING=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DREPO_PATH=/etc/sysrepo ..'
+        execute(cmd, cwd='~/.hammer-tmp/sysrepo/build')
         execute('make -j $(nproc || gnproc)', cwd='~/.hammer-tmp/sysrepo/build')
         execute('sudo make install', cwd='~/.hammer-tmp/sysrepo/build')
         system, _ = get_system_revision()
