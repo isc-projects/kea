@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2018-2026 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -66,8 +66,10 @@ SYSTEMS = {
         '38': False,
         '39': False,
         '40': False,
-        '41': True,
-        '42': True,
+        '41': False,
+        '42': False,
+        '43': True,
+        '44': True,
     },
     'centos': {
         '7': False,
@@ -89,11 +91,12 @@ SYSTEMS = {
         '18.10': False,
         '19.04': False,
         '19.10': False,
-        '20.04': True,
+        '20.04': False,
         '20.10': False,
         '21.04': False,
         '22.04': True,
         '24.04': True,
+        '26.04': True,
     },
     'debian': {
         '8': False,
@@ -101,14 +104,14 @@ SYSTEMS = {
         '10': False,
         '11': True,
         '12': True,
+        '13': True,
     },
     'freebsd': {
-        '11.2': False,
-        '11.4': False,
-        '12.0': False,
-        '12.1': False,
-        '13.0': False,
-        '14.0': True,
+        '11': False,
+        '12': False,
+        '13': False,
+        '14': False,
+        '15': True,
     },
     'alpine': {
         '3.10': False,
@@ -120,10 +123,11 @@ SYSTEMS = {
         '3.16': False,
         '3.17': False,
         '3.18': False,
-        '3.19': True,
-        '3.20': True,
+        '3.19': False,
+        '3.20': False,
         '3.21': True,
         '3.22': True,
+        '3.23': True,
     },
     'arch': {},
 }
@@ -468,8 +472,8 @@ def replace_in_file(file_name, pattern, replacement):
         file.write(content)
 
 
-def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller'):
-    """ Install meson with pyinstaller or venv.
+def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller', only: str = None):
+    """ Install meson and ninja with pyinstaller or venv.
 
     Pyinstaller is needed as opposed to venv to overcome package building errors such as:
     venv/bin/python3 is needed by isc-kea-admin-2.7.7-isc20250320085254.el9.x86_64
@@ -478,8 +482,9 @@ def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller'):
     :type python_v: str
     :param mode: whether installation is through pyinstaller or plain venv
     :type mode: str
+    :param only: what to install: meson or ninja. None (default) means both.
+    :type only: str
     """
-
     meson_version = '1.8.1'
 
     exit_code = execute('meson --version', quiet=True, raise_error=False)
@@ -488,21 +493,26 @@ def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller'):
     execute('sudo rm -fr .meson-src')
     execute(f'sudo {python_v} -m venv /usr/local/share/.venv')
     execute('sudo /usr/local/share/.venv/bin/pip install --upgrade pip setuptools wheel')
-    execute('sudo /usr/local/share/.venv/bin/pip install ninja')
+    if only is None or only == 'ninja':
+        execute('sudo /usr/local/share/.venv/bin/pip install ninja')
     if mode == 'pyinstaller':
-        execute('git clone https://github.com/mesonbuild/meson .meson-src')
-        execute(f'git checkout {meson_version}', cwd='.meson-src')
-        execute('sudo /usr/local/share/.venv/bin/pip install pyinstaller')
-        execute('sudo /usr/local/share/.venv/bin/pyinstaller --additional-hooks-dir=packaging --clean '
-                '--dist ../.meson --onefile ./meson.py',
-                cwd='.meson-src')
-        execute('sudo cp .meson/meson /usr/local/bin')
-        execute('sudo cp /usr/local/share/.venv/bin/ninja /usr/local/bin')
+        if only is None or only == 'meson':
+            execute('git clone https://github.com/mesonbuild/meson .meson-src')
+            execute(f'git checkout {meson_version}', cwd='.meson-src')
+            execute('sudo /usr/local/share/.venv/bin/pip install pyinstaller')
+            execute('sudo /usr/local/share/.venv/bin/pyinstaller --additional-hooks-dir=packaging --clean '
+                    '--dist ../.meson --onefile ./meson.py',
+                    cwd='.meson-src')
+            execute('sudo cp .meson/meson /usr/local/bin')
+        if only is None or only == 'ninja':
+            execute('sudo cp /usr/local/share/.venv/bin/ninja /usr/local/bin')
 
     elif mode == 'venv':
-        execute(f'sudo /usr/local/share/.venv/bin/pip install meson=={meson_version}')
-        execute('sudo ln -s /usr/local/share/.venv/bin/meson /usr/local/bin/meson')
-        execute('sudo ln -s /usr/local/share/.venv/bin/ninja /usr/local/bin/ninja')
+        if only is None or only == 'meson':
+            execute(f'sudo /usr/local/share/.venv/bin/pip install meson=={meson_version}')
+            execute('sudo ln -s /usr/local/share/.venv/bin/meson /usr/local/bin/meson')
+        if only is None or only == 'ninja':
+            execute('sudo ln -s /usr/local/share/.venv/bin/ninja /usr/local/bin/ninja')
     else:
         raise UnexpectedError(f'Unknown mode in install_meson(mode={mode})')
 
@@ -575,7 +585,7 @@ def _prepare_installed_packages_cache_for_alpine():
     return pkg_cache
 
 
-def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None):
+def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None, one_package_at_a_time=False):
     """Install native packages in a system.
 
     :param dict pkgs: specifies a list of packages to be installed
@@ -619,6 +629,9 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None):
         log.info('all packages already installed')
         return
 
+    # Second cmd attempt.
+    cmd2 = None
+
     if system in ['centos', 'fedora', 'rhel', 'rocky']:
         if system in ['centos', 'rhel'] and revision == '7':
             execute('sudo yum install -y dnf')
@@ -631,6 +644,7 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None):
         cmd = 'sudo apt install --no-install-recommends -y'
     elif system == 'freebsd':
         cmd = 'sudo pkg install --no-repo-update --yes'
+        cmd2 = 'sudo pkg install --yes'  # with repo update
     elif system == 'alpine':
         cmd = 'sudo apk add'
     elif system == 'arch':
@@ -638,9 +652,52 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None):
     else:
         raise NotImplementedError('no implementation for %s' % system)
 
-    pkgs = ' '.join(pkgs)
-    cmd += ' ' + pkgs
-    execute(cmd, timeout=timeout, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
+    pkgs_str = ' '.join(pkgs)
+    if system == 'freebsd':
+        execute(f'sudo pkg fetch --dependencies --yes {pkgs_str}')
+
+    if one_package_at_a_time:
+        for p in pkgs:
+            exit_code, _ = execute(
+                f"{cmd} {p}",
+                timeout=timeout,
+                env=env,
+                check_times=check_times,
+                capture=True,
+                raise_error=(cmd2 is None),  # if there is no cmd2 to run afterwards, treat failure as error
+                attempts=3,
+                sleep_time_after_attempt=10,
+            )
+            if exit_code != 0 and cmd2 is not None:
+                execute(
+                    f"{cmd2} {p}",
+                    timeout=timeout,
+                    env=env,
+                    check_times=check_times,
+                    attempts=3,
+                    sleep_time_after_attempt=10,
+                )
+
+    else:
+        exit_code, _ = execute(
+            f"{cmd} {pkgs_str}",
+            timeout=timeout,
+            env=env,
+            check_times=check_times,
+            capture=True,
+            raise_error=(cmd2 is None),  # if there is no cmd2 to run afterwards, treat failure as error
+            attempts=3,
+            sleep_time_after_attempt=10,
+        )
+        if exit_code != 0 and cmd2 is not None:
+            execute(
+                f"{cmd2} {pkgs_str}",
+                timeout=timeout,
+                env=env,
+                check_times=check_times,
+                attempts=3,
+                sleep_time_after_attempt=10,
+            )
 
 
 def get_image_template(key, variant):
@@ -1227,9 +1284,10 @@ def _install_libyang_from_sources(ignore_errors=False):
         execute('git clone https://github.com/CESNET/libyang.git ~/.hammer-tmp/libyang')
         execute(f'git checkout {version}', cwd='~/.hammer-tmp/libyang')
         execute('mkdir ~/.hammer-tmp/libyang/build')
-        execute('cmake -DBUILD_TESTING=OFF -DCMAKE_C_FLAGS="-Wno-incompatible-pointer-types" ..',
-                cwd='~/.hammer-tmp/libyang/build')
-        execute('make -j $(nproc || gnproc || echo 1)', cwd='~/.hammer-tmp/libyang/build')
+        cmd = 'cmake -DBUILD_TESTING=OFF -DCMAKE_C_FLAGS="-Wno-incompatible-pointer-types" \
+               -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ..'
+        execute(cmd, cwd='~/.hammer-tmp/libyang/build')
+        execute('make -j $(nproc || gnproc)', cwd='~/.hammer-tmp/libyang/build')
         execute('sudo make install', cwd='~/.hammer-tmp/libyang/build')
         system, _ = get_system_revision()
         if system != 'alpine':
@@ -1265,7 +1323,7 @@ def _install_sysrepo_from_sources(ignore_errors=False):
         execute(f'git checkout {version}', cwd='~/.hammer-tmp/sysrepo')
         execute('mkdir ~/.hammer-tmp/sysrepo/build')
         execute('cmake -DBUILD_TESTING=OFF -DREPO_PATH=/etc/sysrepo ..', cwd='~/.hammer-tmp/sysrepo/build')
-        execute('make -j $(nproc || gnproc || echo 1)', cwd='~/.hammer-tmp/sysrepo/build')
+        execute('make -j $(nproc || gnproc)', cwd='~/.hammer-tmp/sysrepo/build')
         execute('sudo make install', cwd='~/.hammer-tmp/sysrepo/build')
         system, _ = get_system_revision()
         if system != 'alpine':
@@ -1309,7 +1367,7 @@ EOF
 """, cwd='~/.hammer-tmp/libyang-cpp')
         execute('mkdir ~/.hammer-tmp/libyang-cpp/build')
         execute('cmake -DBUILD_TESTING=OFF .. ', cwd='~/.hammer-tmp/libyang-cpp/build')
-        execute('make -j $(nproc || gnproc || echo 1)', cwd='~/.hammer-tmp/libyang-cpp/build')
+        execute('make -j $(nproc || gnproc)', cwd='~/.hammer-tmp/libyang-cpp/build')
         execute('sudo make install', cwd='~/.hammer-tmp/libyang-cpp/build')
         system, _ = get_system_revision()
         if system != 'alpine':
@@ -1341,7 +1399,7 @@ def _install_sysrepo_cpp_from_sources(ignore_errors=False):
         execute(f'git checkout {version}', cwd='~/.hammer-tmp/sysrepo-cpp')
         execute('mkdir ~/.hammer-tmp/sysrepo-cpp/build')
         execute('cmake -DBUILD_TESTING=OFF .. ', cwd='~/.hammer-tmp/sysrepo-cpp/build')
-        execute('make -j $(nproc || gnproc || echo 1)', cwd='~/.hammer-tmp/sysrepo-cpp/build')
+        execute('make -j $(nproc || gnproc)', cwd='~/.hammer-tmp/sysrepo-cpp/build')
         execute('sudo make install', cwd='~/.hammer-tmp/sysrepo-cpp/build')
         system, _ = get_system_revision()
         if system != 'alpine':
@@ -1406,33 +1464,54 @@ def _configure_mysql(system, revision, features):
         execute('sudo chown mysql:mysql {}'.format(bind_address_cnf))
         execute('sudo rm -f ./bind-address.cnf')
 
-    # If requested, configure TLS.
-    cert_dir = '/etc/mysql/ssl'
-    kea_cnf = os.path.join(conf_d, 'kea.cnf')
-    # But start fresh first. Not enabling TLS in hammer leaves TLS support removed.
-    execute('sudo rm -rf {} {}'.format(cert_dir, kea_cnf))
-    if 'tls' in features:
-        if not os.path.isdir(cert_dir):
-            execute('sudo mkdir -p {}'.format(cert_dir))
-        # Parent dir of hammer.py.
-        p = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
-        if not os.path.isdir(f'{p}/src/lib/asiolink/testutils/ca'):
-            # Sometimes we call a standalone hammer.py on another Kea source tree. Let's use cwd in that case.
-            p = '.'
-        for file in [
-            f'{p}/src/lib/asiolink/testutils/ca/kea-ca.crt',
-            f'{p}/src/lib/asiolink/testutils/ca/kea-client.crt',
-            f'{p}/src/lib/asiolink/testutils/ca/kea-client.key',
-            f'{p}/src/lib/asiolink/testutils/ca/kea-server.crt',
-            f'{p}/src/lib/asiolink/testutils/ca/kea-server.key',
-        ]:
-            if not os.path.exists(file):
-                print('ERROR: File {} is needed to prepare TLS.'.format(file), file=sys.stderr)
+    # If requested, configure TLS. Except for MariaDB >= 11.8 which introduces zero-config TLS.
+    mariadbd_version = None
+    using_mariadb = None
+    zero_conf_tls = False
+    if system in ['alpine', 'freebsd']:
+        using_mariadb = True
+    else:
+        _, output = execute('sudo systemctl status mysql', capture=True, raise_error=False)
+        using_mariadb = 'mariadb.service' in output
+    if using_mariadb:
+        return_code, output = execute('mariadbd --version', capture=True, raise_error=False)
+        if return_code == 0:
+            matches = re.search(r'Ver ([0-9]+\.[0-9]+)', output)
+            if matches is None:
+                log.error('Could not detect version of mariadbd')
                 sys.exit(1)
-            basename = os.path.basename(file)
-            execute('sudo cp {} {}'.format(file, os.path.join(cert_dir, basename)))
-        with open('kea.cnf', 'w', encoding='utf-8') as f:
-            f.write('''\
+            mariadbd_version = matches.group(1)
+            zero_conf_tls = float('11.8') <= float(mariadbd_version)
+    log.info(
+        'using_mariadb: %s, mariadbd_version: %s, zero_conf_tls: %s', using_mariadb, mariadbd_version, zero_conf_tls
+    )
+    if not zero_conf_tls:
+        cert_dir = '/etc/mysql/ssl'
+        kea_cnf = os.path.join(conf_d, 'kea.cnf')
+        # But start fresh first. Not enabling TLS in hammer leaves TLS support removed.
+        execute('sudo rm -rf {} {}'.format(cert_dir, kea_cnf))
+        if 'tls' in features:
+            if not os.path.isdir(cert_dir):
+                execute('sudo mkdir -p {}'.format(cert_dir))
+            # Parent dir of hammer.py.
+            p = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
+            if not os.path.isdir(f'{p}/src/lib/asiolink/testutils/ca'):
+                # Sometimes we call a standalone hammer.py on another Kea source tree. Let's use cwd in that case.
+                p = '.'
+            for file in [
+                f'{p}/src/lib/asiolink/testutils/ca/kea-ca.crt',
+                f'{p}/src/lib/asiolink/testutils/ca/kea-client.crt',
+                f'{p}/src/lib/asiolink/testutils/ca/kea-client.key',
+                f'{p}/src/lib/asiolink/testutils/ca/kea-server.crt',
+                f'{p}/src/lib/asiolink/testutils/ca/kea-server.key',
+            ]:
+                if not os.path.exists(file):
+                    print('ERROR: File {} is needed to prepare TLS.'.format(file), file=sys.stderr)
+                    sys.exit(1)
+                basename = os.path.basename(file)
+                execute('sudo cp {} {}'.format(file, os.path.join(cert_dir, basename)))
+            with open('kea.cnf', 'w', encoding='utf-8') as f:
+                f.write('''\
 [mysqld]
 ssl_ca = {cert_dir}/kea-ca.crt
 ssl_cert = {cert_dir}/kea-server.crt
@@ -1443,9 +1522,9 @@ ssl_ca = {cert_dir}/kea-ca.crt
 ssl_cert = {cert_dir}/kea-client.crt
 ssl_key = {cert_dir}/kea-client.key
 '''.format(cert_dir=cert_dir))
-        execute('sudo mv ./kea.cnf {}'.format(kea_cnf))
-        # For all added files and directories, change owner to mysql.
-        execute('sudo chown -R mysql:mysql {} {}'.format(cert_dir, kea_cnf))
+            execute('sudo mv ./kea.cnf {}'.format(kea_cnf))
+            # For all added files and directories, change owner to mysql.
+            execute('sudo chown -R mysql:mysql {} {}'.format(cert_dir, kea_cnf))
 
     if system in ['debian', 'fedora', 'centos', 'rhel', 'rocky']:
         execute('sudo systemctl enable mariadb.service')
@@ -1485,15 +1564,17 @@ ssl_key = {cert_dir}/kea-client.key
     execute(cmd, raise_error=False)
     cmd = "echo 'DROP USER 'keatest_secure'@'localhost';' | sudo mysql -u root"
     execute(cmd, raise_error=False)
-    cmd = "sh -c \"cat <<EOF | sudo mysql -u root\n"
-    cmd += "CREATE DATABASE keatest;\n"
-    cmd += "CREATE USER 'keatest'@'localhost' IDENTIFIED BY 'keatest';\n"
-    cmd += "CREATE USER 'keatest_readonly'@'localhost' IDENTIFIED BY 'keatest';\n"
+    cmd = """
+      sudo mysql -u root -e "
+        CREATE DATABASE keatest;
+        CREATE USER 'keatest'@'localhost' IDENTIFIED BY 'keatest';
+        CREATE USER 'keatest_readonly'@'localhost' IDENTIFIED BY 'keatest';
+    """
     if 'tls' in features:
         cmd += "CREATE USER 'keatest_secure'@'localhost' IDENTIFIED BY 'keatest';\n"
     cmd += "GRANT ALL ON keatest.* TO 'keatest'@'localhost';\n"
     cmd += "GRANT SELECT ON keatest.* TO 'keatest_readonly'@'localhost';\n"
-    cmd += "EOF\n\""
+    cmd += '"'
     execute(cmd)
     if 'tls' in features:
         # ALTER USER is the best place to put the REQUIRE but, if it is not
@@ -1512,22 +1593,26 @@ ssl_key = {cert_dir}/kea-client.key
         execute(cmd)
         cmd = "echo 'DROP USER 'keauser'@'localhost';' | sudo mysql -u root"
         execute(cmd, raise_error=False)
-        cmd = "sh -c \"cat <<EOF | sudo mysql -u root\n"
-        cmd += "CREATE DATABASE keadb;\n"
-        cmd += "CREATE USER 'keauser'@'localhost' IDENTIFIED BY 'keapass';\n"
-        cmd += "GRANT ALL ON keadb.* TO 'keauser'@'localhost';\n"
-        cmd += "EOF\n\""
+        cmd = """
+          sudo mysql -u root -e "
+            CREATE DATABASE keadb;
+            CREATE USER 'keauser'@'localhost' IDENTIFIED BY 'keapass';
+            GRANT ALL ON keadb.* TO 'keauser'@'localhost';
+          "
+        """
         execute(cmd)
 
     if system == 'debian' and revision == '9':
         log.info('FIX FOR ISSUE kea#389: %s %s', system, revision)
-        cmd = "sh -c \"cat <<EOF | sudo mysql -u root\n"
-        cmd += "use keatest;\n"
-        cmd += "set global innodb_large_prefix=on;\n"
-        cmd += "set global innodb_file_format=Barracuda;\n"
-        cmd += "set global innodb_file_per_table=true;\n"
-        cmd += "set global innodb_default_row_format=dynamic;\n"
-        cmd += "EOF\n\""
+        cmd = """
+          sudo mysql -u root -e '
+            use keatest;
+            set global innodb_large_prefix=on;
+            set global innodb_file_format=Barracuda;
+            set global innodb_file_per_table=true;
+            set global innodb_default_row_format=dynamic;
+          '
+        """
         execute(cmd)
 
 
@@ -1539,7 +1624,7 @@ def _enable_postgresql(system):
     else:
         # Disable all PostgreSQL services first to avoid conflicts.
         # raise_error=False for when there are no matches
-        _, output = execute("systemctl list-unit-files | grep postgres | grep -Fv '@.service' | cut -d ' ' -f 1",
+        _, output = execute("sudo systemctl list-unit-files | grep postgres | grep -Fv '@.service' | cut -d ' ' -f 1",
                             capture=True, raise_error=False)
         for service in output.split():
             execute(f'sudo systemctl disable {service}')
@@ -1557,7 +1642,7 @@ def _restart_postgresql(system):
     else:
         # Stop all PostgreSQL services first to avoid conflicts.
         # raise_error=False for when there are no matches
-        _, output = execute("systemctl list-unit-files | grep postgres | grep -Fv '@.service' | cut -d ' ' -f 1",
+        _, output = execute("sudo systemctl list-unit-files | grep postgres | grep -Fv '@.service' | cut -d ' ' -f 1",
                             capture=True, raise_error=False)
         for service in output.split():
             execute(f'sudo systemctl stop {service}')
@@ -1643,45 +1728,44 @@ def _configure_pgsql(system, features):
 
     _restart_postgresql(system)
 
-    cmd = """sh -c \"cat <<EOF | sudo -u postgres psql postgres
-        DROP DATABASE IF EXISTS keatest;
-        DROP USER IF EXISTS keatest;
-        DROP USER IF EXISTS keatest_readonly;
-        CREATE USER keatest WITH PASSWORD 'keatest';
-        CREATE USER keatest_readonly WITH PASSWORD 'keatest';
-        CREATE DATABASE keatest;
-        GRANT ALL PRIVILEGES ON DATABASE keatest TO keatest;
-        ALTER DATABASE keatest SET TIMEZONE='{}';\n""".format(_get_local_timezone())
-    cmd += 'EOF\n"'
+    local_timezone = _get_local_timezone()
+
+    cmd = f"""
+      sudo -u postgres psql postgres \
+        -c "DROP DATABASE IF EXISTS keatest;" \
+        -c "DROP USER IF EXISTS keatest;" \
+        -c "DROP USER IF EXISTS keatest_readonly;" \
+        -c "CREATE USER keatest WITH PASSWORD 'keatest';" \
+        -c "CREATE USER keatest_readonly WITH PASSWORD 'keatest';" \
+        -c "CREATE DATABASE keatest;" \
+        -c "GRANT ALL PRIVILEGES ON DATABASE keatest TO keatest;" \
+        -c "ALTER DATABASE keatest SET TIMEZONE='{local_timezone}';"
+    """
     execute(cmd, cwd='/tmp')
 
     # This is needed for postgres >= 15
-    cmd = """sh -c \"cat <<EOF | sudo -u postgres psql -U postgres -d keatest
-        GRANT ALL PRIVILEGES ON SCHEMA public TO keatest;\n"""
-    cmd += 'EOF\n"'
+    cmd = "sudo -u postgres psql -U postgres -d keatest -c 'GRANT ALL PRIVILEGES ON SCHEMA public TO keatest'"
     execute(cmd, cwd='/tmp')
 
-    cmd = """sh -c \"cat <<EOF | sudo -u postgres psql -U keatest keatest
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO keatest_readonly;\n"""
-    cmd += 'EOF\n"'
-    env = os.environ.copy()
-    env['PGPASSWORD'] = 'keatest'
-    execute(cmd, cwd='/tmp', env=env)
+    cmd = """
+      sudo -u postgres env PGPASSWORD=keatest psql -U keatest keatest \
+        -c 'ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO keatest_readonly'
+    """
+    execute(cmd, cwd='/tmp')
 
     if 'forge' in features:
-        cmd = "sh -c \"cat <<EOF | sudo -u postgres psql postgres\n"
-        cmd += "DROP DATABASE IF EXISTS keadb;\n"
-        cmd += "DROP USER IF EXISTS keauser;\n"
-        cmd += "CREATE USER keauser WITH PASSWORD 'keapass';\n"
-        cmd += "CREATE DATABASE keadb;\n"
-        cmd += "GRANT ALL PRIVILEGES ON DATABASE keauser TO keadb;\n"
-        cmd += "EOF\n\""
+        cmd = """
+          sudo -u postgres psql postgres \
+            -c "DROP DATABASE IF EXISTS keadb;" \
+            -c "DROP USER IF EXISTS keauser;" \
+            -c "CREATE USER keauser WITH PASSWORD 'keapass';" \
+            -c "CREATE DATABASE keadb;" \
+            -c "GRANT ALL PRIVILEGES ON DATABASE keadb TO keauser;"
+        """
         execute(cmd, cwd='/tmp')
 
         # This is needed for postgres >= 15
-        cmd = """sh -c \"cat <<EOF | sudo -u postgres psql -U postgres -d keadb
-            GRANT ALL PRIVILEGES ON SCHEMA public TO keauser;\n"""
-        cmd += 'EOF\n"'
+        cmd = "sudo -u postgres psql -U postgres -d keadb -c 'GRANT ALL PRIVILEGES ON SCHEMA public TO keauser'"
         execute(cmd, cwd='/tmp')
 
     log.info('postgresql just configured')
@@ -1734,13 +1818,13 @@ def require_minimum_package_version(package: str, minimum: str):
         raise UnexpectedError(message)
 
 
-def prepare_system_local(features, check_times, ignore_errors_for, just_configure):
+def prepare_system_local(features, check_times, ignore_errors_for, just_configure, one_package_at_a_time):
     """Prepare local system for Kea development based on requested features."""
     system, revision = get_system_revision()
     log.info('Preparing deps for %s %s...', system, revision)
 
     if not just_configure:
-        install_packages_local(system, revision, features, check_times, ignore_errors_for)
+        install_packages_local(system, revision, features, check_times, ignore_errors_for, one_package_at_a_time)
 
     if 'mysql' in features:
         _configure_mysql(system, revision, features)
@@ -1751,7 +1835,7 @@ def prepare_system_local(features, check_times, ignore_errors_for, just_configur
     log.info('Preparing deps completed successfully.')
 
 
-def install_packages_local(system, revision, features, check_times, ignore_errors_for):
+def install_packages_local(system, revision, features, check_times, ignore_errors_for, one_package_at_a_time):
     """Install packages for Kea development based on requested features."""
     env = os.environ.copy()
     env['LANGUAGE'] = env['LANG'] = env['LC_ALL'] = 'C'
@@ -1763,19 +1847,37 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     if 'netconf' in features and 'netconf' not in ignore_errors_for:
         require_minimum_package_version('cmake', '3.19')
 
+    packages = []
+
     # Common packages
-    packages = ['autoconf', 'automake', 'bison', 'flex', 'libtool']
+    packages.append('pkgconf')
+    if 'ccache' in features:
+        packages.append('ccache')
+
+    if 'docs' in features:
+        packages.extend(['bison', 'doxygen', 'flex'])
+
+    if 'unittest' in features:
+        packages.append('valgrind')
 
     # prepare fedora
     if system == 'fedora':
-        packages.extend(['boost-devel', 'gcc-c++', 'openssl-devel', 'log4cplus-devel', 'libpcap-devel', 'make'])
+        packages.extend(['boost-devel', 'gcc-c++', 'openssl-devel', 'log4cplus-devel', 'libpcap-devel'])
         deferred_functions.append(install_meson)
 
         if 'native-pkg' in features:
             packages.extend(['rpm-build', 'python3-devel'])
 
         if 'docs' in features:
-            packages.extend(['python3-sphinx', 'python3-sphinx_rtd_theme', 'texlive', 'texlive-collection-latexextra'])
+            packages.extend(
+                [
+                    'python3-sphinx',
+                    'python3-sphinx_rtd_theme',
+                    'texlive',
+                    'texlive-collection-latexextra',
+                    'texlive-times',
+                ]
+            )
 
         if 'mysql' in features:
             packages.extend(['mariadb', 'mariadb-server', 'mariadb-connector-c-devel'])
@@ -1785,9 +1887,6 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
         if 'gssapi' in features:
             packages.extend(['krb5-devel'])
-
-        if 'ccache' in features:
-            packages.extend(['ccache'])
 
         if 'netconf' in features:
             packages.extend(['cmake', 'git', 'pcre2-devel'])
@@ -1800,6 +1899,9 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.append('wget')
             deferred_functions.append(_install_gtest_sources)
 
+        if 'sanitizers' in features:
+            packages.extend(['compiler-rt', 'llvm', 'libasan', 'libtsan', 'libubsan'])
+
         install_pkgs(packages, timeout=300, env=env, check_times=check_times)
 
         execute('sudo dnf clean packages', env=env, check_times=check_times)
@@ -1808,7 +1910,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     elif system == 'centos':
         install_pkgs('epel-release', env=env, check_times=check_times)
 
-        packages.extend(['boost-devel', 'gcc-c++', 'git', 'log4cplus-devel', 'make', 'openssl-devel'])
+        packages.extend(['boost-devel', 'gcc-c++', 'git', 'log4cplus-devel', 'openssl-devel'])
         deferred_functions.append(install_meson)
 
         if revision in ['7', '8']:
@@ -1845,9 +1947,6 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         if 'gssapi' in features:
             packages.extend(['krb5-devel'])
 
-        if 'ccache' in features:
-            packages.extend(['ccache'])
-
         if 'netconf' in features:
             packages.extend(['cmake', 'git', 'pcre2-devel'])
 
@@ -1855,11 +1954,16 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.append('wget')
             deferred_functions.append(_install_gtest_sources)
 
+        if 'sanitizers' in features:
+            packages.extend(['compiler-rt', 'llvm', 'libasan', 'libtsan', 'libubsan'])
+
         install_pkgs(packages, env=env, check_times=check_times)
 
     # prepare rhel
     elif system == 'rhel':
-        packages.extend(['boost-devel', 'gcc-c++', 'log4cplus-devel', 'make', 'openssl-devel'])
+        packages.extend(['boost-devel', 'gcc-c++', 'log4cplus-devel', 'openssl-devel'])
+        if int(revision) < 9:
+            packages.remove('doxygen')
 
         # RHEL tends to stay behind on Python versions. Install the latest Python alongside the one running this
         # hammer.py.
@@ -1900,9 +2004,6 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         if 'gssapi' in features:
             packages.extend(['krb5-devel'])
 
-        if 'ccache' in features:
-            packages.extend(['ccache'])
-
         if 'netconf' in features:
             packages.extend(['cmake', 'git', 'pcre2-devel'])
 
@@ -1910,13 +2011,16 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.append('wget')
             deferred_functions.append(_install_gtest_sources)
 
+        if 'sanitizers' in features:
+            packages.extend(['compiler-rt', 'llvm', 'libasan', 'libtsan', 'libubsan'])
+
         install_pkgs(packages, env=env, timeout=120, check_times=check_times)
 
     # prepare rocky
     elif system == 'rocky':
         install_pkgs('epel-release', env=env, check_times=check_times)
 
-        packages.extend(['boost-devel', 'gcc-c++', 'log4cplus-devel', 'make', 'openssl-devel', 'ninja-build'])
+        packages.extend(['boost-devel', 'gcc-c++', 'log4cplus-devel', 'openssl-devel', 'ninja-build'])
         deferred_functions.append(install_meson)
 
         if 'docs' in features:
@@ -1936,15 +2040,15 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         if 'gssapi' in features:
             packages.extend(['krb5-devel'])
 
-        if 'ccache' in features:
-            packages.extend(['ccache'])
-
         if 'netconf' in features:
             packages.extend(['cmake', 'git', 'pcre2-devel'])
 
         if 'unittest' in features:
             packages.append('wget')
             deferred_functions.append(_install_gtest_sources)
+
+        if 'sanitizers' in features:
+            packages.extend(['compiler-rt', 'llvm', 'libasan', 'libtsan', 'libubsan'])
 
         execute('sudo dnf config-manager --set-enabled crb')
         execute('sudo dnf config-manager --set-enabled devel')
@@ -1954,9 +2058,23 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     elif system == 'ubuntu':
         _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
-        packages.extend(['gcc', 'g++', 'gnupg', 'libboost-system-dev', 'liblog4cplus-dev',  'libpcap-dev',
-                         'libssl-dev', 'make'])
+        packages.extend(
+            [
+                'gcc',
+                'g++',
+                'gnupg',
+                'libboost-all-dev',
+                'liblog4cplus-dev',
+                'libpcap-dev',
+                'libssl-dev',
+                'python3-dev',
+                'python3-venv',
+            ]
+        )
         deferred_functions.append(install_meson)
+
+        if 'coverage' in features:
+            packages.extend(['gcovr', 'lcov'])
 
         if 'docs' in features:
             packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme',
@@ -1967,7 +2085,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
-            packages.extend(['debhelper', 'libboost-dev', 'python3-dev'])
+            packages.extend(['debhelper', 'python3-dev'])
             if 20.04 <= float(revision):
                 packages.extend(['dh-python'])
 
@@ -1986,11 +2104,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         if 'gssapi' in features:
             packages.extend(['libkrb5-dev'])
 
-        if 'ccache' in features:
-            packages.extend(['ccache'])
-
         if 'netconf' in features:
-            packages.extend(['cmake', 'git', 'libpcre2-dev'])
+            packages.extend(['cmake', 'git', 'libpcre2-dev', 'make'])
 
         install_pkgs(packages, env=env, timeout=240, check_times=check_times)
 
@@ -1998,18 +2113,33 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     elif system == 'debian':
         _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
-        packages.extend(['gcc', 'g++',  'gnupg', 'libboost-system-dev', 'liblog4cplus-dev', 'libssl-dev', 'make'])
+        packages.extend(
+            [
+                'gcc',
+                'g++',
+                'gnupg',
+                'libboost-all-dev',
+                'liblog4cplus-dev',
+                'libpcap-dev',
+                'libssl-dev',
+                'python3-dev',
+                'python3-venv',
+            ]
+        )
         deferred_functions.append(install_meson)
 
+        if 'coverage' in features:
+            packages.extend(['gcovr', 'lcov'])
+
         if 'docs' in features:
-            packages.extend(['doxygen', 'graphviz', 'python3-sphinx', 'python3-sphinx-rtd-theme', 'tex-gyre',
+            packages.extend(['graphviz', 'python3-sphinx', 'python3-sphinx-rtd-theme', 'tex-gyre',
                              'texlive', 'texlive-latex-extra'])
 
         if 'unittest' in features:
             packages.append('googletest')
 
         if 'netconf' in features:
-            packages.extend(['cmake', 'git', 'libpcre2-dev', 'pkg-config'])
+            packages.extend(['cmake', 'git', 'libpcre2-dev', 'make'])
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
@@ -2032,25 +2162,20 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         if 'gssapi' in features:
             packages.extend(['libkrb5-dev'])
 
-        if 'ccache' in features:
-            packages.extend(['ccache'])
-
         install_pkgs(packages, env=env, timeout=240, check_times=check_times)
 
     # prepare freebsd
     elif system == 'freebsd':
-        packages.extend(['boost-libs', 'git', 'log4cplus', 'openssl'])
-        deferred_functions.append(install_meson)
-
-        if revision.startswith('14'):
-            packages.extend(['bash', 'pkgconf'])
+        packages.extend(['bash', 'boost-libs', 'botan3', 'coreutils', 'git', 'log4cplus', 'openssl', 'ninja'])
+        packages.append('pcre2')  # dependency of git
+        deferred_functions.append(lambda: install_meson(only='meson'))
 
         if 'docs' in features:
             # Get the python version from the remote repositories.
             pyv = _get_package_version('python')
             pyv = pyv.split('_')[0].replace('.', '')
-            log.info(">>>>> Detected Sphinx packages version: py%s-sphinx", pyv)
-            packages.extend([f'py{pyv}-sphinx', f'py{pyv}-sphinx_rtd_theme'])
+            log.info(">>>>> Detected python package version: py%s", pyv)
+            packages.extend([f'py{pyv}-sphinx', f'py{pyv}-sphinx_rtd_theme', 'texlive-full'])
 
         if 'mysql' in features:
             if revision.startswith(('11', '12')):
@@ -2063,7 +2188,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             # unless any postgresql-client or postgresql-server version is already installed.
             for i in ['client', 'server']:
                 # Check if already installed.
-                _, output = execute('pkg info', capture=True)
+                _, output = execute('pkg info', capture=True, quiet=True)
                 m = re.search(f'postgresql[0-9]+-{i}', output)
                 if m is None:
                     # If not, go ahead and install.
@@ -2077,13 +2202,10 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                     packages.append(found[-1])
 
         if 'gssapi' in features:
-            packages.extend(['krb5-devel'])
+            packages.extend(['krb5'])
             # FreeBSD comes with a Heimdal krb5-config by default. Make sure
             # it's deleted so that Kea uses the MIT packages added just above.
             execute('sudo rm -f /usr/bin/krb5-config')
-
-        if 'ccache' in features:
-            packages.extend(['ccache'])
 
         if 'netconf' in features:
             packages.extend(['cmake', 'git', 'pcre2'])
@@ -2092,7 +2214,13 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['wget'])
             deferred_functions.append(_install_gtest_sources)
 
-        install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
+        install_pkgs(
+            packages,
+            env=env,
+            timeout=6 * 60,
+            check_times=check_times,
+            one_package_at_a_time=one_package_at_a_time,
+        )
 
         if 'mysql' in features:
             execute('sudo sysrc mysql_enable="yes"', env=env, check_times=check_times)
@@ -2106,8 +2234,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     elif system == 'alpine':
         if 0 != execute("grep -E '^ulimit -s unlimited$' ~/.profile", quiet=True, raise_error=False):
             execute("echo 'ulimit -s unlimited' >> ~/.profile")
-        packages.extend(['bison', 'boost-libs', 'boost-dev', 'build-base', 'flex', 'gcompat', 'gcc', 'g++', 'gzip',
-                         'log4cplus', 'log4cplus-dev', 'make', 'musl-dev', 'openssl-dev', 'procps', 'python3-dev',
+        packages.extend(['boost-libs', 'boost-dev', 'botan3-dev', 'build-base', 'gcompat', 'gcc', 'g++', 'gzip',
+                         'log4cplus', 'log4cplus-dev', 'musl-dev', 'openssl-dev', 'procps', 'python3-dev',
                          'tar'])
         deferred_functions.append(install_meson)
 
@@ -2128,9 +2256,6 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
         if 'native-pkg' in features:
             packages.extend(['alpine-sdk', 'python3-dev'])
-
-        if 'ccache' in features:
-            packages.extend(['ccache'])
 
         if 'unittest' in features:
             packages.append('wget')
@@ -2321,7 +2446,16 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_paths, env, c
         aggr.write('aggregated_tests.xml')
 
     if 'install' in features:
-        execute('sudo meson install -C build', timeout=2 * 60,
+
+        # Try to use full path for meson install due to some distros (i.e. rocky)
+        # do not have /usr/local/bin in secure_path. As result 'meson' is not found with sudo.
+        res, meson_cmd = execute('command -v meson', capture=True, quiet=True, raise_error=False)
+        if res != 0:
+            meson_cmd = 'meson'
+        else:
+            meson_cmd = meson_cmd.rstrip()
+
+        execute(f'sudo {meson_cmd} install -C build', timeout=2 * 60,
                 cwd=src_path, env=env, check_times=check_times, dry_run=dry_run)
         if system != 'alpine':
             execute('sudo ldconfig', dry_run=dry_run, env=env)
@@ -2794,9 +2928,9 @@ class CollectCommaSeparatedArgsAction(argparse.Action):
 
 
 DEFAULT_FEATURES = ['docs', 'install', 'perfdhcp', 'unittest']
-ALL_FEATURES = ['all', 'ccache', 'distcheck', 'docs', 'forge', 'gssapi',
+ALL_FEATURES = ['all', 'ccache', 'coverage', 'distcheck', 'docs', 'forge', 'gssapi',
                 'install', 'mysql', 'native-pkg', 'netconf', 'perfdhcp',
-                'pgsql', 'shell', 'tls', 'unittest']
+                'pgsql', 'sanitizers', 'shell', 'tls', 'unittest']
 
 
 def parse_args():
@@ -2910,6 +3044,8 @@ def parse_args():
     parser.add_argument('--just-configure', action='store_true',
                         help='Whether to prevent installation of packages and only proceed to set them up. '
                              'Only has an effect when preparing system locally, as opposed to inside vagrant.')
+    parser.add_argument('--one-package-at-a-time', action='store_true',
+                        help='Whether to install packages one at a time instead of all at once.')
     parser.add_argument('--ccache-dir', default=None,
                         help='Path to CCache directory on host system.')
     parser.add_argument('--repository-url', default=None,
@@ -3125,7 +3261,13 @@ def prepare_system_cmd(args):
     log.info('Enabled features: %s', ' '.join(features))
 
     if args.provider == 'local':
-        prepare_system_local(features, args.check_times, args.ignore_errors_for, args.just_configure)
+        prepare_system_local(
+            features,
+            args.check_times,
+            args.ignore_errors_for,
+            args.just_configure,
+            args.one_package_at_a_time,
+        )
         return
 
     ccache_dir = _prepare_ccache_dir(args.ccache_dir, args.system, args.revision)
