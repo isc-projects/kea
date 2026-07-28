@@ -1,6 +1,6 @@
-#line 2 "agent_lexer.cc"
+#line 1 "agent_lexer.cc"
 
-#line 4 "agent_lexer.cc"
+#line 3 "agent_lexer.cc"
 
 #define  YY_INT_ALIGNED short int
 
@@ -1624,7 +1624,7 @@ using isc::agent::AgentParser;
 
 /* To avoid the call to exit... oops! */
 #define YY_FATAL_ERROR(msg) isc::agent::ParserContext::fatal(msg)
-#line 1628 "agent_lexer.cc"
+#line 1627 "agent_lexer.cc"
 /* noyywrap disables automatic rewinding for the next file to parse. Since we
    always parse only a single string, there's no need to do any wraps. And
    using yywrap requires linking with -lfl, which provides the default yywrap
@@ -1650,8 +1650,8 @@ using isc::agent::AgentParser;
    by moving it ahead by yyleng bytes. yyleng specifies the length of the
    currently matched token. */
 #define YY_USER_ACTION  driver.loc_.columns(yyleng);
+#line 1653 "agent_lexer.cc"
 #line 1654 "agent_lexer.cc"
-#line 1655 "agent_lexer.cc"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -1965,7 +1965,7 @@ YY_DECL
     }
 
 
-#line 1969 "agent_lexer.cc"
+#line 1968 "agent_lexer.cc"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -2982,7 +2982,7 @@ YY_RULE_SETUP
 #line 835 "agent_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 2986 "agent_lexer.cc"
+#line 2985 "agent_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{

@@ -5729,6 +5729,20 @@ first argument includes the client and the transaction identification
 information. The second argument holds the IPv4 address which release
 was attempted.
 
+DHCP4_RELEASE_FAIL_NOT_ASSIGNED
+===============================
+
+.. code-block:: text
+
+    %1: client is trying to release the lease %2 which is in the %3 state
+
+Logged at debug log level 50.
+This debug message is issued when a client is trying to release the
+lease which is not in the default / assigned state e.g. kept for the client
+by the lease affinity feature in the released state. The first argument
+includes the client and the transaction identification information.
+The second argument specifies the leased address, the last one the lease state.
+
 DHCP4_RELEASE_FAIL_NO_LEASE
 ===========================
 

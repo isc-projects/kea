@@ -1,3 +1,82 @@
+Kea 3.0.4 (stable) released on July 29, 2026
+
+2404.	[bug]		fdupont
+	The from JSON double value to string no longer produces
+	an incorrect output when there is only an exponent part.
+	(Gitlab #4685, #4493)
+
+2403.	[bug]		fdupont
+	Set the broadcast flag in DHCPNAK responses to relayed
+	DHCPREQUEST queries as required by RFC 2131 4.3.2.
+	Thank you to Florian Krieger from Frauscher Sensor Technology
+	Group GmbH for reporting the issue.
+	(Gitlab #4683, #4424)
+
+2402.	[bug]		tmark,fdupont
+	Reject DHCPv4 DHCPRELEASE for leases that are not
+	in the default / assigned state.
+	(Gitlab #4534, #4547)
+
+2401.	[bug]		tmark
+	Corrected an issue in kea-dhcp4 which caused
+	broadcasted client queries to fail to match subnets
+	restricted to classes assigned during early global
+	host lookups.
+	(Gitlab #4620, #4047)
+
+2400.	[bug]		tmark
+	Backport #4049, which fixed an issue in
+	kea-dhcp-ddns which was causing GSS-TSIG key
+	exchanges to timeout when NCR traffic is
+	intermittent.
+	(Gitlab #4619, #4049)
+
+2399.	[func]		tmark,razvan
+	The kea servers return a new status ("result" with value 5) for
+	commands which have failed and have partially altered the running
+	configuration. The rollback mechanism was not able to restore
+	the previous configuration.
+	(Gitlab #4612, #4389)
+
+2398.	[bug]		tmark
+	Corrected an issue in the ping-check hook
+	library that could result in the ICMP socket
+	stuck in the read ready state.
+	(Gitlab #4615, #4221)
+
+2397.	[func]		tmark
+	Memfile lease back end now supports the ``on-fail``
+	parameter though without retry.  When set to either
+	 ``stop-retry-exit`` or ``serve-retry-exit`` the
+	server will exit on unrecoverable write errors. If
+	 set to ``serve-retry-continue`` the server will
+	continue to run but write errors will continue until
+	corrective action is taken. Applies to both
+	kea-dhcp4 and kea-dhcp6.
+	(Gitlab #4614, #4220)
+
+2396.	[bug]		fdupont
+	Added check for prefix length in ipv6-prefix option
+	data type.
+	(Gitlab #4613, #4295)
+
+2395.	[bug]		tmark
+	Corrected an issue that was causing an
+	HA peer to not restart its dedicated listener
+	after handling a config-test command.
+	Applies to both kea-dhcp4 and kea-dhcp6.
+	(Gitlab #4616, #4145)
+
+2394.	[func]		fdupont
+	Extended the parser to accepted an empty "client-classes" list
+	in Kea server configuration files.
+	(Gitlab #4609, #4453)
+
+2393.	[build]		tmark
+	Backported several changes to support building
+	with Boost version 1.89 and newer.
+	(Gitlab #4677, #4624, #4266, #4410, #4085)
+
 2392.	[bug]		razvan
 	Fixed a bug which was causing the dhcpv4 server to crash when
 	reusing expired reservations and hook libraries set the SKIP
