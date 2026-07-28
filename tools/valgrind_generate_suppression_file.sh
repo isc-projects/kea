@@ -61,6 +61,8 @@ for i in ${partial_suppression_files}; do
     fi
     # remove useless data
     xmlstarlet sel -t -v "/valgrindoutput/error/suppression/rawtext" "${i}" | grep "\S" | sed 's/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g; s/&quot;/"/g; s/&apos;/'"'"'/g' >"${i}-txt.supp"
+    # match library names by wildcarded basename only without the path and the versions.
+    sed -Ei 's|obj:.*/([^/]+)([^0-9.]+)\.([0-9.]*)|obj:*\1\2*|g' "${i}-txt.supp"
     # extract the binary path and name
     found_in_path=$(xmlstarlet sel -t -v "/valgrindoutput/args/argv/exe" "${i}" | sed "s|.*build/||")
     echo "${i}: ${found_in_path}"
