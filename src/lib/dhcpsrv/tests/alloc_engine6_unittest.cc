@@ -3221,6 +3221,93 @@ public:
         return (lease);
     }
 
+    /// @brief Test host order of precedence in shared-network
+    ///
+    /// Creates global and shared-network subnet host reservations,
+    /// with or without addresses, and attempts to allocate a lease.
+    /// The resultant lease is then tested to have the expected subnet
+    /// and address.
+    ///
+    ///
+    /// @param include_global_host create a global host when true
+    /// @param global_host_address address to use in the global host reservation or
+    /// none if it is IPV6_ZERO_ADDRESS.
+    /// @param include_subnet_host create a subnet host when true
+    /// @param subnet_host_subnet_id id of the subnet to which the subnet host should
+    /// be added.
+    /// @param subnet_host_address address to use in the subnet host reservation or
+    /// none if it is IPV6_ZERO_ADDRESS.
+    /// @param exp_subnet expected subnet of the resultant lease.
+    /// @param exp_address expected address of the resultant lease.
+    /// @param fake_allocation tests the DISCOVER code path when true, REQUEST when
+    /// false.
+    void globalResVsSubnetRes(bool include_global_host, IOAddress global_host_address,
+                              bool include_subnet_host, SubnetID subnet_host_subnet_id,
+                              IOAddress subnet_host_address, SubnetID exp_subnet,
+                              IOAddress exp_address, bool fake_allocation = true) {
+        EXPECT_FALSE(HostMgr::instance().getDisableSingleQuery());
+
+        HostPtr global_host;
+        if (include_global_host) {
+            // Create global reservation for the client in subnet2.
+            global_host.reset(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
+                                       Host::IDENT_DUID, SUBNET_ID_UNUSED,
+                                       SUBNET_ID_GLOBAL,
+                                       IOAddress::IPV4_ZERO_ADDRESS()));
+
+            if (global_host_address != IOAddress::IPV6_ZERO_ADDRESS()) {
+                global_host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, global_host_address));
+            }
+
+            CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(global_host);
+        }
+
+        // Create subnet reservation for the client in subnet2.
+        HostPtr subnet_host;
+        if (include_subnet_host) {
+            subnet_host.reset(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
+                                       Host::IDENT_DUID, SUBNET_ID_UNUSED,
+                                       subnet_host_subnet_id,
+                                       IOAddress::IPV4_ZERO_ADDRESS()));
+
+            if (subnet_host_address != IOAddress::IPV6_ZERO_ADDRESS()) {
+                subnet_host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, subnet_host_address));
+            }
+
+            CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(subnet_host);
+        }
+
+        CfgMgr::instance().commit();
+
+        subnet1_->setReservationsGlobal(true);
+        subnet1_->setReservationsInSubnet(true);
+        subnet2_->setReservationsGlobal(true);
+        subnet2_->setReservationsInSubnet(true);
+
+        // Start allocation from subnet1.
+        AllocEngine::ClientContext6 ctx(subnet1_, duid_, false, false, "", true,
+                                        Pkt6Ptr());
+        ctx.currentIA().iaid_ = iaid_;
+
+        ctx.fake_allocation_ = fake_allocation;
+        if (fake_allocation) {
+            ctx.query_.reset(new Pkt6(DHCPV6_SOLICIT, 1234));
+        } else {
+            ctx.query_.reset(new Pkt6(DHCPV6_REQUEST, 1234));
+        }
+
+        AllocEngine::findReservation(ctx);
+        Lease6Ptr lease;
+        ASSERT_NO_THROW(lease = expectOneLease(engine_.allocateLeases6(ctx)));
+        ASSERT_TRUE(lease);
+        EXPECT_EQ(exp_subnet, lease->subnet_id_);
+        EXPECT_EQ(exp_address, lease->addr_);
+
+        if (!fake_allocation) {
+            ASSERT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
+        }
+    }
+
     /// Convenience pointers to configuration elements. These are initialized
     /// in the constructor and are used throughout the tests.
     AllocEngine engine_;
@@ -6848,6 +6935,50 @@ TEST_F(AllocEngine6Test, useReclaimedReservedLease) {
     Lease6Ptr new_lease = simpleAlloc6Test(pool_, IOAddress("::"), false);
     ASSERT_TRUE(new_lease);
     EXPECT_EQ(new_lease->valid_lft_, 400U);
+}
+
+TEST_F(SharedNetworkAlloc6Test, solicitGlobalResVsSubnetRes) {
+    // global_host with address in subnet1, subnet_host with no address in subnet2
+    globalResVsSubnetRes(true, IOAddress("2001:db8:1::100"),
+                                 true, SubnetID(20), IOAddress::IPV6_ZERO_ADDRESS(),
+                                 SubnetID(20), IOAddress("2001:db8:2::"));
+
+    // global_host with address in subnet1, subnet_host with address in subnet2
+    globalResVsSubnetRes(true, IOAddress("2001:db8:1::100"),
+                                 true, SubnetID(20), IOAddress("2001:db8:2::200"),
+                                 SubnetID(20), IOAddress("2001:db8:2::200"));
+
+    // global_host with address in subnet2, subnet_host with no address in subnet2
+    globalResVsSubnetRes(true, IOAddress("2001:db8:2::100"),
+                                 true, SubnetID(20), IOAddress::IPV6_ZERO_ADDRESS(),
+                                 SubnetID(20), IOAddress("2001:db8:2::1"));
+
+    // global_host with address in subnet2, subnet_host with address in subnet2
+    globalResVsSubnetRes(true, IOAddress("2001:db8:2::100"),
+                                 true, SubnetID(20), IOAddress("2001:db8:2::200"),
+                                 SubnetID(20), IOAddress("2001:db8:2::200"));
+}
+
+TEST_F(SharedNetworkAlloc6Test, requestGlobalResVsSubnetRes) {
+    // global_host with address in subnet1, subnet_host with no address in subnet2
+    globalResVsSubnetRes(true, IOAddress("2001:db8:1::100"),
+                                 true, SubnetID(20), IOAddress::IPV6_ZERO_ADDRESS(),
+                                 SubnetID(20), IOAddress("2001:db8:2::"), false);
+
+    // global_host with address in subnet1, subnet_host with address in subnet2
+    globalResVsSubnetRes(true, IOAddress("2001:db8:1::100"),
+                                 true, SubnetID(20), IOAddress("2001:db8:2::200"),
+                                 SubnetID(20), IOAddress("2001:db8:2::200"), false);
+
+    // global_host with address in subnet2, subnet_host with no address in subnet2
+    globalResVsSubnetRes(true, IOAddress("2001:db8:2::100"),
+                                 true, SubnetID(20), IOAddress::IPV6_ZERO_ADDRESS(),
+                                 SubnetID(20), IOAddress("2001:db8:2::1"), false);
+
+    // global_host with address in subnet2, subnet_host with address in subnet2
+    globalResVsSubnetRes(true, IOAddress("2001:db8:2::100"),
+                                 true, SubnetID(20), IOAddress("2001:db8:2::200"),
+                                 SubnetID(20), IOAddress("2001:db8:2::200"), false);
 }
 
 }  // namespace test

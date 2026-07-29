@@ -1240,6 +1240,19 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
 
         bool in_subnet = subnet->getReservationsInSubnet();
 
+        if (in_subnet && !host->hasIPv6Reservation()) {
+            ctx.subnet_ = subnet;
+            ctx.host_subnet_ = subnet;
+            if (!host->getHostname().empty()) {
+                OptionPtr fqdn = ctx.query_->getOption(D6O_CLIENT_FQDN);
+                ctx.hostname_ = CfgMgr::instance().getD2ClientMgr().
+                                qualifyName(host->getHostname(), *ctx.getDdnsParams(),
+                                static_cast<bool>(fqdn));
+            }
+
+            return;
+        }
+
         // Get the IPv6 reservations of specified type.
         const IPv6ResrvRange& reservs = host->getIPv6Reservations(type);
         BOOST_FOREACH(auto const& type_lease_tuple, reservs) {
@@ -3650,11 +3663,13 @@ addressReserved(const IOAddress& address, const AllocEngine::ClientContext4& ctx
 ///
 /// This convenience function checks if the context contains the reservation
 /// for the IPv4 address. Note that some reservations may not assign a
-/// static IPv4 address to the clients, but may rather reserve a hostname.
+/// static IPv4 address to the clients, but may rather reserve a hostname,
+/// or serve to select the subnet in a shared-network.
 /// Allocation engine should check if the existing reservation is made
 /// for the IPv4 address and if it is not, allocate the address from the
 /// dynamic pool. The allocation engine uses this function to check if
-/// the reservation is made for the IPv4 address.
+/// the reservation is made for the IPv4 address. It also updates the
+/// selected subnet if it changes.
 ///
 /// @param [out] ctx Client context holding the data extracted from the
 /// client's message.
@@ -3666,25 +3681,13 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
         return (false);
     }
 
-    // Fetch the globally reserved address if there is one.
-    auto global_host = ctx.hosts_.find(SUBNET_ID_GLOBAL);
-    auto global_host_address = ((global_host != ctx.hosts_.end() && global_host->second) ?
-                                 global_host->second->getIPv4Reservation() :
-                                 IOAddress::IPV4_ZERO_ADDRESS());
+    // Save list of subnets checked so we can skip rechecking
+    // client classes for global HRs.
+    std::list<ConstSubnet4Ptr> subnets;
 
-    // Start with currently selected subnet.
     ConstSubnet4Ptr subnet = ctx.subnet_;
     while (subnet) {
-        // If global reservations are enabled for this subnet and there is
-        // globally reserved address and that address is feasible for this
-        // subnet, update the selected subnet and return true.
-        if (subnet->getReservationsGlobal() &&
-            (global_host_address != IOAddress::IPV4_ZERO_ADDRESS()) &&
-            (subnet->inRange(global_host_address))) {
-            ctx.subnet_ = subnet;
-            return (true);
-        }
-
+        subnets.push_back(subnet);
         if (subnet->getReservationsInSubnet()) {
             auto host = ctx.hosts_.find(subnet->getID());
             // The out-of-pool flag indicates that no client should be assigned
@@ -3699,12 +3702,41 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
                     ctx.subnet_ = subnet;
                     return (true);
                 }
+
+                // Do we have a dynamic subnet reservation? If so use it to select
+                // the subnet and return. This overrides a global reserved address.
+                if (reservation.isV4Zero()) {
+                    ctx.subnet_ = subnet;
+                    return(false);
+                }
             }
         }
 
         // No address reservation found here, so let's try another subnet
         // within the same shared network.
         subnet = subnet->getNextSubnet(ctx.subnet_, ctx.query_->getClasses());
+    }
+
+    // No subnet HR so fetch the globally reserved address if there is one.
+    auto global_host = ctx.hosts_.find(SUBNET_ID_GLOBAL);
+    auto global_host_address = ((global_host != ctx.hosts_.end() && global_host->second) ?
+                                 global_host->second->getIPv4Reservation() :
+                                 IOAddress::IPV4_ZERO_ADDRESS());
+    if (global_host_address == IOAddress::IPV4_ZERO_ADDRESS()) {
+        return (false);
+    }
+
+    // Start with currently selected subnet.
+    for (auto subnet : subnets) {
+        // If global reservations are enabled for this subnet and there is
+        // globally reserved address and that address is feasible for this
+        // subnet, update the selected subnet and return true.
+        if (subnet->getReservationsGlobal() &&
+            (global_host_address != IOAddress::IPV4_ZERO_ADDRESS()) &&
+            (subnet->inRange(global_host_address))) {
+            ctx.subnet_ = subnet;
+            return (true);
+        }
     }
 
     if (global_host_address != IOAddress::IPV4_ZERO_ADDRESS()) {
