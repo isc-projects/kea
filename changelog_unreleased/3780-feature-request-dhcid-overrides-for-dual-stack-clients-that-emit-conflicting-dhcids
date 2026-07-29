@@ -1,0 +1,5 @@
+[func]		tmark
+	Added ``cid-as-rfc4361-duid`` flag to flex-id hook
+	library.  This allows the v4 flex-id to formatted
+	as an RFC 4361 compliant embedded DUID.
+	(Gitlab #3780)
