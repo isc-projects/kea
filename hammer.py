@@ -1266,10 +1266,7 @@ def _install_gtest_sources():
     execute('rm -rf ~/.hammer-tmp')
 
 
-def _install_libyang_from_sources(ignore_errors=False):
-    """Install libyang from sources."""
-    version = '2.1.4'
-
+def _is_libyang_already_installed(version):
     libdirs = [f'{usr}/{lib}' for usr in ['/usr', '/usr/local'] for lib in ['lib', 'lib64']]
     for libdir in libdirs:
         pc_file = f'{libdir}/pkgconfig/libyang.pc'
@@ -1278,8 +1275,12 @@ def _install_libyang_from_sources(ignore_errors=False):
                 for line in file:
                     if line.rstrip('\n') == f'Version: {version}':
                         log.info('libyang is already installed: %s.', pc_file)
-                        return
+                        return True
+    return False
 
+
+def _install_libyang_from_sources(version, ignore_errors=False):
+    """Install libyang from sources."""
     execute('rm -rf ~/.hammer-tmp')
     execute('mkdir -p ~/.hammer-tmp')
     try:
@@ -1302,10 +1303,7 @@ def _install_libyang_from_sources(ignore_errors=False):
         execute('rm -rf ~/.hammer-tmp')
 
 
-def _install_sysrepo_from_sources(ignore_errors=False):
-    """Install sysrepo from sources."""
-    version = '2.2.12'
-
+def _is_sysrepo_already_installed(version):
     libdirs = [f'{usr}/{lib}' for usr in ['/usr', '/usr/local'] for lib in ['lib', 'lib64']]
     for libdir in libdirs:
         pc_file = f'{libdir}/pkgconfig/sysrepo.pc'
@@ -1314,8 +1312,12 @@ def _install_sysrepo_from_sources(ignore_errors=False):
                 for line in file:
                     if line.rstrip('\n') == f'Version: {version}':
                         log.info('sysrepo is already installed: %s.', pc_file)
-                        return
+                        return True
+    return False
 
+
+def _install_sysrepo_from_sources(version, ignore_errors=False):
+    """Install sysrepo from sources."""
     # Create repository for YANG modules and change ownership to current user.
     execute('sudo mkdir -p /etc/sysrepo')
     execute('sudo chown -R "${USER}:$(id -gn)" /etc/sysrepo')
@@ -1342,18 +1344,19 @@ def _install_sysrepo_from_sources(ignore_errors=False):
         execute('rm -rf ~/.hammer-tmp')
 
 
-def _install_libyang_cpp_from_sources(ignore_errors=False):
-    """Install libyang-cpp from sources."""
+def _is_libyang_cpp_already_installed(_):
     for prefix_lib in ['/usr/lib', '/usr/lib64', '/usr/local/lib', '/usr/local/lib64']:
         libyang_cpp_so = f'{prefix_lib}/libyang-cpp.so'
         libyang_cpp_pc = f'{prefix_lib}/pkgconfig/libyang-cpp.pc'
         if (os.path.exists(libyang_cpp_so) and os.path.exists(libyang_cpp_pc) and
                 execute(f"grep -F 'Version: 1.1.0' '{libyang_cpp_pc}'", raise_error=False) == 0):
-            log.info('libyang-cpp is already installed at %s.', libyang_cpp_so)
-            return
+            log.info('libyang-cpp is already installed: %s.', libyang_cpp_so)
+            return True
+    return False
 
-    version = 'ae7d649ea75da081725c119dd553b2ef3121a6f8'
 
+def _install_libyang_cpp_from_sources(version, ignore_errors=False):
+    """Install libyang-cpp from sources."""
     execute('rm -rf ~/.hammer-tmp')
     execute('mkdir -p ~/.hammer-tmp')
     try:
@@ -1386,18 +1389,20 @@ EOF
         execute('rm -rf ~/.hammer-tmp')
 
 
-def _install_sysrepo_cpp_from_sources(ignore_errors=False):
+def _is_sysrepo_cpp_already_installed(_):
     """Install sysrepo-cpp from sources."""
     for prefix_lib in ['/usr/lib', '/usr/lib64', '/usr/local/lib', '/usr/local/lib64']:
         sysrepo_cpp_so = f'{prefix_lib}/libsysrepo-cpp.so'
         sysrepo_cpp_pc = f'{prefix_lib}/pkgconfig/sysrepo-cpp.pc'
         if (os.path.exists(sysrepo_cpp_so) and os.path.exists(sysrepo_cpp_pc) and
                 execute(f"grep -F 'Version: 1.1.0' '{sysrepo_cpp_pc}'", raise_error=False) == 0):
-            log.info('sysrepo-cpp is already installed at %s.', sysrepo_cpp_so)
-            return
+            log.info('sysrepo-cpp is already installed: %s.', sysrepo_cpp_so)
+            return True
+    return False
 
-    version = '02634174ffc60568301c3d9b9b7cf710cff6a586'
 
+def _install_sysrepo_cpp_from_sources(version, ignore_errors=False):
+    """Install sysrepo-cpp from sources."""
     execute('rm -rf ~/.hammer-tmp')
     execute('mkdir -p ~/.hammer-tmp')
     try:
@@ -1418,11 +1423,68 @@ def _install_sysrepo_cpp_from_sources(ignore_errors=False):
         execute('rm -rf ~/.hammer-tmp')
 
 
+def _clean_old_netconf_installations():
+    includedirs = [f'{usr}/include' for usr in ['/usr', '/usr/local']]
+    libdirs = [f'{usr}/{lib}' for usr in ['/usr', '/usr/local'] for lib in ['lib', 'lib64']]
+    paths = (
+        [
+            '/usr/local/bin/sysrepocfg',
+            '/usr/local/bin/sysrepoctl',
+            '/usr/local/bin/sysrepo-plugind',
+            '/usr/local/bin/yanglint',
+            '/usr/local/bin/yangre',
+        ]
+        + [
+            f'{includedir}/{sub}'
+            for includedir in includedirs
+            for sub in ['libyang', 'libyang-cpp', 'sysrepo', 'sysrepo.h', 'sysrepo-cpp']
+        ]
+        + [
+            f'{libdir}/{sub}'
+            for libdir in libdirs
+            for sub in [
+                'libsysrepo.so*',
+                'libsysrepo-cpp.so*',
+                'libyang.so*',
+                'libyang-cpp.so*',
+                'pkgconfig/libyang.pc',
+                'pkgconfig/libyang-cpp.pc',
+                'pkgconfig/sysrepo.pc',
+                'pkgconfig/sysrepo-cpp.pc',
+                'sysrepo-plugind',
+            ]
+        ]
+    )
+    for p in paths:
+        execute(f'sudo rm -rf {p}')
+
+    # Clear shared memory, YANG data, and YANG modules.
+    execute('sudo rm -rf /dev/shm/sr_*')
+    execute('sudo rm -rf /dev/shm/srsub_*')
+    execute('sudo rm -rf /etc/sysrepo')
+    execute('sudo rm -rf /usr/local/share/yang/modules')
+
+
 def _install_netconf_libraries_from_sources(ignore_errors=False):
-    _install_libyang_from_sources(ignore_errors)
-    _install_sysrepo_from_sources(ignore_errors)
-    _install_libyang_cpp_from_sources(ignore_errors)
-    _install_sysrepo_cpp_from_sources(ignore_errors)
+    libyang_version = '2.1.4'
+    sysrepo_version = '2.2.12'
+    libyang_cpp_version = 'ae7d649ea75da081725c119dd553b2ef3121a6f8'
+    sysrepo_cpp_version = '02634174ffc60568301c3d9b9b7cf710cff6a586'
+
+    if (
+        _is_libyang_already_installed(libyang_version)
+        and _is_sysrepo_already_installed(sysrepo_version)
+        and _is_libyang_cpp_already_installed(libyang_cpp_version)
+        and _is_sysrepo_cpp_already_installed(sysrepo_cpp_version)
+    ):
+        return
+
+    _clean_old_netconf_installations()
+
+    _install_libyang_from_sources(libyang_version, ignore_errors)
+    _install_sysrepo_from_sources(sysrepo_version, ignore_errors)
+    _install_libyang_cpp_from_sources(libyang_cpp_version, ignore_errors)
+    _install_sysrepo_cpp_from_sources(sysrepo_cpp_version, ignore_errors)
 
 
 def _get_local_timezone():
