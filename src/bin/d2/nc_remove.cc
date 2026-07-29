@@ -326,10 +326,15 @@ NameRemoveTransaction::removingFwdRRsHandler() {
             // see RFC 2136 section 3.2.3/3.2.4.
             const dns::Rcode& rcode = getDnsUpdateResponse()->getRcode();
             if ((rcode == dns::Rcode::NOERROR()) ||
-                (rcode == dns::Rcode::NXRRSET())) {
+                (rcode == dns::Rcode::NXRRSET()) ||
+                (rcode == dns::Rcode::YXRRSET())) {
                 // We were able to remove them or they were not there (
                 // Rcode of NXRRSET means there are no matching RRsets).
                 // In either case, we consider it success and mark it as done.
+                // YXRRSET means either a FWD RR with a different IP (client
+                // change subnets) exists OR a FWD RR of the other protocols
+                // exists, either way we want the DHCID left intact so we
+                // treat this as success.
                 setForwardChangeCompleted(true);
 
                 // If request calls for reverse update then do that next,
@@ -669,7 +674,7 @@ NameRemoveTransaction::buildRemoveFwdRRsRequest() {
                                 dns::RRType::A(), dns::RRTTL(0)));
     request->addRRset(D2UpdateMessage::SECTION_PREREQUISITE, prereq);
 
-    // Create an assertion that there are no A RRs for the FQDN.
+    // Create an assertion that there are no AAAA RRs for the FQDN.
     // Add it to the pre-reqs.
     // Based on RFC 2136, section 2.4.3.
     prereq.reset(new dns::RRset(fqdn, dns::RRClass::NONE(),

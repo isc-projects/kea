@@ -1150,6 +1150,43 @@ TEST_F(CheckExistsRemoveTransactionTest, removingFwdRRsHandler_InvalidResponse) 
     }
 }
 
+// Tests removingFwdRRsHandler with the following scenario:
+//
+//  The request includes a forward and reverse change.
+//  Initial posted event is UPDATE_OK_EVT.
+//  The update request is sent without error.
+//  A server response is received which indicates FQDN is in use.
+//  This should be treated as success.
+//
+TEST_F(CheckExistsRemoveTransactionTest, removingFwdRRsHandler_FQDNInUse) {
+    CheckExistsRemoveStubPtr name_remove;
+    // Create and prep a transaction, poised to run the handler.
+    ASSERT_NO_THROW(name_remove =
+                    prepHandlerTest(CheckExistsRemoveTransaction::
+                                    REMOVING_FWD_ADDRS_ST,
+                                    NameChangeTransaction::
+                                    UPDATE_OK_EVT, FWD_AND_REV_CHG));
+
+    // Run removingFwdRRsHandler to construct and send the request.
+    EXPECT_NO_THROW(name_remove->removingFwdRRsHandler());
+
+    // Simulate receiving a FQDN in use update response.
+    name_remove->fakeResponse(DNSClient::SUCCESS, dns::Rcode::YXRRSET());
+
+    // Run removingFwdRRsHandler again  to process the response.
+    EXPECT_NO_THROW(name_remove->removingFwdRRsHandler());
+
+    // Forward change completion should be true, reverse flag should be false.
+    EXPECT_TRUE(name_remove->getForwardChangeCompleted());
+    EXPECT_FALSE(name_remove->getReverseChangeCompleted());
+
+    // Since the request also includes a reverse change we should
+    // be poised to start it. Verify that we transitioned correctly.
+    EXPECT_EQ(NameChangeTransaction::SELECTING_REV_SERVER_ST,
+              name_remove->getCurrState());
+    EXPECT_EQ(NameChangeTransaction::SELECT_SERVER_EVT,
+              name_remove->getNextEvent());
+}
 
 // Tests the selectingRevServerHandler functionality.
 // It verifies behavior for the following scenarios:

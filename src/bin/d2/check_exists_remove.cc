@@ -326,10 +326,15 @@ CheckExistsRemoveTransaction::removingFwdRRsHandler() {
             // see RFC 2136 section 3.2.3/3.2.4.
             const dns::Rcode& rcode = getDnsUpdateResponse()->getRcode();
             if ((rcode == dns::Rcode::NOERROR()) ||
-                (rcode == dns::Rcode::NXRRSET())) {
+                (rcode == dns::Rcode::NXRRSET()) ||
+                (rcode == dns::Rcode::YXRRSET())) {
                 // We were able to remove them or they were not there (
                 // Rcode of NXRRSET means there are no matching RRsets).
                 // In either case, we consider it success and mark it as done.
+                // YXRRSET means either a FWD RR with a different IP (client
+                // change subnets) exists OR a FWD RR of the other protocols
+                // exists, either way we want the DHCID left intact so we
+                // treat this as success too.
                 setForwardChangeCompleted(true);
 
                 // If request calls for reverse update then do that next,
