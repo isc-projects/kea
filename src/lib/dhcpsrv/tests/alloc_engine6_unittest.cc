@@ -3239,7 +3239,7 @@ public:
     /// none if it is IPV6_ZERO_ADDRESS.
     /// @param exp_subnet expected subnet of the resultant lease.
     /// @param exp_address expected address of the resultant lease.
-    /// @param fake_allocation tests the DISCOVER code path when true, REQUEST when
+    /// @param fake_allocation tests the SOLICIT code path when true, REQUEST when
     /// false.
     void globalResVsSubnetRes(bool include_global_host, IOAddress global_host_address,
                               bool include_subnet_host, SubnetID subnet_host_subnet_id,
@@ -6940,45 +6940,45 @@ TEST_F(AllocEngine6Test, useReclaimedReservedLease) {
 TEST_F(SharedNetworkAlloc6Test, solicitGlobalResVsSubnetRes) {
     // global_host with address in subnet1, subnet_host with no address in subnet2
     globalResVsSubnetRes(true, IOAddress("2001:db8:1::100"),
-                                 true, SubnetID(20), IOAddress::IPV6_ZERO_ADDRESS(),
-                                 SubnetID(20), IOAddress("2001:db8:2::"));
+                         true, SubnetID(20), IOAddress::IPV6_ZERO_ADDRESS(),
+                         SubnetID(20), IOAddress("2001:db8:2::"));
 
     // global_host with address in subnet1, subnet_host with address in subnet2
     globalResVsSubnetRes(true, IOAddress("2001:db8:1::100"),
-                                 true, SubnetID(20), IOAddress("2001:db8:2::200"),
-                                 SubnetID(20), IOAddress("2001:db8:2::200"));
+                         true, SubnetID(20), IOAddress("2001:db8:2::200"),
+                         SubnetID(20), IOAddress("2001:db8:2::200"));
 
     // global_host with address in subnet2, subnet_host with no address in subnet2
     globalResVsSubnetRes(true, IOAddress("2001:db8:2::100"),
-                                 true, SubnetID(20), IOAddress::IPV6_ZERO_ADDRESS(),
-                                 SubnetID(20), IOAddress("2001:db8:2::1"));
+                         true, SubnetID(20), IOAddress::IPV6_ZERO_ADDRESS(),
+                         SubnetID(20), IOAddress("2001:db8:2::1"));
 
     // global_host with address in subnet2, subnet_host with address in subnet2
     globalResVsSubnetRes(true, IOAddress("2001:db8:2::100"),
-                                 true, SubnetID(20), IOAddress("2001:db8:2::200"),
-                                 SubnetID(20), IOAddress("2001:db8:2::200"));
+                         true, SubnetID(20), IOAddress("2001:db8:2::200"),
+                         SubnetID(20), IOAddress("2001:db8:2::200"));
 }
 
 TEST_F(SharedNetworkAlloc6Test, requestGlobalResVsSubnetRes) {
     // global_host with address in subnet1, subnet_host with no address in subnet2
     globalResVsSubnetRes(true, IOAddress("2001:db8:1::100"),
-                                 true, SubnetID(20), IOAddress::IPV6_ZERO_ADDRESS(),
-                                 SubnetID(20), IOAddress("2001:db8:2::"), false);
+                         true, SubnetID(20), IOAddress::IPV6_ZERO_ADDRESS(),
+                         SubnetID(20), IOAddress("2001:db8:2::"), false);
 
     // global_host with address in subnet1, subnet_host with address in subnet2
     globalResVsSubnetRes(true, IOAddress("2001:db8:1::100"),
-                                 true, SubnetID(20), IOAddress("2001:db8:2::200"),
-                                 SubnetID(20), IOAddress("2001:db8:2::200"), false);
+                         true, SubnetID(20), IOAddress("2001:db8:2::200"),
+                         SubnetID(20), IOAddress("2001:db8:2::200"), false);
 
     // global_host with address in subnet2, subnet_host with no address in subnet2
     globalResVsSubnetRes(true, IOAddress("2001:db8:2::100"),
-                                 true, SubnetID(20), IOAddress::IPV6_ZERO_ADDRESS(),
-                                 SubnetID(20), IOAddress("2001:db8:2::1"), false);
+                         true, SubnetID(20), IOAddress::IPV6_ZERO_ADDRESS(),
+                         SubnetID(20), IOAddress("2001:db8:2::1"), false);
 
     // global_host with address in subnet2, subnet_host with address in subnet2
     globalResVsSubnetRes(true, IOAddress("2001:db8:2::100"),
-                                 true, SubnetID(20), IOAddress("2001:db8:2::200"),
-                                 SubnetID(20), IOAddress("2001:db8:2::200"), false);
+                         true, SubnetID(20), IOAddress("2001:db8:2::200"),
+                         SubnetID(20), IOAddress("2001:db8:2::200"), false);
 }
 
 }  // namespace test

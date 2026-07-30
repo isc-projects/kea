@@ -3683,11 +3683,12 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
 
     // Save list of subnets checked so we can skip rechecking
     // client classes for global HRs.
-    std::list<ConstSubnet4Ptr> subnets;
+    std::list<ConstSubnet4Ptr> eligible_subnets;
 
+    // Start with currently selected subnet.
     ConstSubnet4Ptr subnet = ctx.subnet_;
     while (subnet) {
-        subnets.push_back(subnet);
+        eligible_subnets.push_back(subnet);
         if (subnet->getReservationsInSubnet()) {
             auto host = ctx.hosts_.find(subnet->getID());
             // The out-of-pool flag indicates that no client should be assigned
@@ -3726,15 +3727,17 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
         return (false);
     }
 
-    // Start with currently selected subnet.
-    for (auto subnet : subnets) {
+    // Iterate over the list of eligible subnets (starting with
+    // with the currently selected subnet) looking for a subnet
+    // in which the global host address is valid.
+    for (auto eligible_subnet : eligible_subnets) {
         // If global reservations are enabled for this subnet and there is
         // globally reserved address and that address is feasible for this
         // subnet, update the selected subnet and return true.
-        if (subnet->getReservationsGlobal() &&
+        if (eligible_subnet->getReservationsGlobal() &&
             (global_host_address != IOAddress::IPV4_ZERO_ADDRESS()) &&
-            (subnet->inRange(global_host_address))) {
-            ctx.subnet_ = subnet;
+            (eligible_subnet->inRange(global_host_address))) {
+            ctx.subnet_ = eligible_subnet;
             return (true);
         }
     }

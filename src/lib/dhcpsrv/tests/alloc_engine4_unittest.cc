@@ -1022,8 +1022,8 @@ public:
         HostPtr subnet_host;
         if (include_subnet_host) {
             subnet_host.reset(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
-                                     Host::IDENT_HWADDR, subnet_host_subnet_id,
-                                     SUBNET_ID_UNUSED, subnet_host_address));
+                                       Host::IDENT_HWADDR, subnet_host_subnet_id,
+                                       SUBNET_ID_UNUSED, subnet_host_address));
 
             CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(subnet_host);
         }
@@ -6203,45 +6203,45 @@ TEST_F(AllocEngine4Test, getOfferLft4) {
 TEST_F(SharedNetworkAlloc4Test, discoverGlobalResVsSubnetRes) {
     // global_host with address in subnet1, subnet_host with no address in subnet2
     globalResVsSubnetRes(true, IOAddress("192.0.2.100"),
-                                 true, SubnetID(20), IOAddress::IPV4_ZERO_ADDRESS(),
-                                 SubnetID(20), IOAddress("10.1.2.5"));
+                         true, SubnetID(20), IOAddress::IPV4_ZERO_ADDRESS(),
+                         SubnetID(20), IOAddress("10.1.2.5"));
 
     // global_host with address in subnet1, subnet_host with address in subnet2
     globalResVsSubnetRes(true, IOAddress("192.0.2.100"),
-                                 true, SubnetID(20), IOAddress("10.1.2.200"),
-                                 SubnetID(20), IOAddress("10.1.2.200"));
+                         true, SubnetID(20), IOAddress("10.1.2.200"),
+                         SubnetID(20), IOAddress("10.1.2.200"));
 
     // global_host with address in subnet2, subnet_host with no address in subnet2
     globalResVsSubnetRes(true, IOAddress("10.1.2.1"),
-                                 true, SubnetID(20), IOAddress::IPV4_ZERO_ADDRESS(),
-                                 SubnetID(20), IOAddress("10.1.2.6"));
+                         true, SubnetID(20), IOAddress::IPV4_ZERO_ADDRESS(),
+                         SubnetID(20), IOAddress("10.1.2.6"));
 
     // global_host with address in subnet2, subnet_host with address in subnet2
     globalResVsSubnetRes(true, IOAddress("10.1.2.1"),
-                                 true, SubnetID(20), IOAddress("10.1.2.200"),
-                                 SubnetID(20), IOAddress("10.1.2.200"));
+                         true, SubnetID(20), IOAddress("10.1.2.200"),
+                         SubnetID(20), IOAddress("10.1.2.200"));
 }
 
 TEST_F(SharedNetworkAlloc4Test, requestGlobalResVsSubnetRes) {
     // global_host with address in subnet1, subnet_host with no address in subnet2
     globalResVsSubnetRes(true, IOAddress("192.0.2.100"),
-                                 true, SubnetID(20), IOAddress::IPV4_ZERO_ADDRESS(),
-                                 SubnetID(20), IOAddress("10.1.2.5"), false);
+                         true, SubnetID(20), IOAddress::IPV4_ZERO_ADDRESS(),
+                         SubnetID(20), IOAddress("10.1.2.5"), false);
 
     // global_host with address in subnet1, subnet_host with address in subnet2
     globalResVsSubnetRes(true, IOAddress("192.0.2.100"),
-                                 true, SubnetID(20), IOAddress("10.1.2.200"),
-                                 SubnetID(20), IOAddress("10.1.2.200"), false);
+                         true, SubnetID(20), IOAddress("10.1.2.200"),
+                         SubnetID(20), IOAddress("10.1.2.200"), false);
 
     // global_host with address in subnet2, subnet_host with no address in subnet2
     globalResVsSubnetRes(true, IOAddress("10.1.2.1"),
-                                 true, SubnetID(20), IOAddress::IPV4_ZERO_ADDRESS(),
-                                 SubnetID(20), IOAddress("10.1.2.6"), false);
+                         true, SubnetID(20), IOAddress::IPV4_ZERO_ADDRESS(),
+                         SubnetID(20), IOAddress("10.1.2.6"), false);
 
     // global_host with address in subnet2, subnet_host with address in subnet2
     globalResVsSubnetRes(true, IOAddress("10.1.2.1"),
-                                 true, SubnetID(20), IOAddress("10.1.2.200"),
-                                 SubnetID(20), IOAddress("10.1.2.200"), false);
+                         true, SubnetID(20), IOAddress("10.1.2.200"),
+                         SubnetID(20), IOAddress("10.1.2.200"), false);
 }
 
 }  // namespace test
