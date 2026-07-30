@@ -319,9 +319,9 @@ The ``cid-as-rfc4361-duid`` Flag
 describes a mechanism by v4 clients and v6 clients in a dual stack mechanism
 can both maintain DNS entries for the same FQDN.  This is achieved by having the v4
 client embed its v6 counterpart's DUID within its own client identifier (Option 60).
-This value can than be used to generate a DHCID which matches the DHCID generated
+This value can then be used to generate a DHCID which matches the DHCID generated
 for the v6 client.  For cases where it is not feasible to modify a client such that
-they can send an RFC 4361 compliant identifier, using flex-id with
+it can send an RFC 4361 compliant identifier, using flex-id with
 ``cid-as-rfc-4361-duid`` enabled can provide a path forward.
 
 By default v4 flex-id is the result of the ``identifier expression``
@@ -331,7 +331,7 @@ However, when ``cid-as-rfc4361-duid`` is true, the flex-id is the result the
 ``identifier expression`` prefixed with a one byte value of 0xFF for the
 rfc4361 id type followed by a four-byte zero value for IAID.
 
-For example, if the identfier expression is "pkt4.mac" and the client's hardware
+For example, if the identifier expression is "pkt4.mac" and the client's hardware
 address is "01:02:03:04:05:06", by default flex-id generated will be "00:01:02:03:04:05:06".
 If ``cid-as-rfc4361-duid`` is true, the flex-id generated will be
 "FF:00:00:00:00:01:02:03:04:05:06".
