@@ -179,9 +179,9 @@ public:
         if (!cert) {
             return ("");
         }
-        ::X509_NAME *name = ::X509_get_subject_name(cert);
+        const ::X509_NAME *name = ::X509_get_subject_name(cert);
         int loc = ::X509_NAME_get_index_by_NID(name, NID_commonName, -1);
-        ::X509_NAME_ENTRY* ne = ::X509_NAME_get_entry(name, loc);
+        const ::X509_NAME_ENTRY* ne = ::X509_NAME_get_entry(name, loc);
         if (!ne) {
             ::X509_free(cert);
             return ("");
@@ -217,9 +217,9 @@ public:
         if (!cert) {
             return ("");
         }
-        ::X509_NAME *name = ::X509_get_issuer_name(cert);
+        const ::X509_NAME *name = ::X509_get_issuer_name(cert);
         int loc = ::X509_NAME_get_index_by_NID(name, NID_commonName, -1);
-        ::X509_NAME_ENTRY* ne = ::X509_NAME_get_entry(name, loc);
+        const ::X509_NAME_ENTRY* ne = ::X509_NAME_get_entry(name, loc);
         if (!ne) {
             ::X509_free(cert);
             return ("");
