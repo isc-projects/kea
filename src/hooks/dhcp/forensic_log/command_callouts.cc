@@ -185,7 +185,7 @@ bool checkLoggingEnabledSubnet4(ConstElementPtr& arguments) {
 /// @param handle CalloutHandle which provides access to context.
 /// @param name The command name.
 /// @param arguments The command arguments.
-/// @param response The command response.
+/// @param 4 The command response.
 int handleLease4Cmds(CalloutHandle& handle, string& name, ConstElementPtr& arguments,
                      ConstElementPtr& /*response*/) {
     if (!LegalLogMgrFactory::instance(handle.getCurrentLibrary())) {

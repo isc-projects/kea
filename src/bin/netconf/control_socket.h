@@ -108,7 +108,7 @@ using ControlSocketBasePtr = std::shared_ptr<ControlSocketBase>;
 /// @brief Factory template for control sockets.
 ///
 /// @tparam TYPE The control socket type.
-/// @param ctrl_sock The control socket configuration.
+/// @param 1 The control socket configuration.
 /// @return A pointer to a control socket communication object.
 /// @throw NotImplemented if no specialization was called.
 template <CfgControlSocket::Type TYPE>

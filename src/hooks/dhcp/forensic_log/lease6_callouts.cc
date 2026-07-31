@@ -159,7 +159,7 @@ public:
 
     /// @brief Get no option regardless of what the packet contains.
     ///
-    /// @param pkt The packet containing options.
+    /// @param 1 The packet containing options.
     /// @return Always return null option.
     virtual OptionPtr getOption(Pkt&) {
         return (OptionPtr());
@@ -312,7 +312,7 @@ public:
 
     /// @brief Get no option regardless of what the packet contains.
     ///
-    /// @param pkt The packet containing options.
+    /// @param 1 The packet containing options.
     /// @return Always return null option.
     virtual OptionPtr getOption(Pkt&) {
         return (OptionPtr());

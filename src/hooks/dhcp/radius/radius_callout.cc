@@ -446,7 +446,7 @@ int multi_threading_compatible() {
 ///
 /// The only purpose of this callout is to retrieve io_service_ reference.
 ///
-/// @param handle callout handle passed to the callout.
+/// @param 1 callout handle passed to the callout.
 /// @return 0 on success, 1 otherwise.
 int dhcp4_srv_configured(CalloutHandle& /* handle */) {
     RadiusImpl::instance().startServices();
@@ -458,7 +458,7 @@ int dhcp4_srv_configured(CalloutHandle& /* handle */) {
 ///
 /// The only purpose of this callout is to retrieve io_service_ reference.
 ///
-/// @param handle callout handle passed to the callout.
+/// @param 1 callout handle passed to the callout.
 /// @return 0 on success, 1 otherwise.
 int dhcp6_srv_configured(CalloutHandle& /* handle */) {
     RadiusImpl::instance().startServices();

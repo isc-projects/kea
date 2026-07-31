@@ -319,7 +319,7 @@ int unload() {
 ///
 /// Starts the listener.
 ///
-/// @param handle callout handle.
+/// @param 1 callout handle.
 /// @return 0 on success, non-zero otherwise.
 int dhcp4_srv_configured(CalloutHandle& /* handle */) {
     IOServiceMgr::instance().registerIOService(LeaseQueryImplFactory::getMutableImpl().getIOService());

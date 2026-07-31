@@ -277,7 +277,7 @@ protected:
     commandInterfaceAddHandler(const std::string& command,
                                isc::data::ConstElementPtr args);
 
-    /// @Brief handler for processing 'version-get' command
+    /// @brief handler for processing 'version-get' command
     ///
     /// This handler processes version-get command, which returns
     /// over the control channel the -v and -V command line arguments.
@@ -309,7 +309,7 @@ protected:
     /// No limit for processing time or number of processed leases applies.
     ///
     /// @param command (parameter ignored)
-    /// @param args arguments map { "remove": <bool> }
+    /// @param args arguments map { "remove": a_bool }
     ///        if true a lease is removed when it is reclaimed,
     ///        if false its state is changed to "expired-reclaimed".
     ///
@@ -325,7 +325,7 @@ protected:
     /// the result of DHCPv4 subnet selected.
     ///
     /// @param command (parameter ignored)
-    /// @param args arguments map { <selector>: <value> }
+    /// @param args arguments map { selector: value }
     ///
     /// @return status of the command with the selection result
     isc::data::ConstElementPtr
@@ -338,7 +338,7 @@ protected:
     /// the result of DHCP4o6 subnet selected.
     ///
     /// @param command (parameter ignored)
-    /// @param args arguments map { <selector>: <value> }
+    /// @param args arguments map { selector>: value }
     ///
     /// @return status of the command with the selection result
     isc::data::ConstElementPtr

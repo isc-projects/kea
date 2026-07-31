@@ -269,7 +269,7 @@ public:
 
     /// @brief Escape a client class name.
     ///
-    /// Valid characters are letters, digits and '!#$%&*+-./:?@^_|~'.
+    /// Valid characters are letters, digits and @c "!#$%&*+-./:?@^_|~".
     ///
     /// For generated names we need that when name1 != name2
     /// escape(name1) != escape(name2), and for configured names
