@@ -79,29 +79,41 @@ MySqlConnection::openDatabase() {
         isc_throw(DbInvalidPort, ex.what());
     }
 
-    const char* user = NULL;
+    const char* user = 0;
     string suser;
     try {
         suser = getParameter("user");
         user = suser.c_str();
     } catch (...) {
-        // No user.  Fine, we'll use NULL
+        // No user.  Fine, we'll use null
     }
 
-    const char* password = NULL;
+    const char* password = 0;
     string spassword;
     try {
         spassword = getParameter("password");
         password = spassword.c_str();
     } catch (...) {
-        // No password.  Fine, we'll use NULL
+        // No password.  Fine, we'll use null
+    }
+    string spassword_file;
+    try {
+        spassword_file = getParameter("password-file");
+    } catch (...) {
+        // No password-file.
+    }
+    // Already tested by the parser: password and password-file are exclusive
+    if (!spassword_file.empty()) {
+        // This can throw.
+        spassword = util::file::getContent(spassword_file);
+        password = spassword.c_str();
     }
     if (password) {
         // Refuse default password.
         DefaultCredentials::check(spassword);
     }
 
-    const char* name = NULL;
+    const char* name = 0;
     string sname;
     try {
         sname = getParameter("name");
@@ -278,7 +290,7 @@ MySqlConnection::openDatabase() {
     // because no row matching the WHERE clause was found, or because a
     // row was found but no data was altered.
     MYSQL* status = mysql_real_connect(mysql_, host, user, password, name,
-                                       port, NULL, CLIENT_FOUND_ROWS);
+                                       port, 0, CLIENT_FOUND_ROWS);
     if (status != mysql_) {
         // Mark this connection as no longer usable.
         markUnusable();
@@ -342,7 +354,7 @@ MySqlConnection::getVersion(const ParameterMap& parameters,
 
     // Allocate a new statement.
     MYSQL_STMT *stmt = mysql_stmt_init(conn.mysql_);
-    if (stmt == NULL) {
+    if (stmt == 0) {
         isc_throw(DbOperationError, "unable to allocate MySQL prepared "
                 "statement structure, reason: " << mysql_error(conn.mysql_));
     }
@@ -548,7 +560,7 @@ void
 MySqlConnection::prepareStatement(uint32_t index, const char* text) {
     // Validate that there is space for the statement in the statements array
     // and that nothing has been placed there before.
-    if ((index >= statements_.size()) || (statements_[index] != NULL)) {
+    if ((index >= statements_.size()) || (statements_[index] != 0)) {
         isc_throw(InvalidParameter, "invalid prepared statement index (" <<
                   static_cast<int>(index) << ") or indexed prepared " <<
                   "statement is not null");
@@ -557,7 +569,7 @@ MySqlConnection::prepareStatement(uint32_t index, const char* text) {
     // All OK, so prepare the statement
     text_statements_[index] = std::string(text);
     statements_[index] = mysql_stmt_init(mysql_);
-    if (statements_[index] == NULL) {
+    if (statements_[index] == 0) {
         isc_throw(DbOperationError, "unable to allocate MySQL prepared "
                   "statement structure, reason: " << mysql_error(mysql_));
     }
@@ -576,7 +588,7 @@ MySqlConnection::prepareStatements(const TaggedStatement* start_statement,
     for (const TaggedStatement* tagged_statement = start_statement;
          tagged_statement != end_statement; ++tagged_statement) {
         if (tagged_statement->index >= statements_.size()) {
-            statements_.resize(tagged_statement->index + 1, NULL);
+            statements_.resize(tagged_statement->index + 1, 0);
             text_statements_.resize(tagged_statement->index + 1,
                                     std::string(""));
         }
@@ -591,9 +603,9 @@ MySqlConnection::~MySqlConnection() {
     // about them? We're destroying this object and are not really concerned
     // with errors on a database connection that is about to go away.)
     for (size_t i = 0; i < statements_.size(); ++i) {
-        if (statements_[i] != NULL) {
+        if (statements_[i] != 0) {
             (void) mysql_stmt_close(statements_[i]);
-            statements_[i] = NULL;
+            statements_[i] = 0;
         }
     }
     statements_.clear();

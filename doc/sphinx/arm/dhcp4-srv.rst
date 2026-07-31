@@ -658,6 +658,13 @@ access the database should be set:
 If there is no password to the account, set the password to the empty
 string ``""``. (This is the default.)
 
+.. note::
+
+   Since Kea 3.3.1 it is possible to use as an alternative to the ``password``
+   parameter the ``password-file`` parameter which specifies the name
+   of a file which contains the password value. This applies to other
+   databases so hosts and config databases.
+
 .. _tuning-database-timeouts4:
 
 Tuning Database Timeouts

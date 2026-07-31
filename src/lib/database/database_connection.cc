@@ -240,6 +240,7 @@ DatabaseConnection::toElement(const ParameterMap& params) {
         } else if ((keyword == "type") ||
                    (keyword == "user") ||
                    (keyword == "password") ||
+                   (keyword == "password-file") ||
                    (keyword == "host") ||
                    (keyword == "name") ||
                    (keyword == "on-fail") ||

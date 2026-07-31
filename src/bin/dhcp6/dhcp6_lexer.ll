@@ -2271,6 +2271,9 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"password-file\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::LEASE_DATABASE:
+    case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
     case isc::dhcp::Parser6Context::CLIENTS:
         return isc::dhcp::Dhcp6Parser::make_PASSWORD_FILE(driver.loc_);
     default:

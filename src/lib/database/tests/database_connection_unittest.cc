@@ -600,6 +600,44 @@ TEST(DatabaseConnection, toElementDbAccessStringValid) {
     ASSERT_TRUE(json_elements->equals(*round_trip));
 }
 
+// Same with a password-file entry.
+TEST(DatabaseConnection, toElementDbAccessStringValid2) {
+    const char* configs[] = {
+        "{\n"
+        "\"connect-timeout\": 200, \n"
+        "\"on-fail\": \"stop-retry-exit\", \n"
+        "\"lfc-interval\" : 100, \n"
+        "\"host\": \"whatevah\", \n"
+        "\"max-reconnect-tries\": 5, \n"
+        "\"name\": \"name_str\", \n"
+        "\"password-file\": \"my-password\", \n"
+        "\"persist\" : true, \n"
+        "\"port\" : 300, \n"
+        "\"readonly\" : false, \n"
+        "\"reconnect-wait-time\": 99, \n"
+        "\"retry-on-startup\" : true, \n"
+        "\"type\": \"memfile\", \n"
+        "\"user\": \"user_str\", \n"
+        "\"max-row-errors\": 50, \n"
+        "\"trust-anchor\": \"my-ca\", \n"
+        "\"cert-file\": \"my-cert.crt\", \n"
+        "\"key-file\": \"my-key.key\", \n"
+        "\"cipher-list\": \"AES\" \n"
+        "}\n"
+    };
+
+    DbAccessParser parser;
+    std::string access_str;
+    ConstElementPtr json_elements;
+
+    ASSERT_NO_THROW(json_elements = Element::fromJSON(configs[0]));
+    ASSERT_NO_THROW(parser.parse(access_str, json_elements));
+
+    ElementPtr round_trip = DatabaseConnection::toElementDbAccessString(access_str);
+
+    ASSERT_TRUE(json_elements->equals(*round_trip));
+}
+
 // Check that the toElementDbAccessString() handles Postgres backend
 // specific parameters.
 TEST(DatabaseConnection, toElementDbAccessStringValidPostgresql) {

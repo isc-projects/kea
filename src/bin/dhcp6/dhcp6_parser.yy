@@ -1063,6 +1063,7 @@ database_map_params: database_map_param
 database_map_param: database_type
                   | user
                   | password
+                  | password_file
                   | host
                   | port
                   | name
@@ -1110,6 +1111,15 @@ password: PASSWORD {
 } COLON STRING {
     ElementPtr pwd(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("password", pwd);
+    ctx.leave();
+};
+
+password_file: PASSWORD_FILE {
+    ctx.unique("password-file", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr password(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("password-file", password);
     ctx.leave();
 };
 
@@ -3059,15 +3069,6 @@ user_file: USER_FILE {
 } COLON STRING {
     ElementPtr user(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("user-file", user);
-    ctx.leave();
-};
-
-password_file: PASSWORD_FILE {
-    ctx.unique("password-file", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr password(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("password-file", password);
     ctx.leave();
 };
 

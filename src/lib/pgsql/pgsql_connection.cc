@@ -112,7 +112,7 @@ PgSqlResult::rowColCheck(int row, int col) const {
 
 std::string
 PgSqlResult::getColumnLabel(const int col) const {
-    const char* label = NULL;
+    const char* label = 0;
     try {
         colCheck(col);
         label = PQfname(result_, col);
@@ -389,7 +389,7 @@ PgSqlConnection::getConnParametersInternal(bool logging) {
         suser = getParameter("user");
         dbconnparameters += " user = '" + escapePgSqlConnValue(suser) + "'";
     } catch(...) {
-        // No user. Fine, we'll use NULL
+        // No user. Fine, we'll use null
     }
 
     string spassword;
@@ -397,7 +397,18 @@ PgSqlConnection::getConnParametersInternal(bool logging) {
         spassword = getParameter("password");
         dbconnparameters += " password = '" + escapePgSqlConnValue(spassword) + "'";
     } catch(...) {
-        // No password. Fine, we'll use NULL
+        // No password. Fine, we'll use null
+    }
+    string spassword_file;
+    try {
+        spassword_file = getParameter("password-file");
+    } catch (...) {
+        // No password-file.
+    }
+    // Already tested by the parser: password and password-file are exclusive
+    if (!spassword_file.empty()) {
+        // This can throw.
+        spassword = util::file::getContent(spassword_file);
     }
     if (!spassword.empty()) {
         // Refuse default password.
@@ -551,7 +562,7 @@ bool
 PgSqlConnection::compareError(const PgSqlResult& r, const char* error_state) {
     const char* sqlstate = PQresultErrorField(r, PG_DIAG_SQLSTATE);
     // PostgreSQL guarantees it will always be 5 characters long
-    return ((sqlstate != NULL) &&
+    return ((sqlstate != 0) &&
             (memcmp(sqlstate, error_state, PGSQL_STATECODE_LEN) == 0));
 }
 
@@ -563,9 +574,9 @@ PgSqlConnection::checkStatementError(const PgSqlResult& r,
         // We're testing the first two chars of SQLSTATE, as this is the
         // error class. Note, there is a severity field, but it can be
         // misleadingly returned as fatal. However, a loss of connectivity
-        // can lead to a NULL sqlstate with a status of PGRES_FATAL_ERROR.
+        // can lead to a null sqlstate with a status of PGRES_FATAL_ERROR.
         const char* sqlstate = PQresultErrorField(r, PG_DIAG_SQLSTATE);
-        if ((sqlstate == NULL) ||
+        if ((sqlstate == 0) ||
             ((memcmp(sqlstate, "08", 2) == 0) ||  // Connection Exception
              (memcmp(sqlstate, "53", 2) == 0) ||  // Insufficient resources
              (memcmp(sqlstate, "54", 2) == 0) ||  // Program Limit exceeded

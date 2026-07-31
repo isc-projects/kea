@@ -116,6 +116,7 @@ DbAccessParser::parse(std::string& access_string,
                 // type
                 // user
                 // password
+                // password-file
                 // host
                 // name
                 // on-fail
@@ -252,6 +253,15 @@ DbAccessParser::parse(std::string& access_string,
         isc_throw(DbConfigError, "reconnect-wait-time " << reconnect_wait_time
                   << " must be in range 0...MAX_UINT32 (4294967295) "
                   << "(" << value->getPosition() << ")");
+    }
+
+    // g. Reject password and password-file both being specified.
+    auto password_ptr = values_copy.find("password");
+    auto password_file_ptr = values_copy.find("password-file");
+    if ((password_ptr != values_copy.end()) &&
+        (password_file_ptr != values_copy.end())) {
+        isc_throw(DbConfigError, "can't specify both 'password' and "
+                  << "'password-file'");
     }
 
     // 4. If all is OK, update the stored keyword/value pairs.  We do this by

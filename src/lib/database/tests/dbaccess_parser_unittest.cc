@@ -43,14 +43,14 @@ public:
     /// @brief Build JSON String
     ///
     /// Given a array of "const char*" strings representing in order, keyword,
-    /// value, keyword, value, ... and terminated by a NULL, return a string
+    /// value, keyword, value, ... and terminated by a null, return a string
     /// that represents the JSON map for the keywords and values.
     ///
-    /// E.g. given the array of strings: alpha, one, beta, two, NULL, it would
+    /// E.g. given the array of strings: alpha, one, beta, two, null, it would
     /// return the string '{ "alpha": "one", "beta": "two" }'
     ///
     /// @param keyval Array of "const char*" strings in the order keyword,
-    ///        value, keyword, value ...  A NULL entry terminates the list.
+    ///        value, keyword, value ...  A null entry terminates the list.
     ///
     /// @return JSON map for the keyword value array.
     std::string toJson(const char* keyval[]) {
@@ -60,15 +60,15 @@ public:
 
         string result = "{ ";
 
-        for (size_t i = 0; keyval[i] != NULL; i+= 2) {
-            // Get the value.  This should not be NULL.  As ASSERT_NE will
+        for (size_t i = 0; keyval[i] != 0; i+= 2) {
+            // Get the value.  This should not be null.  As ASSERT_NE will
             // cause a return - which gives compilation problems as a return
             // statement is expected to return a string - use EXPECT_NE and
             // explicitly return if the expected array is incorrect.
-            EXPECT_NE(static_cast<const char*>(NULL), keyval[i + 1]) <<
+            EXPECT_NE(static_cast<const char*>(0), keyval[i + 1]) <<
                 "Supplied reference keyword/value list does not contain values "
                 "for all keywords";
-            if (keyval[i + 1] == NULL) {
+            if (keyval[i + 1] == 0) {
                 return (std::string(""));
             }
 
@@ -112,7 +112,7 @@ public:
     ///        SCOPED_TRACE for this call.
     /// @param dbaccess set of database access parameters to check
     /// @param keyval Array of "const char*" strings in the order keyword,
-    ///        value, keyword, value ...  A NULL entry terminates the list.
+    ///        value, keyword, value ...  A null entry terminates the list.
     void checkAccessString(const char* trace_string,
                            const DatabaseConnection::ParameterMap& parameters,
                            const char* keyval[]) {
@@ -121,9 +121,9 @@ public:
         // Construct a map of keyword value pairs.
         std::map<string, string> expected;
         size_t expected_count = 0;
-        for (size_t i = 0; keyval[i] != NULL; i += 2) {
-            // Get the value.  This should not be NULL
-            ASSERT_NE(static_cast<const char*>(NULL), keyval[i + 1]) <<
+        for (size_t i = 0; keyval[i] != 0; i += 2) {
+            // Get the value.  This should not be null
+            ASSERT_NE(static_cast<const char*>(0), keyval[i + 1]) <<
                 "Supplied reference keyword/value list does not contain values "
                 "for all keywords";
             expected[keyval[i]] = keyval[i + 1];
@@ -163,15 +163,16 @@ private:
     /// the value should be quoted or not.
     ///
     /// @return true if the value of the parameter should be quoted.
-     bool quoteValue(const std::string& parameter) const {
-         return ((parameter != "persist") && (parameter != "lfc-interval") &&
-                 (parameter != "connect-timeout") &&
-                 (parameter != "read-timeout") &&
-                 (parameter != "write-timeout") &&
-                 (parameter != "tcp-user-timeout") &&
-                 (parameter != "port") &&
-                 (parameter != "max-row-errors") &&
-                 (parameter != "readonly"));
+    bool quoteValue(const std::string& parameter) const {
+        return ((parameter != "persist") &&
+                (parameter != "lfc-interval") &&
+                (parameter != "connect-timeout") &&
+                (parameter != "read-timeout") &&
+                (parameter != "write-timeout") &&
+                (parameter != "tcp-user-timeout") &&
+                (parameter != "port") &&
+                (parameter != "max-row-errors") &&
+                (parameter != "readonly"));
     }
 
 };
@@ -226,7 +227,7 @@ public:
 // Check that the parser works with a simple configuration.
 TEST_F(DbAccessParserTest, validTypeMemfile) {
     const char* config[] = {"type", "memfile",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -240,7 +241,7 @@ TEST_F(DbAccessParserTest, validTypeMemfile) {
 // Check that the parser works with a simple configuration for host database.
 TEST_F(DbAccessParserTest, hosts) {
     const char* config[] = {"type", "memfile",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -256,7 +257,7 @@ TEST_F(DbAccessParserTest, hosts) {
 TEST_F(DbAccessParserTest, emptyKeyword) {
     const char* config[] = {"type", "memfile",
                             "name", "",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -273,7 +274,7 @@ TEST_F(DbAccessParserTest, persistV4Memfile) {
     const char* config[] = {"type", "memfile",
                             "persist", "true",
                             "name", "/opt/var/lib/kea/kea-leases4.csv",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -292,7 +293,7 @@ TEST_F(DbAccessParserTest, persistV6Memfile) {
     const char* config[] = {"type", "memfile",
                             "persist", "true",
                             "name", "/opt/var/lib/kea/kea-leases6.csv",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -311,7 +312,7 @@ TEST_F(DbAccessParserTest, validLFCInterval) {
     const char* config[] = {"type", "memfile",
                             "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "lfc-interval", "3600",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -329,7 +330,7 @@ TEST_F(DbAccessParserTest, negativeLFCInterval) {
     const char* config[] = {"type", "memfile",
                             "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "lfc-interval", "-1",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -345,7 +346,7 @@ TEST_F(DbAccessParserTest, largeLFCInterval) {
     const char* config[] = {"type", "memfile",
                             "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "lfc-interval", "4294967296",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -361,7 +362,7 @@ TEST_F(DbAccessParserTest, validConnectTimeout) {
     const char* config[] = {"type", "mysql",
                             "name", "keatest",
                             "connect-timeout", "3600",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -379,7 +380,7 @@ TEST_F(DbAccessParserTest, negativeConnectTimeout) {
     const char* config[] = {"type", "mysql",
                             "name", "keatest",
                             "connect-timeout", "-1",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -395,7 +396,7 @@ TEST_F(DbAccessParserTest, largeConnectTimeout) {
     const char* config[] = {"type", "mysql",
                             "name", "keatest",
                             "connect-timeout", "4294967296",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -411,7 +412,7 @@ TEST_F(DbAccessParserTest, validReadTimeout) {
     const char* config[] = {"type", "mysql",
                             "name", "keatest",
                             "read-timeout", "3600",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -429,7 +430,7 @@ TEST_F(DbAccessParserTest, negativeReadTimeout) {
     const char* config[] = {"type", "mysql",
                             "name", "keatest",
                             "read-timeout", "-1",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -445,7 +446,7 @@ TEST_F(DbAccessParserTest, largeReadTimeout) {
     const char* config[] = {"type", "mysql",
                             "name", "keatest",
                             "read-timeout", "4294967296",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -461,7 +462,7 @@ TEST_F(DbAccessParserTest, validWriteTimeout) {
     const char* config[] = {"type", "mysql",
                             "name", "keatest",
                             "write-timeout", "3600",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -479,7 +480,7 @@ TEST_F(DbAccessParserTest, negativeWriteTimeout) {
     const char* config[] = {"type", "mysql",
                             "name", "keatest",
                             "write-timeout", "-1",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -495,7 +496,7 @@ TEST_F(DbAccessParserTest, largeWriteTimeout) {
     const char* config[] = {"type", "mysql",
                             "name", "keatest",
                             "write-timeout", "4294967296",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -511,7 +512,7 @@ TEST_F(DbAccessParserTest, validTcpUserTimeout) {
     const char* config[] = {"type", "postgresql",
                             "name", "keatest",
                             "tcp-user-timeout", "3600",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -529,7 +530,7 @@ TEST_F(DbAccessParserTest, negativeTcpUserTimeout) {
     const char* config[] = {"type", "postgresql",
                             "name", "keatest",
                             "tcp-user-timeout", "-1",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -545,7 +546,7 @@ TEST_F(DbAccessParserTest, largeTcpUserTimeout) {
     const char* config[] = {"type", "postgresql",
                             "name", "keatest",
                             "tcp-user-timeout", "4294967296",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -561,7 +562,7 @@ TEST_F(DbAccessParserTest, memfileTcpUserTimeout) {
     const char* config[] = {"type", "memfile",
                             "name", "keatest",
                             "tcp-user-timeout", "10",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -577,7 +578,7 @@ TEST_F(DbAccessParserTest, mysqlTcpUserTimeout) {
     const char* config[] = {"type", "mysql",
                             "name", "keatest",
                             "tcp-user-timeout", "10",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -593,7 +594,7 @@ TEST_F(DbAccessParserTest, memfileReadTimeout) {
     const char* config[] = {"type", "memfile",
                             "name", "keatest",
                             "read-timeout", "10",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -609,7 +610,7 @@ TEST_F(DbAccessParserTest, postgresqlReadTimeout) {
     const char* config[] = {"type", "postgresql",
                             "name", "keatest",
                             "read-timeout", "10",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -625,7 +626,7 @@ TEST_F(DbAccessParserTest, memfileWriteTimeout) {
     const char* config[] = {"type", "memfile",
                             "name", "keatest",
                             "write-timeout", "10",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -641,7 +642,7 @@ TEST_F(DbAccessParserTest, postgresqlWriteTimeout) {
     const char* config[] = {"type", "postgresql",
                             "name", "keatest",
                             "write-timeout", "10",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -657,7 +658,7 @@ TEST_F(DbAccessParserTest, validPort) {
     const char* config[] = {"type", "memfile",
                             "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "port", "3306",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -675,7 +676,7 @@ TEST_F(DbAccessParserTest, negativePort) {
     const char* config[] = {"type", "memfile",
                             "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "port", "-1",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -691,7 +692,7 @@ TEST_F(DbAccessParserTest, largePort) {
     const char* config[] = {"type", "memfile",
                             "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "port", "65536",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -707,7 +708,7 @@ TEST_F(DbAccessParserTest, zeroMaxRowErrors) {
     const char* config[] = {"type", "memfile",
                             "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "max-row-errors", "0",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -725,7 +726,7 @@ TEST_F(DbAccessParserTest, validZeroMaxRowErrors) {
     const char* config[] = {"type", "memfile",
                             "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "max-row-errors", "50",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -744,7 +745,7 @@ TEST_F(DbAccessParserTest, negativeMaxRowErrors) {
     const char* config[] = {"type", "memfile",
                             "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "max-row-errors", "-1",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -760,7 +761,7 @@ TEST_F(DbAccessParserTest, largeMaxRowErrors) {
     const char* config[] = {"type", "memfile",
                             "name", "/opt/var/lib/kea/kea-leases6.csv",
                             "max-row-errors", "4294967296",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -778,7 +779,7 @@ TEST_F(DbAccessParserTest, validTypeMysql) {
                             "user",     "kea",
                             "password", "keapassword",
                             "name",     "keatest",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -796,7 +797,7 @@ TEST_F(DbAccessParserTest, missingTypeKeyword) {
                             "user",     "kea",
                             "password", "keapassword",
                             "name",     "keatest",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -810,7 +811,7 @@ TEST_F(DbAccessParserTest, missingTypeKeyword) {
 // database configuration are incremental.
 TEST_F(DbAccessParserTest, incrementalChanges) {
     const char* config1[] = {"type", "memfile",
-                             NULL};
+                             0};
 
     // Applying config2 will cause a wholesale change.
     const char* config2[] = {"type",     "mysql",
@@ -819,39 +820,39 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
                              "user",     "kea",
                              "password", "keapassword",
                              "name",     "keatest",
-                             NULL};
+                             0};
 
     // Applying incremental2 should cause a change to config3.
     const char* incremental2[] = {"user",     "me",
                                   "password", "meagain",
-                                  NULL};
+                                  0};
     const char* config3[] = {"type",     "mysql",
                              "host",     "erewhon",
                              "port",     "3306",
                              "user",     "me",
                              "password", "meagain",
                              "name",     "keatest",
-                             NULL};
+                             0};
 
     // incremental3 will cause an exception.  There should be no change
     // to the returned value.
     const char* incremental3[] = {"type",     "invalid",
                                   "user",     "you",
                                   "password", "youagain",
-                                  NULL};
+                                  0};
 
     // incremental4 is a compatible change and should cause a transition
     // to config4.
     const char* incremental4[] = {"user",     "them",
                                   "password", "",
-                                  NULL};
+                                  0};
     const char* config4[] = {"type",     "mysql",
                              "host",     "erewhon",
                              "port",     "3306",
                              "user",     "them",
                              "password", "",
                              "name",     "keatest",
-                             NULL};
+                             0};
 
     TestDbAccessParser parser;
 
@@ -912,7 +913,7 @@ TEST_F(DbAccessParserTest, getDbAccessString) {
                             "host",     "",
                             "name",     "keatest",
                             "password", "password with spaces",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -938,7 +939,7 @@ TEST_F(DbAccessParserTest, validReadOnly) {
                             "password", "keatest",
                             "name", "keatest",
                             "readonly", "true",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -960,7 +961,7 @@ TEST_F(DbAccessParserTest, invalidReadOnly) {
                             "password", "keatest",
                             "name", "keatest",
                             "readonly", "1",
-                            NULL};
+                            0};
 
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
@@ -974,10 +975,10 @@ TEST_F(DbAccessParserTest, invalidReadOnly) {
 TEST_F(DbAccessParserTest, multipleHost) {
     const char* config1[] = {"type", "mysql",
                              "name", "keatest1",
-                             NULL};
+                             0};
     const char* config2[] = {"type", "mysql",
                              "name", "keatest2",
-                             NULL};
+                             0};
 
     string json_config1 = toJson(config1);
     string json_config2 = toJson(config2);
@@ -997,4 +998,36 @@ TEST_F(DbAccessParserTest, multipleHost) {
                       config2);
 }
 
-};  // Anonymous namespace
+// This test checks that the parser accepts password-file.
+TEST_F(DbAccessParserTest, passwordFile) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+                            "password-file", "/etc/kea/password",
+                            0};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser;
+    EXPECT_NO_THROW(parser.parse(json_elements));
+    checkAccessString("Passord-File", parser.getDbAccessParameters(), config);
+}
+
+// This test checks that the parser rejects password and  password-file together.
+TEST_F(DbAccessParserTest, passwordFiletwoPasswords) {
+    const char* config[] = {"type", "memfile",
+                            "name", "/opt/var/lib/kea/kea-leases6.csv",
+                            "password", "keapassword",
+                            "password-file", "/etc/kea/password",
+                            0};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser;
+    EXPECT_THROW(parser.parse(json_elements), DbConfigError);
+}
+
+}  // Anonymous namespace
