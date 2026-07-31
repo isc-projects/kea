@@ -482,6 +482,12 @@ if CRYPTO_DEP.name() == openssl.name()
     if not result1 or not result2
         error('Boost TLS support broken.')
     endif
+    result = cpp.compiles(
+        fs.read('compiler-checks/const-openssl-x509-name.cc'),
+        name: 'CONST_OPENSSL_X09_NAME',
+        dependencies: [boost_dep, CRYPTO_DEP, threads_dep],
+    )
+    conf_data.set('CONST_OPENSSL_X09_NAME', result)
 endif
 
 if CRYPTO_DEP.name() == botan.name()
