@@ -39,7 +39,7 @@ Shell Usage
 
 .. code-block:: console
 
-   $ kea-shell [--host hostname] [--port number] [--path path] [--auth-user] [--auth-password] [--auth-password-file] [--timeout seconds] [command]
+   $ kea-shell [--host hostname] [--port number] [--path path] [--auth-user] [--auth-user-file] [--auth-password] [--auth-password-file] [--timeout seconds] [command]
 
 where:
 
@@ -56,6 +56,13 @@ where:
 -  ``--auth-user`` specifies the user ID for basic HTTP authentication.
    If not specified or specified as the empty string, authentication is
    not used.
+
+-  ``--auth-user-file`` specifies a text file whose first line contains
+   the user ID to be used for basic HTTP authentication. This flag takes
+   precedence over ``--auth-user`` flag.
+   Caution is advised when setting file permissions
+   for the file containing the user ID. Access to the file should be as strict as
+   possible and limited only to the Kea administrators.
 
 -  ``--auth-password`` specifies the password for basic HTTP authentication.
    If not specified but the user ID is specified, an empty password is used.

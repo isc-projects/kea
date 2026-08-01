@@ -73,7 +73,13 @@ def shell_body():
     parser.add_argument('--service', nargs="?", action="append",
                         help='obsolete parameter.')
     parser.add_argument('--auth-user', type=str, default='',
-                        help='Basic HTTP authentication user')
+                        help='Basic HTTP authentication user. If used '
+                             'together with "--auth-user-file", '
+                             'it is disregarded.')
+    parser.add_argument('--auth-user-file', type=str, default='',
+                        help='A text file whose first line contains the user '
+                             'to be used for Basic HTTP authentication. This flag '
+                             'takes precedence over "--auth-user flag.')
     parser.add_argument('--auth-password', type=str, default='',
                         help='Basic HTTP authentication password. If used '
                              'together with "--auth-password-file", '
@@ -120,8 +126,19 @@ def shell_body():
     if cmd_args.key:
         # HTTPS check already done for the cert
         params.key = cmd_args.key
-    if cmd_args.auth_user != '':
-        user = cmd_args.auth_user
+    if cmd_args.auth_user_file != '' or cmd_args.auth_user != '':
+        if cmd_args.auth_user_file != '':
+            try:
+                file = open(cmd_args.auth_user_file, 'r')
+                user = file.readline()
+                if len(user) > 0 and user[-1] == '\n':
+                    user = user[:-1]
+                file.close()
+            except Exception as exc:
+                print("Failed to run: " + str(exc))
+                sys.exit(1)
+        else:
+            user = cmd_args.auth_user
         if cmd_args.auth_password_file != '':
             try:
                 file = open(cmd_args.auth_password_file, 'r')

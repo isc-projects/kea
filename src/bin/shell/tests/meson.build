@@ -142,6 +142,16 @@ test(
     priority: -1,
     suite: 'shell-tests',
 )
+auth_bad_user_file = configure_file(
+    input: 'auth_bad_user_file.in',
+    output: 'auth_bad_user_file',
+    configuration: shell_tests_conf_data,
+)
+auth_user_file = configure_file(
+    input: 'auth_user_file.in',
+    output: 'auth_user_file',
+    configuration: shell_tests_conf_data,
+)
 auth_bad_password_file = configure_file(
     input: 'auth_bad_password_file.in',
     output: 'auth_bad_password_file',

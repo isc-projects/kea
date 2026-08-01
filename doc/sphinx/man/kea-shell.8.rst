@@ -16,7 +16,7 @@
 Synopsis
 ~~~~~~~~
 
-:program:`kea-shell` [**-h**] [**-v**] [**--host**] [**--port**] [**--path**] [**--ca**] [**--cert**] [**--key**] [**--auth-user**] [**--auth-password**] [**--auth-password-file**] [**--timeout**] [**--service**] [command]
+:program:`kea-shell` [**-h**] [**-v**] [**--host**] [**--port**] [**--path**] [**--ca**] [**--cert**] [**--key**] [**--auth-user**] [**--auth-user-file**] [**--auth-password**] [**--auth-password-file**] [**--timeout**] [**--service**] [command]
 
 Description
 ~~~~~~~~~~~
@@ -71,6 +71,11 @@ The arguments are as follows:
 ``--auth-user``
    Specifies the user ID for basic HTTP authentication. If not specified,
    or specified as the empty string, authentication is not used.
+
+``--auth-user-file``
+   Specifies a text file whose first line contains the user ID to be used
+   for basic HTTP authentication. This flag takes precedence
+   over ``--auth-user`` flag.
 
 ``--auth-password``
    Specifies the password for basic HTTP authentication. If not specified

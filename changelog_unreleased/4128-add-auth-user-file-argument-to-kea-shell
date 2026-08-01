@@ -1,0 +1,5 @@
+[func]		fdupont
+	Added a new argument, '--auth-user-file', which provides
+	a secure method for supplying a user ID for basic HTTP
+	authentication in kea-shell.
+	(Gitlab #4128)
