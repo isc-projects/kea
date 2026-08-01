@@ -2976,13 +2976,7 @@ Dhcpv4SrvTest::loadConfigFile(const string& path) {
         mutable_config->set("hosts-databases", hosts);
     }
     // Remove authentication clients using files.
-    ConstElementPtr control_sockets = dhcp4->get("control-socket");
-    if (control_sockets) {
-        removeAuthFiles(control_sockets);
-        control_sockets = redactConfig(control_sockets, { "*" }, "-----");
-        mutable_config->set("control-socket", control_sockets);
-    }
-    control_sockets = dhcp4->get("control-sockets");
+    ConstElementPtr control_sockets = dhcp4->get("control-sockets");
     if (control_sockets) {
         for (unsigned i = 0; i < control_sockets->size(); ++i) {
             removeAuthFiles(control_sockets->get(i));

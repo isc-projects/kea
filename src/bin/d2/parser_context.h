@@ -254,8 +254,8 @@ public:
         ///< Used while parsing content of list of dns-servers
         DNS_SERVERS,
 
-        ///< Used while parsing content of a control-socket
-        CONTROL_SOCKET,
+        ///< Used while parsing content of a control-sockets
+        CONTROL_SOCKETS,
 
         ///< Used while parsing content of a socket-type
         CONTROL_SOCKET_TYPE,

@@ -267,12 +267,6 @@ void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
 
     // Get control sockets.
     ConstElementPtr control_sockets = config->get("control-sockets");
-    ConstElementPtr control_socket = config->get("control-socket");
-    if (control_socket) {
-        ElementPtr l = Element::createList();
-        l->add(UserContext::toElement(control_socket));
-        control_sockets = l;
-    }
     if (control_sockets) {
         if (control_sockets->getType() != Element::list) {
             // Sanity check: not supposed to fail.

@@ -27,13 +27,13 @@
 
     "user-context": { "version": 1 },
 
-// ----------------- Control Socket -----------------
+// ----------------- Control Sockets -----------------
 
-    "control-socket":
+    "control-sockets": [
     {
         "socket-type": "unix",
         "socket-name": "kea-ddns-ctrl-socket"
-    },
+    } ],
 
 // ----------------- Hooks Libraries -----------------
 

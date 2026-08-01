@@ -78,7 +78,6 @@ using namespace std;
   SECRET "secret"
   SECRET_FILE "secret-file"
 
-  CONTROL_SOCKET "control-socket"
   CONTROL_SOCKETS "control-sockets"
   SOCKET_TYPE "socket-type"
   UNIX "unix"
@@ -308,7 +307,6 @@ dhcpddns_param: ip_address
               | forward_ddns
               | reverse_ddns
               | tsig_keys
-              | control_socket
               | control_sockets
               | hooks_libraries
               | loggers
@@ -765,25 +763,12 @@ tsig_key_secret_file: SECRET_FILE {
 
 // --- control sockets ----------------------------------------
 
-control_socket: CONTROL_SOCKET {
-    ctx.unique("control-socket", ctx.loc2pos(@1));
-    ctx.unique("control-sockets", ctx.loc2pos(@1));
-    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("control-socket", m);
-    ctx.stack_.push_back(m);
-    ctx.enter(ctx.CONTROL_SOCKET);
-} COLON LCURLY_BRACKET control_socket_params RCURLY_BRACKET {
-    ctx.stack_.pop_back();
-    ctx.leave();
-};
-
 control_sockets: CONTROL_SOCKETS {
     ctx.unique("control-sockets", ctx.loc2pos(@1));
-    ctx.unique("control-socket", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("control-sockets", l);
     ctx.stack_.push_back(l);
-    ctx.enter(ctx.CONTROL_SOCKET);
+    ctx.enter(ctx.CONTROL_SOCKETS);
 } COLON LSQUARE_BRACKET control_socket_list RSQUARE_BRACKET {
     ctx.stack_.pop_back();
     ctx.leave();

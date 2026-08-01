@@ -53,10 +53,10 @@
     // This defines a control socket. If defined, Kea will open a UNIX socket
     // and will listen for incoming commands. See section 17 of the Kea ARM for
     // details.
-    "control-socket": {
+    "control-sockets": [ {
         "socket-type": "unix",
         "socket-name": "kea4-ctrl-socket"
-    },
+    } ],
 
     // Hooks libraries that enable configuration backend are loaded.
     "hooks-libraries": [

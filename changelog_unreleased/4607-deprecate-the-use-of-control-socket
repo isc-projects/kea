@@ -1,0 +1,5 @@
+[func]		fdupont
+	The "control-socket" keyword is deprecated in favor
+	of "control-sockets" in DHCPv4, DHCPv6 and DDNS server
+	configurations.
+	(Gitlab #4607)

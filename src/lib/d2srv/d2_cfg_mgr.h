@@ -313,7 +313,7 @@ public:
     /// @brief Convenience method fetches information about
     /// UNIX control socket from context
     ///
-    /// @return pointer to the Element that holds control-socket map
+    /// @return pointer to the Element that holds control-sockets item map
     const isc::data::ConstElementPtr getUnixControlSocketInfo();
 
     /// @brief Convenience method fetches information about

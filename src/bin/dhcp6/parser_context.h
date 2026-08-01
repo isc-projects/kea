@@ -293,24 +293,24 @@ public:
         /// Used while parsing Dhcp6/server-id/type structures.
         DUID_TYPE,
 
-        /// Used while parsing Dhcp6/control-socket structures.
-        CONTROL_SOCKET,
+        /// Used while parsing Dhcp6/control-sockets structures.
+        CONTROL_SOCKETS,
 
-        /// Used while parsing Dhcp6/control-socket/socket-type structures.
+        /// Used while parsing Dhcp6/control-sockets/socket-type structures.
         CONTROL_SOCKET_TYPE,
 
-        /// Used while parsing Dhcp6/control-socket/authentication structures.
+        /// Used while parsing Dhcp6/control-sockets/authentication structures.
         AUTHENTICATION,
 
-        /// Used while parsing Dhcp6/control-socket/authentication/type
+        /// Used while parsing Dhcp6/control-sockets/authentication/type
         /// structures.
         AUTH_TYPE,
 
-        /// Used while parsing Dhcp6/control-socket/authentication/clients
+        /// Used while parsing Dhcp6/control-sockets/authentication/clients
         /// structures.
         CLIENTS,
 
-        ///< Used while parsing Dhcp6/control-socket/http-headers structures.
+        ///< Used while parsing Dhcp6/control-sockets/http-headers structures.
         HTTP_HEADERS,
 
         /// Used while parsing Dhcp6/dhcp-queue-control structures.

@@ -416,14 +416,6 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
             parser.parse(cfg_option, option_datas);
         }
 
-        ConstElementPtr control_socket = mutable_cfg->get("control-socket");
-        if (control_socket) {
-            mutable_cfg->remove("control-socket");
-            ElementPtr l = Element::createList(control_socket->getPosition());
-            l->add(UserContext::toElement(control_socket));
-            mutable_cfg->set("control-sockets", l);
-        }
-
         ConstElementPtr control_sockets = mutable_cfg->get("control-sockets");
         if (control_sockets) {
             parameter_name = "control-sockets";
@@ -619,7 +611,6 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
             // These are converted to SimpleParser and are handled already above.
             if ((config_pair.first == "option-def") ||
                 (config_pair.first == "option-data") ||
-                (config_pair.first == "control-socket") ||
                 (config_pair.first == "control-sockets") ||
                 (config_pair.first == "multi-threading") ||
                 (config_pair.first == "dhcp-queue-control") ||
@@ -746,7 +737,7 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
 
     if (!answer) {
         answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Configuration seems sane. "
-                                           "Control-socket, hook-libraries, and D2 configuration "
+                                           "Control-sockets, hook-libraries, and D2 configuration "
                                            "were sanity checked, but not applied.");
     }
 

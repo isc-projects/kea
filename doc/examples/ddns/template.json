@@ -14,13 +14,13 @@
 //    "ncr-protocol" : "UDP"
 //    "ncr-format" : "JSON"
 
-// ----------------- Control Socket -----------------
+// ----------------- Control Sockets -----------------
 
-//    "control-socket":
+//    "control-sockets": [
 //    {
 //        "socket-type": "unix",
 //        "socket-name": "kea-ddns-ctrl-socket"
-//    },
+//    } ],
 
 // ----------------- Forward DDNS  ------------------
     "forward-ddns" :

@@ -239,12 +239,12 @@ public:
             "    \"renew-timer\": 1000, "
             "    \"subnet4\": [ ],"
             "    \"valid-lifetime\": 4000,"
-            "    \"control-socket\": {"
+            "    \"control-sockets\": [ {"
             "        \"socket-type\": \"unix\","
             "        \"socket-name\": \"";
 
         std::string footer =
-            "\"    },"
+            "\"    } ],"
             "    \"lease-database\": {"
             "       \"type\": \"memfile\", \"persist\": false },"
             "    \"loggers\": [ {"
@@ -831,11 +831,11 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
         "    }\n"
         "]\n";
     string control_socket_header =
-        "       ,\"control-socket\": { \n"
+        "       ,\"control-sockets\": [ { \n"
         "       \"socket-type\": \"unix\", \n"
         "       \"socket-name\": \"";
     string control_socket_footer =
-        "\"   \n} \n";
+        "\"   \n} ]\n";
     string logger_txt =
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
@@ -1015,11 +1015,11 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSetLFCRunning) {
         "    }\n"
         "]\n";
     string control_socket_header =
-        "       ,\"control-socket\": { \n"
+        "       ,\"control-sockets\": [ { \n"
         "       \"socket-type\": \"unix\", \n"
         "       \"socket-name\": \"";
     string control_socket_footer =
-        "\"   \n} \n";
+        "\"   \n} ]\n";
     string logger_txt =
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
@@ -1171,11 +1171,11 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSetLFCRunning2) {
         "    }\n"
         "]\n";
     string control_socket_header =
-        "       ,\"control-socket\": { \n"
+        "       ,\"control-sockets\": [ { \n"
         "       \"socket-type\": \"unix\", \n"
         "       \"socket-name\": \"";
     string control_socket_footer =
-        "\"   \n} \n";
+        "\"   \n} ]\n";
     string logger_txt =
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
@@ -1364,11 +1364,11 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
     string subnet_footer =
         "          ] \n";
     string control_socket_header =
-        "       ,\"control-socket\": { \n"
+        "       ,\"control-sockets\": [ { \n"
         "       \"socket-type\": \"unix\", \n"
         "       \"socket-name\": \"";
     string control_socket_footer =
-        "\"   \n} \n";
+        "\"   \n} ]\n";
     string logger_txt =
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
@@ -1460,7 +1460,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
 
     // Verify the configuration was successful.
     EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration seems sane. "
-              "Control-socket, hook-libraries, and D2 configuration were "
+              "Control-sockets, hook-libraries, and D2 configuration were "
               "sanity checked, but not applied.\" }",
               response);
 
@@ -2357,12 +2357,12 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTestDetectInterfaces) {
     // socket name (/tmp/kea-<value-changing-each-time>/kea4.sock), so the
     // hash will be different each time. As such, we can do simplified checks:
     // - verify the "result": 0 is there
-    // - verify the "text": "Configuration seems sane. Control-socket,
+    // - verify the "text": "Configuration seems sane. Control-sockets,
     //                       hook-libraries, and D2 configuration were
     //                       sanity checked, but not applied." is there
     EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
     EXPECT_NE(response.find("\"text\": \"Configuration seems sane. "
-                            "Control-socket, hook-libraries, and D2 configuration "
+                            "Control-sockets, hook-libraries, and D2 configuration "
                             "were sanity checked, but not applied.\""), std::string::npos);
 
     // Check that the config was not applied.

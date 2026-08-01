@@ -666,11 +666,11 @@ public:
             "    \"renew-timer\": 1000, "
             "    \"subnet4\": [ ],"
             "    \"valid-lifetime\": 4000,"
-            "    \"control-socket\": {"
+            "    \"control-sockets\": [ {"
             "        \"socket-type\": \"http\","
             "        \"socket-address\": \"127.0.0.1\","
             "        \"socket-port\": 18124"
-            "    },"
+            "    } ],"
             "    \"lease-database\": {"
             "       \"type\": \"memfile\", \"persist\": false },"
             "    \"loggers\": [ {"
@@ -794,14 +794,14 @@ public:
             << "    \"renew-timer\": 1000, "
             << "    \"subnet4\": [ ],"
             << "    \"valid-lifetime\": 4000,"
-            << "    \"control-socket\": {"
+            << "    \"control-sockets\": [ {"
             << "        \"socket-type\": \"http\","
             << "        \"socket-address\": \"127.0.0.1\","
             << "        \"socket-port\": 18124,"
             << "        \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\","
             << "        \"cert-file\": \"" << ca_dir << "/kea-server.crt\","
             << "        \"key-file\": \"" << ca_dir << "/kea-server.key\""
-            << "    },"
+            << "    } ],"
             << "    \"lease-database\": {"
             << "       \"type\": \"memfile\", \"persist\": false },"
             << "    \"loggers\": [ {"
@@ -1152,12 +1152,12 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSet) {
         "        \"data\": \"12345\"\n"
         "    }\n"
         "]\n";
-    string control_socket =
-        "    ,\"control-socket\": { \n"
+    string control_sockets =
+        "    ,\"control-sockets\": [ { \n"
         "       \"socket-type\": \"http\", \n"
         "       \"socket-address\": \"127.0.0.1\", \n"
         "       \"socket-port\": 18124 \n"
-        "    } \n";
+        "    } ]\n";
     string logger_txt =
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
@@ -1178,7 +1178,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSet) {
        << subnet_footer
        << option_def
        << option_data
-       << control_socket
+       << control_sockets
        << logger_txt
        << "}\n"                      // close dhcp4
        << "}}";
@@ -1205,7 +1205,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSet) {
        << dhcp4_cfg_txt
        << bad_subnet
        << subnet_footer
-       << control_socket
+       << control_sockets
        << "}\n"                      // close dhcp4
        << "}}";
 
@@ -1321,12 +1321,12 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSetLFCRunning) {
         "        \"data\": \"12345\"\n"
         "    }\n"
         "]\n";
-    string control_socket =
-        "    ,\"control-socket\": { \n"
+    string control_sockets =
+        "    ,\"control-sockets\": [ { \n"
         "       \"socket-type\": \"http\", \n"
         "       \"socket-address\": \"127.0.0.1\", \n"
         "       \"socket-port\": 18124 \n"
-        "    } \n";
+        "    } ]\n";
     string logger_txt =
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
@@ -1347,7 +1347,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSetLFCRunning) {
        << subnet_footer
        << option_def
        << option_data
-       << control_socket
+       << control_sockets
        << logger_txt
        << "}\n"                      // close dhcp4
        << "}}";
@@ -1470,12 +1470,12 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSetLFCRunning2) {
         "        \"data\": \"12345\"\n"
         "    }\n"
         "]\n";
-    string control_socket =
-        "    ,\"control-socket\": { \n"
+    string control_sockets =
+        "    ,\"control-sockets\": [ { \n"
         "       \"socket-type\": \"http\", \n"
         "       \"socket-address\": \"127.0.0.1\", \n"
         "       \"socket-port\": 18124 \n"
-        "    } \n";
+        "    } ]\n";
     string logger_txt =
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
@@ -1496,7 +1496,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSetLFCRunning2) {
        << subnet_footer
        << option_def
        << option_data
-       << control_socket
+       << control_sockets
        << logger_txt
        << "}\n"                      // close dhcp4
        << "}}";
@@ -1621,12 +1621,12 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, configSet) {
         "    }\n"
         "]\n";
     string control_socket_header =
-        "    ,\"control-socket\": { \n"
+        "    ,\"control-sockets\": [ { \n"
         "       \"socket-type\": \"http\", \n"
         "       \"socket-address\": \"127.0.0.1\", \n"
         "       \"socket-port\": 18124, \n";
     string control_socket_footer =
-        "    } \n";
+        "    } ]\n";
     string logger_txt =
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
@@ -1806,12 +1806,12 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, configSetLFCRunning) {
         "    }\n"
         "]\n";
     string control_socket_header =
-        "    ,\"control-socket\": { \n"
+        "    ,\"control-sockets\": [ { \n"
         "       \"socket-type\": \"http\", \n"
         "       \"socket-address\": \"127.0.0.1\", \n"
         "       \"socket-port\": 18124, \n";
     string control_socket_footer =
-        "    } \n";
+        "    } ]\n";
     string logger_txt =
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
@@ -1964,12 +1964,12 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, configSetLFCRunning2) {
         "    }\n"
         "]\n";
     string control_socket_header =
-        "    ,\"control-socket\": { \n"
+        "    ,\"control-sockets\": [ { \n"
         "       \"socket-type\": \"http\", \n"
         "       \"socket-address\": \"127.0.0.1\", \n"
         "       \"socket-port\": 18124, \n";
     string control_socket_footer =
-        "    } \n";
+        "    } ]\n";
     string logger_txt =
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
@@ -2173,12 +2173,12 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configTest) {
         "                \"pools\": [{ \"pool\": \"192.2.2.1-192.2.2.50\" }]}\n";
     string subnet_footer =
         "          ] \n";
-    string control_socket =
-        "    ,\"control-socket\": { \n"
+    string control_sockets =
+        "    ,\"control-sockets\": [ { \n"
         "       \"socket-type\": \"http\", \n"
         "       \"socket-address\": \"127.0.0.1\", \n"
         "       \"socket-port\": 18124 \n"
-        "    } \n";
+        "    } ]\n";
     string logger_txt =
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
@@ -2197,7 +2197,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configTest) {
        << dhcp4_cfg_txt
        << subnet1
        << subnet_footer
-       << control_socket
+       << control_sockets
        << logger_txt
        << "}\n"                      // close dhcp4
        << "}}";
@@ -2221,7 +2221,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configTest) {
        << dhcp4_cfg_txt
        << bad_subnet
        << subnet_footer
-       << control_socket
+       << control_sockets
        << "}\n"                      // close dhcp4
        << "}}";
 
@@ -2262,7 +2262,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configTest) {
 
     // Verify the configuration was successful.
     EXPECT_EQ("[ { \"result\": 0, \"text\": \"Configuration seems sane. "
-              "Control-socket, hook-libraries, and D2 configuration were "
+              "Control-sockets, hook-libraries, and D2 configuration were "
               "sanity checked, but not applied.\" } ]",
               response);
 
@@ -2315,12 +2315,12 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, configTest) {
     string subnet_footer =
         "          ] \n";
     string control_socket_header =
-        "    ,\"control-socket\": { \n"
+        "    ,\"control-sockets\": [ { \n"
         "       \"socket-type\": \"http\", \n"
         "       \"socket-address\": \"127.0.0.1\", \n"
         "       \"socket-port\": 18124, \n";
     string control_socket_footer =
-        "    } \n";
+        "    } ]\n";
     string logger_txt =
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
@@ -2418,7 +2418,7 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, configTest) {
 
     // Verify the configuration was successful.
     EXPECT_EQ("[ { \"result\": 0, \"text\": \"Configuration seems sane. "
-              "Control-socket, hook-libraries, and D2 configuration were "
+              "Control-sockets, hook-libraries, and D2 configuration were "
               "sanity checked, but not applied.\" } ]",
               response);
 
@@ -3528,12 +3528,12 @@ BaseCtrlChannelDhcpv4Test::testConfigTestDetectInterfaces() {
     // socket name (/tmp/kea-<value-changing-each-time>/kea4.sock), so the
     // hash will be different each time. As such, we can do simplified checks:
     // - verify the "result": 0 is there
-    // - verify the "text": "Configuration seems sane. Control-socket,
+    // - verify the "text": "Configuration seems sane. Control-sockets,
     //                       hook-libraries, and D2 configuration were
     //                       sanity checked, but not applied." is there
     EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
     EXPECT_NE(response.find("\"text\": \"Configuration seems sane. "
-                            "Control-socket, hook-libraries, and D2 configuration "
+                            "Control-sockets, hook-libraries, and D2 configuration "
                             "were sanity checked, but not applied.\""), std::string::npos);
 
     // Check that the config was not applied.
@@ -4781,12 +4781,12 @@ TEST_F(HttpCtrlChannelDhcpv4Test, noListenerChange) {
         "        \"data\": \"12345\"\n"
         "    }\n"
         "]\n";
-    string control_socket =
-        "    ,\"control-socket\": { \n"
+    string control_sockets =
+        "    ,\"control-sockets\": [ { \n"
         "       \"socket-type\": \"http\", \n"
         "       \"socket-address\": \"127.0.0.1\", \n"
         "       \"socket-port\": 18124 \n"
-        "    } \n";
+        "    } ]\n";
     string logger_txt =
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
@@ -4807,7 +4807,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, noListenerChange) {
        << subnet_footer
        << option_def
        << option_data
-       << control_socket
+       << control_sockets
        << logger_txt
        << "}\n"                      // close dhcp4
        << "}}";
@@ -4906,12 +4906,12 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, noListenerChange) {
         "    }\n"
         "]\n";
     string control_socket_header =
-        "    ,\"control-socket\": { \n";
+        "    ,\"control-sockets\": [ { \n";
     string control_socket_footer =
         "       \"socket-type\": \"http\", \n"
         "       \"socket-address\": \"127.0.0.1\", \n"
         "       \"socket-port\": 18124 \n"
-        "    } \n";
+        "    } ]\n";
     string logger_txt =
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
@@ -5045,12 +5045,12 @@ TEST_F(HttpCtrlChannelDhcpv4Test, handleHttpToHttpsSwitch) {
         "    }\n"
         "]\n";
     string control_socket_header =
-        "    ,\"control-socket\": { \n";
+        "    ,\"control-sockets\": [ { \n";
     string control_socket_footer =
         "       \"socket-type\": \"http\", \n"
         "       \"socket-address\": \"127.0.0.1\", \n"
         "       \"socket-port\": 18124 \n"
-        "    } \n";
+        "    } ]\n";
     string logger_txt =
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
@@ -5198,12 +5198,12 @@ TEST_F(HttpCtrlChannelDhcpv4Test, handleHttpToHttpsSwitchFatal) {
         "    }\n"
         "]\n";
     string control_socket_header =
-        "    ,\"control-socket\": { \n";
+        "    ,\"control-sockets\": [ { \n";
     string control_socket_footer =
         "       \"socket-type\": \"http\", \n"
         "       \"socket-address\": \"127.0.0.1\", \n"
         "       \"socket-port\": 18124 \n"
-        "    } \n";
+        "    } ]\n";
     string logger_txt =
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
@@ -5350,12 +5350,12 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, handleHttpsToHttpSwitch) {
         "    }\n"
         "]\n";
     string control_socket_header =
-        "    ,\"control-socket\": { \n";
+        "    ,\"control-sockets\": [ { \n";
     string control_socket_footer =
         "       \"socket-type\": \"http\", \n"
         "       \"socket-address\": \"127.0.0.1\", \n"
         "       \"socket-port\": 18124 \n"
-        "    } \n";
+        "    } ]\n";
     string logger_txt =
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"
@@ -5512,12 +5512,12 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, handleHttpsToHttpSwitchFatal) {
         "    }\n"
         "]\n";
     string control_socket_header =
-        "    ,\"control-socket\": { \n";
+        "    ,\"control-sockets\": [ { \n";
     string control_socket_footer =
         "       \"socket-type\": \"http\", \n"
         "       \"socket-address\": \"127.0.0.1\", \n"
         "       \"socket-port\": 18124 \n"
-        "    } \n";
+        "    } ]\n";
     string logger_txt =
         "       ,\"loggers\": [ { \n"
         "            \"name\": \"kea\", \n"

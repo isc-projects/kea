@@ -207,13 +207,13 @@ public:
             "{"
             "    \"ip-address\": \"192.168.77.1\","
             "    \"port\": 777,"
-            "    \"control-socket\": {"
+            "    \"control-sockets\": [ {"
             "        \"socket-type\": \"unix\","
             "        \"socket-name\": \"";
 
         string footer =
             "\""
-            "    },"
+            "    } ],"
             "    \"tsig-keys\": [],"
             "    \"forward-ddns\" : {},"
             "    \"reverse-ddns\" : {}"
@@ -431,7 +431,7 @@ TEST_F(CtrlChannelD2Test, parser) {
         "{"
         "    \"ip-address\": \"192.168.77.1\","
         "    \"port\": 777,"
-        "    \"control-socket\": { },"
+        "    \"control-sockets\": [ { } ],"
         "    \"tsig-keys\": [],"
         "    \"forward-ddns\" : {},"
         "    \"reverse-ddns\" : {}"
@@ -443,11 +443,11 @@ TEST_F(CtrlChannelD2Test, parser) {
         "{"
         "    \"ip-address\": \"192.168.77.1\","
         "    \"port\": 777,"
-        "    \"control-socket\": {"
+        "    \"control-sockets\": [ {"
         "        \"socket-type\": \"unix\","
         "        \"socket-name\": \"/tmp/d2.sock\","
         "        \"bogus\": \"unknown...\""
-        "    },"
+        "    } ],"
         "    \"tsig-keys\": [],"
         "    \"forward-ddns\" : {},"
         "    \"reverse-ddns\" : {}"
@@ -467,9 +467,9 @@ TEST_F(CtrlChannelD2Test, configure) {
         "{"
         "    \"ip-address\": \"192.168.77.1\","
         "    \"port\": 777,"
-        "    \"control-socket\": {"
+        "    \"control-sockets\": [ {"
         "        \"socket-name\": \"/tmp/d2.sock\""
-        "    },"
+        "    } ],"
         "    \"tsig-keys\": [],"
         "    \"forward-ddns\" : {},"
         "    \"reverse-ddns\" : {}"
@@ -494,9 +494,9 @@ TEST_F(CtrlChannelD2Test, configure) {
         "{"
         "    \"ip-address\": \"192.168.77.1\","
         "    \"port\": 777,"
-        "    \"control-socket\": {"
+        "    \"control-sockets\": [ {"
         "        \"socket-type\": \"unix\""
-        "    },"
+        "    } ],"
         "    \"tsig-keys\": [],"
         "    \"forward-ddns\" : {},"
         "    \"reverse-ddns\" : {}"
@@ -784,11 +784,11 @@ TEST_F(CtrlChannelD2Test, configTest) {
     string key_footer =
         "          ] \n";
     string control_socket_header =
-        "       ,\"control-socket\": { \n"
+        "       ,\"control-sockets\": [ { \n"
         "           \"socket-type\": \"unix\", \n"
         "           \"socket-name\": \"";
     string control_socket_footer =
-        "\"   \n} \n";
+        "\"   \n} ]\n";
 
     ostringstream os;
     // Create a valid config with all the parts should parse.
@@ -929,11 +929,11 @@ TEST_F(CtrlChannelD2Test, configSet) {
     string key_footer =
         "          ] \n";
     string control_socket_header =
-        "       ,\"control-socket\": { \n"
+        "       ,\"control-sockets\": [ { \n"
         "           \"socket-type\": \"unix\", \n"
         "           \"socket-name\": \"";
     string control_socket_footer =
-        "\"   \n} \n";
+        "\"   \n} ]\n";
 
     ostringstream os;
     // Create a valid config with all the parts should parse.

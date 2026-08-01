@@ -78,10 +78,10 @@
     // This defines a control socket. If defined, Kea will open a UNIX socket
     // and will listen for incoming commands. See section 15 of the Kea User's
     // Guide for list of supported commands.
-    "control-socket": {
+    "control-sockets": [ {
         "socket-type": "unix",
         "socket-name": "kea6-ctrl-socket"
-    },
+    } ],
 
     // Addresses will be assigned with preferred and valid lifetimes
     // being 3000 and 4000, respectively. Client is told to start

@@ -603,7 +603,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
     case isc::dhcp::Parser4Context::CONFIG_DATABASE:
-    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::dhcp::Parser4Context::CONTROL_SOCKETS:
         return isc::dhcp::Dhcp4Parser::make_TRUST_ANCHOR(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("trust-anchor", driver.loc_);
@@ -615,7 +615,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
     case isc::dhcp::Parser4Context::CONFIG_DATABASE:
-    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::dhcp::Parser4Context::CONTROL_SOCKETS:
         return isc::dhcp::Dhcp4Parser::make_CERT_FILE(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("cert-file", driver.loc_);
@@ -627,7 +627,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
     case isc::dhcp::Parser4Context::CONFIG_DATABASE:
-    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::dhcp::Parser4Context::CONTROL_SOCKETS:
         return isc::dhcp::Dhcp4Parser::make_KEY_FILE(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("key-file", driver.loc_);
@@ -1142,7 +1142,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::OPTION_DATA:
     case isc::dhcp::Parser4Context::RESERVATIONS:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
-    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::dhcp::Parser4Context::CONTROL_SOCKETS:
     case isc::dhcp::Parser4Context::AUTHENTICATION:
     case isc::dhcp::Parser4Context::CLIENTS:
     case isc::dhcp::Parser4Context::HTTP_HEADERS:
@@ -1167,7 +1167,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::OPTION_DATA:
     case isc::dhcp::Parser4Context::RESERVATIONS:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
-    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::dhcp::Parser4Context::CONTROL_SOCKETS:
     case isc::dhcp::Parser4Context::AUTHENTICATION:
     case isc::dhcp::Parser4Context::CLIENTS:
     case isc::dhcp::Parser4Context::HTTP_HEADERS:
@@ -1779,15 +1779,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
-\"control-socket\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::DHCP4:
-        return isc::dhcp::Dhcp4Parser::make_CONTROL_SOCKET(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("control-socket", driver.loc_);
-    }
-}
-
 \"control-sockets\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -1799,7 +1790,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"socket-type\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::dhcp::Parser4Context::CONTROL_SOCKETS:
         return isc::dhcp::Dhcp4Parser::make_SOCKET_TYPE(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("socket-type", driver.loc_);
@@ -1835,7 +1826,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"socket-name\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::dhcp::Parser4Context::CONTROL_SOCKETS:
         return isc::dhcp::Dhcp4Parser::make_SOCKET_NAME(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("socket-name", driver.loc_);
@@ -1844,7 +1835,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"socket-address\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::dhcp::Parser4Context::CONTROL_SOCKETS:
         return isc::dhcp::Dhcp4Parser::make_SOCKET_ADDRESS(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("socket-address", driver.loc_);
@@ -1853,7 +1844,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"socket-port\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::dhcp::Parser4Context::CONTROL_SOCKETS:
         return isc::dhcp::Dhcp4Parser::make_SOCKET_PORT(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("socket-port", driver.loc_);
@@ -1862,7 +1853,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"authentication\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::dhcp::Parser4Context::CONTROL_SOCKETS:
         return isc::dhcp::Dhcp4Parser::make_AUTHENTICATION(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("authentication", driver.loc_);
@@ -1925,7 +1916,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"cert-required\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::dhcp::Parser4Context::CONTROL_SOCKETS:
         return isc::dhcp::Dhcp4Parser::make_CERT_REQUIRED(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("cert-required", driver.loc_);
@@ -1934,7 +1925,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"http-headers\" {
     switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+    case isc::dhcp::Parser4Context::CONTROL_SOCKETS:
         return isc::dhcp::Dhcp4Parser::make_HTTP_HEADERS(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("http-headers", driver.loc_);

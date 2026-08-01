@@ -35,7 +35,7 @@
     "ncr-format": "JSON",
 
     // Command control socket configuration parameters for Kea DHCP-DDNS server.
-    "control-socket": {
+    "control-sockets": [ {
 
         // Location of the UNIX domain socket file the DHCP-DDNS server uses
         // to receive control commands from the local server administrator.
@@ -44,7 +44,7 @@
         // Control socket type used by the Kea DHCP-DDNS server.
         // The 'unix' socket is currently the only supported type.
         "socket-type": "unix"
-    },
+    } ],
 
     // List of hook libraries and their specific configuration parameters
     // to be loaded by Kea DHCP-DDNS server.

@@ -41,10 +41,10 @@
     // config-reload (which tells Kea to reload its configuration from file),
     // statistic-get (to retrieve statistics) and many more. For detailed
     // description, see Sections 9.12, 16 and 15.
-    "control-socket": {
+    "control-sockets": [ {
         "socket-type": "unix",
         "socket-name": "kea6-ctrl-socket"
-    },
+    } ],
 
     // Use Memfile lease database backend to store leases in a CSV file.
     // Depending on how Kea was compiled, it may also support SQL databases

@@ -21,10 +21,10 @@
 {
   "ip-address": "127.0.0.1",
   "port": 53001,
-  "control-socket": {
+  "control-sockets": [ {
       "socket-type": "unix",
       "socket-name": "kea-ddns-ctrl-socket"
-  },
+  } ],
   "tsig-keys": [],
   "forward-ddns" : {},
   "reverse-ddns" : {},

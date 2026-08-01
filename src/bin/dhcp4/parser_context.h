@@ -290,24 +290,24 @@ public:
         /// Used while parsing Dhcp4/server-id structures.
         SERVER_ID,
 
-        /// Used while parsing Dhcp4/control-socket structures.
-        CONTROL_SOCKET,
+        /// Used while parsing Dhcp4/control-sockets structures.
+        CONTROL_SOCKETS,
 
-        /// Used while parsing Dhcp4/control-socket/socket-type structures.
+        /// Used while parsing Dhcp4/control-sockets/socket-type structures.
         CONTROL_SOCKET_TYPE,
 
-        /// Used while parsing Dhcp4/control-socket/authentication structures.
+        /// Used while parsing Dhcp4/control-sockets/authentication structures.
         AUTHENTICATION,
 
-        /// Used while parsing Dhcp4/control-socket/authentication/type
+        /// Used while parsing Dhcp4/control-sockets/authentication/type
         /// structures.
         AUTH_TYPE,
 
-        /// Used while parsing Dhcp4/control-socket/authentication/clients
+        /// Used while parsing Dhcp4/control-sockets/authentication/clients
         /// structures.
         CLIENTS,
 
-        ///< Used while parsing Dhcp4/control-socket/http-headers structures.
+        ///< Used while parsing Dhcp4/control-sockets/http-headers structures.
         HTTP_HEADERS,
 
         /// Used while parsing Dhcp4/dhcp-queue-control structures.

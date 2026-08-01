@@ -234,7 +234,6 @@ using namespace std;
   THREAD_POOL_SIZE "thread-pool-size"
   PACKET_QUEUE_SIZE "packet-queue-size"
 
-  CONTROL_SOCKET "control-socket"
   CONTROL_SOCKETS "control-sockets"
   SOCKET_TYPE "socket-type"
   UNIX "unix"
@@ -552,7 +551,6 @@ global_param: data_directory
             | expired_leases_processing
             | server_id
             | dhcp4o6_port
-            | control_socket
             | control_sockets
             | dhcp_queue_control
             | dhcp_ddns
@@ -2800,25 +2798,12 @@ dhcp4o6_port: DHCP4O6_PORT COLON INTEGER {
 
 // --- control socket ----------------------------------------
 
-control_socket: CONTROL_SOCKET {
-    ctx.unique("control-socket", ctx.loc2pos(@1));
-    ctx.unique("control-sockets", ctx.loc2pos(@1));
-    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("control-socket", m);
-    ctx.stack_.push_back(m);
-    ctx.enter(ctx.CONTROL_SOCKET);
-} COLON LCURLY_BRACKET control_socket_params RCURLY_BRACKET {
-    ctx.stack_.pop_back();
-    ctx.leave();
-};
-
 control_sockets: CONTROL_SOCKETS {
     ctx.unique("control-sockets", ctx.loc2pos(@1));
-    ctx.unique("control-socket", ctx.loc2pos(@1));
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("control-sockets", l);
     ctx.stack_.push_back(l);
-    ctx.enter(ctx.CONTROL_SOCKET);
+    ctx.enter(ctx.CONTROL_SOCKETS);
 } COLON LSQUARE_BRACKET control_socket_list RSQUARE_BRACKET {
     ctx.stack_.pop_back();
     ctx.leave();

@@ -183,8 +183,8 @@ Parser6Context::contextName() {
         return ("server-id");
     case DUID_TYPE:
         return ("duid-type");
-    case CONTROL_SOCKET:
-        return ("control-socket");
+    case CONTROL_SOCKETS:
+        return ("control-sockets");
     case CONTROL_SOCKET_TYPE:
         return ("control-socket-type");
     case AUTHENTICATION:

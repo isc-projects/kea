@@ -87,10 +87,10 @@
     // This defines a control socket. If defined, Kea will open a UNIX socket
     // and will listen for incoming commands. See section 15 of the Kea User's
     // Guide for list of supported commands.
-    "control-socket": {
+    "control-sockets": [ {
         "socket-type": "unix",
         "socket-name": "kea4-ctrl-socket"
-    },
+    } ],
 
     // Addresses will be assigned with a lifetime of 4000 seconds.
     // The client is told to start renewing after 1000 seconds. If the server

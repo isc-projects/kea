@@ -339,7 +339,7 @@ configuration file can be used:
 .. note:
 
    For backward compatibility the ``control-socket`` keyword is still
-   recognized by Kea version newer than 2.7.2: a ``control-socket`` entry
+   recognized by Kea versions between 2.7.2 and 3.3.0: a ``control-socket`` entry
    is put into a ``control-sockets`` list by the configuration parser.
 
 .. _d2-unix-ctrl-channel:

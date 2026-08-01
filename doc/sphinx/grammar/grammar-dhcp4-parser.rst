@@ -106,7 +106,6 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                  | hooks_libraries
                  | expired_leases_processing
                  | dhcp4o6_port
-                 | control_socket
                  | control_sockets
                  | dhcp_queue_control
                  | dhcp_ddns
@@ -919,8 +918,6 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
      only_in_additional_list ::= "only-in-additional-list" ":" BOOLEAN
 
      dhcp4o6_port ::= "dhcp4o6-port" ":" INTEGER
-
-     control_socket ::= "control-socket" ":" "{" control_socket_params "}"
 
      control_sockets ::= "control-sockets" ":" "[" control_socket_list "]"
 

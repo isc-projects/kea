@@ -115,7 +115,6 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                  | expired_leases_processing
                  | server_id
                  | dhcp4o6_port
-                 | control_socket
                  | control_sockets
                  | dhcp_queue_control
                  | dhcp_ddns
@@ -974,8 +973,6 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      enterprise_id ::= "enterprise-id" ":" INTEGER
 
      dhcp4o6_port ::= "dhcp4o6-port" ":" INTEGER
-
-     control_socket ::= "control-socket" ":" "{" control_socket_params "}"
 
      control_sockets ::= "control-sockets" ":" "[" control_socket_list "]"
 

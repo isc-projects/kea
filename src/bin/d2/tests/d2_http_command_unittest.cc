@@ -513,11 +513,11 @@ public:
             "{"
             "    \"ip-address\": \"192.168.77.1\","
             "    \"port\": 777,"
-            "    \"control-socket\": {"
+            "    \"control-sockets\": [ {"
             "        \"socket-type\": \"http\","
             "        \"socket-address\": \"127.0.0.1\","
             "        \"socket-port\": 18125"
-            "    },"
+            "    } ],"
             "    \"tsig-keys\": [],"
             "    \"forward-ddns\" : {},"
             "    \"reverse-ddns\" : {}"
@@ -605,14 +605,14 @@ public:
         cf_st << "{"
               << "    \"ip-address\": \"192.168.77.1\","
               << "    \"port\": 777,"
-              << "    \"control-socket\": {"
+              << "    \"control-sockets\": [ {"
               << "        \"socket-type\": \"https\","
               << "        \"socket-address\": \"127.0.0.1\","
               << "        \"socket-port\": 18125,"
               << "        \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\","
               << "        \"cert-file\": \"" << ca_dir << "/kea-server.crt\","
               << "        \"key-file\": \"" << ca_dir << "/kea-server.key\""
-              << "    },"
+              << "    } ],"
               << "    \"tsig-keys\": [],"
               << "    \"forward-ddns\" : {},"
               << "    \"reverse-ddns\" : {}"
@@ -959,11 +959,11 @@ TEST_F(HttpCtrlChannelD2Test, configTest) {
         "             \"algorithm\": \"hmac-md5\", \n"
         "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
         "          ], \n"
-        "        \"control-socket\": { \n"
+        "        \"control-sockets\": [ { \n"
         "           \"socket-type\": \"http\", \n"
         "           \"socket-address\": \"127.0.0.1\", \n"
         "           \"socket-port\": 18125 \n"
-        "        } \n"
+        "        } ]\n"
         "    } \n";
 
     ASSERT_TRUE(server_);
@@ -1005,11 +1005,11 @@ TEST_F(HttpCtrlChannelD2Test, configTest) {
         "             \"algorithm\": \"hmac-md5\", \n"
         "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
         "          ], \n"
-        "        \"control-socket\": { \n"
+        "        \"control-sockets\": [ { \n"
         "           \"socket-type\": \"http\", \n"
         "           \"socket-address\": \"127.0.0.1\", \n"
         "           \"socket-port\": 18125 \n"
-        "        } \n"
+        "        } ]\n"
         "    } \n"
         "}} \n";
 
@@ -1078,14 +1078,14 @@ TEST_F(HttpsCtrlChannelD2Test, configTest) {
           << "             \"algorithm\": \"hmac-md5\", \n"
           << "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
           << "          ], \n"
-          << "        \"control-socket\": { \n"
+          << "        \"control-sockets\": [ { \n"
           << "           \"socket-type\": \"https\", \n"
           << "           \"socket-address\": \"127.0.0.1\", \n"
           << "           \"socket-port\": 18125, \n"
           << "        \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
           << "        \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
           << "        \"key-file\": \"" << ca_dir << "/kea-server.key\" \n"
-          << "        } \n"
+          << "        } ]\n"
           << "    } \n";
 
     ASSERT_TRUE(server_);
@@ -1134,11 +1134,11 @@ TEST_F(HttpsCtrlChannelD2Test, configTest) {
         "             \"algorithm\": \"hmac-md5\", \n"
         "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
         "          ], \n"
-        "        \"control-socket\": { \n"
+        "        \"control-sockets\": [ { \n"
         "           \"socket-type\": \"http\", \n"
         "           \"socket-address\": \"127.0.0.1\", \n"
         "           \"socket-port\": 18125 \n"
-        "        } \n"
+        "        } ]\n"
         "    } \n"
         "}} \n";
 
@@ -1206,11 +1206,11 @@ TEST_F(HttpCtrlChannelD2Test, configSet) {
         "             \"algorithm\": \"hmac-md5\", \n"
         "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
         "          ], \n"
-        "        \"control-socket\": { \n"
+        "        \"control-sockets\": [ { \n"
         "           \"socket-type\": \"http\", \n"
         "           \"socket-address\": \"127.0.0.1\", \n"
         "           \"socket-port\": 18125 \n"
-        "        } \n"
+        "        } ]\n"
         "    } \n";
 
     ASSERT_TRUE(server_);
@@ -1252,11 +1252,11 @@ TEST_F(HttpCtrlChannelD2Test, configSet) {
         "             \"algorithm\": \"hmac-md5\", \n"
         "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
         "          ], \n"
-        "        \"control-socket\": { \n"
+        "        \"control-sockets\": [ { \n"
         "           \"socket-type\": \"http\", \n"
         "           \"socket-address\": \"127.0.0.1\", \n"
         "           \"socket-port\": 18125 \n"
-        "        } \n"
+        "        } ]\n"
         "    } \n"
         "}} \n";
 
@@ -1333,14 +1333,14 @@ TEST_F(HttpsCtrlChannelD2Test, configSet) {
           << "             \"algorithm\": \"hmac-md5\", \n"
           << "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
           << "          ], \n"
-          << "        \"control-socket\": { \n"
+          << "        \"control-sockets\": [ { \n"
           << "           \"socket-type\": \"https\", \n"
           << "           \"socket-address\": \"127.0.0.1\", \n"
           << "           \"socket-port\": 18125, \n"
           << "        \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
           << "        \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
           << "        \"key-file\": \"" << ca_dir << "/kea-server.key\" \n"
-          << "        } \n"
+          << "        } ]\n"
           << "    } \n";
 
     ASSERT_TRUE(server_);
@@ -1389,11 +1389,11 @@ TEST_F(HttpsCtrlChannelD2Test, configSet) {
         "             \"algorithm\": \"hmac-md5\", \n"
         "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
         "          ], \n"
-        "        \"control-socket\": { \n"
+        "        \"control-sockets\": [ { \n"
         "           \"socket-type\": \"http\", \n"
         "           \"socket-address\": \"127.0.0.1\", \n"
         "           \"socket-port\": 18125 \n"
-        "        } \n"
+        "        } ]\n"
         "    } \n"
         "}} \n";
 
@@ -2099,11 +2099,11 @@ TEST_F(HttpCtrlChannelD2Test, noListenerChange) {
         "             \"algorithm\": \"hmac-md5\", \n"
         "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
         "          ], \n"
-        "        \"control-socket\": { \n"
+        "        \"control-sockets\": [ { \n"
         "           \"socket-type\": \"http\", \n"
         "           \"socket-address\": \"127.0.0.1\", \n"
         "           \"socket-port\": 18125 \n"
-        "        } \n"
+        "        } ]\n"
         "    } \n";
 
     ASSERT_TRUE(server_);
@@ -2175,14 +2175,14 @@ TEST_F(HttpsCtrlChannelD2Test, noListenerChange) {
           << "             \"algorithm\": \"hmac-md5\", \n"
           << "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
           << "          ], \n"
-          << "        \"control-socket\": { \n"
+          << "        \"control-sockets\": [ { \n"
           << "           \"socket-type\": \"https\", \n"
           << "           \"socket-address\": \"127.0.0.1\", \n"
           << "           \"socket-port\": 18125, \n"
           << "        \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
           << "        \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
           << "        \"key-file\": \"" << ca_dir << "/kea-server.key\" \n"
-          << "        } \n"
+          << "        } ]\n"
           << "    } \n";
 
     ASSERT_TRUE(server_);
@@ -2264,11 +2264,11 @@ TEST_F(HttpCtrlChannelD2Test, handleHttpToHttpsSwitch) {
         "             \"algorithm\": \"hmac-md5\", \n"
         "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
         "          ], \n"
-        "        \"control-socket\": { \n"
+        "        \"control-sockets\": [ { \n"
         "           \"socket-type\": \"http\", \n"
         "           \"socket-address\": \"127.0.0.1\", \n"
         "           \"socket-port\": 18125 \n"
-        "        } \n"
+        "        } ]\n"
         "    } \n";
 
     ASSERT_TRUE(server_);
@@ -2309,14 +2309,14 @@ TEST_F(HttpCtrlChannelD2Test, handleHttpToHttpsSwitch) {
           << "             \"algorithm\": \"hmac-md5\", \n"
           << "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
           << "          ], \n"
-          << "        \"control-socket\": { \n"
+          << "        \"control-sockets\": [ { \n"
           << "           \"socket-type\": \"https\", \n"
           << "           \"socket-address\": \"127.0.0.1\", \n"
           << "           \"socket-port\": 18125, \n"
           << "        \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
           << "        \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
           << "        \"key-file\": \"" << ca_dir << "/kea-server.key\" \n"
-          << "        } \n"
+          << "        } ]\n"
           << "    } \n";
 
     // Create a config with HTTPS and same content that should not recreate listener.
@@ -2369,11 +2369,11 @@ TEST_F(HttpCtrlChannelD2Test, handleHttpToHttpsSwitchFatal) {
         "             \"algorithm\": \"hmac-md5\", \n"
         "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
         "          ], \n"
-        "        \"control-socket\": { \n"
+        "        \"control-sockets\": [ { \n"
         "           \"socket-type\": \"http\", \n"
         "           \"socket-address\": \"127.0.0.1\", \n"
         "           \"socket-port\": 18125 \n"
-        "        } \n"
+        "        } ]\n"
         "    } \n";
 
     ASSERT_TRUE(server_);
@@ -2414,14 +2414,14 @@ TEST_F(HttpCtrlChannelD2Test, handleHttpToHttpsSwitchFatal) {
           << "             \"algorithm\": \"hmac-md5\", \n"
           << "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
           << "          ], \n"
-          << "        \"control-socket\": { \n"
+          << "        \"control-sockets\": [ { \n"
           << "           \"socket-type\": \"https\", \n"
           << "           \"socket-address\": \"127.0.0.1\", \n"
           << "           \"socket-port\": 18125, \n"
           << "        \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
           << "        \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
           << "        \"key-file\": \"" << ca_dir << "/kea-server.key\" \n"
-          << "        } \n"
+          << "        } ]\n"
           << "    } \n";
 
     // Create a config with HTTPS and same content that should not recreate listener.
@@ -2474,14 +2474,14 @@ TEST_F(HttpsCtrlChannelD2Test, handleHttpsToHttpSwitch) {
           << "             \"algorithm\": \"hmac-md5\", \n"
           << "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
           << "          ], \n"
-          << "        \"control-socket\": { \n"
+          << "        \"control-sockets\": [ { \n"
           << "           \"socket-type\": \"https\", \n"
           << "           \"socket-address\": \"127.0.0.1\", \n"
           << "           \"socket-port\": 18125, \n"
           << "        \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
           << "        \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
           << "        \"key-file\": \"" << ca_dir << "/kea-server.key\" \n"
-          << "        } \n"
+          << "        } ]\n"
           << "    } \n";
 
     ASSERT_TRUE(server_);
@@ -2529,11 +2529,11 @@ TEST_F(HttpsCtrlChannelD2Test, handleHttpsToHttpSwitch) {
         "             \"algorithm\": \"hmac-md5\", \n"
         "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
         "          ], \n"
-        "        \"control-socket\": { \n"
+        "        \"control-sockets\": [ { \n"
         "           \"socket-type\": \"http\", \n"
         "           \"socket-address\": \"127.0.0.1\", \n"
         "           \"socket-port\": 18125 \n"
-        "        } \n"
+        "        } ]\n"
         "    } \n";
 
     // Create a config with HTTP and same content that should not recreate listener.
@@ -2588,14 +2588,14 @@ TEST_F(HttpsCtrlChannelD2Test, handleHttpsToHttpSwitchFatal) {
           << "             \"algorithm\": \"hmac-md5\", \n"
           << "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
           << "          ], \n"
-          << "        \"control-socket\": { \n"
+          << "        \"control-sockets\": [ { \n"
           << "           \"socket-type\": \"https\", \n"
           << "           \"socket-address\": \"127.0.0.1\", \n"
           << "           \"socket-port\": 18125, \n"
           << "        \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
           << "        \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
           << "        \"key-file\": \"" << ca_dir << "/kea-server.key\" \n"
-          << "        } \n"
+          << "        } ]\n"
           << "    } \n";
 
     ASSERT_TRUE(server_);
@@ -2643,11 +2643,11 @@ TEST_F(HttpsCtrlChannelD2Test, handleHttpsToHttpSwitchFatal) {
         "             \"algorithm\": \"hmac-md5\", \n"
         "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n"
         "          ], \n"
-        "        \"control-socket\": { \n"
+        "        \"control-sockets\": [ { \n"
         "           \"socket-type\": \"http\", \n"
         "           \"socket-address\": \"127.0.0.1\", \n"
         "           \"socket-port\": 18125 \n"
-        "        } \n"
+        "        } ]\n"
         "    } \n";
 
     // Create a config with HTTP and same content that should not recreate listener.

@@ -80,7 +80,6 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
                    | forward_ddns
                    | reverse_ddns
                    | tsig_keys
-                   | control_socket
                    | control_sockets
                    | hooks_libraries
                    | loggers
@@ -216,8 +215,6 @@ This grammar is generated from ``d2_parser.yy``. See :ref:`dhcp-ddns-server` for
      tsig_key_secret ::= "secret" ":" STRING
 
      tsig_key_secret_file ::= "secret-file" ":" STRING
-
-     control_socket ::= "control-socket" ":" "{" control_socket_params "}"
 
      control_sockets ::= "control-sockets" ":" "[" control_socket_list "]"
 

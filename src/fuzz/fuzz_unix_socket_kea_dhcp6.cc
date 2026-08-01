@@ -48,16 +48,16 @@ LLVMFuzzerInitialize() {
     static bool initialized(DoInitialization());
     assert(initialized);
 
-    // "control-socket" is of explicit interest, but we also specify the memfile
+    // "control-sockets" is of explicit interest, but we also specify the memfile
     // CSV location and the server-id to make sure that we don't get an error
     // caused by an invalid file path.
     writeToFile(KEA_DHCP6_CONF, R"(
       {
         "Dhcp6": {
-          "control-socket": {
+          "control-sockets": [ {
             "socket-name": ")" + SOCKET + R"(",
             "socket-type": "unix"
-          },
+          } ],
           "lease-database": {
             "name": ")" + KEA_DHCP6_CSV + R"(",
             "persist": false,

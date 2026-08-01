@@ -239,7 +239,7 @@ ensure ``socat`` waits long enough for the server to respond:
    $ echo "{ some command...}" | socat UNIX:/path/to/the/kea/socket -,ignoreeof
 
 where ``/path/to/the/kea/socket`` is the path specified in the
-``Dhcp4/control-socket/socket-name`` parameter in the Kea configuration
+``Dhcp4/control-sockets/socket-name`` parameter in the Kea configuration
 file. Text passed to ``socat`` is sent to Kea and the responses received
 from Kea are printed to standard output. This approach communicates with
 the specific server directly.
@@ -1033,3 +1033,8 @@ the HA listeners too.
 
 For compatibility the JSON result of these HTTP/HTTPS control sockets is
 still encapsulated into a list.
+
+.. note::
+
+   Kea version 3.3.1 deprecated the ``control-socket`` keyword: only the
+   ``control-sockets`` is recognized by DHCPv4, DHCPv6 and DDNS servers.
