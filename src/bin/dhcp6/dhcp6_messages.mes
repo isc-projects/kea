@@ -1031,6 +1031,14 @@ argument holds the client and transaction identification information.
 The second and third argument hold the released address and IAID
 respectively.
 
+% DHCP6_RELEASE_NA_FAIL_NOT_ASSIGNED %1: client tried to release address %2 which is not assigned
+Logged at debug log level 40.
+This debug message is issued when a client is trying to release an address
+which is not assigned (no lease or a lease not in default / assigned state
+e.g. kept for the client by the lease affinity feature in the released state).
+The first argument includes the client and the transaction identification
+information. The second argument specifies the address.
+
 % DHCP6_RELEASE_NA_FAIL_WRONG_DUID %1: client tried to release address %2, but it belongs to another client using duid=%3
 This warning message indicates that a client tried to release an address
 that belongs to a different client. This should not happen in normal
@@ -1072,6 +1080,14 @@ removed from the database during RELEASE message processing. The
 first argument hold the client and transaction identification
 information. The second and third argument define the prefix and
 its length. The fourth argument holds the IAID.
+
+% DHCP6_RELEASE_PD_FAIL_NOT_ASSIGNED %1: client tried to release prefix %2/%3 which is not assigned
+Logged at debug log level 40.
+This debug message is issued when a client is trying to release a prefix
+which is not assigned (no lease or a lease not in default / assigned state
+e.g. kept for the client by the lease affinity feature in the released state).
+The first argument includes the client and the transaction identification
+information. The second and third arguments specify the prefix.
 
 % DHCP6_RELEASE_PD_FAIL_WRONG_DUID %1: client tried to release prefix %2/%3, but it belongs to another client (duid=%4)
 This warning message indicates that client tried to release a prefix

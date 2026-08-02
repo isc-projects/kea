@@ -32,6 +32,7 @@ using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using namespace isc::process;
 using namespace isc::stats;
 using namespace isc::util;
@@ -904,6 +905,119 @@ Dhcpv6SrvTest::testReleaseAndReclaim(Lease::Type type) {
     ASSERT_TRUE(stat);
     count = stat->getInteger().first;
     ASSERT_EQ(count, subnet_after);
+}
+
+void
+Dhcpv6SrvTest::testReleaseAlreadyReleased(Lease::Type type) {
+    ASSERT_TRUE((type == Lease::TYPE_NA) || (type == Lease::TYPE_PD));
+
+    const uint32_t iaid = 234;
+
+    uint32_t code; // option code of the container (IA_NA or IA_PD)
+    IOAddress addr = IOAddress::IPV6_ZERO_ADDRESS();
+    uint8_t prefix_len;
+    if (type == Lease::TYPE_NA) {
+        code = D6O_IA_NA;
+        addr = IOAddress("2001:db8:1:1::cafe:babe");
+        prefix_len = 128;
+    } else if (type == Lease::TYPE_PD) {
+        code = D6O_IA_PD;
+        addr = IOAddress("2001:db8:1:2::");
+        prefix_len = pd_pool_->getLength();
+    }
+
+    // Generate client-id also duid_
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(type, addr));
+
+    // Let's prepopulate the database with a released lease.
+    Lease6Ptr lease(new Lease6(type, addr, duid_, iaid,
+                               0, 0, subnet_->getID(),
+                               HWAddrPtr(), prefix_len));
+    lease->state_ = Lease6::STATE_RELEASED;
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Check that the lease is really in the database
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(type, addr);
+    ASSERT_TRUE(l);
+
+    // And prepopulate the stats counter
+    StatsMgr::instance().setValue(type == Lease::TYPE_NA ?
+                                  "assigned-nas" : "assigned-pds",
+                                  static_cast<int64_t>(10));
+
+    std::string name = StatsMgr::generateName("subnet", subnet_->getID(),
+                                              type == Lease::TYPE_NA ?
+                                              "assigned-nas" : "assigned-pds");
+    StatsMgr::instance().setValue(name, static_cast<int64_t>(10));
+
+    ObservationPtr stat = StatsMgr::instance().getObservation(name);
+    ASSERT_TRUE(stat);
+
+    // Let's create a RELEASE
+    Pkt6Ptr rel = createMessage(DHCPV6_RELEASE, type, addr, prefix_len, iaid);
+    rel->addOption(clientid);
+    rel->addOption(srv_->getServerID());
+
+    // Pass it to the server and hope for a REPLY
+    Pkt6Ptr reply = srv_->processRelease(rel);
+
+    // Check if we get response at all
+    checkResponse(reply, DHCPV6_REPLY, 1234);
+
+    OptionPtr tmp = reply->getOption(code);
+    ASSERT_TRUE(tmp);
+
+    // Check that IA was returned,
+    boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
+    checkIA_NAStatusCode(ia, STATUS_NoBinding, 0, 0);
+    checkMsgStatusCode(reply, STATUS_NoBinding);
+
+    // There should be no address returned in RELEASE (see RFC 9915, 18.3.7)
+    // There should be no prefix
+    EXPECT_FALSE(tmp->getOption(D6O_IAADDR));
+    EXPECT_FALSE(tmp->getOption(D6O_IAPREFIX));
+
+    // Check DUIDs
+    checkServerId(reply, srv_->getServerID());
+    checkClientId(reply, clientid);
+
+    // Check the lease.
+    l = LeaseMgrFactory::instance().getLease6(type, addr);
+    ASSERT_TRUE(l);
+
+    EXPECT_EQ(l->valid_lft_, 0U);
+    EXPECT_EQ(l->preferred_lft_, 0U);
+
+    EXPECT_EQ(Lease6::STATE_RELEASED, l->state_);
+
+    // get lease by subnetid/duid/iaid combination
+    l = LeaseMgrFactory::instance().getLease6(type, *duid_, iaid,
+                                              subnet_->getID());
+    ASSERT_TRUE(l);
+
+    EXPECT_EQ(l->valid_lft_, 0U);
+    EXPECT_EQ(l->preferred_lft_, 0U);
+    EXPECT_EQ(Lease::STATE_RELEASED, l->state_);
+
+    // We should not have decremented the address counter
+    stat = StatsMgr::instance().getObservation(type == Lease::TYPE_NA ?
+                                               "assigned-nas" : "assigned-pds");
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(10, stat->getInteger().first);
+
+    stat = StatsMgr::instance().getObservation(name);
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(10, stat->getInteger().first);
+
+    // Expect log.
+    if (type == Lease::TYPE_NA) {
+        EXPECT_EQ(1U, countFile("DHCP6_RELEASE_NA_FAIL_NOT_ASSIGNED"));
+    } else {
+        EXPECT_EQ(1U, countFile("DHCP6_RELEASE_PD_FAIL_NOT_ASSIGNED"));
+    }
 }
 
 void

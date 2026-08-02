@@ -964,6 +964,15 @@ public:
     void
     testReleaseAndReclaim(isc::dhcp::Lease::Type type);
 
+    /// @brief Performs double RELEASE test for an address within a subnet
+    /// and does not cause counters to decrease below 0.
+    ///
+    /// This method does not throw, but uses gtest macros to signify failures.
+    ///
+    /// @param type type (TYPE_NA or TYPE_PD)
+    void
+    testReleaseAlreadyReleased(isc::dhcp::Lease::Type type);
+
     /// @brief Checks that reassignment of a released-expired lease
     /// does not lead to zero lifetimes.
     ///

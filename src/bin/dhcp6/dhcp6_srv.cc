@@ -3438,12 +3438,17 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
     Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                             release_addr->getAddress());
 
-    if (!lease || (lease->state_ == Lease::STATE_REGISTERED)) {
-        // client releasing a lease that we don't know about.
+    if (!lease || (lease->state_ != Lease::STATE_DEFAULT)) {
+        // client releasing an address which is not assigned.
+
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC,
+                  DHCP6_RELEASE_NA_FAIL_NOT_ASSIGNED)
+            .arg(query->getLabel())
+            .arg(release_addr->getAddress().toText());
 
         // Insert status code NoBinding.
         ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_NoBinding,
-                          "Sorry, no known leases for this duid/iaid, can't release."));
+                          "Sorry, this address isn't assigned, can't release."));
         general_status = STATUS_NoBinding;
 
         return (ia_rsp);
@@ -3653,12 +3658,18 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
     Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD,
                                                             release_prefix->getAddress());
 
-    if (!lease) {
-        // Client releasing a lease that we don't know about.
+    if (!lease || (lease->state_ != Lease::STATE_DEFAULT)) {
+        // Client releasing a prefix which is not assigned.
+
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC,
+                  DHCP6_RELEASE_PD_FAIL_NOT_ASSIGNED)
+            .arg(query->getLabel())
+            .arg(release_prefix->getAddress().toText())
+            .arg(static_cast<int>(release_prefix->getLength()));
 
         // Insert status code NoBinding.
         ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_NoBinding,
-                          "Sorry, no known leases for this duid/iaid, can't release."));
+                          "Sorry, this prefix isn't assigned, can't release."));
         general_status = STATUS_NoBinding;
 
         return (ia_rsp);

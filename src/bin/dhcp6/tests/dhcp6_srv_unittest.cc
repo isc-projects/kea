@@ -2145,6 +2145,12 @@ TEST_F(Dhcpv6SrvTest, ReleaseAndReclaim) {
     testReleaseAndReclaim(Lease::TYPE_NA);
 }
 
+// This test checks that to release a second time just logs when lease
+// affinity is enabled.
+TEST_F(Dhcpv6SrvTest, ReleaseAlreadyReleased) {
+    testReleaseAlreadyReleased(Lease::TYPE_NA);
+}
+
 // This test verifies that incoming (positive) RELEASE with address can be
 // handled properly, that a REPLY is generated, that the response has status
 // code and that the lease is expired and not removed from the database.
@@ -2207,6 +2213,12 @@ TEST_F(Dhcpv6SrvTest, pdReleaseBasic) {
 // a subnet can be reclaimed and does not cause counters to decrease below 0.
 TEST_F(Dhcpv6SrvTest, pdReleaseAndReclaim) {
     testReleaseAndReclaim(Lease::TYPE_PD);
+}
+
+// This test checks that to release a second time just logs when lease
+// affinity is enabled.
+TEST_F(Dhcpv6SrvTest, pdReleaseAlreadyReleased) {
+    testReleaseAlreadyReleased(Lease::TYPE_PD);
 }
 
 // This test verifies that incoming (positive) RELEASE with prefix can be
