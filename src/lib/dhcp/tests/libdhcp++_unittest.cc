@@ -3979,6 +3979,16 @@ TEST_F(LibDhcpTest, tooDeepRecursionUnpackOptions6) {
         Unexpected, "Too deep recursion in unpacking options");
 }
 
+// Check that too deep recursion throws in unpackVendorOptions6.
+TEST_F(LibDhcpTest, tooDeepRecursionUnpackVendorOptions6) {
+    OptionBuffer buf;
+    OptionCollection options;
+    ASSERT_THROW_MSG(
+        LibDHCP::unpackVendorOptions6(1234, buf, options,
+                                      LibDHCP::MAX_RECURSION_LEVEL - 1),
+        Unexpected, "Too deep recursion in unpacking vendor options");
+}
+
 // Check that too deep recursion throws with client-data custom option.
 TEST_F(LibDhcpTest, tooDeepRecursionClientData) {
     OptionDefContainerPtr options = LibDHCP::getOptionDefs(DHCP6_OPTION_SPACE);
@@ -4135,6 +4145,24 @@ TEST_F(LibDhcpTest, tooDeepRecursionSequence) {
     options.clear();
     LibDHCP::MAX_RECURSION_LEVEL = 4;
     EXPECT_NO_THROW(LibDHCP::unpackOptions6(buf, space, options));
+}
+
+// Check that too deep recursion throws with vendor-opts special option.
+TEST_F(LibDhcpTest, tooDeepRecursionVendorOps) {
+    OptionBuffer buf = {
+        0, D6O_VENDOR_OPTS,     // type vendor-opts
+        0, 10,                  // length
+        12, 23, 45, 67,         // vendor id
+        0, 10,                  // sub-option type
+        0, 2,                   // sub-option length
+        1, 2                    // sub-option content
+    };
+    string space = DHCP6_OPTION_SPACE;
+    OptionCollection options;
+    ASSERT_THROW_MSG(
+        LibDHCP::unpackOptions6(buf, space, options, 0, 0,
+                                LibDHCP::MAX_RECURSION_LEVEL - 2),
+        Unexpected, "Too deep recursion in unpacking vendor options");
 }
 
 // This test verifies that unpackOptions4() throws on a scalar

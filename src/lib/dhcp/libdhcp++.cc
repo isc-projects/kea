@@ -861,7 +861,8 @@ LibDHCP::unpackVendorOptions6(const uint32_t vendor_id, const OptionBuffer& buf,
                               size_t rec_level /* = 0 */) {
     ++rec_level;
     if (rec_level >= MAX_RECURSION_LEVEL) {
-        isc_throw(isc::Unexpected, "Too deep recursion in unpacking options");
+        isc_throw(isc::Unexpected,
+                  "Too deep recursion in unpacking vendor options");
     }
     size_t offset = 0;
     size_t length = buf.size();
