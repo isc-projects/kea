@@ -395,8 +395,10 @@ LibDHCP::unpackOptions6(const OptionBuffer& buf, const string& option_space,
             }
 
             // Parse this as vendor option
-            OptionPtr vendor_opt(new OptionVendor(Option::V6, buf.begin() + offset,
-                                                  buf.begin() + offset + opt_len));
+            OptionPtr vendor_opt(new OptionVendor(Option::V6,
+                                                  buf.begin() + offset,
+                                                  buf.begin() + offset + opt_len,
+                                                  rec_level));
             options.insert(std::make_pair(opt_type, vendor_opt));
 
             offset += opt_len;
@@ -855,7 +857,12 @@ LibDHCP::extendVendorOptions4(OptionCollection& options) {
 
 size_t
 LibDHCP::unpackVendorOptions6(const uint32_t vendor_id, const OptionBuffer& buf,
-                              OptionCollection& options) {
+                              OptionCollection& options,
+                              size_t rec_level /* = 0 */) {
+    ++rec_level;
+    if (rec_level >= MAX_RECURSION_LEVEL) {
+        isc_throw(isc::Unexpected, "Too deep recursion in unpacking options");
+    }
     size_t offset = 0;
     size_t length = buf.size();
 
@@ -866,7 +873,7 @@ LibDHCP::unpackVendorOptions6(const uint32_t vendor_id, const OptionBuffer& buf,
     // Get the search index #1. It allows to search for option definitions
     // using option code. If there's no such vendor-id space, we're out of luck
     // anyway.
-    const OptionDefContainerTypeIndex* idx = NULL;
+    const OptionDefContainerTypeIndex* idx = 0;
     if (option_defs) {
         idx = &(option_defs->get<1>());
     }
@@ -924,7 +931,8 @@ LibDHCP::unpackVendorOptions6(const uint32_t vendor_id, const OptionBuffer& buf,
                 isc_throw_assert(def);
                 opt = def->optionFactory(Option::V6, opt_type,
                                          buf.begin() + offset,
-                                         buf.begin() + offset + opt_len);
+                                         buf.begin() + offset + opt_len,
+                                         false, rec_level);
             }
         }
 

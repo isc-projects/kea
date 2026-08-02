@@ -43,11 +43,12 @@ public:
     /// @param u universe (V4 or V6)
     /// @param begin iterator to first byte of option data.
     /// @param end iterator to end of option data (first byte after option end).
+    /// @param rec_level recursion level.
     ///
-    /// @throw isc::OutOfRange if provided buffer is shorter than data size.
+    /// @Throw isc::OutOfRange if provided buffer is shorter than data size.
     /// @todo Extend constructor to set encapsulated option space name.
     OptionVendor(Option::Universe u, OptionBufferConstIter begin,
-                 OptionBufferConstIter end);
+                 OptionBufferConstIter end, size_t rec_level = 0);
 
     /// @brief Copies this option and returns a pointer to the copy.
     OptionPtr clone() const;
@@ -72,6 +73,14 @@ public:
     /// caller that a: remaining options cannot be parsed and b: the packet
     /// should be considered for processing anyway.
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end);
+
+    /// @brief Parses received buffer with limited recursion.
+    ///
+    /// @param begin iterator to first byte of option data
+    /// @param end iterator to end of option data (first byte after option end)
+    /// @param rec_level recursion level.
+    void unpack(OptionBufferConstIter begin, OptionBufferConstIter end,
+                size_t rec_level);
 
     /// @brief Sets enterprise identifier
     ///

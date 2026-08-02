@@ -383,6 +383,8 @@ public:
     /// @param buf Buffer to be parsed.
     /// @param options Reference to option container. Suboptions will be
     ///        put here.
+    /// @param rec_level recursion level.
+    /// @throw Unexpected on too deep recursion and multiple definitions.
     /// @return offset to the first byte after the last successfully
     /// parsed suboption
     ///
@@ -390,7 +392,8 @@ public:
     /// so the return value is currently always the buffer length.
     static size_t unpackVendorOptions6(const uint32_t vendor_id,
                                        const OptionBuffer& buf,
-                                       isc::dhcp::OptionCollection& options);
+                                       isc::dhcp::OptionCollection& options,
+                                       size_t rec_level = 0);
 
     /// @brief Parses provided buffer as DHCPv4 vendor options and creates
     ///        Option objects.
