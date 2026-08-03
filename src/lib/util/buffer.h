@@ -102,6 +102,11 @@ public:
         return (static_cast<size_t>(current_ - base_));
     }
 
+    /// @brief Return the size remaining to be read.
+    size_t getRemaining() const {
+        return (static_cast<size_t>(end_ - current_));
+    }
+
     /// @brief Set the read position of the buffer to the given value.
     ///
     /// @details The new position must be in the valid range of the buffer;
@@ -125,7 +130,7 @@ public:
     /// @details If the remaining length of the buffer is smaller than 8-bit,
     /// an exception of class @c isc::OutOfRange will be thrown.
     uint8_t peekUint8() {
-        if (sizeof(uint8_t) > getLength() - getPosition()) {
+        if (sizeof(uint8_t) > getRemaining()) {
             isc_throw(OutOfRange,
                       "InputBuffer::peekUint8 read beyond end of buffer");
         }
@@ -149,7 +154,7 @@ public:
     /// @details If the remaining length of the buffer is smaller than 16-bit,
     /// an exception of class @c isc::OutOfRange will be thrown.
     uint16_t peekUint16() {
-        if (sizeof(uint16_t) > getLength() - getPosition()) {
+        if (sizeof(uint16_t) > getRemaining()) {
             isc_throw(OutOfRange,
                       "InputBuffer::peekUint16 read beyond end of buffer");
         }
@@ -177,7 +182,7 @@ public:
     /// @details If the remaining length of the buffer is smaller than 32-bit,
     /// an exception of class @c isc::OutOfRange will be thrown.
     uint32_t peekUint32() {
-        if (sizeof(uint32_t) > getLength() - getPosition()) {
+        if (sizeof(uint32_t) > getRemaining()) {
             isc_throw(OutOfRange,
                       "InputBuffer::peekUint32 read beyond end of buffer");
         }
@@ -212,7 +217,7 @@ public:
     void peekData(void* data, size_t len) {
         // Compare remaining size to len; pointer addition can wrap for
         // very large len values and bypass the check.
-        if (len > getLength() - getPosition()) {
+        if (len > getRemaining()) {
             isc_throw(OutOfRange,
                       "InputBuffer::peekData read beyond end of buffer");
         }
@@ -243,7 +248,7 @@ public:
     /// @param data Reference to a buffer (data will be stored there).
     /// @param len Size specified number of bytes to read in a vector.
     void peekVector(std::vector<uint8_t>& data, size_t len) {
-        if (len > getLength() - getPosition()) {
+        if (len > getRemaining()) {
             isc_throw(OutOfRange,
                       "InputBuffer::peekVector read beyond end of buffer");
         }
