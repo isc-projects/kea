@@ -1,4 +1,4 @@
-2524.	[bug]		razvan
+2525.	[bug]		razvan
 	Corrected MLM_MYSQL_FETCH_FAILURE to 1 so MySQL
 	selectQuery and host lookups detect mysql_stmt_fetch
 	errors instead of silently ignoring them.

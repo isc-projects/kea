@@ -894,16 +894,7 @@ public:
             if (lease_->client_id_) {
                 client_id_ = lease_->client_id_->getClientId();
                 client_id_length_ = client_id_.size();
-
-                // Make sure that the buffer has at least length of 1, even if
-                // empty client id is passed. This is required by some of the
-                // MySQL connectors that the buffer is set to non-null value.
-                // Otherwise, null value would be inserted into the database,
-                // rather than empty string.
-                if (client_id_.empty()) {
-                    client_id_.resize(1);
-                }
-
+                // ClientID constructor throws if the size is outside [2, 255] (can not be empty).
                 bind_[2].buffer_type = MYSQL_TYPE_BLOB;
                 bind_[2].buffer = reinterpret_cast<char*>(&client_id_[0]);
                 bind_[2].buffer_length = client_id_length_;
@@ -1458,7 +1449,7 @@ public:
             }
             duid_ = lease_->duid_->getDuid();
             duid_length_ = duid_.size();
-
+            // DUID constructor throws if the size is outside [3, 130] (can not be empty).
             bind_[1].buffer_type = MYSQL_TYPE_BLOB;
             bind_[1].buffer = reinterpret_cast<char*>(&(duid_[0]));
             bind_[1].buffer_length = duid_length_;
@@ -2864,13 +2855,7 @@ MySqlLeaseMgr::getLease4(const ClientId& clientid) const {
 
     std::vector<uint8_t> client_data = clientid.getClientId();
     unsigned long client_data_length = client_data.size();
-
-    // If the data happens to be empty, we have to create a 1 byte dummy
-    // buffer and pass it to the binding.
-    if (client_data.empty()) {
-        client_data.resize(1);
-    }
-
+    // ClientID constructor throws if the size is outside [2, 255] (can not be empty).
     inbind[0].buffer = reinterpret_cast<char*>(&client_data[0]);
     inbind[0].buffer_length = client_data_length;
     inbind[0].length = &client_data_length;
@@ -2901,13 +2886,7 @@ MySqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
 
     std::vector<uint8_t> client_data = clientid.getClientId();
     unsigned long client_data_length = client_data.size();
-
-    // If the data happens to be empty, we have to create a 1 byte dummy
-    // buffer and pass it to the binding.
-    if (client_data.empty()) {
-        client_data.resize(1);
-    }
-
+    // ClientID constructor throws if the size is outside [2, 255] (can not be empty).
     inbind[0].buffer = reinterpret_cast<char*>(&client_data[0]);
     inbind[0].buffer_length = client_data_length;
     inbind[0].length = &client_data_length;
@@ -3204,9 +3183,10 @@ MySqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
     // data).  For that reason, "const_cast" has been used.
     const vector<uint8_t>& duid_vector = duid.getDuid();
     unsigned long duid_length = duid_vector.size();
+    // DUID constructor throws if the size is outside [3, 130] (can not be empty).
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
     inbind[0].buffer = reinterpret_cast<char*>(
-        const_cast<uint8_t*>(&duid_vector[0]));
+            const_cast<uint8_t*>(&duid_vector[0]));
     inbind[0].buffer_length = duid_length;
     inbind[0].length = &duid_length;
 
@@ -3249,6 +3229,7 @@ MySqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
     // the DUID for an explanation of the reason.
     const vector<uint8_t>& duid_vector = duid.getDuid();
     unsigned long duid_length = duid_vector.size();
+    // DUID constructor throws if the size is outside [3, 130] (can not be empty).
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
     inbind[0].buffer = reinterpret_cast<char*>(
             const_cast<uint8_t*>(&duid_vector[0]));
@@ -3388,6 +3369,7 @@ MySqlLeaseMgr::getLeases6(const DUID& duid) const {
 
     const vector<uint8_t>& duid_vector = duid.getDuid();
     unsigned long duid_length = duid_vector.size();
+    // DUID constructor throws if the size is outside [3, 130] (can not be empty).
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
     inbind[0].buffer = reinterpret_cast<char*>(
             const_cast<uint8_t*>(&duid_vector[0]));
