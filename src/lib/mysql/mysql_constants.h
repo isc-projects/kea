@@ -46,7 +46,7 @@ static_assert(sizeof(my_bool) == sizeof(char), "unsupported bool size");
 const int MLM_MYSQL_FETCH_SUCCESS = 0;
 
 /// @brief MySQL fetch failure code.
-const int MLM_MYSQL_FETCH_FAILURE = 0;
+const int MLM_MYSQL_FETCH_FAILURE = 1;
 
 //@}
 
