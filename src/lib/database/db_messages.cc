@@ -14,6 +14,7 @@ extern const isc::log::MessageID DATABASE_MYSQL_FATAL_ERROR = "DATABASE_MYSQL_FA
 extern const isc::log::MessageID DATABASE_MYSQL_INITIALIZE_SCHEMA = "DATABASE_MYSQL_INITIALIZE_SCHEMA";
 extern const isc::log::MessageID DATABASE_MYSQL_INITIAL_CONNECTION_FAIL = "DATABASE_MYSQL_INITIAL_CONNECTION_FAIL";
 extern const isc::log::MessageID DATABASE_MYSQL_NO_INIT_NO_ADMIN = "DATABASE_MYSQL_NO_INIT_NO_ADMIN";
+extern const isc::log::MessageID DATABASE_MYSQL_NO_INIT_NO_PASSWORD = "DATABASE_MYSQL_NO_INIT_NO_PASSWORD";
 extern const isc::log::MessageID DATABASE_MYSQL_NO_INIT_READONLY = "DATABASE_MYSQL_NO_INIT_READONLY";
 extern const isc::log::MessageID DATABASE_MYSQL_ROLLBACK = "DATABASE_MYSQL_ROLLBACK";
 extern const isc::log::MessageID DATABASE_MYSQL_START_TRANSACTION = "DATABASE_MYSQL_START_TRANSACTION";
@@ -24,6 +25,7 @@ extern const isc::log::MessageID DATABASE_PGSQL_FATAL_ERROR = "DATABASE_PGSQL_FA
 extern const isc::log::MessageID DATABASE_PGSQL_INITIALIZE_SCHEMA = "DATABASE_PGSQL_INITIALIZE_SCHEMA";
 extern const isc::log::MessageID DATABASE_PGSQL_INITIAL_CONNECTION_FAIL = "DATABASE_PGSQL_INITIAL_CONNECTION_FAIL";
 extern const isc::log::MessageID DATABASE_PGSQL_NO_INIT_NO_ADMIN = "DATABASE_PGSQL_NO_INIT_NO_ADMIN";
+extern const isc::log::MessageID DATABASE_PGSQL_NO_INIT_NO_PASSWORD = "DATABASE_PGSQL_NO_INIT_NO_PASSWORD";
 extern const isc::log::MessageID DATABASE_PGSQL_NO_INIT_READONLY = "DATABASE_PGSQL_NO_INIT_READONLY";
 extern const isc::log::MessageID DATABASE_PGSQL_ROLLBACK = "DATABASE_PGSQL_ROLLBACK";
 extern const isc::log::MessageID DATABASE_PGSQL_ROLLBACK_SAVEPOINT = "DATABASE_PGSQL_ROLLBACK_SAVEPOINT";
@@ -46,6 +48,7 @@ const char* values[] = {
     "DATABASE_MYSQL_INITIALIZE_SCHEMA", "Initializing the MySQL schema with command: %1.",
     "DATABASE_MYSQL_INITIAL_CONNECTION_FAIL", "The connection to the MySQL server is not yet established. Reason: %1",
     "DATABASE_MYSQL_NO_INIT_NO_ADMIN", "Not attempting to initialize the MySQL schema. kea-admin seems to be missing.",
+    "DATABASE_MYSQL_NO_INIT_NO_PASSWORD", "Not attempting to initialize the MySQL schema. Kea database password is not available.",
     "DATABASE_MYSQL_NO_INIT_READONLY", "Not attempting to initialize the MySQL schema. Kea has the database configured as readonly.",
     "DATABASE_MYSQL_ROLLBACK", "rolling back MySQL database",
     "DATABASE_MYSQL_START_TRANSACTION", "starting new MySQL transaction",
@@ -56,6 +59,7 @@ const char* values[] = {
     "DATABASE_PGSQL_INITIALIZE_SCHEMA", "Initializing the PostgreSQL schema with command: %1.",
     "DATABASE_PGSQL_INITIAL_CONNECTION_FAIL", "The connection to the PostgreSQL server is not yet established. Reason: %1",
     "DATABASE_PGSQL_NO_INIT_NO_ADMIN", "Not attempting to initialize the PostgreSQL schema. kea-admin seems to be missing.",
+    "DATABASE_PGSQL_NO_INIT_NO_PASSWORD", "Not attempting to initialize the PostgreSQL schema. Kea database password is not available.",
     "DATABASE_PGSQL_NO_INIT_READONLY", "Not attempting to initialize the PostgreSQL schema. Kea has the database configured as readonly.",
     "DATABASE_PGSQL_ROLLBACK", "rolling back PostgreSQL database",
     "DATABASE_PGSQL_ROLLBACK_SAVEPOINT", "rolling back PostgreSQL database to savepoint: $1",

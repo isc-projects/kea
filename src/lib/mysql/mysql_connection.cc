@@ -484,6 +484,12 @@ MySqlConnection::initializeSchema(const ParameterMap& parameters) {
         return;
     }
 
+    if (parameters.count("password-file")) {
+        // Kea-admin does not support the password-file argument.
+        DB_LOG_WARN(MYSQL_NO_INIT_NO_PASSWORD).arg();
+        return;
+    }
+
     if (!isc::util::file::isFile(KEA_ADMIN_)) {
         // It can happen for kea-admin to not exist, especially with
         // packages that install it in a separate package.

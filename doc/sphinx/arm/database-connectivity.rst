@@ -71,7 +71,8 @@ to exit, it issues a fatal error before shutdown.
 For Kea DHCP servers to work with database backends, the database schema must be
 created and must match the version of the Kea
 server. If the version check fails and the database backend is not configured
-as read-only, Kea attempts to initialize the schema.
+as read-only and the password is available (i.e. not hidden in a file using
+the ``password-file`` parameter), Kea attempts to initialize the schema.
 
 .. note::
 

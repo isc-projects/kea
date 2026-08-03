@@ -40,6 +40,10 @@ for the connection to succeed after the Kea DHCP server runs kea-admin db-init.
 % DATABASE_MYSQL_NO_INIT_NO_ADMIN Not attempting to initialize the MySQL schema. kea-admin seems to be missing.
 A warning message indicating that kea-admin is not available which makes db-init not possible.
 
+% DATABASE_MYSQL_NO_INIT_NO_PASSWORD Not attempting to initialize the MySQL schema. Kea database password is not available.
+A warning message indicating that the password required to coonect to the Kea
+database is no available sp db-init will not be attempted.
+
 % DATABASE_MYSQL_NO_INIT_READONLY Not attempting to initialize the MySQL schema. Kea has the database configured as readonly.
 A warning message indicating that the database is configured in Kea as readonly so db-init will not be attempted.
 
@@ -92,6 +96,10 @@ for the connection to succeed after the Kea DHCP server runs kea-admin db-init.
 
 % DATABASE_PGSQL_NO_INIT_NO_ADMIN Not attempting to initialize the PostgreSQL schema. kea-admin seems to be missing.
 A warning message indicating that kea-admin is not available which makes db-init not possible.
+
+% DATABASE_PGSQL_NO_INIT_NO_PASSWORD Not attempting to initialize the PostgreSQL schema. Kea database password is not available.
+A warning message indicating that the password required to coonect to the Kea
+database is no available sp db-init will not be attempted.
 
 % DATABASE_PGSQL_NO_INIT_READONLY Not attempting to initialize the PostgreSQL schema. Kea has the database configured as readonly.
 A warning message indicating that the database is configured in Kea as readonly so db-init will not be attempted.

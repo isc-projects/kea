@@ -988,6 +988,18 @@ TEST_F(PgSqlConnectionTest, initializeSchemaReadonly) {
     EXPECT_TRUE(checkFile());
 }
 
+/// @brief Check initializeSchema when the password is hidden in a file.
+TEST_F(PgSqlConnectionTest, initializeSchemaPasswordFile) {
+    DatabaseConnection::ParameterMap const parameters(DatabaseConnection::parse(
+        connectionString(PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER,
+                         VALID_FILE, VALID_TIMEOUT)));
+    EXPECT_NO_THROW_LOG(PgSqlConnection::initializeSchema(parameters));
+    addString("DATABASE_PGSQL_NO_INIT_NO_PASSWORD Not attempting to "
+              "initialize the PostgreSQL schema. Kea database password is "
+              "not available.");
+    EXPECT_TRUE(checkFile());
+}
+
 /// @brief Check initializeSchema when kea-admin does not exist.
 TEST_F(PgSqlConnectionTest, initializeSchemaNoAdmin) {
     PgSqlConnection::KEA_ADMIN_ = "invalid_path_to_kea_admin";
