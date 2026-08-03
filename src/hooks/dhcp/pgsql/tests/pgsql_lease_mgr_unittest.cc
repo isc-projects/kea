@@ -211,6 +211,15 @@ TEST(PgSqlOpenTest, OpenDatabase) {
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, DEFAULT_PASSWORD)),
          isc::data::DefaultCredential);
 
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, NOT_EXIST_FILE)),
+        BadValue);
+
+    // See invalid password comment.
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_FILE)),
+        DbOpenError);
+
     // Check for invalid timeouts
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
@@ -222,8 +231,12 @@ TEST(PgSqlOpenTest, OpenDatabase) {
 
     // Check for missing parameters
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        PGSQL_VALID_TYPE, NULL, VALID_HOST, VALID_USER, VALID_PASSWORD)),
+        PGSQL_VALID_TYPE, 0, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
+
+    // Check for password file.
+    EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_FILE)));
 
     // Check for SSL/TLS support.
     if (hasPgSQLTls()) {
@@ -1390,19 +1403,19 @@ TEST_F(PgSqlLeaseMgrTest, updateStatsOn4DifferentSubnet) {
     testUpdateStatsOn4DifferentSubnet();
 }
 
-TEST_F(PgSqlLeaseMgrTest, updateStatsOn6SameSubnet) { 
+TEST_F(PgSqlLeaseMgrTest, updateStatsOn6SameSubnet) {
     testUpdateStatsOn6SameSubnet();
 }
 
-TEST_F(PgSqlLeaseMgrTest, updateStatsOn6SameSubnetPD) { 
+TEST_F(PgSqlLeaseMgrTest, updateStatsOn6SameSubnetPD) {
     testUpdateStatsOn6SameSubnetPD();
 }
 
-TEST_F(PgSqlLeaseMgrTest, updateStatsOn6DifferentSubnet) { 
+TEST_F(PgSqlLeaseMgrTest, updateStatsOn6DifferentSubnet) {
     testUpdateStatsOn6DifferentSubnet();
 }
 
-TEST_F(PgSqlLeaseMgrTest, updateStatsOn6DifferentSubnetPD) { 
+TEST_F(PgSqlLeaseMgrTest, updateStatsOn6DifferentSubnetPD) {
     testUpdateStatsOn6DifferentSubnetPD();
 }
 

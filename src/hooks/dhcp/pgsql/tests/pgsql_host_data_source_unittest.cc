@@ -241,6 +241,12 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, DEFAULT_PASSWORD)),
         DefaultCredential);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, NOT_EXIST_FILE)),
+        BadValue);
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_FILE)),
+        DbOpenError);
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
         DbInvalidTimeout);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
@@ -252,8 +258,12 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
 
     // Check for missing parameters
     EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+        PGSQL_VALID_TYPE, 0, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
+
+    // Check for password file.
+    EXPECT_NO_THROW(HostMgr::addBackend(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_FILE)));
 
     // Check for SSL/TLS support.
     if (hasPgSQLTls()) {
@@ -343,6 +353,12 @@ TEST(PgSqlHostDataSource, OpenDatabaseMultiThreading) {
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, DEFAULT_PASSWORD)),
         DefaultCredential);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, NOT_EXIST_FILE)),
+        BadValue);
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_FILE)),
+        DbOpenError);
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
         DbInvalidTimeout);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
@@ -354,8 +370,12 @@ TEST(PgSqlHostDataSource, OpenDatabaseMultiThreading) {
 
     // Check for missing parameters
     EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+        PGSQL_VALID_TYPE, 0, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
+
+    // Check for password file.
+    EXPECT_NO_THROW(HostMgr::addBackend(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_FILE)));
 
     // Tidy up after the test
     destroyPgSQLSchema();

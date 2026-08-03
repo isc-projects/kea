@@ -251,11 +251,22 @@ TEST(MySqlHostDataSource, OpenDatabase) {
     EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
         VALID_TIMEOUT, INVALID_READONLY_DB)), DbInvalidReadOnly);
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, NOT_EXIST_FILE)),
+        BadValue);
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_FILE)),
+        DbOpenError);
 
     // Check for missing parameters
     EXPECT_THROW(HostMgr::addBackend(connectionString(
-        MYSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
+        MYSQL_VALID_TYPE, 0, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
+
+    // Check for password file.
+    EXPECT_NO_THROW(HostMgr::addBackend(connectionString(
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_FILE)));
+    HostMgr::delBackend("mysql");
 
     // Check for SSL/TLS support.
     if (hasMySQLTls()) {
@@ -353,11 +364,22 @@ TEST(MySqlHostDataSource, OpenDatabaseMultiThreading) {
     EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
         VALID_TIMEOUT, INVALID_READONLY_DB)), DbInvalidReadOnly);
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, NOT_EXIST_FILE)),
+        BadValue);
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_FILE)),
+        DbOpenError);
 
     // Check for missing parameters
     EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
+
+    // Check for password file.
+    EXPECT_NO_THROW(HostMgr::addBackend(connectionString(
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_FILE)));
+    HostMgr::delBackend("mysql");
 
     // Tidy up after the test
     destroyMySQLSchema();

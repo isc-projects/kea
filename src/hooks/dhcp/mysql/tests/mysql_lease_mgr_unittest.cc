@@ -206,6 +206,14 @@ TEST(MySqlOpenTest, OpenDatabase) {
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, DEFAULT_PASSWORD)),
         isc::data::DefaultCredential);
 
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, NOT_EXIST_FILE)),
+        BadValue);
+
+    EXPECT_THROW(LeaseMgrFactory::create(connectionString(
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_FILE)),
+        DbOpenError);
+
     // Check for invalid timeouts
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
@@ -217,8 +225,12 @@ TEST(MySqlOpenTest, OpenDatabase) {
 
     // Check for missing parameters
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
-        MYSQL_VALID_TYPE, NULL, VALID_HOST, VALID_USER, VALID_PASSWORD)),
+        MYSQL_VALID_TYPE, 0, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
+
+    // Check for password file.
+    EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_FILE)));
 
     // Check for SSL/TLS support.
     if (hasMySQLTls()) {
