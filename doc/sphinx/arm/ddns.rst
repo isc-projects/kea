@@ -173,6 +173,32 @@ directly. It accepts the following command-line switches:
    is to just log the error and continue, making it possible for an administrator
    to intervene and fix the issue without restarting the server.
 
+.. note::
+
+   Kea packages provided on `ISC's Cloudsmith repositories <https://cloudsmith.io/~isc/repos>`_ include service files
+   prepared for easy overrides that add command-line switches to the server.
+
+   For **systemd** based distributions, the override file should be located in
+   ``/etc/systemd/system/isc-kea-dhcp-ddns-server.service.d/``
+   (or for RPM packages ``/etc/systemd/system/kea-dhcp-ddns.service.d/``) directory
+   and have a ``.conf`` extension.
+
+   Example file contents:
+
+   .. code-block:: ini
+
+      [Service]
+      Environment="KEA_DHCP_DDNS_OPTIONS=-F -X"
+
+   For **OpenRC** based distributions, the override file must be
+   ``/etc/openrc/conf.d/kea-dhcp-ddns``.
+
+   Example file contents:
+
+   .. code-block:: ini
+
+      options="-F -d"
+
 Upon startup, the module loads its configuration and begins listening
 for NCRs based on that configuration.
 
