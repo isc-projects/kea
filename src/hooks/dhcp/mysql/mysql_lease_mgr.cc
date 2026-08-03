@@ -995,7 +995,7 @@ public:
                 std::string ctx_txt = ctx->str();
                 strncpy(user_context_, ctx_txt.c_str(), USER_CONTEXT_MAX_LEN - 1);
                 bind_[10].buffer = user_context_;
-                bind_[10].buffer_length = ctx_txt.length();
+                bind_[10].buffer_length = std::min(ctx_txt.length(), USER_CONTEXT_MAX_LEN - 1);
                 // bind_[10].is_null = &MLM_FALSE; // commented out for performance
                                                    // reasons, see memset() above
             } else {
@@ -1439,14 +1439,14 @@ public:
         try {
             // address: binary(16)
             addr6_ = lease->addr_.toBytes();
-            if (addr6_.size() != 16) {
+            if (addr6_.size() != isc::asiolink::V6ADDRESS_LEN) {
                 isc_throw(DbOperationError, "lease6 address is not 16 bytes long");
             }
 
-            addr6_length_ = 16;
+            addr6_length_ = isc::asiolink::V6ADDRESS_LEN;
             bind_[0].buffer_type = MYSQL_TYPE_BLOB;
             bind_[0].buffer = reinterpret_cast<char*>(&addr6_[0]);
-            bind_[0].buffer_length = 16;
+            bind_[0].buffer_length = addr6_length_;
             bind_[0].length = &addr6_length_;
             // bind_[0].is_null = &MLM_FALSE; // commented out for performance
                                               // reasons, see memset() above
@@ -1638,7 +1638,7 @@ public:
                 std::string ctx_txt = ctx->str();
                 strncpy(user_context_, ctx_txt.c_str(), USER_CONTEXT_MAX_LEN - 1);
                 bind_[16].buffer = user_context_;
-                bind_[16].buffer_length = ctx_txt.length();
+                bind_[16].buffer_length = std::min(ctx_txt.length(), USER_CONTEXT_MAX_LEN - 1);
                 // bind_[16].is_null = &MLM_FALSE; // commented out for performance
                                                    // reasons, see memset() above
             } else {
@@ -1688,7 +1688,7 @@ public:
         memset(bind_, 0, sizeof(bind_));
 
         // address: binary(16)
-        addr6_length_ = 16;
+        addr6_length_ = isc::asiolink::V6ADDRESS_LEN;
         bind_[0].buffer_type = MYSQL_TYPE_BLOB;
         bind_[0].buffer = reinterpret_cast<char*>(addr6_buffer_);
         bind_[0].buffer_length = addr6_length_;
@@ -2821,7 +2821,7 @@ MySqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
 
     // If the data happens to be empty, we have to create a 1 byte dummy
     // buffer and pass it to the binding.
-    std::vector<uint8_t> single_byte_vec(1);
+    uint8_t single_byte_data = 0;
 
     // As "buffer" is "char*" - even though the data is being read - we need
     // to cast away the "const"ness as well as reinterpreting the data as
@@ -2829,7 +2829,7 @@ MySqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
     // local variable, but as the data is only being read, this introduces
     // an unnecessary copy).
     uint8_t* data = !hwaddr.hwaddr_.empty() ? const_cast<uint8_t*>(&hwaddr.hwaddr_[0])
-        : &single_byte_vec[0];
+        : &single_byte_data;
 
     inbind[0].buffer = reinterpret_cast<char*>(data);
     inbind[0].buffer_length = hwaddr_length;
@@ -3111,14 +3111,14 @@ MySqlLeaseMgr::getLease6(Lease::Type lease_type,
 
     // address: binary(16)
     std::vector<uint8_t>addr6 = addr.toBytes();
-    if (addr6.size() != 16) {
+    if (addr6.size() != isc::asiolink::V6ADDRESS_LEN) {
         isc_throw(DbOperationError, "lease6 address is not 16 bytes long");
     }
 
-    unsigned long addr6_length = 16;
+    unsigned long addr6_length = isc::asiolink::V6ADDRESS_LEN;
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
     inbind[0].buffer = reinterpret_cast<char*>(&addr6[0]);
-    inbind[0].buffer_length = 16;
+    inbind[0].buffer_length = addr6_length;
     inbind[0].length = &addr6_length;
 
     // LEASE_TYPE
@@ -3204,18 +3204,9 @@ MySqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
     // data).  For that reason, "const_cast" has been used.
     const vector<uint8_t>& duid_vector = duid.getDuid();
     unsigned long duid_length = duid_vector.size();
-
-    // Make sure that the buffer has at least length of 1, even if
-    // empty client id is passed. This is required by some of the
-    // MySQL connectors that the buffer is set to non-null value.
-    // Otherwise, null value would be inserted into the database,
-    // rather than empty string.
-    uint8_t single_byte_data = 0;
-    uint8_t* data = !duid_vector.empty() ? const_cast<uint8_t*>(&duid_vector[0])
-        : &single_byte_data;
-
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
-    inbind[0].buffer = reinterpret_cast<char*>(data);
+    inbind[0].buffer = reinterpret_cast<char*>(
+        const_cast<uint8_t*>(&duid_vector[0]));
     inbind[0].buffer_length = duid_length;
     inbind[0].length = &duid_length;
 
@@ -3347,7 +3338,7 @@ MySqlLeaseMgr::getLeases6(SubnetID subnet_id,
     // Bind the lower bound address.
     std::vector<uint8_t> lb_addr_data = lower_bound_address.toBytes();
     unsigned long lb_addr_size = lb_addr_data.size();
-    if (lb_addr_size != 16) {
+    if (lb_addr_size != isc::asiolink::V6ADDRESS_LEN) {
         isc_throw(DbOperationError, "lower bound address is not 16 bytes long");
     }
     inbind[1].buffer_type = MYSQL_TYPE_BLOB;
@@ -3397,7 +3388,6 @@ MySqlLeaseMgr::getLeases6(const DUID& duid) const {
 
     const vector<uint8_t>& duid_vector = duid.getDuid();
     unsigned long duid_length = duid_vector.size();
-
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
     inbind[0].buffer = reinterpret_cast<char*>(
             const_cast<uint8_t*>(&duid_vector[0]));
@@ -3522,14 +3512,14 @@ MySqlLeaseMgr::getLeases6(const IOAddress& lower_bound_address,
 
     // Bind lower bound address
     std::vector<uint8_t>lb_addr = lower_bound_address.toBytes();
-    if (lb_addr.size() != 16) {
+    if (lb_addr.size() != isc::asiolink::V6ADDRESS_LEN) {
         isc_throw(DbOperationError, "getLeases6() - lower bound address is not 16 bytes long");
     }
 
-    unsigned long lb_addr_length = 16;
+    unsigned long lb_addr_length = isc::asiolink::V6ADDRESS_LEN;
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
     inbind[0].buffer = reinterpret_cast<char*>(&lb_addr[0]);
-    inbind[0].buffer_length = 16;
+    inbind[0].buffer_length = lb_addr_length;
     inbind[0].length = &lb_addr_length;
 
     // Bind page size value
@@ -3754,14 +3744,14 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 
     // Bind the where clause address parameter.
     std::vector<uint8_t>addr6 = lease->addr_.toBytes();
-    if (addr6.size() != 16) {
+    if (addr6.size() != isc::asiolink::V6ADDRESS_LEN) {
         isc_throw(DbOperationError, "updateLease6() - address is not 16 bytes long");
     }
 
-    unsigned long addr6_length = 16;
+    unsigned long addr6_length = isc::asiolink::V6ADDRESS_LEN;
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
     inbind[0].buffer = reinterpret_cast<char*>(&addr6[0]);
-    inbind[0].buffer_length = 16;
+    inbind[0].buffer_length = addr6_length;
     inbind[0].length = &addr6_length;
 
     bind.push_back(inbind[0]);
@@ -3945,14 +3935,14 @@ MySqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
 
     // Bind the where clause address parameter.
     std::vector<uint8_t>addr6 = addr.toBytes();
-    if (addr6.size() != 16) {
+    if (addr6.size() != isc::asiolink::V6ADDRESS_LEN) {
         isc_throw(DbOperationError, "deleteLease6() - address is not 16 bytes long");
     }
 
-    unsigned long addr6_length = 16;
+    unsigned long addr6_length = isc::asiolink::V6ADDRESS_LEN;
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
     inbind[0].buffer = reinterpret_cast<char*>(&addr6[0]);
-    inbind[0].buffer_length = 16;
+    inbind[0].buffer_length = addr6_length;
     inbind[0].length = &addr6_length;
 
     // See the expire code of createBindForSend for the
@@ -4430,7 +4420,7 @@ MySqlLeaseMgr::addRelayId6(const IOAddress& lease_addr,
     // Bind the lease address.
     std::vector<uint8_t> lease_addr_data = lease_addr.toBytes();
     unsigned long lease_addr_length = lease_addr_data.size();
-    if (lease_addr_length != 16) {
+    if (lease_addr_length != isc::asiolink::V6ADDRESS_LEN) {
         isc_throw(DbOperationError, "lease6 address is not 16 bytes long");
     }
     bind[1].buffer_type = MYSQL_TYPE_BLOB;
@@ -4474,7 +4464,7 @@ MySqlLeaseMgr::addRemoteId6(const IOAddress& lease_addr,
     // Bind the lease address.
     std::vector<uint8_t> lease_addr_data = lease_addr.toBytes();
     unsigned long lease_addr_length = lease_addr_data.size();
-    if (lease_addr_length != 16) {
+    if (lease_addr_length != isc::asiolink::V6ADDRESS_LEN) {
         isc_throw(DbOperationError, "lease6 address is not 16 bytes long");
     }
     bind[1].buffer_type = MYSQL_TYPE_BLOB;
@@ -4844,7 +4834,7 @@ MySqlLeaseMgr::getLeases6ByRelayId(const DUID& relay_id,
     // Bind the lower bound address.
     std::vector<uint8_t> lb_addr_data = lower_bound_address.toBytes();
     unsigned long lb_addr_size = lb_addr_data.size();
-    if (lb_addr_size != 16) {
+    if (lb_addr_size != isc::asiolink::V6ADDRESS_LEN) {
         isc_throw(DbOperationError, "lower bound address is not 16 bytes long");
     }
     inbind[1].buffer_type = MYSQL_TYPE_BLOB;
@@ -4902,7 +4892,7 @@ MySqlLeaseMgr::getLeases6ByRemoteId(const OptionBuffer& remote_id,
     // Bind the lower bound address.
     std::vector<uint8_t> lb_addr_data = lower_bound_address.toBytes();
     unsigned long lb_addr_size = lb_addr_data.size();
-    if (lb_addr_size != 16) {
+    if (lb_addr_size != isc::asiolink::V6ADDRESS_LEN) {
         isc_throw(DbOperationError, "lower bound address is not 16 bytes long");
     }
     inbind[1].buffer_type = MYSQL_TYPE_BLOB;
@@ -4952,14 +4942,14 @@ MySqlLeaseMgr::upgradeExtendedInfo6(const LeasePageSize& page_size) {
 
         // Bind start address.
         std::vector<uint8_t>start_addr_bytes = start_addr.toBytes();
-        if (start_addr_bytes.size() != 16) {
+        if (start_addr_bytes.size() != isc::asiolink::V6ADDRESS_LEN) {
             isc_throw(DbOperationError, "start address is not 16 bytes long");
         }
 
-        unsigned long start_addr_size = 16;
+        unsigned long start_addr_size = isc::asiolink::V6ADDRESS_LEN;
         inbind[0].buffer_type = MYSQL_TYPE_BLOB;
         inbind[0].buffer = reinterpret_cast<char*>(&start_addr_bytes[0]);
-        inbind[0].buffer_length = 16;
+        inbind[0].buffer_length = start_addr_size;
         inbind[0].length = &start_addr_size;
 
         // Bind page size value.

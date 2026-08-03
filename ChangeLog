@@ -6,6 +6,14 @@
 
 Kea 3.3.0 (development) released on July 29, 2026
 
+2524.	[func]		razvan
+	Added support for unlimited encapsulation levels in evaluated
+	expressions: option[code0].option[code1]...option[codeX],
+	relay4[code0].option[code1]...option[codeX],
+	relay6[nest].option[code0].option[code1]...option[codeX] and
+	vendor[ent-id].option[code0].option[code1]...option[codeX].
+	(Gitlab #4146)
+
 2523.	[func]		fdupont
 	RADIUS accounting now ignores DHCPv4 lease reuses.
 	(Gitlab #4544)

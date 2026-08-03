@@ -2072,6 +2072,7 @@ TEST_F(FlexOptionLogTest, noWarning) {
     ElementPtr code = Element::create(DHO_HOST_NAME);
     option->set("code", code);
     option->set("client-class", Element::create(string("foobar")));
+
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
@@ -2091,6 +2092,7 @@ TEST_F(FlexOptionLogTest, classWarning) {
     option->set("client-class", Element::create(string("foobar")));
     ElementPtr dest = Element::create(string("query"));
     option->set("destination", dest);
+
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
@@ -2112,6 +2114,7 @@ TEST_F(FlexOptionLogTest, memberWarning) {
     option->set("code", code);
     ElementPtr dest = Element::create(string("query"));
     option->set("destination", dest);
+
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
