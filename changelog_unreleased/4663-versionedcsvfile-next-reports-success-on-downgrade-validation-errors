@@ -1,4 +1,5 @@
-[bug]		wlodek
-	VersionedCSVFile::next now returns false when a row
-	fails column-count checks during schema downgrade.
+[bug]		wlodek, tmark
+	Corrected an issue that could mask an invalid
+	row error while loading a Memfile lease file
+	generated from a newer version of Kea.
 	(Gitlab #4663)
