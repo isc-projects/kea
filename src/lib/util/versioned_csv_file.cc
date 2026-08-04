@@ -131,7 +131,7 @@ VersionedCSVFile::next(CSVRow& row) {
         return (false);
     }
     if (row == CSVFile::EMPTY_ROW()) {
-        return(true);
+        return (true);
     }
 
     bool row_valid = true;
