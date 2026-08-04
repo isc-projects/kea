@@ -1,4 +1,0 @@
-[bug]		wlodek
-	VersionedCSVFile::next now returns false when the
-	underlying CSVFile::next read fails.
-	(Gitlab #4664)
