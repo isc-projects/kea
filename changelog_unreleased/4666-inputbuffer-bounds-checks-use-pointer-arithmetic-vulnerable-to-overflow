@@ -1,5 +1,0 @@
-[bug]		wlodek,tmark
-	Fixed InputBuffer bounds checks to use size comparisons
-	instead of pointer arithmetic that could overflow for
-	very large offsets or lengths.
-	(Gitlab #4666)
