@@ -106,7 +106,7 @@ the following command-line switches:
       Environment="KEA_DHCP6_OPTIONS=-F -X"
 
    For **OpenRC** based distributions, the override file must be
-   ``/etc/openrc/conf.d/kea-dhcp6``.
+   ``/etc/conf.d/kea-dhcp6``.
 
    Example file contents:
 

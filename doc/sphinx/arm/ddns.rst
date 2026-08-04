@@ -191,7 +191,7 @@ directly. It accepts the following command-line switches:
       Environment="KEA_DHCP_DDNS_OPTIONS=-F -X"
 
    For **OpenRC** based distributions, the override file must be
-   ``/etc/openrc/conf.d/kea-dhcp-ddns``.
+   ``/etc/conf.d/kea-dhcp-ddns``.
 
    Example file contents:
 
