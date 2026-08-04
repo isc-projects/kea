@@ -751,21 +751,21 @@ TEST(Element, listElement) {
 // rather than invoking undefined behavior (Gitlab #4636).
 TEST(Element, listElementRemoveOutOfRange) {
     ElementPtr el = Element::fromJSON("[ 1, 2 ]");
-    ASSERT_EQ(2, static_cast<int>(el->size()));
+    ASSERT_EQ(2U, el->size());
 
     // Index past the end should be a no-op.
     EXPECT_NO_THROW(el->remove(5));
-    EXPECT_EQ(2, static_cast<int>(el->size()));
+    EXPECT_EQ(2U, el->size());
     EXPECT_EQ("[ 1, 2 ]", el->str());
 
     // Index equal to size should be a no-op.
     EXPECT_NO_THROW(el->remove(2));
-    EXPECT_EQ(2, static_cast<int>(el->size()));
+    EXPECT_EQ(2U, el->size());
     EXPECT_EQ("[ 1, 2 ]", el->str());
 
     // Negative index should be a no-op.
     EXPECT_NO_THROW(el->remove(-1));
-    EXPECT_EQ(2, static_cast<int>(el->size()));
+    EXPECT_EQ(2U, el->size());
     EXPECT_EQ("[ 1, 2 ]", el->str());
 
     // Empty list: any remove should be a no-op.
@@ -775,7 +775,7 @@ TEST(Element, listElementRemoveOutOfRange) {
 
     // In-range remove still works.
     EXPECT_NO_THROW(el->remove(0));
-    EXPECT_EQ(1, static_cast<int>(el->size()));
+    EXPECT_EQ(1U, el->size());
     EXPECT_EQ(2, el->get(0)->intValue());
 }
 
