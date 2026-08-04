@@ -1,4 +1,5 @@
 [bug]		wlodek
-	Fixed MapElement::remove() undefined behavior on out-of-range
-	indices so it matches the documented no-op contract.
+	Fixed MapElement::remove() const int overload undefined
+	behavior on out-of-range indices so it matches the
+	documented no-op contract.
 	(Gitlab #4637)

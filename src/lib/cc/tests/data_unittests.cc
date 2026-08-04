@@ -843,21 +843,21 @@ TEST(Element, mapElement) {
 // rather than invoking undefined behavior (Gitlab #4637).
 TEST(Element, mapElementRemoveOutOfRange) {
     ElementPtr el = Element::fromJSON("{ \"a\": 1, \"b\": 2 }");
-    ASSERT_EQ(2, static_cast<int>(el->size()));
+    ASSERT_EQ(2U, el->size());
 
     // Index past the end should be a no-op.
     EXPECT_NO_THROW(el->remove(5));
-    EXPECT_EQ(2, static_cast<int>(el->size()));
+    EXPECT_EQ(2U, el->size());
     EXPECT_EQ("{ \"a\": 1, \"b\": 2 }", el->str());
 
     // Index equal to size should be a no-op.
     EXPECT_NO_THROW(el->remove(2));
-    EXPECT_EQ(2, static_cast<int>(el->size()));
+    EXPECT_EQ(2U, el->size());
     EXPECT_EQ("{ \"a\": 1, \"b\": 2 }", el->str());
 
     // Negative index should be a no-op.
     EXPECT_NO_THROW(el->remove(-1));
-    EXPECT_EQ(2, static_cast<int>(el->size()));
+    EXPECT_EQ(2U, el->size());
     EXPECT_EQ("{ \"a\": 1, \"b\": 2 }", el->str());
 
     // Empty map: any remove should be a no-op.
@@ -867,9 +867,10 @@ TEST(Element, mapElementRemoveOutOfRange) {
 
     // In-range remove still works (ordered map: index 0 is key "a").
     EXPECT_NO_THROW(el->remove(0));
-    EXPECT_EQ(1, static_cast<int>(el->size()));
+    EXPECT_EQ(1U, el->size());
+    ASSERT_TRUE(el->get("b"));
     EXPECT_EQ(2, el->get("b")->intValue());
-    EXPECT_TRUE(isNull(el->get("a")));
+    EXPECT_FALSE(el->get("a"));
 }
 
 TEST(Element, toAndFromWire) {
