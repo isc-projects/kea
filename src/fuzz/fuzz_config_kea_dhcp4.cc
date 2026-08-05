@@ -64,6 +64,7 @@ LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
         server.init(KEA_DHCP4_CONF);
     } catch (BadValue const&) {
     } catch (Dhcp4ParseError const&) {
+    } catch (std::exception const&) {
     }
 
     return 0;
