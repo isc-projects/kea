@@ -12,6 +12,8 @@
 #include <gtest/gtest.h>
 
 using namespace isc::config;
+using namespace isc::http;
+using namespace std;
 
 namespace {
 
@@ -19,7 +21,9 @@ namespace {
 // the create() method.
 TEST(CmdResponseCreatorFactory, createDefault) {
     // Create the factory.
-    CmdResponseCreatorFactory factory;
+    HttpAuthConfigPtr http_auth_config;
+    unordered_set<string> command_accept_list;
+    CmdResponseCreatorFactory factory(http_auth_config, command_accept_list);
 
     // Create a response creator.
     CmdResponseCreatorPtr response1;
@@ -31,10 +35,10 @@ TEST(CmdResponseCreatorFactory, createDefault) {
     EXPECT_TRUE(CmdResponseCreator::EMULATE_AGENT_RESPONSE);
 
     // Authorization configuration should be an empty pointer.
-    EXPECT_FALSE(CmdResponseCreator::http_auth_config_);
+    EXPECT_FALSE(response1->getAuthConfig());
 
     // By default all commands are accepted.
-    EXPECT_TRUE(CmdResponseCreator::command_accept_list_.empty());
+    EXPECT_TRUE(response1->getCommandAcceptList().empty());
 
     // Invoke create() again.
     CmdResponseCreatorPtr response2;
@@ -50,7 +54,9 @@ TEST(CmdResponseCreatorFactory, createDefault) {
 // be turned off.
 TEST(CmdResponseCreatorFactory, createAgentEmulationDisabled) {
     // Instantiate the factory.
-    CmdResponseCreatorFactory factory;
+    HttpAuthConfigPtr http_auth_config;
+    unordered_set<string> command_accept_list;
+    CmdResponseCreatorFactory factory(http_auth_config, command_accept_list);
 
     // Disable agent emulation.
     CmdResponseCreator::EMULATE_AGENT_RESPONSE = false;
@@ -65,10 +71,10 @@ TEST(CmdResponseCreatorFactory, createAgentEmulationDisabled) {
     EXPECT_FALSE(CmdResponseCreator::EMULATE_AGENT_RESPONSE);
 
     // Authorization configuration should be an empty pointer.
-    EXPECT_FALSE(CmdResponseCreator::http_auth_config_);
+    EXPECT_FALSE(response->getAuthConfig());
 
     // By default all commands are accepted.
-    EXPECT_TRUE(CmdResponseCreator::command_accept_list_.empty());
+    EXPECT_TRUE(response->getCommandAcceptList().empty());
 }
 
 } // end of anonymous namespace

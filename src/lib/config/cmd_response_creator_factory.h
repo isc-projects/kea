@@ -30,7 +30,13 @@ public:
     ///
     /// Creates sole instance of the @ref CmdResponseCreator object
     /// returned by the @ref CmdResponseCreatorFactory::create.
-    CmdResponseCreatorFactory() : sole_creator_(new CmdResponseCreator) {
+    ///
+    /// @param http_auth_config Authentication configuration.
+    /// @param command_accept_list Command accept list.
+    CmdResponseCreatorFactory(http::HttpAuthConfigPtr http_auth_config,
+                              std::unordered_set<std::string> command_accept_list)
+        : sole_creator_(new CmdResponseCreator(http_auth_config,
+                                               command_accept_list)) {
     }
 
     /// @brief Returns an instance of the @ref CmdResponseCreator which

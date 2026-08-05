@@ -122,19 +122,28 @@ HAService::HAService(const unsigned int id, const IOServicePtr& io_service,
             // Fetch the TLS context.
             auto tls_context = config_->getThisServerConfig()->getTlsContext();
 
-            // Instantiate the listener.
-            listener_.reset(new CmdHttpListener(server_address, my_url.getPort(),
-                                                listener_threads, tls_context));
+            // Set the HTTP basic authentication.
+            HttpAuthConfigPtr auth_config;
+            // Wrong type: BasicHttpAuthPtr vs BasicHttpAuthConfigPtr
+            // auth_config = config_->getThisServerConfig()->getBasicAuth();
+
             // Set the command filter when enabled.
+            std::unordered_set<std::string> command_accept_list;
             if (config_->getRestrictCommands()) {
                 if (server_type == HAServerType::DHCPv4) {
-                    CmdResponseCreator::command_accept_list_ =
-                        CommandCreator::ha_commands4_;
+                    command_accept_list = CommandCreator::ha_commands4_;
                 } else {
-                    CmdResponseCreator::command_accept_list_ =
-                        CommandCreator::ha_commands6_;
+                    command_accept_list = CommandCreator::ha_commands6_;
                 }
             }
+
+            // Instantiate the listener.
+            listener_.reset(new CmdHttpListener(server_address,
+                                                my_url.getPort(),
+                                                listener_threads,
+                                                tls_context,
+                                                auth_config,
+                                                command_accept_list));
         }
     }
 

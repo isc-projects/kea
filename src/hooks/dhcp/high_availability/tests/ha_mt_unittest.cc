@@ -127,7 +127,6 @@ public:
     HAMtServiceTest()
         : HATest() {
         MultiThreadingMgr::instance().setMode(true);
-        CmdResponseCreator::command_accept_list_.clear();
     }
 
     /// @brief Destructor.
@@ -136,7 +135,6 @@ public:
     ~HAMtServiceTest() {
         io_service_->stopAndPoll();
         MultiThreadingMgr::instance().setMode(false);
-        CmdResponseCreator::command_accept_list_.clear();
     }
 
     /// @brief Callback function invoke upon test timeout.
@@ -197,8 +195,12 @@ TEST_F(HAMtServiceTest, multiThreadingBasics) {
     // Multi-threading should be enabled.
     ASSERT_TRUE(ha_config->get()->getEnableMultiThreading());
 
+    // Authentication is disabled.
+    ASSERT_TRUE(service->listener_);
+    EXPECT_FALSE(service->listener_->getAuthConfig());
+
     // Command filtering is enabled.
-    EXPECT_FALSE(CmdResponseCreator::command_accept_list_.empty());
+    EXPECT_FALSE(service->listener_->getCommandAcceptList().empty());
 
     // Now we'll start, pause, resume and stop a few times.
     for (int i = 0; i < 3; ++i) {

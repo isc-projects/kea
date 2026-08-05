@@ -23,10 +23,6 @@ using namespace std;
 namespace isc {
 namespace config {
 
-HttpAuthConfigPtr CmdResponseCreator::http_auth_config_;
-
-unordered_set<string> CmdResponseCreator::command_accept_list_;
-
 bool CmdResponseCreator::EMULATE_AGENT_RESPONSE = true;
 
 HttpRequestPtr

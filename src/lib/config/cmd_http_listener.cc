@@ -22,16 +22,20 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::util;
+using namespace std;
 
 namespace isc {
 namespace config {
 
 CmdHttpListener::CmdHttpListener(const IOAddress& address, const uint16_t port,
                                  const uint16_t thread_pool_size /* = 1 */,
-                                 TlsContextPtr context /* = () */)
+                                 TlsContextPtr context /* = () */,
+                                 HttpAuthConfigPtr http_auth_config /* = () */,
+                                 unordered_set<string> command_accept_list /* = {} */)
     : address_(address), port_(port), thread_io_service_(), http_listener_(),
       thread_pool_size_(thread_pool_size), thread_pool_(),
-      tls_context_(context) {
+      tls_context_(context), http_auth_config_(http_auth_config),
+      command_accept_list_(command_accept_list) {
 }
 
 CmdHttpListener::~CmdHttpListener() {
@@ -61,7 +65,9 @@ CmdHttpListener::start() {
         // Create the response creator factory first. It will be used to
         // generate response creators. Each response creator will be
         // used to generate the answer to specific request.
-        HttpResponseCreatorFactoryPtr rcf(new CmdResponseCreatorFactory());
+        HttpResponseCreatorFactoryPtr
+            rcf(new CmdResponseCreatorFactory(http_auth_config_,
+                                              command_accept_list_));
 
         // Create the HTTP listener. It will open up a TCP socket and be
         // prepared to accept incoming connections.

@@ -10,6 +10,7 @@
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
 #include <asiolink/io_service_thread_pool.h>
+#include <http/auth_config.h>
 #include <http/listener.h>
 #include <thread>
 #include <vector>
@@ -34,7 +35,9 @@ public:
     /// @brief Constructor
     CmdHttpListener(const asiolink::IOAddress& address, const uint16_t port,
                     const uint16_t thread_pool_size = 1,
-                    asiolink::TlsContextPtr context = asiolink::TlsContextPtr());
+                    asiolink::TlsContextPtr context = asiolink::TlsContextPtr(),
+                    http::HttpAuthConfigPtr http_auth_config = http::HttpAuthConfigPtr(),
+                    std::unordered_set<std::string> command_accept_list = {});
 
     /// @brief Destructor
     virtual ~CmdHttpListener();
@@ -128,6 +131,20 @@ public:
         return (thread_io_service_);
     }
 
+    /// @brief Fetches the authentication configuration.
+    ///
+    /// @return the authentication configuration.
+    http::HttpAuthConfigPtr getAuthConfig() const {
+        return (http_auth_config_);
+    }
+
+    /// @brief Fetches the command accept list.
+    ///
+    /// @return the command accept list.
+    std::unordered_set<std::string> getCommandAcceptList() const {
+        return (command_accept_list_);
+    }
+
 private:
     /// @brief IP address on which to listen.
     isc::asiolink::IOAddress address_;
@@ -149,6 +166,12 @@ private:
 
     /// @brief The TLS context.
     asiolink::TlsContextPtr tls_context_;
+
+    /// @brief The server current authentication configuration.
+    http::HttpAuthConfigPtr http_auth_config_;
+
+    /// @brief The server command accept list.
+    std::unordered_set<std::string> command_accept_list_;
 };
 
 /// @brief Defines a shared pointer to CmdHttpListener.

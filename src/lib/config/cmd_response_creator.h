@@ -32,6 +32,19 @@ namespace config {
 class CmdResponseCreator : public http::HttpResponseCreator {
 public:
 
+    /// @brief Constructor.
+    ///
+    /// @param http_auth_config Authentication configuration.
+    /// @param command_accept_list Command accept list.
+    CmdResponseCreator(http::HttpAuthConfigPtr http_auth_config,
+                       std::unordered_set<std::string> command_accept_list) :
+        http::HttpResponseCreator(), http_auth_config_(http_auth_config),
+        command_accept_list_(command_accept_list) {
+    }
+
+    /// @brief virtual destructor.
+    virtual ~CmdResponseCreator() = default;
+
     /// @brief Create a new request.
     ///
     /// This method creates a bare instance of the @ref
@@ -64,22 +77,22 @@ public:
                   const data::ConstElementPtr& body,
                   const std::unordered_set<std::string>& accept);
 
-    /// @brief The server current authentication configuration.
-    ///
-    /// Default to the empty HttpAuthConfigPtr.
-    ///
-    /// @note: This is currently not used, except in unit-tests. For the time being,
-    /// we postponed writing the corresponding code in the HA, so http_auth_config_
-    /// is left to its empty default value.
-    static http::HttpAuthConfigPtr http_auth_config_;
-
-    /// @brief The server command accept list.
-    ///
-    /// Default to the empty list which means to accept everything.
-    static std::unordered_set<std::string> command_accept_list_;
-
     /// @brief The emulate agent response flag.
     static bool EMULATE_AGENT_RESPONSE;
+
+    /// @brief Fetches the authentication configuration.
+    ///
+    /// @return the authentication configuration.
+    http::HttpAuthConfigPtr getAuthConfig() const {
+        return (http_auth_config_);
+    }
+
+    /// @brief Fetches the command accept list.
+    ///
+    /// @return the command accept list.
+    std::unordered_set<std::string> getCommandAcceptList() const {
+        return (command_accept_list_);
+    }
 
 private:
 
@@ -103,6 +116,12 @@ private:
     /// @return Pointer to an object representing HTTP response.
     virtual http::HttpResponsePtr
     createDynamicHttpResponse(http::HttpRequestPtr request);
+
+    /// @brief The server current authentication configuration.
+    http::HttpAuthConfigPtr http_auth_config_;
+
+    /// @brief The server command accept list.
+    std::unordered_set<std::string> command_accept_list_;
 };
 
 /// @brief Pointer to the @ref CmdResponseCreator.

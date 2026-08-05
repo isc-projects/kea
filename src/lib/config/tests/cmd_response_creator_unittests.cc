@@ -42,9 +42,6 @@ public:
         config::CommandMgr::instance().
             registerCommand("foo", std::bind(&CmdResponseCreatorTest::fooCommandHandler,
                                              this, ph::_1, ph::_2));
-        // Clear class variables.
-        CmdResponseCreator::http_auth_config_.reset();
-        CmdResponseCreator::command_accept_list_.clear();
     }
 
     /// @brief Destructor.
@@ -52,8 +49,6 @@ public:
     /// Removes registered commands from the command manager.
     virtual ~CmdResponseCreatorTest() {
         config::CommandMgr::instance().deregisterAll();
-        CmdResponseCreator::http_auth_config_.reset();
-        CmdResponseCreator::command_accept_list_.clear();
     }
 
     /// @brief SetUp function that wraps call to initCreator.
@@ -66,10 +61,15 @@ public:
     /// @brief Creates a new CmdResponseCreator and new HttpRequest.
     ///
     /// @param emulate_agent_flag enables/disables agent response emulation
+    /// @param http_auth_config authentication configuration.
+    /// @param command_accept_list command accept list.
     /// in the CmdResponsCreator.
-    void initCreator(bool emulate_agent_flag = true) {
-        response_creator_.reset(new CmdResponseCreator);
+    void initCreator(bool emulate_agent_flag = true,
+                     HttpAuthConfigPtr http_auth_config = HttpAuthConfigPtr(),
+                     unordered_set<string> command_accept_list = {}) {
         CmdResponseCreator::EMULATE_AGENT_RESPONSE = emulate_agent_flag;
+        response_creator_.reset(new CmdResponseCreator(http_auth_config,
+                                                       command_accept_list));
         request_ = response_creator_->createNewHttpRequest();
         ASSERT_TRUE(request_) << "initCreator failed to create request";
     }
@@ -307,7 +307,12 @@ TEST_F(CmdResponseCreatorTest, filterCommand) {
 // This test verifies basic HTTP authentication - reject case.
 // Empty case was handled in createDynamicHttpResponseNoEmulation.
 TEST_F(CmdResponseCreatorTest, basicAuthReject) {
-    initCreator(false);
+    // Create basic HTTP authentication configuration.
+    BasicHttpAuthConfigPtr basic(new BasicHttpAuthConfig);
+    ASSERT_TRUE(basic);
+    EXPECT_NO_THROW(basic->add("test", "", "123\xa3", ""));
+
+    initCreator(false, basic);
     setBasicContext(request_);
 
     // Body: "foo" command has been registered in the test fixture constructor.
@@ -317,14 +322,6 @@ TEST_F(CmdResponseCreatorTest, basicAuthReject) {
 
     // All requests must be finalized before they can be processed.
     ASSERT_NO_THROW(request_->finalize());
-
-    // Create basic HTTP authentication configuration.
-    CmdResponseCreator::http_auth_config_.reset(new BasicHttpAuthConfig());
-    BasicHttpAuthConfigPtr basic =
-        boost::dynamic_pointer_cast<BasicHttpAuthConfig>(
-            CmdResponseCreator::http_auth_config_);
-    ASSERT_TRUE(basic);
-    EXPECT_NO_THROW(basic->add("test", "", "123\xa3", ""));
 
     // Create response from the request.
     HttpResponsePtr response;
@@ -338,7 +335,12 @@ TEST_F(CmdResponseCreatorTest, basicAuthReject) {
 // This test verifies basic HTTP authentication - accept case.
 // Empty case was handled in createDynamicHttpResponseNoEmulation.
 TEST_F(CmdResponseCreatorTest, basicAuthAccept) {
-    initCreator(false);
+    // Create basic HTTP authentication configuration.
+    BasicHttpAuthConfigPtr basic(new BasicHttpAuthConfig);
+    ASSERT_TRUE(basic);
+    EXPECT_NO_THROW(basic->add("test", "", "123\xa3", ""));
+
+    initCreator(false, basic);
     setBasicContext(request_);
 
     // Body: "foo" command has been registered in the test fixture constructor.
@@ -350,14 +352,6 @@ TEST_F(CmdResponseCreatorTest, basicAuthAccept) {
 
     // All requests must be finalized before they can be processed.
     ASSERT_NO_THROW(request_->finalize());
-
-    // Create basic HTTP authentication configuration.
-    CmdResponseCreator::http_auth_config_.reset(new BasicHttpAuthConfig());
-    BasicHttpAuthConfigPtr basic =
-        boost::dynamic_pointer_cast<BasicHttpAuthConfig>(
-            CmdResponseCreator::http_auth_config_);
-    ASSERT_TRUE(basic);
-    EXPECT_NO_THROW(basic->add("test", "", "123\xa3", ""));
 
     // Create response from the request.
     HttpResponsePtr response;
@@ -380,7 +374,10 @@ TEST_F(CmdResponseCreatorTest, basicAuthAccept) {
 
 // This test verifies command filtering at the HTTP level - reject case.
 TEST_F(CmdResponseCreatorTest, filterCommandReject) {
-    initCreator(false);
+    // Add foo in the access list.
+    unordered_set<string> accept;
+    accept.insert("foo");
+    initCreator(false, 0, accept);
     setBasicContext(request_);
     // For the log message...
     request_->setRemote("127.0.0.1");
@@ -390,9 +387,6 @@ TEST_F(CmdResponseCreatorTest, filterCommandReject) {
 
     // All requests must be finalized before they can be processed.
     ASSERT_NO_THROW(request_->finalize());
-
-    // Add foo in the access list.
-    CmdResponseCreator::command_accept_list_.insert("foo");
 
     // Create response from the request.
     HttpResponsePtr response;
@@ -405,7 +399,10 @@ TEST_F(CmdResponseCreatorTest, filterCommandReject) {
 
 // This test verifies command filtering at the HTTP level - accept case.
 TEST_F(CmdResponseCreatorTest, filterCommandAccept) {
-    initCreator(false);
+    // Add foo in the access list.
+    unordered_set<string> accept;
+    accept.insert("foo");
+    initCreator(false, 0, accept);
     setBasicContext(request_);
 
     // Body: "foo" command has been registered in the test fixture constructor.
@@ -413,9 +410,6 @@ TEST_F(CmdResponseCreatorTest, filterCommandAccept) {
 
     // All requests must be finalized before they can be processed.
     ASSERT_NO_THROW(request_->finalize());
-
-    // Add foo in the access list.
-    CmdResponseCreator::command_accept_list_.insert("foo");
 
     // Create response from the request.
     HttpResponsePtr response;

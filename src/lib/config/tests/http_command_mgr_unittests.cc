@@ -47,7 +47,7 @@ const unsigned short SERVER_PORT = 18123;
 /// @brief Test timeout (ms).
 const long TEST_TIMEOUT = 10000;
 
-/// @brief Test fixture class for @ref CmdHttpListener.
+/// @brief Test fixture class for @ref HttpCommandMgr.
 class HttpCommandMgrTest : public ::testing::Test {
 public:
 
