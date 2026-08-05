@@ -1034,8 +1034,8 @@ respectively.
 % DHCP6_RELEASE_NA_FAIL_NOT_ASSIGNED %1: client tried to release address %2 which is not assigned
 Logged at debug log level 40.
 This debug message is issued when a client is trying to release an address
-which is not assigned (no lease or a lease not in default / assigned state
-e.g. kept for the client by the lease affinity feature in the released state).
+for which there is no lease or the lease is not in default / assigned state
+(e.g. kept for the client by the lease affinity feature in the released state).
 The first argument includes the client and the transaction identification
 information. The second argument specifies the address.
 
@@ -1084,8 +1084,8 @@ its length. The fourth argument holds the IAID.
 % DHCP6_RELEASE_PD_FAIL_NOT_ASSIGNED %1: client tried to release prefix %2/%3 which is not assigned
 Logged at debug log level 40.
 This debug message is issued when a client is trying to release a prefix
-which is not assigned (no lease or a lease not in default / assigned state
-e.g. kept for the client by the lease affinity feature in the released state).
+for which there is no lease or the lease is not in default / assigned state
+(e.g. kept for the client by the lease affinity feature in the released state).
 The first argument includes the client and the transaction identification
 information. The second and third arguments specify the prefix.
 

@@ -965,7 +965,7 @@ public:
     testReleaseAndReclaim(isc::dhcp::Lease::Type type);
 
     /// @brief Performs double RELEASE test for an address within a subnet
-    /// and does not cause counters to decrease below 0.
+    /// which should not cause counters to decrease below 0.
     ///
     /// This method does not throw, but uses gtest macros to signify failures.
     ///
