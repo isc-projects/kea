@@ -31,7 +31,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include "helper_func.h"
+#include <helper_func.h>
 
 using namespace isc::dhcp;
 using namespace isc::hooks;
@@ -166,6 +166,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
     // Call lease6_decline
     try {
+        handle = getCalloutHandle(pkt);
         uint8_t mac_addr[6];
         for (size_t i = 0; i < 6; ++i) {
             mac_addr[i] = fdp.ConsumeIntegral<uint8_t>();
@@ -189,6 +190,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
     // Call lease6_release
     try {
+        handle = getCalloutHandle(pkt);
         uint8_t mac_addr[6];
         for (size_t i = 0; i < 6; ++i) {
             mac_addr[i] = fdp.ConsumeIntegral<uint8_t>();

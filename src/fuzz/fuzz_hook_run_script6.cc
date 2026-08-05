@@ -30,7 +30,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include "helper_func.h"
+#include <helper_func.h>
 
 using namespace isc::asiolink;
 using namespace isc::dhcp;
@@ -195,12 +195,12 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     // Call leases6_committed
     try {
         handle = getCalloutHandle(pkt);
+        Pkt6Ptr rsp;
         uint8_t mac_addr[6];
         for (size_t i = 0; i < 6; ++i) {
             mac_addr[i] = fdp.ConsumeIntegral<uint8_t>();
         }
         HWAddr hw(mac_addr, sizeof(mac_addr), HTYPE_ETHER);
-        Pkt6Ptr rsp;
         Lease6Collection leases = LeaseMgrFactory::instance().getLease6(hw);
         handle->setArgument("leases6", leases);
         handle->setArgument("deleted_leases6", leases);

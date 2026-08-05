@@ -6,7 +6,7 @@
 //
 // Developed by AdaLogics under contract to ISC.
 
-#include "config.h"
+#include <config.h>
 #include <fuzzer/FuzzedDataProvider.h>
 
 #include <log/logger_support.h>

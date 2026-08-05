@@ -5,7 +5,7 @@
     "rebind-timer": 2000,
     "preferred-lifetime": 3000,
     "interfaces-config": {
-      "interfaces": ["eth0"]
+      "interfaces": [ "eth0" ]
     },
     "lease-database": {
       "type": "memfile",

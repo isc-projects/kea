@@ -6,7 +6,7 @@
 //
 // Developed by AdaLogics under contract to ISC.
 
-#include "config.h"
+#include <config.h>
 #include <fuzzer/FuzzedDataProvider.h>
 
 #include <cc/command_interpreter.h>
@@ -18,7 +18,7 @@
 #include <log/logger_support.h>
 #include <process/daemon.h>
 
-#include "helper_func.h"
+#include <helper_func.h>
 
 #include <array>
 #include <cstdlib>
@@ -118,9 +118,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 
         // Configure the server with valid tree
         if (rawTree) {
-                configureDhcp6Server(srv, rawTree, checkOnly, extraChecks);
-                ControlledDhcpv6Srv::checkConfig(rawTree);
-                ControlledDhcpv6Srv::processConfig(rawTree);
+            configureDhcp6Server(srv, rawTree, checkOnly, extraChecks);
+            ControlledDhcpv6Srv::checkConfig(rawTree);
+            ControlledDhcpv6Srv::processConfig(rawTree);
         }
     } catch (const isc::Exception&) {
     }
@@ -133,7 +133,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
         // Configure the server with valid tree
         if (tree) {
             if (type == Parser6Context::PARSER_JSON ||
-                type == Parser6Context::PARSER_DHCP6){
+                type == Parser6Context::PARSER_DHCP6) {
                 configureDhcp6Server(srv, tree, checkOnly, extraChecks);
                 ControlledDhcpv6Srv::checkConfig(tree);
                 ControlledDhcpv6Srv::processConfig(tree);

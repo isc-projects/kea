@@ -10,7 +10,7 @@
 
 # Next we set up the interfaces to be used by the server.
     "interfaces-config": {
-        "interfaces": ["eth0"]
+        "interfaces": [ "eth0" ]
     },
 
 # And we specify the type of lease database

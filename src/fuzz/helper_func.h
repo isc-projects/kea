@@ -6,7 +6,8 @@
 //
 // Developed by AdaLogics under contract to ISC.
 
-#pragma once
+#ifndef HELPER_FUNC_H
+#define HELPER_FUNC_H
 
 #include <string>
 #include <cc/data.h>
@@ -86,3 +87,5 @@ namespace fuzz {
     void deleteTempFile(std::string file_path);
     isc::data::ElementPtr parseJSON(const std::string& s);
 }
+
+#endif // HELPER_FUNC_H

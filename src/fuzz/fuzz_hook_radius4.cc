@@ -31,7 +31,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include "helper_func.h"
+#include <helper_func.h>
 
 using namespace isc::dhcp;
 using namespace isc::hooks;
@@ -155,7 +155,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
     // Fuzz subnet4_select
     try {
-        handle = getCalloutHandle(pkt);
         Pkt4Ptr rsp;
         CfgMgr& cfgmgr = CfgMgr::instance();
         handle = getCalloutHandle(pkt);
@@ -180,6 +179,30 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         handle->deleteAllArguments();
     }
 
+    // Call lease4_decline
+    try {
+        handle = getCalloutHandle(pkt);
+        uint8_t mac_addr[6];
+        for (size_t i = 0; i < 6; ++i) {
+            mac_addr[i] = fdp.ConsumeIntegral<uint8_t>();
+        }
+        HWAddr hw(mac_addr, sizeof(mac_addr), HTYPE_ETHER);
+        Lease4Collection leases = LeaseMgrFactory::instance().getLease4(hw);
+        handle->setArgument("leases4", leases);
+        handle->setArgument("query4", pkt);
+
+        lease4_decline(*handle);
+    } catch (const isc::Exception& e) {
+        // Silent exceptions
+    } catch (const std::exception&) {
+        // Silent exceptions
+    }
+
+    // Clean up to avoid mem leak
+    if (handle) {
+        handle->deleteAllArguments();
+    }
+
     // Call lease4_release
     try {
         handle = getCalloutHandle(pkt);
@@ -193,29 +216,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         handle->setArgument("query4", pkt);
 
         lease4_release(*handle);
-    } catch (const isc::Exception& e) {
-        // Silent exceptions
-    } catch (const std::exception&) {
-        // Silent exceptions
-    }
-
-    // Clean up to avoid mem leak
-    if (handle) {
-        handle->deleteAllArguments();
-    }
-
-    // Call lease4_decline
-    try {
-        uint8_t mac_addr[6];
-        for (size_t i = 0; i < 6; ++i) {
-            mac_addr[i] = fdp.ConsumeIntegral<uint8_t>();
-        }
-        HWAddr hw(mac_addr, sizeof(mac_addr), HTYPE_ETHER);
-        Lease4Collection leases = LeaseMgrFactory::instance().getLease4(hw);
-        handle->setArgument("leases4", leases);
-        handle->setArgument("query4", pkt);
-
-        lease4_decline(*handle);
     } catch (const isc::Exception& e) {
         // Silent exceptions
     } catch (const std::exception&) {

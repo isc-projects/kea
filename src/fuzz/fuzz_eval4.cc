@@ -6,7 +6,7 @@
 //
 // Developed by AdaLogics under contract to ISC.
 
-#include "config.h"
+#include <config.h>
 #include <fuzzer/FuzzedDataProvider.h>
 
 #include <eval/eval_context.h>
@@ -26,6 +26,7 @@ using namespace isc::dhcp;
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
     FuzzedDataProvider fdp(Data, Size);
     EvalContext ctx(Option::V4);
+
     auto idx = fdp.ConsumeIntegralInRange<uint8_t>(1, 18);
     const std::string payload = fdp.ConsumeRemainingBytesAsString();
 

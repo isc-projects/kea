@@ -6,7 +6,7 @@
 //
 // Developed by AdaLogics under contract to ISC.
 
-#include "config.h"
+#include <config.h>
 #include <fuzzer/FuzzedDataProvider.h>
 
 #include <string>
@@ -35,7 +35,7 @@
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcpsrv/parsers/simple_parser6.h>
 
-#include "helper_func.h"
+#include <helper_func.h>
 
 using namespace isc;
 using namespace isc::data;

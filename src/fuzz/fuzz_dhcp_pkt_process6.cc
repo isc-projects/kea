@@ -30,7 +30,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include "helper_func.h"
+#include <helper_func.h>
 
 using namespace isc::dhcp;
 using namespace isc::hooks;

@@ -72,7 +72,7 @@
         ],
 // Kea is told to listen on eth0 interface only.
         "interfaces-config": {
-            "interfaces": ["eth0"]
+            "interfaces": [ "eth0" ]
         },
 // We need to specify the database used to store leases.
         "lease-database": {

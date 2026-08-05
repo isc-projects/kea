@@ -34,7 +34,7 @@
 #include <string>
 #include <cstdio>
 
-#include "helper_func.h"
+#include <helper_func.h>
 
 using namespace isc::dhcp;
 using namespace isc::hooks;
@@ -82,6 +82,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     try {
         // Package parsing
         Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(data, size));
+        pkt->toText();
         pkt->toText(fdp->ConsumeBool());
         pkt->getType();
         pkt->getTransid();
@@ -93,10 +94,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
             pkt->pack();
         } catch (...) {
         }
+        pkt->getMAC(fdp->ConsumeIntegral<uint32_t>());
         pkt->getName();
         pkt->getName(fdp->ConsumeIntegral<uint8_t>());
         pkt->getLabel();
-        pkt->getMAC(fdp->ConsumeIntegral<uint16_t>());
     } catch (...) {
     }
 
@@ -116,6 +117,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         Pkt6Ptr pkt6 = Pkt6Ptr(new Pkt6(data, size));
         Pkt4o6Ptr pkt = Pkt4o6Ptr(new Pkt4o6(pkt4, pkt6));
         pkt->toText();
+        pkt->toText(fdp->ConsumeBool());
         pkt->getType();
         pkt->getTransid();
         try {
@@ -126,10 +128,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
             pkt->pack();
         } catch (...) {
         }
+        pkt->getMAC(fdp->ConsumeIntegral<uint32_t>());
         pkt->getName();
         pkt->getName(fdp->ConsumeIntegral<uint8_t>());
         pkt->getLabel();
-        pkt->getMAC(fdp->ConsumeIntegral<uint16_t>());
     } catch (...) {
     }
 

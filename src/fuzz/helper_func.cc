@@ -6,10 +6,9 @@
 //
 // Developed by AdaLogics under contract to ISC.
 
-
 #include <config.h>
 
-#include "helper_func.h"
+#include <helper_func.h>
 
 #include <cstdlib>
 #include <filesystem>

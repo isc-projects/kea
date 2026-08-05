@@ -6,7 +6,6 @@
 //
 // Developed by AdaLogics under contract to ISC.
 
-
 #include <config.h>
 
 #include <cstddef>

@@ -30,7 +30,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include "helper_func.h"
+#include <helper_func.h>
 
 using namespace isc::dhcp;
 using namespace isc::hooks;
@@ -47,7 +47,7 @@ namespace isc {
                     return accept(pkt);
                 }
 
-                static void fuzz_sanityCheck(const Pkt4Ptr& query) {
+                void fuzz_sanityCheck(const Pkt4Ptr& query) {
                     ControlledDhcpv4Srv::sanityCheck(query);
                 }
 
@@ -174,6 +174,15 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         // This is consistent with production code
         // (processing pkt might crash otherwise).
         return 0;
+    }
+
+    // Call process functions after the accept and check
+    try {
+        srv->processDhcp4Query(pkt, fdp->ConsumeBool());
+    } catch (const isc::Exception& e) {
+        // Silent exceptions
+    } catch (const std::exception&) {
+        // Silent exceptions
     }
 
     // Prepare client context
