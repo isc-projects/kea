@@ -32,7 +32,8 @@ namespace ha {
 
 HAConfig::PeerConfig::PeerConfig()
     : tls_context_(), name_(), url_(""), trust_anchor_(), cert_file_(),
-      key_file_(), role_(STANDBY), auto_failover_(false), basic_auth_() {
+      key_file_(), role_(STANDBY), auto_failover_(false), basic_auth_(),
+      basic_auth_config_() {
 }
 
 void

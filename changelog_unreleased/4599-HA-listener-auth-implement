@@ -1,0 +1,4 @@
+[bug]		fdupont
+	Implemented HTTP basic authentication for HA dedicated
+	listener, before such configuration was silently ignored.
+	(Gitlab #4599)

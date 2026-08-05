@@ -323,9 +323,9 @@ HAConfigParser::parseOne(const HAConfigMapperPtr& config_storage,
             }
             password = getString(p, "basic-auth-password");
         }
+        std::string password_file;
         if (p->contains("basic-auth-password-file")) {
-            std::string password_file =
-                getString(p, "basic-auth-password-file");
+            password_file = getString(p, "basic-auth-password-file");
             try {
                 password = util::file::getContent(password_file);
             } catch (const std::exception& ex) {
@@ -348,9 +348,9 @@ HAConfigParser::parseOne(const HAConfigMapperPtr& config_storage,
             user = getString(p, "basic-auth-user");
             do_auth = true;
         }
+        std::string user_file;
         if (p->contains("basic-auth-user-file")) {
-            std::string user_file =
-                getString(p, "basic-auth-user-file");
+            user_file = getString(p, "basic-auth-user-file");
             try {
                 user = util::file::getContent(user_file);
                 do_auth = true;
@@ -361,10 +361,13 @@ HAConfigParser::parseOne(const HAConfigMapperPtr& config_storage,
         }
         if (do_auth) {
             BasicHttpAuthPtr& auth = cfg->getBasicAuth();
+            BasicHttpAuthConfigPtr& auth_config = cfg->getBasicAuthConfig();
             try {
                 if (!user.empty()) {
                     // Validate the user id value.
                     auth.reset(new BasicHttpAuth(user, password));
+                    auth_config.reset(new BasicHttpAuthConfig);
+                    auth_config->add(user, user_file, password, password_file);
                 }
             } catch (const std::exception& ex) {
                 isc_throw(dhcp::DhcpConfigError, ex.what() << " in peer '"

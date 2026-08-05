@@ -123,9 +123,8 @@ HAService::HAService(const unsigned int id, const IOServicePtr& io_service,
             auto tls_context = config_->getThisServerConfig()->getTlsContext();
 
             // Set the HTTP basic authentication.
-            HttpAuthConfigPtr auth_config;
-            // Wrong type: BasicHttpAuthPtr vs BasicHttpAuthConfigPtr
-            // auth_config = config_->getThisServerConfig()->getBasicAuth();
+            HttpAuthConfigPtr auth_config =
+                config_->getThisServerConfig()->getBasicAuthConfig();
 
             // Set the command filter when enabled.
             std::unordered_set<std::string> command_accept_list;

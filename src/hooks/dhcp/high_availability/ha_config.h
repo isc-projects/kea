@@ -11,7 +11,7 @@
 #include <asiolink/crypto_tls.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
-#include <http/basic_auth.h>
+#include <http/basic_auth_config.h>
 #include <http/post_request_json.h>
 #include <http/url.h>
 #include <util/optional.h>
@@ -220,6 +220,16 @@ public:
         /// when credentials are specified.
         void addBasicAuthHttpHeader(http::PostHttpRequestJsonPtr request) const;
 
+        /// @brief Returns non-const basic HTTP authentication configuration.
+        http::BasicHttpAuthConfigPtr& getBasicAuthConfig() {
+            return (basic_auth_config_);
+        }
+
+        /// @brief Returns const basic HTTP authentication configuration.
+        const http::BasicHttpAuthConfigPtr& getBasicAuthConfig() const {
+            return (basic_auth_config_);
+        }
+
         /// @brief Server TLS context.
         ///
         /// @note: if you make it protected or private please make
@@ -236,6 +246,7 @@ public:
         Role role_;                                 ///< Server role.
         bool auto_failover_;                        ///< Auto failover state.
         http::BasicHttpAuthPtr basic_auth_;         ///< Basic HTTP authentication.
+        http::BasicHttpAuthConfigPtr basic_auth_config_; ///< Basic HTTP authentication configuration.
     };
 
     /// @brief Pointer to the server's configuration.
