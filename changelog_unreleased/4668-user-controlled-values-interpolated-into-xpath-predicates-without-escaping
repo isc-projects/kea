@@ -1,4 +1,4 @@
-[bug]		wlodek
+[bug]		wlodek,tmark
 	Quoted YANG XPath list-key predicates safely so
 	configuration values containing quotes no longer
 	break or retarget sysrepo paths.
