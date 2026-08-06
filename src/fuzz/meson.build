@@ -1,4 +1,4 @@
-if not FUZZ_OPT.enabled() or not KRB5_DEP.found()
+if not FUZZ_OPT.enabled()
     subdir_done()
 endif
 
@@ -75,9 +75,12 @@ endforeach
 # As a result, they can only be compiled using clang++.
 cpp = meson.get_compiler('cpp')
 if cpp.get_id() == 'clang'
+    maybe_ddns_gss_tsig_lib = []
+    if KRB5_DEP.found()
+        maybe_ddns_gss_tsig_lib += [ddns_gss_tsig_lib]
+    endif
     fuzz_libs = [
         d2_lib,
-        ddns_gss_tsig_lib,
         dhcp_lease_query_lib,
         dhcp_flex_id_lib,
         dhcp_ddns_tuning_lib,
@@ -85,40 +88,19 @@ if cpp.get_id() == 'clang'
         dhcp_radius_lib,
         dhcp_run_script_lib,
         dhcp_user_chk_lib,
-        dhcp4_lib,
-        dhcp6_lib,
         kea_testutils_lib,
         fuzz_lib,
     ]
+    fuzz_libs += maybe_ddns_gss_tsig_lib
     foreach i : [
         'fuzz_cc',
         'fuzz_crypto',
         'fuzz_cryptolink',
         'fuzz_d2',
-        'fuzz_dhcp_parser4',
-        'fuzz_dhcp_parser6',
-        'fuzz_dhcp_pkt4',
-        'fuzz_dhcp_pkt6',
-        'fuzz_dhcp_pkt_process4',
-        'fuzz_dhcp_pkt_process6',
         'fuzz_dhcpsrv',
         'fuzz_dhcpsrv_csv_lease',
         'fuzz_dns',
         'fuzz_encode',
-        'fuzz_eval4',
-        'fuzz_eval6',
-        'fuzz_hook_ddns_tuning4',
-        'fuzz_hook_ddns_tuning6',
-        'fuzz_hook_flex_id4',
-        'fuzz_hook_flex_id6',
-        'fuzz_hook_lease_query4',
-        'fuzz_hook_lease_query6',
-        'fuzz_hook_radius4',
-        'fuzz_hook_radius6',
-        'fuzz_hook_run_script4',
-        'fuzz_hook_run_script6',
-        'fuzz_hook_user_chk4',
-        'fuzz_hook_user_chk6',
         'fuzz_http',
         'fuzz_ioaddress',
         'fuzz_util',
@@ -132,21 +114,83 @@ if cpp.get_id() == 'clang'
             cpp_args: cpp_flags,
             dependencies: [CRYPTO_DEP, GTEST_DEP, KRB5_DEP],
             include_directories: includes,
-            link_with: [
-                d2_lib,
-                ddns_gss_tsig_lib,
-                dhcp_lease_query_lib,
-                dhcp_flex_id_lib,
-                dhcp_ddns_tuning_lib,
-                dhcp_lease_cmds_lib,
-                dhcp_radius_lib,
-                dhcp_run_script_lib,
-                dhcp_user_chk_lib,
-                dhcp4_lib,
-                dhcp6_lib,
-                kea_testutils_lib,
-                fuzz_lib,
-            ] + LIBS_BUILT_SO_FAR,
+            link_with: fuzz_libs + LIBS_BUILT_SO_FAR,
+            build_rpath: BUILD_RPATH,
+        )
+    endforeach
+    fuzz_libs = [
+        dhcp_lease_query_lib,
+        dhcp_flex_id_lib,
+        dhcp_ddns_tuning_lib,
+        dhcp_lease_cmds_lib,
+        dhcp_radius_lib,
+        dhcp_run_script_lib,
+        dhcp_user_chk_lib,
+        dhcp4_lib,
+        kea_testutils_lib,
+        fuzz_lib,
+    ]
+    fuzz_libs += maybe_ddns_gss_tsig_lib
+    foreach i : [
+        'fuzz_dhcp_parser4',
+        'fuzz_dhcp_pkt4',
+        'fuzz_dhcp_pkt_process4',
+        'fuzz_eval4',
+        'fuzz_hook_ddns_tuning4',
+        'fuzz_hook_flex_id4',
+        'fuzz_hook_lease_query4',
+        'fuzz_hook_radius4',
+        'fuzz_hook_run_script4',
+        'fuzz_hook_user_chk4',
+    ]
+        FUZZING_HARNESSES += static_library(
+            i,
+            f'@i@.cc',
+            'empty_llvm_functions.cc',
+            'helper_func.cc',
+            fuzz_sources,
+            cpp_args: cpp_flags,
+            dependencies: [CRYPTO_DEP, GTEST_DEP, KRB5_DEP],
+            include_directories: includes,
+            link_with: fuzz_libs + LIBS_BUILT_SO_FAR,
+            build_rpath: BUILD_RPATH,
+        )
+    endforeach
+    fuzz_libs = [
+        dhcp_lease_query_lib,
+        dhcp_flex_id_lib,
+        dhcp_ddns_tuning_lib,
+        dhcp_lease_cmds_lib,
+        dhcp_radius_lib,
+        dhcp_run_script_lib,
+        dhcp_user_chk_lib,
+        dhcp6_lib,
+        kea_testutils_lib,
+        fuzz_lib,
+    ]
+    fuzz_libs += maybe_ddns_gss_tsig_lib
+    foreach i : [
+        'fuzz_dhcp_parser6',
+        'fuzz_dhcp_pkt6',
+        'fuzz_dhcp_pkt_process6',
+        'fuzz_eval6',
+        'fuzz_hook_ddns_tuning6',
+        'fuzz_hook_flex_id6',
+        'fuzz_hook_lease_query6',
+        'fuzz_hook_radius6',
+        'fuzz_hook_run_script6',
+        'fuzz_hook_user_chk6',
+    ]
+        FUZZING_HARNESSES += static_library(
+            i,
+            f'@i@.cc',
+            'empty_llvm_functions.cc',
+            'helper_func.cc',
+            fuzz_sources,
+            cpp_args: cpp_flags,
+            dependencies: [CRYPTO_DEP, GTEST_DEP, KRB5_DEP],
+            include_directories: includes,
+            link_with: fuzz_libs + LIBS_BUILT_SO_FAR,
             build_rpath: BUILD_RPATH,
         )
     endforeach
