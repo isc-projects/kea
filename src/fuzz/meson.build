@@ -173,9 +173,11 @@ if cpp.get_id() == 'clang'
     if KRB5_DEP.found()
         files = ['fuzz_hook_tsig']
         maybe_pgsqlmock = []
+	maybe_pgsql_lib = []
         if POSTGRESQL_DEP.found()
             files += ['fuzz_pgsql4', 'fuzz_pgsql6']
             maybe_pgsqlmock += ['pgsqlmock.cc']
+	    maybe_pgsql_lib += [dhcp_pgsql_lib]            
         endif
         foreach i : files
             FUZZING_HARNESSES += static_library(
@@ -188,7 +190,7 @@ if cpp.get_id() == 'clang'
                 cpp_args: cpp_flags,
                 dependencies: [POSTGRESQL_DEP, CRYPTO_DEP, GTEST_DEP, KRB5_DEP],
                 include_directories: includes,
-                link_with: fuzz_libs + [dhcp_pgsql_lib] + LIBS_BUILT_SO_FAR,
+                link_with: fuzz_libs + maybe_pgsql_lib + LIBS_BUILT_SO_FAR,
                 build_rpath: BUILD_RPATH,
             )
         endforeach
