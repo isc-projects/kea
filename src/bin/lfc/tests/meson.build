@@ -12,8 +12,10 @@ kea_lfc_tests = executable(
     'kea-lfc-tests',
     'lfc_controller_unittests.cc',
     'lfc_unittests.cc',
-    cpp_args: [f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
-               f'-DTEST_SCRIPT_SH="@current_build_dir@/process_test.sh"',],
+    cpp_args: [
+        f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
+        f'-DTEST_SCRIPT_SH="@current_build_dir@/process_test.sh"',
+    ],
     dependencies: [GTEST_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [lfc_lib] + LIBS_BUILT_SO_FAR,

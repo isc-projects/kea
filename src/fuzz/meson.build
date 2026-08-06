@@ -1,4 +1,4 @@
-if not FUZZ_OPT.enabled() or not KRB5_DEP.found()
+if not FUZZ_OPT.enabled()
     subdir_done()
 endif
 
@@ -75,6 +75,21 @@ endforeach
 # As a result, they can only be compiled using clang++.
 cpp = meson.get_compiler('cpp')
 if cpp.get_id() == 'clang'
+    fuzz_libs = [
+        d2_lib,
+        ddns_gss_tsig_lib,
+        dhcp_lease_query_lib,
+        dhcp_flex_id_lib,
+        dhcp_ddns_tuning_lib,
+        dhcp_lease_cmds_lib,
+        dhcp_radius_lib,
+        dhcp_run_script_lib,
+        dhcp_user_chk_lib,
+        dhcp4_lib,
+        dhcp6_lib,
+        kea_testutils_lib,
+        fuzz_lib,
+    ]
     foreach i : [
         'fuzz_cc',
         'fuzz_crypto',
@@ -102,7 +117,6 @@ if cpp.get_id() == 'clang'
         'fuzz_hook_radius6',
         'fuzz_hook_run_script4',
         'fuzz_hook_run_script6',
-        'fuzz_hook_tsig',
         'fuzz_hook_user_chk4',
         'fuzz_hook_user_chk6',
         'fuzz_http',
@@ -151,57 +165,30 @@ if cpp.get_id() == 'clang'
                 cpp_args: cpp_flags,
                 dependencies: [MYSQL_DEP, CRYPTO_DEP, GTEST_DEP, KRB5_DEP],
                 include_directories: includes,
-                link_with: [
-                    d2_lib,
-                    ddns_gss_tsig_lib,
-                    dhcp_lease_query_lib,
-                    dhcp_flex_id_lib,
-                    dhcp_ddns_tuning_lib,
-                    dhcp_lease_cmds_lib,
-                    dhcp_mysql_lib,
-                    dhcp_radius_lib,
-                    dhcp_run_script_lib,
-                    dhcp_user_chk_lib,
-                    dhcp4_lib,
-                    dhcp6_lib,
-                    kea_testutils_lib,
-                    fuzz_lib,
-                ] + LIBS_BUILT_SO_FAR,
+                link_with: fuzz_libs + LIBS_BUILT_SO_FAR,
                 build_rpath: BUILD_RPATH,
             )
         endforeach
     endif
-    if POSTGRESQL_DEP.found()
-        foreach i : [
-            'fuzz_pgsql4',
-            'fuzz_pgsql6',
-        ]
+    if KRB5_DEP.found()
+        files = ['fuzz_hook_tsig']
+        maybe_pgsqlmock = []
+        if POSTGRESQL_DEP.found()
+            files += ['fuzz_pgsql4', 'fuzz-pgsql6']
+            maybe_pgsqlmock += ['pgsqlmock.cc']
+        endif
+        foreach i : files
             FUZZING_HARNESSES += static_library(
                 i,
                 f'@i@.cc',
                 'empty_llvm_functions.cc',
                 'helper_func.cc',
-                'pgsqlmock.cc',
+                maybe_pgsqlmock,
                 fuzz_sources,
                 cpp_args: cpp_flags,
                 dependencies: [POSTGRESQL_DEP, CRYPTO_DEP, GTEST_DEP, KRB5_DEP],
                 include_directories: includes,
-                link_with: [
-                    d2_lib,
-                    ddns_gss_tsig_lib,
-                    dhcp_lease_query_lib,
-                    dhcp_flex_id_lib,
-                    dhcp_ddns_tuning_lib,
-                    dhcp_lease_cmds_lib,
-                    dhcp_pgsql_lib,
-                    dhcp_radius_lib,
-                    dhcp_run_script_lib,
-                    dhcp_user_chk_lib,
-                    dhcp4_lib,
-                    dhcp6_lib,
-                    kea_testutils_lib,
-                    fuzz_lib,
-                ] + LIBS_BUILT_SO_FAR,
+                link_with: fuzz_libs + LIBS_BUILT_SO_FAR,
                 build_rpath: BUILD_RPATH,
             )
         endforeach
