@@ -419,7 +419,7 @@ extern "C" {
     int mysql_stmt_fetch(MYSQL_STMT* stmt) {
         auto s = SS(stmt);
 
-        if (!s || !s->has_rows){
+        if (!s || !s->has_rows) {
              return MYSQL_NO_DATA;
         }
         if (s->fetch_index >= s->rows.size()) {

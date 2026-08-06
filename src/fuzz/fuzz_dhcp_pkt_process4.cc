@@ -178,7 +178,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
     // Call process functions after the accept and check
     try {
-        srv->processDhcp4Query(pkt, fdp->ConsumeBool());
+        srv->processDhcp4Query(pkt, fdp.ConsumeBool());
     } catch (const isc::Exception& e) {
         // Silent exceptions
     } catch (const std::exception&) {

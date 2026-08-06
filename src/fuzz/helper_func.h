@@ -6,11 +6,12 @@
 //
 // Developed by AdaLogics under contract to ISC.
 
-#ifndef HELPER_FUNC_H
-#define HELPER_FUNC_H
+#ifndef KEA_FUZZ_HELPER_FUNC_H
+#define KEA_FUZZ_HELPER_FUNC_H
+
+#include <cc/data.h>
 
 #include <string>
-#include <cc/data.h>
 
 static const std::string JSON_CONFIG4 = R"CONFIG(
     {
@@ -88,4 +89,4 @@ namespace fuzz {
     isc::data::ElementPtr parseJSON(const std::string& s);
 }
 
-#endif // HELPER_FUNC_H
+#endif  // KEA_FUZZ_HELPER_FUNC_H
