@@ -174,7 +174,7 @@ if cpp.get_id() == 'clang'
         files = ['fuzz_hook_tsig']
         maybe_pgsqlmock = []
         if POSTGRESQL_DEP.found()
-            files += ['fuzz_pgsql4', 'fuzz-pgsql6']
+            files += ['fuzz_pgsql4', 'fuzz_pgsql6']
             maybe_pgsqlmock += ['pgsqlmock.cc']
         endif
         foreach i : files
