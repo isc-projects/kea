@@ -398,27 +398,24 @@ TEST_F(PathCheckerTest, validatePathEnforcePath) {
         __LINE__,
         "..",
         "",
-        string("invalid path specified: '..', supported path is '" +
-               def_path + "'"),
-        true
+        "path: '..' has no filename",
+        false
     },
     {
         // Bare "." refers to the supported directory itself.
         __LINE__,
         ".",
         "",
-        string("invalid path specified: '.', supported path is '" +
-               def_path + "'"),
-        true
+        "path: '.' has no filename",
+        false
     },
     {
         // Supported path plus ".." also escapes despite matching parent.
         __LINE__,
         def_path + "/..",
         "",
-        string("invalid path specified: '..', supported path is '" +
-               def_path + "'"),
-        true
+        string("path: '" + def_path + "/..' has no filename"),
+        false
     }
     };
 

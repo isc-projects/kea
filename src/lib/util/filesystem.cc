@@ -293,26 +293,8 @@ PathChecker::validatePath(const std::string input_path_str,
                           bool enforce_path /* = PathChecker::shouldEnforceSecurity() */) const {
     Path input_path(trim(input_path_str));
     auto filename = input_path.filename();
-    if (filename.empty()) {
+    if (filename.empty() || (filename == ".") || (filename == "..")) {
         isc_throw(BadValue, "path: '" << input_path.str() << "' has no filename");
-    }
-
-    // A bare "." or ".." has an empty parent directory, so the check below would
-    // otherwise accept it and append it to the supported path. For "..", that
-    // resolves outside the supported directory (e.g. /var/lib/kea/..). The same
-    // escape also occurs for "<supported-path>/..", whose parent matches.
-    if ((filename == ".") || (filename == "..")) {
-        std::ostringstream oss;
-        oss << "invalid path specified: '"
-            << filename
-            << "', supported path is '"
-            << path_ << "'";
-
-        if (enforce_path) {
-            isc_throw(SecurityError, oss.str());
-        } else {
-            isc_throw(SecurityWarn, oss.str());
-        }
     }
 
     auto parent_path = input_path.parentPath();

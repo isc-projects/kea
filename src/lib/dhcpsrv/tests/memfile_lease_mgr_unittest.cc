@@ -567,13 +567,25 @@ TEST_F(MemfileLeaseMgrTest, defaultDataDir) {
     ASSERT_THROW_MSG(lease_mgr.reset(new Memfile_LeaseMgr(pmap)),
                      file::SecurityError, os.str());
 
-    // Bare ".." must not resolve outside the data directory.
-    pmap["name"] = "..";
-    std::ostringstream os2;
-    os2 << "invalid path specified: '..', supported path is '"
-        << CfgMgr::instance().getDataDir() << "'";
+    // Blank value should be rejected.
+    pmap["name"] = "   ";
     ASSERT_THROW_MSG(lease_mgr.reset(new Memfile_LeaseMgr(pmap)),
-                     file::SecurityError, os2.str());
+                     BadValue, "path: '' has no filename");
+
+    // Empty value should be rejected.
+    pmap["name"] = "";
+    ASSERT_THROW_MSG(lease_mgr.reset(new Memfile_LeaseMgr(pmap)),
+                     BadValue, "path: '' has no filename");
+
+    // Bare "." should be rejected.
+    pmap["name"] = ".";
+    ASSERT_THROW_MSG(lease_mgr.reset(new Memfile_LeaseMgr(pmap)),
+                     BadValue, "path: '.' has no filename");
+
+    // Bare ".." should be rejected.
+    pmap["name"] = "..";
+    ASSERT_THROW_MSG(lease_mgr.reset(new Memfile_LeaseMgr(pmap)),
+                     BadValue, "path: '..' has no filename");
 }
 
 /// @brief Verifies that the supported path may be overridden with
