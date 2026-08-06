@@ -152,6 +152,7 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
     EXPECT_EQ(HAConfig::PeerConfig::PRIMARY, cfg->getRole());
     EXPECT_FALSE(cfg->isAutoFailover());
     EXPECT_FALSE(cfg->getBasicAuth());
+    EXPECT_FALSE(cfg->getBasicAuthConfig());
 
     cfg = impl->getConfig()->getPeerConfig("server2");
     ASSERT_TRUE(cfg);
@@ -161,6 +162,7 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
     EXPECT_EQ(HAConfig::PeerConfig::SECONDARY, cfg->getRole());
     EXPECT_TRUE(cfg->isAutoFailover());
     EXPECT_FALSE(cfg->getBasicAuth());
+    EXPECT_FALSE(cfg->getBasicAuthConfig());
 
     cfg = impl->getConfig()->getPeerConfig("server3");
     ASSERT_TRUE(cfg);
@@ -171,6 +173,13 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
     EXPECT_FALSE(cfg->isAutoFailover());
     ASSERT_TRUE(cfg->getBasicAuth());
     EXPECT_EQ("foo:bar", cfg->getBasicAuth()->getSecret());
+    ASSERT_TRUE(cfg->getBasicAuthConfig());
+    auto const& auth_list = cfg->getBasicAuthConfig()->getClientList();
+    ASSERT_EQ(1U, auth_list.size());
+    EXPECT_EQ("foo", auth_list.front().getUser());
+    EXPECT_EQ("", auth_list.front().getUserFile());
+    EXPECT_EQ("bar", auth_list.front().getPassword());
+    EXPECT_EQ("", auth_list.front().getPasswordFile());
 
     // Verify that per-state configuration is correct.
 
@@ -278,6 +287,13 @@ TEST_F(HAConfigTest, configureHotStandby) {
     EXPECT_FALSE(cfg->isAutoFailover());
     ASSERT_TRUE(cfg->getBasicAuth());
     EXPECT_EQ("admin:", cfg->getBasicAuth()->getSecret());
+    ASSERT_TRUE(cfg->getBasicAuthConfig());
+    auto const& auth_list = cfg->getBasicAuthConfig()->getClientList();
+    ASSERT_EQ(1U, auth_list.size());
+    EXPECT_EQ("admin", auth_list.front().getUser());
+    EXPECT_EQ("", auth_list.front().getUserFile());
+    EXPECT_EQ("", auth_list.front().getPassword());
+    EXPECT_EQ("", auth_list.front().getPasswordFile());
 
     cfg = impl->getConfig()->getPeerConfig("server2");
     ASSERT_TRUE(cfg);
@@ -286,6 +302,7 @@ TEST_F(HAConfigTest, configureHotStandby) {
     EXPECT_EQ(HAConfig::PeerConfig::STANDBY, cfg->getRole());
     EXPECT_TRUE(cfg->isAutoFailover());
     EXPECT_FALSE(cfg->getBasicAuth());
+    EXPECT_FALSE(cfg->getBasicAuthConfig());
 
     cfg = impl->getConfig()->getPeerConfig("server3");
     ASSERT_TRUE(cfg);
@@ -294,6 +311,7 @@ TEST_F(HAConfigTest, configureHotStandby) {
     EXPECT_EQ(HAConfig::PeerConfig::BACKUP, cfg->getRole());
     EXPECT_FALSE(cfg->isAutoFailover());
     EXPECT_FALSE(cfg->getBasicAuth());
+    EXPECT_FALSE(cfg->getBasicAuthConfig());
 
     HAConfig::StateConfigPtr state_cfg;
     ASSERT_NO_THROW(state_cfg = impl->getConfig()->getStateMachineConfig()->
@@ -384,6 +402,7 @@ TEST_F(HAConfigTest, configurePassiveBackup) {
     EXPECT_EQ("http://127.0.0.1:8080/", cfg->getUrl().toText());
     EXPECT_EQ(HAConfig::PeerConfig::PRIMARY, cfg->getRole());
     EXPECT_FALSE(cfg->getBasicAuth());
+    EXPECT_FALSE(cfg->getBasicAuthConfig());
 
     cfg = impl->getConfig()->getPeerConfig("server2");
     ASSERT_TRUE(cfg);
@@ -391,6 +410,7 @@ TEST_F(HAConfigTest, configurePassiveBackup) {
     EXPECT_EQ("http://127.0.0.1:8081/", cfg->getUrl().toText());
     EXPECT_EQ(HAConfig::PeerConfig::BACKUP, cfg->getRole());
     EXPECT_FALSE(cfg->getBasicAuth());
+    EXPECT_FALSE(cfg->getBasicAuthConfig());
 
     cfg = impl->getConfig()->getPeerConfig("server3");
     ASSERT_TRUE(cfg);
@@ -399,6 +419,10 @@ TEST_F(HAConfigTest, configurePassiveBackup) {
     EXPECT_EQ(HAConfig::PeerConfig::BACKUP, cfg->getRole());
     ASSERT_TRUE(cfg->getBasicAuth());
     EXPECT_EQ("a2VhdGVzdDpLZWFUZXN0", cfg->getBasicAuth()->getCredential());
+    ASSERT_TRUE(cfg->getBasicAuthConfig());
+    auto const& auth_map = cfg->getBasicAuthConfig()->getCredentialMap();
+    ASSERT_EQ(1U, auth_map.size());
+    EXPECT_EQ("a2VhdGVzdDpLZWFUZXN0", auth_map.cbegin()->first);
 
     // Verify multi-threading default values. Default is 0 for the listener and client threads, but
     // after MT is applied, HAImpl resolves them to the auto-detected values.
