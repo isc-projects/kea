@@ -981,9 +981,10 @@ public:
     /// @brief Get the i-th element in the map.
     ///
     /// Useful when required to iterate with an index.
+    /// Returns a string holding the key.
     ///
     /// @param i the position of the element you want to return
-    /// @return the element at position i
+    /// @return the key element at position i
     ConstElementPtr get(int const i) const override {
         auto it(m.begin());
         std::advance(it, i);

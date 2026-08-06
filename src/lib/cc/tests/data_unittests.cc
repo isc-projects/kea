@@ -873,6 +873,31 @@ TEST(Element, mapElementRemoveOutOfRange) {
     EXPECT_FALSE(el->get("a"));
 }
 
+// Verifies that MapElement::get(int) returns the key at the index.
+TEST(Element, mapElementGetByIndex) {
+    ElementPtr el = Element::fromJSON(R"({"alpha": 1, "beta": 2})");
+    ASSERT_EQ(2, static_cast<int>(el->size()));
+
+    // Ordered map: index 0 is key "alpha", index 1 is key "beta".
+    ConstElementPtr g0 = el->get(0);
+    ASSERT_TRUE(g0);
+    EXPECT_EQ(Element::string, g0->getType());
+    EXPECT_EQ("alpha", g0->stringValue());
+
+    ConstElementPtr g1 = el->get(1);
+    ASSERT_TRUE(g1);
+    EXPECT_EQ(Element::string, g1->getType());
+    EXPECT_EQ("beta", g1->stringValue());
+
+    // Mixed value types: string then nested map.
+    el = Element::fromJSON(R"({"name": "foo", "value2": {"number": 42}})");
+    ASSERT_EQ(2, static_cast<int>(el->size()));
+    EXPECT_EQ(Element::string, el->get(0)->getType());
+    EXPECT_EQ("name", el->get(0)->stringValue());
+    EXPECT_EQ(Element::string, el->get(1)->getType());
+    EXPECT_EQ("value2", el->get(1)->stringValue());
+}
+
 TEST(Element, toAndFromWire) {
     // Wire format is now plain JSON.
     EXPECT_EQ("1", Element::create(1)->toWire());
