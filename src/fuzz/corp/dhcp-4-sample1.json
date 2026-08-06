@@ -9,10 +9,10 @@
         "interfaces": [ "enp0s8" ]
     },
 
-    "control-socket": {
+    "control-sockets": [ {
         "socket-type": "unix",
         "socket-name": "kea4-ctrl-socket"
-    },
+    } ],
 
     "lease-database": {
         "type": "memfile"
