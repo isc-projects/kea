@@ -234,15 +234,7 @@ public:
                                   const long idle_timeout)
         : HttpConnection(io_service, acceptor, tls_context, connection_pool,
                          response_creator, callback, request_timeout,
-                         idle_timeout) {
-    }
-
-    /// @brief Resets static instrumentation state used by tests.
-    static void resetTestState() {
-        injected_ = false;
-        output_size_before_ = 0;
-        output_size_after_ = 0;
-        do_write_during_inject_ = 0;
+                         idle_timeout), injecting_(false) {
     }
 
     /// @brief Callback invoked when data is sent over the socket.
@@ -260,7 +252,7 @@ public:
         if (!injected_) {
             injected_ = true;
             output_size_before_ = transaction->getOutputBufSize();
-            ASSERT_GT(output_size_before_, size_t(0));
+            ASSERT_GT(output_size_before_, 0U);
             injecting_ = true;
             HttpConnection::socketWriteCallback(transaction,
                 boost::asio::error::connection_reset, 1);
@@ -279,17 +271,40 @@ public:
         if (injecting_) {
             ++do_write_during_inject_;
         }
+        if (injected_) {
+            ++do_write_after_inject_;
+        }
         HttpConnection::doWrite(transaction);
     }
 
-    static inline bool injected_ = false;
-    static inline size_t output_size_before_ = 0;
-    static inline size_t output_size_after_ = 0;
-    static inline size_t do_write_during_inject_ = 0;
+    /// @brief Resets static instrumentation state used by tests.
+    static void resetTestState() {
+        injected_ = false;
+        output_size_before_ = 0;
+        output_size_after_ = 0;
+        do_write_during_inject_ = 0;
+        do_write_after_inject_ = 0;
+    }
+
+    /// @brief Flag which indicates if the error has been triggered.
+    static bool injected_;
+
+    /// @brief The output buffer size before error.
+    static size_t output_size_before_;
+
+    /// @brief The output buffer size after error.
+    static size_t output_size_after_;
+
+    /// @brief The number of calls to @ref doWrite while injecting error.
+    static size_t do_write_during_inject_;
+
+    /// @brief The number of calls to @ref doWrite after error.
+    static size_t do_write_after_inject_;
 
 private:
 
-    bool injecting_ = false;
+    /// @brief Flag which indicates if the error is being triggered.
+    bool injecting_;
 };
 
 /// @brief Connection that injects @c would_block on the first write once.
@@ -323,15 +338,7 @@ public:
                                   const long idle_timeout)
         : HttpConnection(io_service, acceptor, tls_context, connection_pool,
                          response_creator, callback, request_timeout,
-                         idle_timeout) {
-    }
-
-    /// @brief Resets static instrumentation state used by tests.
-    static void resetTestState() {
-        injected_ = false;
-        output_size_before_ = 0;
-        output_size_after_ = 0;
-        do_write_during_inject_ = 0;
+                         idle_timeout), injecting_(false) {
     }
 
     /// @brief Callback invoked when data is sent over the socket.
@@ -377,17 +384,40 @@ public:
         if (injecting_) {
             ++do_write_during_inject_;
         }
+        if (injected_) {
+            ++do_write_after_inject_;
+        }
         HttpConnection::doWrite(transaction);
     }
 
-    static inline bool injected_ = false;
-    static inline size_t output_size_before_ = 0;
-    static inline size_t output_size_after_ = 0;
-    static inline size_t do_write_during_inject_ = 0;
+    /// @brief Resets static instrumentation state used by tests.
+    static void resetTestState() {
+        injected_ = false;
+        output_size_before_ = 0;
+        output_size_after_ = 0;
+        do_write_during_inject_ = 0;
+        do_write_after_inject_ = 0;
+    }
+
+    /// @brief Flag which indicates if the error has been triggered.
+    static bool injected_;
+
+    /// @brief The output buffer size before error.
+    static size_t output_size_before_;
+
+    /// @brief The output buffer size after error.
+    static size_t output_size_after_;
+
+    /// @brief The number of calls to @ref doWrite while injecting error.
+    static size_t do_write_during_inject_;
+
+    /// @brief The number of calls to @ref doWrite after error.
+    static size_t do_write_after_inject_;
 
 private:
 
-    bool injecting_ = false;
+    /// @brief Flag which indicates if the error is being triggered.
+    bool injecting_;
 };
 
 /// @brief Pointer to the TestHttp[s]Client.
@@ -588,6 +618,7 @@ public:
         EXPECT_EQ(HttpConnectionWriteFatalError::output_size_before_,
                   HttpConnectionWriteFatalError::output_size_after_);
         EXPECT_EQ(0U, HttpConnectionWriteFatalError::do_write_during_inject_);
+        EXPECT_EQ(0U, HttpConnectionWriteFatalError::do_write_after_inject_);
 
         ASSERT_EQ(1U, clients_.size());
         auto client = *clients_.begin();
@@ -619,6 +650,7 @@ public:
         EXPECT_EQ(HttpConnectionWriteWouldBlock::output_size_before_,
                   HttpConnectionWriteWouldBlock::output_size_after_);
         EXPECT_EQ(1U, HttpConnectionWriteWouldBlock::do_write_during_inject_);
+        EXPECT_EQ(1U, HttpConnectionWriteWouldBlock::do_write_after_inject_);
 
         ASSERT_EQ(1U, clients_.size());
         auto client = *clients_.begin();

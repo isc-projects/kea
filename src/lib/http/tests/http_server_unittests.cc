@@ -46,6 +46,18 @@ namespace ph = std::placeholders;
 
 #include <http/tests/http_server_test.h>
 
+bool HttpConnectionWriteFatalError::injected_ = false;
+size_t HttpConnectionWriteFatalError::output_size_before_ = 0;
+size_t HttpConnectionWriteFatalError::output_size_after_ = 0;
+size_t HttpConnectionWriteFatalError::do_write_during_inject_ = 0;
+size_t HttpConnectionWriteFatalError::do_write_after_inject_ = 0;
+
+bool HttpConnectionWriteWouldBlock::injected_ = false;
+size_t HttpConnectionWriteWouldBlock::output_size_before_ = 0;
+size_t HttpConnectionWriteWouldBlock::output_size_after_ = 0;
+size_t HttpConnectionWriteWouldBlock::do_write_during_inject_ = 0;
+size_t HttpConnectionWriteWouldBlock::do_write_after_inject_ = 0;
+
 namespace {
 
 /// @brief Test fixture class for @ref HttpListener.

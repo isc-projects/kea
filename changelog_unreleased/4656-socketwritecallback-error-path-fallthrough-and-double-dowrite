@@ -1,4 +1,4 @@
-[bug]		wlodek
+[bug]		wlodek, razvan
 	HttpConnection::socketWriteCallback now returns after fatal
 	write errors and treats EAGAIN/EWOULDBLOCK like the HTTP
 	client send path, avoiding fallthrough and duplicate doWrite.

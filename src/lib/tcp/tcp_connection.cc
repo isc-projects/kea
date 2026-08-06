@@ -437,7 +437,7 @@ TcpConnection::postData(TcpRequestPtr request, WireData& input_data) {
 
 void
 TcpConnection::socketWriteCallback(TcpResponsePtr response,
-                                    boost::system::error_code ec, size_t length) {
+                                   boost::system::error_code ec, size_t length) {
     if (ec) {
         // IO service has been stopped and the connection is probably
         // going to be shutting down.
