@@ -1,4 +1,4 @@
-if not FUZZ_OPT.enabled() or not KRB5_DEP.found()
+if not FUZZ_OPT.enabled() or not KRB5_DEP.found() or SYSTEM != 'linux'
     subdir_done()
 endif
 
