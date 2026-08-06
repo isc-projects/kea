@@ -9,23 +9,20 @@
 #include <cc/data.h>
 #include <util/bigints.h>
 
-#include <cstring>
 #include <cassert>
-#include <climits>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstring>
+#include <fstream>
+#include <iostream>
 #include <list>
 #include <map>
-#include <cstdio>
-#include <iostream>
-#include <iomanip>
 #include <set>
-#include <string>
 #include <sstream>
-#include <fstream>
-#include <cerrno>
+#include <string>
 
 #include <boost/lexical_cast.hpp>
-
-#include <cmath>
 
 using namespace std;
 
@@ -276,7 +273,9 @@ bool operator!=(const Element& a, const Element& b) {
 bool
 operator<(Element const& a, Element const& b) {
     if (a.getType() != b.getType()) {
-        isc_throw(BadValue, "cannot compare Elements of different types");
+        isc_throw(BadValue, "cannot compare Elements of different types: "
+                                << Element::typeToName(a.getType()) << " and "
+                                << Element::typeToName(b.getType()));
     }
     switch (a.getType()) {
     case Element::integer:
@@ -287,8 +286,10 @@ operator<(Element const& a, Element const& b) {
         return b.boolValue() || !a.boolValue();
     case Element::string:
         return std::strcmp(a.stringValue().c_str(), b.stringValue().c_str()) < 0;
+    case Element::bigint:
+        return a.intValue() < b.intValue();
     default:
-        isc_throw(BadValue, "cannot compare Elements of type " << to_string(a.getType()));
+        isc_throw(BadValue, "cannot compare Elements of type " << Element::typeToName(a.getType()));
     }
 }
 
@@ -1525,7 +1526,7 @@ copy(ConstElementPtr from, unsigned level) {
     }
 
     auto pos = from->getPosition();
-    int from_type = from->getType();
+    Element::types from_type = from->getType();
     if (from_type == Element::integer) {
         return (ElementPtr(new IntElement(from->intValue(), pos)));
     } else if (from_type == Element::bigint) {
@@ -1561,7 +1562,7 @@ copy(ConstElementPtr from, unsigned level) {
         }
         return (result);
     } else {
-        isc_throw(BadValue, "copy got an element of type: " << from_type);
+        isc_throw(BadValue, "copy got an element of type: " << Element::typeToName(from_type));
     }
 }
 
@@ -1672,7 +1673,7 @@ prettyPrint0(ConstElementPtr element, std::ostream& out,
         if (!element->get(0)) {
             isc_throw(BadValue, "prettyPrint got a null pointer");
         }
-        int first_type = element->get(0)->getType();
+        Element::types first_type = element->get(0)->getType();
         bool complex = false;
         if ((first_type == Element::list) || (first_type == Element::map)) {
             complex = true;

@@ -1,3 +1,0 @@
-[bug]		wlodek
-	Fixed data::copy() to handle Element::bigint values.
-	(Gitlab #4639)
