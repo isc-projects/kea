@@ -24,12 +24,12 @@ Primary developers:
                    GSS-TSIG, bulk leasequery)
  - Razvan Becheriu (cassandra, netconf, multi-threading, forensic logging,
                     run script hook, multi-threading mode of high availability,
-                    GSS-TSIG, statistics)
+                    GSS-TSIG, statistics, fuzzing)
  - Vicky Risk (documentation)
  - Suzanne Goldlust (documentation)
  - Andrei Pavel (build system, documentation, hammer, netconf, perfdhcp,
                  radius, release engineering, shell scripts, testing, limits,
-                 statistics)
+                 statistics, fuzzing)
  - Peter Davies (documentation)
  - Slawek Figiel (documentation, host reservations, perfdhcp)
  - Marcin Godzina (documentation, release engineering, testing)
@@ -330,5 +330,8 @@ We have received the following contributions:
  - sanua356
    2026-06: Contributed a patch that updates ARM documentation about internal
             option type.
+
+- Ada Logics
+  2026: Added more fuzz harnesses and support for oss-fuzz.
 
 
