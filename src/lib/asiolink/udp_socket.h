@@ -94,6 +94,9 @@ public:
     /// data asynchronously to the remote endpoint.  The callback will be called
     /// on completion.
     ///
+    /// @note: this uses a boost asio buffer which does not own the data
+    /// so it is the responsibility of the caller to keep the data valid.
+    ///
     /// \param data Data to send
     /// \param length Length of data to send
     /// \param endpoint Target of the send
