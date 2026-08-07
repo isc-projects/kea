@@ -310,7 +310,7 @@ private:
 /// @brief Connection that injects @c would_block on the first write once.
 ///
 /// Records whether the output buffer was consumed and how many @c doWrite()
-/// calls were scheduled while handling the injected retryable error.
+/// calls were scheduled while handling the injected error.
 class HttpConnectionWriteWouldBlock : public HttpConnection {
 public:
 
