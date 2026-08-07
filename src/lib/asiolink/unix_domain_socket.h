@@ -78,6 +78,9 @@ public:
     ///
     /// Always returns immediately.
     ///
+    /// @note: this uses a boost asio buffer which does not own the data
+    /// so it is the responsibility of the caller to keep the data valid.
+    ///
     /// @param data Pointer to data to be sent.
     /// @param length Number of bytes to be sent.
     /// @param handler Callback to be invoked when data have been sent or
