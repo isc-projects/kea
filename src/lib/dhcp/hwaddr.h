@@ -143,6 +143,18 @@ public:
     static HWAddr fromText(const std::string& text,
                            const uint16_t htype = HTYPE_ETHER);
 
+    /// @brief Comapres two hardware addresses for equality
+    ///
+    /// @note: the hardware type is now informative only so operators
+    /// below do not include it. When previous behavior is needed use
+    /// this method.
+    ///
+    /// @param other HWAddr object to be compared.
+    /// @param include_htype Boolean value which controls whether the hardware
+    /// type is included in the comparison (true), or not (false).
+    /// @return True if the two hardware addresses are equal, false otherwise.
+    bool equals(const HWAddr& other, bool include_htype = true) const;
+
     /// @brief Compares two hardware addresses for equality
     bool operator==(const HWAddr& other) const;
 

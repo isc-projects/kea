@@ -65,13 +65,22 @@ HWAddr::fromText(const std::string& text, const uint16_t htype) {
     return (HWAddr(binary, htype));
 }
 
+bool HWAddr::equals(const HWAddr& other, bool include_htype) const {
+    if (this->hwaddr_ != other.hwaddr_) {
+        return (false);
+    }
+    if (!include_htype || (this->htype_ == other.htype_)) {
+        return (true);
+    }
+    return (false);
+}
+
 bool HWAddr::operator==(const HWAddr& other) const {
-    return ((this->htype_  == other.htype_) &&
-            (this->hwaddr_ == other.hwaddr_));
+    return (equals(other, false));
 }
 
 bool HWAddr::operator!=(const HWAddr& other) const {
-    return !(*this == other);
+    return (!equals(other, false));
 }
 
 }  // end of isc::dhcp namespace
