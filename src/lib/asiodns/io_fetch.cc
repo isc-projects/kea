@@ -317,16 +317,16 @@ IOFetch::stop(Result result) {
         // TODO: Update testing of stopped_ if threads are used.
         data_->stopped = true;
         switch (result) {
-            case TIME_OUT:
-                LOG_DEBUG(logger, DBG_COMMON, ASIODNS_READ_TIMEOUT).
-                    arg(data_->remote_snd->getAddress().toText()).
-                    arg(data_->remote_snd->getPort());
-                break;
-
             case SUCCESS:
                 LOG_DEBUG(logger, DBG_VERBOSE, ASIODNS_FETCH_COMPLETED).
                     arg(data_->remote_rcv->getAddress().toText()).
                     arg(data_->remote_rcv->getPort());
+                break;
+
+            case TIME_OUT:
+                LOG_DEBUG(logger, DBG_COMMON, ASIODNS_READ_TIMEOUT).
+                    arg(data_->remote_snd->getAddress().toText()).
+                    arg(data_->remote_snd->getPort());
                 break;
 
             case STOPPED:
