@@ -1317,7 +1317,8 @@ mergeDiffAdd(ElementPtr& element, ElementPtr& other,
             // hierarchy.
             if (hierarchy.size() <= idx) {
                 isc_throw(OutOfRange, "Attempt at accessing index "
-                                          << idx << " in hierarchy of size " << hierarchy.size());
+                          << idx << " in hierarchy of size "
+                          << hierarchy.size());
             }
             auto f = hierarchy[idx].find(key);
             if (f != hierarchy[idx].end()) {
@@ -1388,9 +1389,9 @@ mergeDiffDel(ElementPtr& element, ElementPtr& other,
                 // Check if we have any description of the key in the
                 // configuration hierarchy.
                 if (hierarchy.size() <= idx) {
-                    isc_throw(OutOfRange, "Attempt at accessing index " << idx
-                                                                        << " in hierarchy of size "
-                                                                        << hierarchy.size());
+                    isc_throw(OutOfRange, "Attempt at accessing index "
+                              << idx << " in hierarchy of size "
+                              << hierarchy.size());
                 }
                 auto f = hierarchy[idx].find(key);
                 if (f != hierarchy[idx].end()) {
@@ -1447,8 +1448,8 @@ mergeDiffDel(ElementPtr& element, ElementPtr& other,
                         // configuration hierarchy.
                         if (hierarchy.size() <= idx) {
                             isc_throw(OutOfRange, "Attempt at accessing index "
-                                                      << idx << " in hierarchy of size "
-                                                      << hierarchy.size());
+                                      << idx << " in hierarchy of size "
+                                      << hierarchy.size());
                         }
                         auto f = hierarchy[idx].find(key);
                         if (f != hierarchy[idx].end()) {
@@ -1494,7 +1495,8 @@ extend(const std::string& container, const std::string& extension,
             // hierarchy.
             if (hierarchy.size() <= idx) {
                 isc_throw(OutOfRange, "Attempt at accessing index "
-                                          << idx << " in hierarchy of size " << hierarchy.size());
+                          << idx << " in hierarchy of size "
+                          << hierarchy.size());
             }
             auto f = hierarchy[idx].find(key);
             if (f != hierarchy[idx].end()) {
