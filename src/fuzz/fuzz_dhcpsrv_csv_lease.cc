@@ -21,7 +21,7 @@ using namespace isc::dhcp;
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
     char filename[256];
-    snprintf(filename, 256, "/tmp/libfuzzer.%d", getpid());
+    snprintf(filename, sizeof(filename), "/tmp/libfuzzer.%d", getpid());
 
     FILE *fp = fopen(filename, "wb");
     if (!fp)
