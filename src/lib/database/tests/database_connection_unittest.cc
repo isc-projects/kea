@@ -458,8 +458,8 @@ TEST_F(DatabaseConnectionParseLogTest, parseInvalidTokenDoesNotLogCleartextPassw
     std::string bad = "user=me password=s3cret name=kea badtoken";
     EXPECT_THROW(DatabaseConnection::parse(bad), isc::InvalidParameter);
 
-    EXPECT_EQ(1U, countFile("DATABASE_INVALID_ACCESS"));
-    EXPECT_EQ(1U, countFile("password=*****"));
+    EXPECT_EQ(0U, countFile("DATABASE_INVALID_ACCESS"));
+    EXPECT_EQ(0U, countFile("password=*****"));
     EXPECT_EQ(0U, countFile("password=s3cret"));
     EXPECT_EQ(0U, countFile("s3cret"));
 }

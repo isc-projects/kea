@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -228,6 +228,12 @@ public:
     /// @param dbaccess the database access string
     /// @return a pointer to configuration
     static isc::data::ElementPtr toElementDbAccessString(const std::string& dbaccess);
+
+    /// @brief Split a database access string into a parameter map.
+    ///
+    /// @param [in] dbaccess the input database access string
+    /// @param [out] mapped_tokens the output parameter map
+    static void splitDbAccessString(const std::string& dbaccess, ParameterMap& mapped_tokens);
 
     /// @brief Sets IO service to be used by the database backends.
     ///
