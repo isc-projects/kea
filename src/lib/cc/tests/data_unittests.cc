@@ -11,9 +11,9 @@
 #include <boost/pointer_cast.hpp>
 #include <boost/assign/std/vector.hpp>
 
-#include <climits>
-
+#include <exceptions/exceptions.h>
 #include <cc/data.h>
+#include <testutils/gtest_utils.h>
 #include <util/unittests/check_valgrind.h>
 #include <util/bigints.h>
 
@@ -2110,52 +2110,37 @@ TEST(Element, hierarchyIndexBounds) {
         SCOPED_TRACE("mergeDiffAdd empty hierarchy list");
         // Reproduces Gitlab #4640: empty hierarchy used to crash on list merge.
         isc::data::HierarchyDescriptor hierarchy;
-        ElementPtr left = Element::fromJSON("[{\"id\":1}]");
-        ElementPtr right = Element::fromJSON("[{\"id\":2}]");
-        ASSERT_NO_THROW(mergeDiffAdd(left, right, hierarchy, "pools"));
-        ElementPtr expected = Element::fromJSON("[{\"id\":1},{\"id\":2}]");
-        EXPECT_TRUE(isc::data::isEquivalent(left, expected))
-            << "Actual: " << left->str()
-            << "\nExpected: " << expected->str();
+        ElementPtr left = Element::fromJSON("[{\"id\": 1}]");
+        ElementPtr right = Element::fromJSON("[{\"id\": 2}]");
+        EXPECT_THROW_MSG(mergeDiffAdd(left, right, hierarchy, "pools"), isc::OutOfRange,
+                         "Attempt at accessing index 0 in hierarchy of size 0");
     }
     {
         SCOPED_TRACE("mergeDiffDel empty hierarchy list");
         isc::data::HierarchyDescriptor hierarchy;
-        ElementPtr left = Element::fromJSON("[{\"id\":1},{\"id\":2}]");
-        ElementPtr right = Element::fromJSON("[{\"id\":2}]");
-        ASSERT_NO_THROW(mergeDiffDel(left, right, hierarchy, "pools"));
-        ElementPtr expected = Element::fromJSON("[{\"id\":1}]");
-        EXPECT_TRUE(isc::data::isEquivalent(left, expected))
-            << "Actual: " << left->str()
-            << "\nExpected: " << expected->str();
+        ElementPtr left = Element::fromJSON("[{\"id\": 1},{\"id\": 2}]");
+        ElementPtr right = Element::fromJSON("[{\"id\": 2}]");
+        EXPECT_THROW_MSG(mergeDiffDel(left, right, hierarchy, "pools"), isc::OutOfRange,
+                         "Attempt at accessing index 0 in hierarchy of size 0");
     }
     {
         SCOPED_TRACE("extend empty hierarchy list");
         isc::data::HierarchyDescriptor hierarchy;
-        ElementPtr left = Element::fromJSON("[{\"id\":1,\"name\":\"a\"}]");
-        ElementPtr right = Element::fromJSON("[{\"id\":1,\"name\":\"b\"}]");
+        ElementPtr left = Element::fromJSON("[{\"id\": 1, \"name\": \"a\"}]");
+        ElementPtr right = Element::fromJSON("[{\"id\": 1, \"name\": \"b\"}]");
         ElementPtr expected = copy(left);
-        ASSERT_NO_THROW(extend("pools", "name", left, right, hierarchy,
-                               "pools"));
-        EXPECT_TRUE(isc::data::isEquivalent(left, expected))
-            << "Actual: " << left->str()
-            << "\nExpected: " << expected->str();
+        EXPECT_THROW_MSG(extend("pools", "name", left, right, hierarchy, "pools"), isc::OutOfRange,
+                         "Attempt at accessing index 0 in hierarchy of size 0");
     }
     {
         SCOPED_TRACE("mergeDiffAdd shallow hierarchy nested list");
         // hierarchy size 1; nested list is processed at idx 1 (out of range).
         isc::data::HierarchyDescriptor hierarchy = createHierarchy();
         hierarchy.resize(1);
-        ElementPtr left = Element::fromJSON(
-            "{\"items\":[{\"id\":1,\"v\":\"a\"}]}");
-        ElementPtr right = Element::fromJSON(
-            "{\"items\":[{\"id\":2,\"v\":\"b\"}]}");
-        ASSERT_NO_THROW(mergeDiffAdd(left, right, hierarchy, "root"));
-        ElementPtr expected = Element::fromJSON(
-            "{\"items\":[{\"id\":1,\"v\":\"a\"},{\"id\":2,\"v\":\"b\"}]}");
-        EXPECT_TRUE(isc::data::isEquivalent(left, expected))
-            << "Actual: " << left->str()
-            << "\nExpected: " << expected->str();
+        ElementPtr left = Element::fromJSON("{\"items\":[{\"id\": 1, \"v\": \"a\"}]}");
+        ElementPtr right = Element::fromJSON("{\"items\":[{\"id\": 2, \"v\": \"b\"}]}");
+        EXPECT_THROW_MSG(mergeDiffAdd(left, right, hierarchy, "root"), isc::OutOfRange,
+                         "Attempt at accessing index 1 in hierarchy of size 1");
     }
 }
 
