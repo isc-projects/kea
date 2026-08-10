@@ -338,7 +338,7 @@ protected:
     /// the result of DHCP4o6 subnet selected.
     ///
     /// @param command (parameter ignored)
-    /// @param args arguments map { selector>: value }
+    /// @param args arguments map { selector: value }
     ///
     /// @return status of the command with the selection result
     isc::data::ConstElementPtr
