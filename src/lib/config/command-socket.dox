@@ -116,7 +116,7 @@ int main(int argc, const char* argv[]) {
 
     // Send a command to list all available commands.
     char buf[1024];
-    sprintf(buf, "{ \"command\": \"list-commands\" }");
+    snprintf(buf, sizeof(buf), "{ \"command\": \"list-commands\" }");
     int bytes_sent = send(socket_fd, buf, strlen(buf), 0);
     printf("%d bytes sent\n", bytes_sent);
 
