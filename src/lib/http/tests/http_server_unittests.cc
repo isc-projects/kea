@@ -46,6 +46,12 @@ namespace ph = std::placeholders;
 
 #include <http/tests/http_server_test.h>
 
+bool HttpConnectionReadFatalError::injected_ = false;
+size_t HttpConnectionReadFatalError::input_size_before_ = 0;
+size_t HttpConnectionReadFatalError::input_size_after_ = 0;
+size_t HttpConnectionReadFatalError::do_read_during_inject_ = 0;
+size_t HttpConnectionReadFatalError::do_read_after_inject_ = 0;
+
 bool HttpConnectionWriteFatalError::injected_ = false;
 size_t HttpConnectionWriteFatalError::output_size_before_ = 0;
 size_t HttpConnectionWriteFatalError::output_size_after_ = 0;
@@ -209,6 +215,12 @@ TEST_F(HttpListenerTest, tooLongWriteBuffer) {
 // the socket write callback does not cause an exception.
 TEST_F(HttpListenerTest, transactionChangeDuringWrite) {
     testWriteBufferIssues<HttpConnectionTransactionChange>();
+}
+
+// This test verifies that a fatal read error stops the connection without
+// fallthrough that would consume the input buffer or schedule another read.
+TEST_F(HttpListenerTest, readFatalErrorNoFallthrough) {
+    testReadFatalError();
 }
 
 // This test verifies that a fatal write error stops the connection without

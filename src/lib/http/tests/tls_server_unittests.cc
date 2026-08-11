@@ -213,6 +213,12 @@ TEST_F(HttpsListenerTest, transactionChangeDuringWrite) {
     testWriteBufferIssues<HttpConnectionTransactionChange>();
 }
 
+// This test verifies that a fatal read error stops the connection without
+// fallthrough that would consume the input buffer or schedule another read.
+TEST_F(HttpsListenerTest, readFatalErrorNoFallthrough) {
+    testReadFatalError();
+}
+
 // This test verifies that a fatal write error stops the connection without
 // fallthrough that would consume the output buffer or schedule another write.
 TEST_F(HttpsListenerTest, writeFatalErrorNoFallthrough) {

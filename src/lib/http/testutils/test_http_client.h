@@ -28,6 +28,9 @@ const size_t TEST_HTTP_CHUCK_SIZE = 8 * 1024;
 /// @brief Common base for test HTTP/HTTPS clients.
 class BaseTestHttpClient : public boost::noncopyable {
 public:
+    /// @brief Constructor.
+    BaseTestHttpClient() : fail_on_read_error_(true) {
+    }
 
     /// @brief Destructor.
     virtual ~BaseTestHttpClient() = default;
@@ -83,6 +86,26 @@ public:
     /// @return True if the receive completed successfully, false
     /// otherwise.
     virtual bool receiveDone() const = 0;
+
+    /// @brief Get the fail on read error flag.
+    ///
+    /// @return The fail on read error flag.
+    bool getFailOnReadError() {
+        return (fail_on_read_error_);
+    }
+
+    /// @brief Set the fail on read error flag.
+    ///
+    /// @param fail_on_receive_error The fail on read error flag.
+    void setFailOnReadError(bool fail_on_receive_error) {
+        fail_on_read_error_ = fail_on_receive_error;
+    }
+
+protected:
+
+    /// @brief flag which indicates if the test should fail if the client
+    /// detects an error on read.
+    bool fail_on_read_error_;
 };
 
 /// @brief Entity which can connect to the HTTP server endpoint.
@@ -209,9 +232,11 @@ public:
                     bytes_transferred = 0;
 
                 } else {
-                    // Error occurred, bail...
-                    ADD_FAILURE() << "error occurred while receiving HTTP"
-                        " response from the server: " << ec.message();
+                    if (fail_on_read_error_) {
+                        // Error occurred, bail...
+                        ADD_FAILURE() << "error occurred while receiving HTTP"
+                            " response from the server: " << ec.message();
+                    }
                     io_service_->stop();
                 }
             }
@@ -494,9 +519,11 @@ public:
                     bytes_transferred = 0;
 
                 } else {
-                    // Error occurred, bail...
-                    ADD_FAILURE() << "error occurred while receiving HTTP"
-                        " response from the server: " << ec.message();
+                    if (fail_on_read_error_) {
+                        // Error occurred, bail...
+                        ADD_FAILURE() << "error occurred while receiving HTTP"
+                            " response from the server: " << ec.message();
+                    }
                     io_service_->stop();
                 }
             }

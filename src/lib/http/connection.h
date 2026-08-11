@@ -299,7 +299,7 @@ public:
     /// @param transaction Pointer to the transaction for which the read
     /// operation should be performed. It defaults to null pointer which
     /// indicates that this function should create new transaction.
-    void doRead(TransactionPtr transaction = TransactionPtr());
+    virtual void doRead(TransactionPtr transaction = TransactionPtr());
 
 protected:
 
@@ -350,9 +350,9 @@ protected:
     /// is invoked.
     /// @param ec Error code.
     /// @param length Length of the received data.
-    void socketReadCallback(TransactionPtr transaction,
-                            boost::system::error_code ec,
-                            size_t length);
+    virtual void socketReadCallback(TransactionPtr transaction,
+                                    boost::system::error_code ec,
+                                    size_t length);
 
     /// @brief Callback invoked when data is sent over the socket.
     ///

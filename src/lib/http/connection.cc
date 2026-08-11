@@ -510,6 +510,7 @@ HttpConnection::socketReadCallback(HttpConnection::TransactionPtr transaction,
         } else if ((ec.value() != boost::asio::error::try_again) &&
                    (ec.value() != boost::asio::error::would_block)) {
             stopThisConnection();
+            return;
 
         // We got EWOULDBLOCK or EAGAIN which indicate that we may be able to
         // read something from the socket on the next attempt. Just make sure

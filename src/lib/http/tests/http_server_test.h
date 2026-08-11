@@ -7,6 +7,15 @@
 #ifndef HTTP_SERVER_TEST_H
 #define HTTP_SERVER_TEST_H
 
+namespace {
+
+/// @brief Maximum size of the HTTP message that can be logged.
+///
+/// The part of the HTTP message beyond this value is truncated.
+constexpr size_t MAX_LOGGED_MESSAGE_SIZE = 1024;
+
+}
+
 namespace isc {
 namespace http {
 namespace test {
@@ -307,6 +316,111 @@ private:
     bool injecting_;
 };
 
+/// @brief Connection that injects a fatal socket read error once.
+///
+/// Records whether the input buffer was not consumed by fallthrough after
+/// @c stopThisConnection() and how many @c doRead() calls were scheduled
+/// while handling the injected error.
+class HttpConnectionReadFatalError : public HttpConnection {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// @param io_service IO service to be used by the connection.
+    /// @param acceptor Pointer to the TCP acceptor object used to listen for
+    /// new HTTP connections.
+    /// @param tls_context TLS context.
+    /// @param connection_pool Connection pool in which this connection is
+    /// stored.
+    /// @param response_creator Pointer to the response creator object used to
+    /// create HTTP response from the HTTP request received.
+    /// @param callback Callback invoked when new connection is accepted.
+    /// @param request_timeout Configured timeout for a HTTP request.
+    /// @param idle_timeout Timeout after which persistent HTTP connection is
+    /// closed by the server.
+    HttpConnectionReadFatalError(const IOServicePtr& io_service,
+                                 const HttpAcceptorPtr& acceptor,
+                                 const TlsContextPtr& tls_context,
+                                 HttpConnectionPoolPtr connection_pool,
+                                 const HttpResponseCreatorPtr& response_creator,
+                                 const HttpAcceptorCallback& callback,
+                                 const long request_timeout,
+                                 const long idle_timeout)
+        : HttpConnection(io_service, acceptor, tls_context, connection_pool,
+                         response_creator, callback, request_timeout,
+                         idle_timeout), injecting_(false) {
+    }
+
+    /// @brief Callback invoked when data is received over the socket.
+    ///
+    /// On the first invocation injects @c connection_reset with a non-zero
+    /// length so fallthrough would incorrectly consume input data.
+    ///
+    /// @param transaction Pointer to the transaction for which the callback
+    /// is invoked.
+    /// @param ec Error code.
+    /// @param length Length of the data received.
+    virtual void socketReadCallback(HttpConnection::TransactionPtr transaction,
+                                    boost::system::error_code ec,
+                                    size_t length) {
+        if (!injected_) {
+            injected_ = true;
+            input_size_before_ = transaction->getParser()->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE).size();
+            ASSERT_EQ(input_size_before_, 0U);
+            injecting_ = true;
+            HttpConnection::socketReadCallback(transaction,
+                boost::asio::error::connection_reset, 1);
+            injecting_ = false;
+            input_size_after_ = transaction->getParser()->getBufferAsString(MAX_LOGGED_MESSAGE_SIZE).size();
+            return;
+        }
+        HttpConnection::socketReadCallback(transaction, ec, length);
+    }
+
+    /// @brief Counts @c doRead calls while the fatal error is injected.
+    ///
+    /// @param transaction Pointer to the transaction for which the read
+    /// operation should be performed.
+    virtual void doRead(HttpConnection::TransactionPtr transaction) {
+        if (injecting_) {
+            ++do_read_during_inject_;
+        }
+        if (injected_) {
+            ++do_read_after_inject_;
+        }
+        HttpConnection::doRead(transaction);
+    }
+
+    /// @brief Resets static instrumentation state used by tests.
+    static void resetTestState() {
+        injected_ = false;
+        input_size_before_ = 0;
+        input_size_after_ = 0;
+        do_read_during_inject_ = 0;
+        do_read_after_inject_ = 0;
+    }
+
+    /// @brief Flag which indicates if the error has been triggered.
+    static bool injected_;
+
+    /// @brief The input buffer size before error.
+    static size_t input_size_before_;
+
+    /// @brief The input buffer size after error.
+    static size_t input_size_after_;
+
+    /// @brief The number of calls to @ref doRead while injecting error.
+    static size_t do_read_during_inject_;
+
+    /// @brief The number of calls to @ref doRead after error.
+    static size_t do_read_after_inject_;
+
+private:
+
+    /// @brief Flag which indicates if the error is being triggered.
+    bool injecting_;
+};
+
 /// @brief Connection that injects @c would_block on the first write once.
 ///
 /// Records whether the output buffer was consumed and how many @c doWrite()
@@ -590,6 +704,45 @@ public:
         auto client = *clients_.begin();
         ASSERT_TRUE(client);
         EXPECT_EQ(httpOk(HttpVersion::HTTP_11()), client->getResponse());
+    }
+
+    /// @brief Verifies fatal read errors stop the connection without
+    /// scheduling further reads or consuming the input buffer.
+    void testReadFatalError() {
+        HttpConnectionReadFatalError::resetTestState();
+
+        std::string request = "POST /foo/bar HTTP/1.1\r\n"
+            "Content-Type: application/json\r\n"
+            "Content-Length: 3\r\n\r\n"
+            "{ }";
+
+        HttpListenerCustom<HttpConnectionReadFatalError>
+            listener(io_service_, IOAddress(SERVER_ADDRESS), SERVER_PORT,
+                     server_context_, factory_,
+                     HttpListener::RequestTimeout(REQUEST_TIMEOUT),
+                     HttpListener::IdleTimeout(IDLE_TIMEOUT));
+
+        ASSERT_NO_THROW(listener.start());
+        ASSERT_NO_THROW(startRequest(request));
+        {
+            ASSERT_EQ(1U, clients_.size());
+            auto client = *clients_.begin();
+            client->setFailOnReadError(false);
+        }
+        // The server closes the connection on the injected read error, so the
+        // client may never complete reading a response. Bound the wait.
+        ASSERT_NO_THROW(runIOService(1000));
+
+        ASSERT_TRUE(HttpConnectionReadFatalError::injected_);
+        EXPECT_EQ(HttpConnectionReadFatalError::input_size_before_,
+                  HttpConnectionReadFatalError::input_size_after_);
+        EXPECT_EQ(0U, HttpConnectionReadFatalError::do_read_during_inject_);
+        EXPECT_EQ(0U, HttpConnectionReadFatalError::do_read_after_inject_);
+
+        ASSERT_EQ(1U, clients_.size());
+        auto client = *clients_.begin();
+        ASSERT_TRUE(client);
+        EXPECT_TRUE(client->isConnectionClosed());
     }
 
     /// @brief Verifies fatal write errors stop the connection without
