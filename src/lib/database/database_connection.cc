@@ -69,10 +69,16 @@ DatabaseConnection::parse(const std::string& dbaccess) {
             // Leading or trailing whitespace may remain after the password removal.
             dba = util::str::trim(dba);
         }
-        std::cout << dba << std::endl;
         splitDbAccessString(dba, mapped_tokens);
     } catch (const std::exception& ex) {
-        splitDbAccessString(dba, mapped_tokens);
+        if (mapped_tokens.empty()) {
+            // The split likely didn't get to happen.
+            // Let's try again disregarding any exception so we don't shadow the current exception.
+            try {
+                splitDbAccessString(dba, mapped_tokens);
+            } catch (const std::exception&) {
+            }
+        }
         DB_LOG_ERROR(DB_INVALID_ACCESS).arg(redactedAccessString(mapped_tokens));
         throw;
     }
@@ -259,11 +265,13 @@ DatabaseConnection::toElementDbAccessString(const std::string& dbaccess) {
 }
 
 void
-DatabaseConnection::splitDbAccessString(const std::string& dbaccess, ParameterMap& mapped_tokens) {
+DatabaseConnection::splitDbAccessString(const string& dbaccess, ParameterMap& mapped_tokens) {
     if (dbaccess.empty()) {
         return;
     }
     vector<string> tokens;
+    string bad_token;
+    bool error(false);
 
     // We need to pass a string to is_any_of, not just char*. Otherwise
     // there are cryptic warnings on Debian6 running g++ 4.4 in
@@ -271,16 +279,22 @@ DatabaseConnection::splitDbAccessString(const std::string& dbaccess, ParameterMa
     // array bounds"
     boost::split(tokens, dbaccess, boost::is_any_of(string("\t ")));
     for (auto const& token : tokens) {
-        cout << token << endl;
         size_t pos = token.find("=");
-        if (pos != string::npos) {
-            string name = token.substr(0, pos);
-            string value = token.substr(pos + 1);
-            mapped_tokens.insert(make_pair(name, value));
-        } else {
-            isc_throw(InvalidParameter,
-                      "Cannot parse " << token << ", expected format is name=value");
+        if (pos == string::npos) {
+            if (!error) {
+                // Keep first only.
+                bad_token = token;
+                error = true;
+            }
+            continue;
         }
+        string name = token.substr(0, pos);
+        string value = token.substr(pos + 1);
+        mapped_tokens.insert(make_pair(name, value));
+    }
+    if (error) {
+        isc_throw(InvalidParameter,
+                  "Cannot parse " << bad_token << ", expected format is name=value");
     }
 }
 

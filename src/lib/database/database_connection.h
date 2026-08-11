@@ -233,6 +233,7 @@ public:
     ///
     /// @param [in] dbaccess the input database access string
     /// @param [out] mapped_tokens the output parameter map
+    /// @throw InvalidParameter if a token is not in name=value format
     static void splitDbAccessString(const std::string& dbaccess, ParameterMap& mapped_tokens);
 
     /// @brief Sets IO service to be used by the database backends.

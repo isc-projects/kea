@@ -446,10 +446,11 @@ TEST_F(DatabaseConnectionParseLogTest, parseErrorDoesNotLogCleartextPassword) {
     EXPECT_THROW(DatabaseConnection::parse(bad), DefaultCredential);
 
     EXPECT_EQ(1U, countFile("DATABASE_INVALID_ACCESS"));
+    EXPECT_EQ(1U, countFile("password="));
     EXPECT_EQ(1U, countFile("password=*****"));
     EXPECT_EQ(0U, countFile("password='1234'"));
     EXPECT_EQ(0U, countFile("password=1234"));
-    EXPECT_EQ(0U, countFile("'1234'"));
+    EXPECT_EQ(0U, countFile("1234"));
 }
 
 // Verifies that a mid-parse failure after an unquoted password was accepted
@@ -458,8 +459,9 @@ TEST_F(DatabaseConnectionParseLogTest, parseInvalidTokenDoesNotLogCleartextPassw
     std::string bad = "user=me password=s3cret name=kea badtoken";
     EXPECT_THROW(DatabaseConnection::parse(bad), isc::InvalidParameter);
 
-    EXPECT_EQ(0U, countFile("DATABASE_INVALID_ACCESS"));
-    EXPECT_EQ(0U, countFile("password=*****"));
+    EXPECT_EQ(1U, countFile("DATABASE_INVALID_ACCESS"));
+    EXPECT_EQ(1U, countFile("password="));
+    EXPECT_EQ(1U, countFile("password=*****"));
     EXPECT_EQ(0U, countFile("password=s3cret"));
     EXPECT_EQ(0U, countFile("s3cret"));
 }
