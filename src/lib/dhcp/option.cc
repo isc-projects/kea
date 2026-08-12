@@ -354,12 +354,14 @@ uint8_t Option::getUint8() const {
 
 uint16_t Option::getUint16() const {
     // readUint16() checks and throws OutOfRange if data_ is too small.
-    return (readUint16(&data_[0], data_.size()));
+    uint8_t single_byte_data = 0;
+    return (readUint16(data_.size() ? &data_[0] : &single_byte_data, data_.size()));
 }
 
 uint32_t Option::getUint32() const {
     // readUint32() checks and throws OutOfRange if data_ is too small.
-    return (readUint32(&data_[0], data_.size()));
+    uint8_t single_byte_data = 0;
+    return (readUint32(data_.size() ? &data_[0] : &single_byte_data, data_.size()));
 }
 
 void Option::setUint8(uint8_t value) {

@@ -151,6 +151,9 @@ Message::encode() {
     buffer_[1] = identifier_;
     buffer_[2] = static_cast<uint8_t>((length_ & 0xff00) >> 8);
     buffer_[3] = static_cast<uint8_t>(length_ & 0xff);
+    if (auth_.size() != AUTH_VECTOR_LEN) {
+        isc_throw(BadValue, "Bad auth");
+    }
     memmove(&buffer_[4], &auth_[0], auth_.size());
 
     // Fill attributes.
@@ -249,6 +252,10 @@ Message::decode() {
         buffer_.resize(length_);
     }
 
+    if (auth_.size() != AUTH_VECTOR_LEN) {
+        isc_throw(BadValue, "Bad auth");
+    }
+
     // Verify authentication.
     if ((code_ != PW_ACCESS_REQUEST) && (code_ != PW_STATUS_SERVER)) {
         vector<uint8_t> work = buffer_;
@@ -342,6 +349,12 @@ Message::encodeUserPassword(const ConstAttributePtr& attr) {
     }
     password.resize(len);
 
+    // password can not be empty
+
+    if (secret_.empty()) {
+        isc_throw(InvalidOperation, "empty secret");
+    }
+
     // Hide password.
     for (size_t i = 0; i < len; i += AUTH_VECTOR_LEN) {
         boost::scoped_ptr<Hash> md(CryptoLink::getCryptoLink().createHash(MD5));
@@ -383,6 +396,12 @@ Message::decodeUserPassword(const ConstAttributePtr& attr) {
     if (len > AUTH_PASS_LEN) {
         len = AUTH_PASS_LEN;
         password.resize(len);
+    }
+
+    // password can not be empty
+
+    if (secret_.empty()) {
+        isc_throw(InvalidOperation, "empty secret");
     }
 
     // Get plain text password.
@@ -433,6 +452,10 @@ Message::signMessageAuthenticator(size_t ptr) {
         isc_throw(Unexpected, "can't sign Message-Authenticator");
     }
 
+    if (secret_.empty()) {
+        isc_throw(InvalidOperation, "empty secret");
+    }
+
     boost::scoped_ptr<HMAC> hmac(
         CryptoLink::getCryptoLink().createHMAC(&secret_[0], secret_.size(), MD5));
 
@@ -456,6 +479,10 @@ Message::verifyMessageAuthenticator(size_t ptr) {
     vector<uint8_t> sign;
     sign.resize(AUTH_VECTOR_LEN);
     memmove(&sign[0], &buffer_[ptr + 2], sign.size());
+
+    if (secret_.empty()) {
+        isc_throw(InvalidOperation, "empty secret");
+    }
 
     boost::scoped_ptr<HMAC> hmac(
         CryptoLink::getCryptoLink().createHMAC(&secret_[0], secret_.size(), MD5));

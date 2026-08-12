@@ -151,8 +151,9 @@ Pkt4::pack() {
 
 void
 Pkt4::unpack() {
+    uint8_t single_byte_data = 0;
     // input buffer (used during message reception)
-    isc::util::InputBuffer buffer_in(&data_[0], data_.size());
+    isc::util::InputBuffer buffer_in(data_.size() ? &data_[0] : &single_byte_data, data_.size());
 
     if (buffer_in.getLength() < DHCPV4_PKT_HDR_LEN) {
         isc_throw(OutOfRange, "Received truncated DHCPv4 packet (len="

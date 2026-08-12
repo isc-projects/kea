@@ -520,9 +520,14 @@ PktFilterBPF::receive(Iface& iface, const SocketInfo& socket_info) {
     // Decode IP/UDP headers.
     decodeIpUdpHeader(buf, dummy_pkt);
 
+    auto v4_len = buf.getLength() - buf.getPosition();
+    if (v4_len <= 0) {
+        isc_throw(SocketReadError, "Pkt4FilterBpf packet has no DHCPv4 data");
+    }
+
     // Read the DHCP data.
     std::vector<uint8_t> dhcp_buf;
-    buf.readVector(dhcp_buf, buf.getLength() - buf.getPosition());
+    buf.readVector(dhcp_buf, v4_len);
 
     // Decode DHCP data into the Pkt4 object.
     Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(&dhcp_buf[0], dhcp_buf.size()));
