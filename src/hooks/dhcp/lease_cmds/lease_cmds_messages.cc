@@ -17,6 +17,8 @@ extern const isc::log::MessageID LEASE_CMDS_DEL4 = "LEASE_CMDS_DEL4";
 extern const isc::log::MessageID LEASE_CMDS_DEL4_FAILED = "LEASE_CMDS_DEL4_FAILED";
 extern const isc::log::MessageID LEASE_CMDS_DEL6 = "LEASE_CMDS_DEL6";
 extern const isc::log::MessageID LEASE_CMDS_DEL6_FAILED = "LEASE_CMDS_DEL6_FAILED";
+extern const isc::log::MessageID LEASE_CMDS_FATAL_WRITE_LEASES4 = "LEASE_CMDS_FATAL_WRITE_LEASES4";
+extern const isc::log::MessageID LEASE_CMDS_FATAL_WRITE_LEASES6 = "LEASE_CMDS_FATAL_WRITE_LEASES6";
 extern const isc::log::MessageID LEASE_CMDS_GET4_FAILED = "LEASE_CMDS_GET4_FAILED";
 extern const isc::log::MessageID LEASE_CMDS_GET6_FAILED = "LEASE_CMDS_GET6_FAILED";
 extern const isc::log::MessageID LEASE_CMDS_INIT_OK = "LEASE_CMDS_INIT_OK";
@@ -78,6 +80,8 @@ const char* values[] = {
     "LEASE_CMDS_DEL4_FAILED", "lease4-del command failed (parameters: %1, reason: %2)",
     "LEASE_CMDS_DEL6", "lease4-del command successful (address: %1)",
     "LEASE_CMDS_DEL6_FAILED", "lease6-del command failed (parameters: %1, reason: %2)",
+    "LEASE_CMDS_FATAL_WRITE_LEASES4", "fatal lease4-write command failure: %1",
+    "LEASE_CMDS_FATAL_WRITE_LEASES6", "fatal lease6-write command failure: %1",
     "LEASE_CMDS_GET4_FAILED", "lease4-get command failed (parameters: %1, reason: %2)",
     "LEASE_CMDS_GET6_FAILED", "lease6-get command failed (parameters: %1, reason: %2)",
     "LEASE_CMDS_INIT_OK", "loading Lease Commands hooks library successful",

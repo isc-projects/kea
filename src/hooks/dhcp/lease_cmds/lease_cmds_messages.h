@@ -18,6 +18,8 @@ extern const isc::log::MessageID LEASE_CMDS_DEL4;
 extern const isc::log::MessageID LEASE_CMDS_DEL4_FAILED;
 extern const isc::log::MessageID LEASE_CMDS_DEL6;
 extern const isc::log::MessageID LEASE_CMDS_DEL6_FAILED;
+extern const isc::log::MessageID LEASE_CMDS_FATAL_WRITE_LEASES4;
+extern const isc::log::MessageID LEASE_CMDS_FATAL_WRITE_LEASES6;
 extern const isc::log::MessageID LEASE_CMDS_GET4_FAILED;
 extern const isc::log::MessageID LEASE_CMDS_GET6_FAILED;
 extern const isc::log::MessageID LEASE_CMDS_INIT_OK;
