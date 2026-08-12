@@ -63,6 +63,14 @@ Lease IPv6 address is logged.
 The attempt to delete an IPv6 lease (lease4-del command) has failed. Both the
 reason as well as the parameters passed are logged.
 
+% LEASE_CMDS_FATAL_WRITE_LEASES4 fatal lease4-write command failure: %1
+The attempt to write leases into the lease file failed. This situation
+requires a manual recovery. Details are logged.
+
+% LEASE_CMDS_FATAL_WRITE_LEASES6 fatal lease6-write command failure: %1
+The attempt to write leases into the lease file failed. This situation
+requires a manual recovery. Details are logged.
+
 % LEASE_CMDS_GET4_FAILED lease4-get command failed (parameters: %1, reason: %2)
 The lease4-get command has failed. Both the reason as well as the
 parameters passed are logged.

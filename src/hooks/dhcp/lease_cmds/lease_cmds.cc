@@ -2495,7 +2495,7 @@ LeaseCmdsImpl::leaseWriteHandler(CalloutHandle& handle) {
 
         std::string filename;
         try {
-          filename = CfgMgr::instance().validatePath(file->stringValue());
+            filename = CfgMgr::instance().validatePath(file->stringValue());
         } catch (const SecurityWarn& ex) {
             LOG_WARN(lease_cmds_logger, LEASE_CMDS_PATH_SECURITY_WARNING)
                     .arg(ex.what());
@@ -2516,6 +2516,16 @@ LeaseCmdsImpl::leaseWriteHandler(CalloutHandle& handle) {
           << filename << "'.";
         ConstElementPtr response = createAnswer(CONTROL_RESULT_SUCCESS, s.str());
         setResponse(handle, response);
+    } catch (const FatalException& ex) {
+        if (v4) {
+            LOG_FATAL(lease_cmds_logger, LEASE_CMDS_FATAL_WRITE_LEASES4)
+                .arg(ex.what());
+        } else {
+            LOG_FATAL(lease_cmds_logger, LEASE_CMDS_FATAL_WRITE_LEASES6)
+                .arg(ex.what());
+        }
+        setErrorResponse(handle, ex.what(), CONTROL_RESULT_FATAL_ERROR);
+        return (CONTROL_RESULT_FATAL_ERROR);
     } catch (const std::exception& ex) {
         setErrorResponse(handle, ex.what());
         return (CONTROL_RESULT_ERROR);

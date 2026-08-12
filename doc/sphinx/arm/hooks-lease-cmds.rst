@@ -1133,8 +1133,11 @@ backend and write the lease database into a CSV file. They take the path
 of the file as the ``filename`` argument. If the specified output file
 is the same as the configured memfile one, the backend closes and reopens
 the file in an attempt to synchronize both the files and the in-memory images
-of the lease database. The extension ``.bak`` and the server PID number are added
-to the previous filename: for example, ``.bak14326``.
+of the lease database. It is an all or nothing procedure as it can finish
+with a fatal error were the lease file is brojen  (but leases in memory
+are still valid). The extension ``.bak`` and the server PID number are added
+to the previous filename: for example, ``.bak14326``. Leases are written
+in a file with extension ``.tmp`` and the server PID number.
 
 .. note::
 

@@ -4,6 +4,11 @@
     "brief": [
         "This command writes the IPv4 memfile lease database into a CSV file."
     ],
+    "cmd-comment": [
+        "The ``lease4-write`` command can take the lease file as argument. ",
+        "In this case on successful completion the DHCPv4 server will try ",
+        "to reopen it fixing problems or raising a fatal error."
+    ],
     "cmd-syntax": [
         "{",
         "    \"command\": \"lease4-write\",",

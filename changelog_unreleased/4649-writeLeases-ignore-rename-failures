@@ -1,0 +1,6 @@
+[bug]		fdupont
+	Made some errors from "lease4-write" and "lease6-write"
+	commands with the lease file as argument leaving it
+	not usable explicitly fatal. Unfortunately recovery
+	requires manual intervention.
+	(Gitlab #4649)
