@@ -243,6 +243,12 @@ TEST(MySqlHostDataSource, OpenDatabase) {
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, DEFAULT_PASSWORD)),
         DefaultCredential);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, NOT_EXIST_FILE)),
+        BadValue);
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_FILE)),
+        DbOpenError);
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
         DbInvalidTimeout);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
@@ -251,12 +257,6 @@ TEST(MySqlHostDataSource, OpenDatabase) {
     EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
         VALID_TIMEOUT, INVALID_READONLY_DB)), DbInvalidReadOnly);
-    EXPECT_THROW(HostMgr::addBackend(connectionString(
-        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, NOT_EXIST_FILE)),
-        BadValue);
-    EXPECT_THROW(HostMgr::addBackend(connectionString(
-        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_FILE)),
-        DbOpenError);
 
     // Check for missing parameters
     EXPECT_THROW(HostMgr::addBackend(connectionString(
@@ -356,6 +356,12 @@ TEST(MySqlHostDataSource, OpenDatabaseMultiThreading) {
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, DEFAULT_PASSWORD)),
         DefaultCredential);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, NOT_EXIST_FILE)),
+        BadValue);
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
+        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_FILE)),
+        DbOpenError);
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
         DbInvalidTimeout);
     EXPECT_THROW(HostMgr::addBackend(connectionString(
@@ -364,12 +370,6 @@ TEST(MySqlHostDataSource, OpenDatabaseMultiThreading) {
     EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
         VALID_TIMEOUT, INVALID_READONLY_DB)), DbInvalidReadOnly);
-    EXPECT_THROW(HostMgr::addBackend(connectionString(
-        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, NOT_EXIST_FILE)),
-        BadValue);
-    EXPECT_THROW(HostMgr::addBackend(connectionString(
-        MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_FILE)),
-        DbOpenError);
 
     // Check for missing parameters
     EXPECT_THROW(HostMgr::addBackend(connectionString(
@@ -379,7 +379,6 @@ TEST(MySqlHostDataSource, OpenDatabaseMultiThreading) {
     // Check for password file.
     EXPECT_NO_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_FILE)));
-    HostMgr::delBackend("mysql");
 
     // Tidy up after the test
     destroyMySQLSchema();

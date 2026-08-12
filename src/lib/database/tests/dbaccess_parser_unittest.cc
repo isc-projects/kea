@@ -1011,7 +1011,7 @@ TEST_F(DbAccessParserTest, passwordFile) {
 
     TestDbAccessParser parser;
     EXPECT_NO_THROW(parser.parse(json_elements));
-    checkAccessString("Passord-File", parser.getDbAccessParameters(), config);
+    checkAccessString("Password-File", parser.getDbAccessParameters(), config);
 }
 
 // This test checks that the parser rejects password and  password-file together.

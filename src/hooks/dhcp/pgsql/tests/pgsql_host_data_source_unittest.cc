@@ -264,6 +264,7 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
     // Check for password file.
     EXPECT_NO_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_FILE)));
+    HostMgr::delBackend("postgresql");
 
     // Check for SSL/TLS support.
     if (hasPgSQLTls()) {

@@ -415,7 +415,7 @@ PgSqlConnection::getConnParametersInternal(bool logging) {
     if (!spassword_file.empty()) {
         // This can throw.
         spassword = util::file::getContent(spassword_file);
-        dbconnparameters += " password = '" + spassword + "'";
+        dbconnparameters += " password = '" + escapePgSqlConnValue(spassword) + "'";
     }
     if (!spassword.empty()) {
         // Refuse default password.

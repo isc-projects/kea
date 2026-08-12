@@ -210,6 +210,7 @@ TEST(MySqlOpenTest, OpenDatabase) {
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, NOT_EXIST_FILE)),
         BadValue);
 
+    // See invalid password comment.
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_FILE)),
         DbOpenError);
