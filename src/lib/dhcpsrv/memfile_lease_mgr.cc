@@ -3745,18 +3745,31 @@ Memfile_LeaseMgr::writeLeases4Internal(const std::string& filename) {
         // Overwriting the existing lease file.
         // Close the existing lease file and move it to back up.
         lease_file4_->close();
-        ::rename(filename.c_str(), bakname.c_str());
+        static_cast<void>(::rename(filename.c_str(), bakname.c_str()));
 
         // Rename the temp file and open it as the lease file.
-        ::rename(tmpname.c_str(), filename.c_str());
-        lease_file4_->open(true);
+        static_cast<void>(::rename(tmpname.c_str(), filename.c_str()));
+        try {
+            // If no valid open will recreate it.
+            if (!lease_file4_->valid()) {
+                isc_throw(Unexpected, "lease file '" << filename
+                          << "' was lost");
+            }
+            // Catch any error in reopen.
+            lease_file4_->open(true);
+        } catch (const std::exception& ex) {
+            isc_throw(FatalException, "Fatal issue: lease file '" << filename
+                      << "' is broken: " << ex.what() << ". See backup '"
+                      << bakname << "' or dump '" << tmpname
+                      << "' files which can still contain leases.");
+        }
     } else {
         // Dumping to a new file.
         // Rename the previous dump file (if one) to back up.
-        ::rename(filename.c_str(), bakname.c_str());
+        static_cast<void>(::rename(filename.c_str(), bakname.c_str()));
 
         // Rename temp file to dump file.
-        ::rename(tmpname.c_str(), filename.c_str());
+        static_cast<void>(::rename(tmpname.c_str(), filename.c_str()));
     }
 }
 
@@ -3801,18 +3814,31 @@ Memfile_LeaseMgr::writeLeases6Internal(const std::string& filename) {
         // Overwriting the existing lease file.
         // Close the existing lease file and move it to back up.
         lease_file6_->close();
-        ::rename(filename.c_str(), bakname.c_str());
+        static_cast<void>(::rename(filename.c_str(), bakname.c_str()));
 
         // Rename the temp file and open it as the lease file.
-        ::rename(tmpname.c_str(), filename.c_str());
-        lease_file6_->open(true);
+        static_cast<void>(::rename(tmpname.c_str(), filename.c_str()));
+        try {
+            // If no valid open will recreate it.
+            if (!lease_file6_->valid()) {
+                isc_throw(Unexpected, "lease file '" << filename
+                          << "' was lost");
+            }
+            // Catch any error in reopen.
+            lease_file6_->open(true);
+        } catch (const std::exception& ex) {
+            isc_throw(FatalException, "Fatal issue: lease file '" << filename
+                      << "' is broken: " << ex.what() << ". See backup '"
+                      << bakname << "' or dump '" << tmpname
+                      << "' files which can still contain leases.");
+        }
     } else {
         // Dumping to a new file.
         // Rename the previous dump file (if one) to back up.
-        ::rename(filename.c_str(), bakname.c_str());
+        static_cast<void>(::rename(filename.c_str(), bakname.c_str()));
 
         // Rename temp file to dump file.
-        ::rename(tmpname.c_str(), filename.c_str());
+        static_cast<void>(::rename(tmpname.c_str(), filename.c_str()));
     }
 }
 
