@@ -1,4 +1,0 @@
-[bug]		fdupont
-	Fixed NameChangeSender send queue stall when doSend()
-	throws while initiating a send.
-	(Gitlab #4644)
