@@ -2471,4 +2471,18 @@ TEST_F(Pkt6Test, garbageRelayForw) {
     EXPECT_THROW(pkt->unpack(), Unexpected);
 }
 
+// Checks that RELAY-FORW with empty body is dropped.
+TEST_F(Pkt6Test, emptyRelayForw) {
+    // Reuse packet from the previous test keeping just the relay-forw header.
+    string hex_string =
+        "0c00fd4a3b1c8d9e00230000000000000001"
+        "fe80000000000000deadbeefcafe0001";
+    vector<uint8_t> bin;
+    ASSERT_NO_THROW(isc::util::encode::decodeHex(hex_string, bin));
+    EXPECT_EQ(34U, bin.size());
+    Pkt6Ptr pkt(new Pkt6(&bin[0], bin.size()));
+    ASSERT_TRUE(pkt);
+    EXPECT_THROW(pkt->unpack(), BadValue);
+}
+
 }  // namespace

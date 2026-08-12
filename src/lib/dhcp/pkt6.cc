@@ -570,6 +570,12 @@ Pkt6::unpackRelayMsg() {
         offset += isc::asiolink::V6ADDRESS_LEN;
         bufsize -= DHCPV6_RELAY_HDR_LEN; // 34 bytes (1+1+16+16)
 
+        // We just avoid to go out of bounds but we could use the minimal
+        // room for the relay-msg option...
+        if (bufsize == 0) {
+            isc_throw(BadValue, "Mandatory options missing");
+        }
+
         // parse the rest as options
         OptionBuffer opt_buffer(&data_[offset], &data_[offset] + bufsize);
 
