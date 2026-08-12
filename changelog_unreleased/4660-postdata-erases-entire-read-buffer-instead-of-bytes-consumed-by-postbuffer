@@ -1,4 +1,5 @@
 [bug]		wlodek
-	Fixed TcpConnection::postData to erase only
-	bytes consumed so coalesced messages are not lost.
+	Fixed Bulk Lease Query TCP connection read handler
+	to erase only bytes consumed so message framing is
+	preserved.
 	(Gitlab #4660)
