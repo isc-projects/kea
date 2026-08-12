@@ -218,7 +218,8 @@ public:
 
         // Create a UDP socket through which our "sender" will send the NCR.
         boost::asio::ip::udp::socket
-            udp_socket(io_service_->getInternalIOService(), boost::asio::ip::udp::v4());
+            udp_socket(io_service_->getInternalIOService(),
+                       boost::asio::ip::udp::v4());
 
         // Create an endpoint pointed at the listener.
         boost::asio::ip::udp::endpoint
@@ -229,13 +230,15 @@ public:
         // Note this uses a synchronous send so it ships immediately.
         // If listener isn't in listening mode, it will get missed.
         udp_socket.send_to(boost::asio::buffer(ncr_buffer.getData(),
-                           ncr_buffer.getLength()), listener_endpoint);
+                                               ncr_buffer.getLength()),
+                           listener_endpoint);
     }
 
     /// @brief Sends raw UDP payload to the listener without NCR validation.
     void sendRaw(const std::string& payload) {
         boost::asio::ip::udp::socket
-            udp_socket(io_service_->getInternalIOService(), boost::asio::ip::udp::v4());
+            udp_socket(io_service_->getInternalIOService(),
+                       boost::asio::ip::udp::v4());
         boost::asio::ip::udp::endpoint
             listener_endpoint(boost::asio::ip::make_address(TEST_ADDRESS),
                               LISTENER_PORT);
@@ -314,8 +317,8 @@ public:
     bool throw_next_;
 };
 
-// Verifies that an invalid NCR is discarded without notifying the
-// application, listening continues, and a subsequent valid NCR is delivered.
+// Verifies that an invalid NCR is discarded without notifying the application,
+// listening continues, and a subsequent valid NCR is delivered.
 TEST_F(NameChangeUDPListenerTest, invalidNcrThenValidContinues) {
     isc::stats::StatsMgr::instance().setValue("ncr-invalid",
                                               static_cast<int64_t>(0));
