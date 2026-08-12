@@ -596,6 +596,14 @@ TEST_F(CSVFileTest, exists) {
 
     // The file should not exist.
     EXPECT_FALSE(csv->exists());
+
+    // The file should not be valid.
+    EXPECT_FALSE(csv->valid());
+
+    // Writing nothing in it: exists not not yet valid.
+    writeFile("");
+    EXPECT_TRUE(csv->exists());
+    EXPECT_FALSE(csv->valid());
 }
 
 // Check that a single header without a trailing blank line can be parsed.

@@ -138,6 +138,11 @@ CSVFile::exists() const {
     return (file_exists);
 }
 
+bool
+CSVFile::valid() const {
+    return (size() != static_cast<std::streampos>(0));
+}
+
 void
 CSVFile::flush() const {
     checkStreamStatusAndReset("flush");
@@ -316,7 +321,7 @@ CSVFile::next(CSVRow& row, const bool skip_validation) {
 void
 CSVFile::open(const bool seek_to_end) {
     // If file doesn't exist or is empty, we have to create our own file.
-    if (size() == static_cast<std::streampos>(0)) {
+    if (!valid()) {
         recreate();
 
     } else {
