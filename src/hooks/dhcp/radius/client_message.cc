@@ -144,6 +144,9 @@ Message::encode() {
     if (secret_.empty()) {
         isc_throw(InvalidOperation, "empty secret");
     }
+    if (auth_.size() != AUTH_VECTOR_LEN) {
+        isc_throw(BadValue, "Bad auth");
+    }
 
     // Header.
     buffer_.resize(AUTH_HDR_LEN);
@@ -151,9 +154,6 @@ Message::encode() {
     buffer_[1] = identifier_;
     buffer_[2] = static_cast<uint8_t>((length_ & 0xff00) >> 8);
     buffer_[3] = static_cast<uint8_t>(length_ & 0xff);
-    if (auth_.size() != AUTH_VECTOR_LEN) {
-        isc_throw(BadValue, "Bad auth");
-    }
     memmove(&buffer_[4], &auth_[0], auth_.size());
 
     // Fill attributes.
@@ -236,6 +236,7 @@ Message::decode() {
     } else if (auth_.size() != AUTH_VECTOR_LEN) {
         isc_throw(InvalidOperation, "bad authenticator");
     }
+    // Note that now the auth_ is AUTH_VECTOR_LEN (16) octet long.
     if (length_ > buffer_.size()) {
         isc_throw(BadValue, "truncated " << msgCodeToText(code_)
                   << " length " << length_ << ", got " << buffer_.size());
@@ -250,10 +251,6 @@ Message::decode() {
     }
     if (length_ < buffer_.size()) {
         buffer_.resize(length_);
-    }
-
-    if (auth_.size() != AUTH_VECTOR_LEN) {
-        isc_throw(BadValue, "Bad auth");
     }
 
     // Verify authentication.
@@ -336,7 +333,8 @@ ConstAttributePtr
 Message::encodeUserPassword(const ConstAttributePtr& attr) {
     if (!attr || (attr->getValueType() != PW_TYPE_STRING) ||
         (attr->getValueLen() == 0) ||
-        (auth_.size() != AUTH_VECTOR_LEN)) {
+        (auth_.size() != AUTH_VECTOR_LEN) ||
+        secret_.empty()) {
         isc_throw(Unexpected, "can't encode User-Password");
     }
 
@@ -348,12 +346,6 @@ Message::encodeUserPassword(const ConstAttributePtr& attr) {
         len = AUTH_PASS_LEN;
     }
     password.resize(len);
-
-    // password can not be empty
-
-    if (secret_.empty()) {
-        isc_throw(InvalidOperation, "empty secret");
-    }
 
     // Hide password.
     for (size_t i = 0; i < len; i += AUTH_VECTOR_LEN) {
@@ -386,7 +378,8 @@ Message::decodeUserPassword(const ConstAttributePtr& attr) {
     if (!attr || (attr->getValueType() != PW_TYPE_STRING) ||
         (attr->getValueLen() == 0) ||
         ((attr->getValueLen() % AUTH_VECTOR_LEN) != 0) ||
-        (auth_.size() != AUTH_VECTOR_LEN)) {
+        (auth_.size() != AUTH_VECTOR_LEN) ||
+        secret_.empty()) {
         isc_throw(Unexpected, "can't decode User-Password");
     }
 
@@ -396,12 +389,6 @@ Message::decodeUserPassword(const ConstAttributePtr& attr) {
     if (len > AUTH_PASS_LEN) {
         len = AUTH_PASS_LEN;
         password.resize(len);
-    }
-
-    // password can not be empty
-
-    if (secret_.empty()) {
-        isc_throw(InvalidOperation, "empty secret");
     }
 
     // Get plain text password.
@@ -448,12 +435,9 @@ void
 Message::signMessageAuthenticator(size_t ptr) {
     if ((ptr < AUTH_HDR_LEN) || (ptr > buffer_.size() - 2 - AUTH_VECTOR_LEN) ||
         (buffer_[ptr + 1] != 2 + AUTH_VECTOR_LEN) ||
-        (auth_.size() != AUTH_VECTOR_LEN)) {
+        (auth_.size() != AUTH_VECTOR_LEN) ||
+        secret_.empty()) {
         isc_throw(Unexpected, "can't sign Message-Authenticator");
-    }
-
-    if (secret_.empty()) {
-        isc_throw(InvalidOperation, "empty secret");
     }
 
     boost::scoped_ptr<HMAC> hmac(
@@ -472,17 +456,14 @@ void
 Message::verifyMessageAuthenticator(size_t ptr) {
     if ((ptr < AUTH_HDR_LEN) || (ptr > buffer_.size() - 2 - AUTH_VECTOR_LEN) ||
         (buffer_[ptr + 1] != 2 + AUTH_VECTOR_LEN) ||
-        (auth_.size() != AUTH_VECTOR_LEN)) {
+        (auth_.size() != AUTH_VECTOR_LEN) ||
+        secret_.empty()) {
         isc_throw(BadValue, "can't verify Message-Authenticator");
     }
 
     vector<uint8_t> sign;
     sign.resize(AUTH_VECTOR_LEN);
     memmove(&sign[0], &buffer_[ptr + 2], sign.size());
-
-    if (secret_.empty()) {
-        isc_throw(InvalidOperation, "empty secret");
-    }
 
     boost::scoped_ptr<HMAC> hmac(
         CryptoLink::getCryptoLink().createHMAC(&secret_[0], secret_.size(), MD5));

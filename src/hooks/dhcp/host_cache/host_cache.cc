@@ -640,13 +640,11 @@ HostCache::cacheGetByIdHandler(hooks::CalloutHandle& handle) {
             isc_throw(BadValue, "invalid identifier '" << ident_txt << "'");
         }
 
-        uint8_t single_byte_data = 0;
-
         // Get the entry list and build the result.
         ConstHostCollection hosts;
-        {
+        if (!ident.empty()) {
             MultiThreadingLock lock(*mutex_);
-            hosts = impl_->get(id_type, ident.size() ? &ident[0] : &single_byte_data, ident.size());
+            hosts = impl_->get(id_type, &ident[0], ident.size());
         }
         for (auto const& host : hosts) {
             result->add(host_cache::toElement(host));
@@ -996,8 +994,6 @@ HostCache::cacheRemoveHandler(hooks::CalloutHandle& handle) {
             }
         }
 
-        uint8_t single_byte_data = 0;
-
         // Something is wrong?
         if (!valid) {
             isc_throw(BadValue, "inconsistent parameters");
@@ -1011,10 +1007,12 @@ HostCache::cacheRemoveHandler(hooks::CalloutHandle& handle) {
             } else {
                 del_txt = impl_->del6(subnet_id, addr);
             }
+        } else if (ident.empty()) {
+            isc_throw(BadValue, "empty identifier");
         } else if (family == AF_INET) {
-            del_txt = impl_->del4(subnet_id, id_type, ident.size() ? &ident[0] : &single_byte_data, ident.size());
+            del_txt = impl_->del4(subnet_id, id_type, &ident[0], ident.size());
         } else {
-            del_txt = impl_->del6(subnet_id, id_type, ident.size() ? &ident[0] : &single_byte_data, ident.size());
+            del_txt = impl_->del6(subnet_id, id_type, &ident[0], ident.size());
         }
     } catch (const std::exception& ex) {
         LOG_ERROR(host_cache_logger, HOST_CACHE_COMMAND_REMOVE_FAILED)
