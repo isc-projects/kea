@@ -35,6 +35,9 @@ PktTransform::pack(const Option::Universe universe,
 
     // Always override the packet if function is called.
     out_buffer.clear();
+    if (in_buffer.empty()) {
+        isc_throw(Unexpected, "no packet data");
+    }
     // Write whole buffer to output buffer.
     out_buffer.writeData(&in_buffer[0], in_buffer.size());
 
@@ -212,7 +215,15 @@ void
 PktTransform::writeAt(dhcp::OptionBuffer& in_buffer, size_t dest_pos,
                       dhcp::OptionBuffer::iterator first,
                       dhcp::OptionBuffer::iterator last) {
-    memcpy(&in_buffer[dest_pos], &(*first), std::distance(first, last));
+    auto length = std::distance(first, last);
+    if (length <= 0) {
+        return;
+    }
+    if (in_buffer.size() < dest_pos + length) {
+        isc_throw(OutOfRange, "writeAt: pos=" << dest_pos << ", length="
+                  << length << ", size=" << in_buffer.size());
+    }
+    memcpy(&in_buffer[dest_pos], &(*first), length);
 }
 
 } // namespace perfdhcp
