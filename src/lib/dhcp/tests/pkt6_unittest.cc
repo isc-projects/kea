@@ -318,7 +318,9 @@ TEST_F(Pkt6Test, unpackMalformed) {
                            // dereferencing an empty buffer.
 
     Pkt6Ptr empty_pkt(new Pkt6(&empty[0], 0));
-    EXPECT_THROW(empty_pkt->unpack(), isc::BadValue);
+    string expected = "Received truncated UDP DHCPv6 packet of size 1, ";
+    expected += "DHCPv6 header alone has 4 bytes.";
+    EXPECT_THROW_MSG(empty_pkt->unpack(), isc::BadValue, expected);
 
     // Neither is 3 bytes long.
     OptionBuffer shorty;
@@ -326,7 +328,9 @@ TEST_F(Pkt6Test, unpackMalformed) {
     shorty.push_back(1);
     shorty.push_back(2);
     Pkt6Ptr too_short_pkt(new Pkt6(&shorty[0], shorty.size()));
-    EXPECT_THROW(too_short_pkt->unpack(), isc::BadValue);
+    expected = "Received truncated UDP DHCPv6 packet of size 3 ";
+    expected += "DHCPv6 header alone has 4 bytes.";
+    EXPECT_THROW_MSG(too_short_pkt->unpack(), isc::BadValue, expected);
 
     // The code should complain about remaining bytes that can't be parsed
     // but doesn't do so yet.
@@ -2468,7 +2472,41 @@ TEST_F(Pkt6Test, garbageRelayForw) {
     ASSERT_NO_THROW(isc::util::encode::decodeHex(hex_string, bin));
     Pkt6Ptr pkt(new Pkt6(&bin[0], bin.size()));
     ASSERT_TRUE(pkt);
-    EXPECT_THROW(pkt->unpack(), Unexpected);
+    EXPECT_THROW_MSG(pkt->unpack(), Unexpected,
+                     "Truncated inner relayed message: 23 < 34");
+}
+
+// Checks that RELAY-FORW with empty relay-msg.
+TEST_F(Pkt6Test, emptyMsgRelayForw) {
+    // Reuse packet from the previous test keeping just the relay-forw header
+    // and an interface-id and empty relay-msg options.
+    string hex_string =
+        "0c00fd4a3b1c8d9e00230000000000000001fe80000000000000deadbeefcaf"
+        "e000100120007683031706f727400090000";
+    vector<uint8_t> bin;
+    ASSERT_NO_THROW(isc::util::encode::decodeHex(hex_string, bin));
+    EXPECT_EQ(49U, bin.size());
+    Pkt6Ptr pkt(new Pkt6(&bin[0], bin.size()));
+    ASSERT_TRUE(pkt);
+    EXPECT_THROW_MSG(pkt->unpack(), BadValue,
+                     "Mandatory relay-msg option missing");
+}
+
+// Checks that RELAY-FORW with no relay-msg.
+TEST_F(Pkt6Test, noMsgRelayForw) {
+    // Reuse packet from the previous test keeping just the relay-forw header
+    // and an interface-id option. BTW malformed relay-forw is not parsed
+    // so leads to the same error.
+    string hex_string =
+        "0c00fd4a3b1c8d9e00230000000000000001fe80000000000000deadbeefcaf"
+        "e000100120007683031706f7274";
+    vector<uint8_t> bin;
+    ASSERT_NO_THROW(isc::util::encode::decodeHex(hex_string, bin));
+    EXPECT_EQ(45U, bin.size());
+    Pkt6Ptr pkt(new Pkt6(&bin[0], bin.size()));
+    ASSERT_TRUE(pkt);
+    EXPECT_THROW_MSG(pkt->unpack(), BadValue,
+                     "Mandatory relay-msg option missing");
 }
 
 // Checks that RELAY-FORW with empty body is dropped.
@@ -2482,7 +2520,7 @@ TEST_F(Pkt6Test, emptyRelayForw) {
     EXPECT_EQ(34U, bin.size());
     Pkt6Ptr pkt(new Pkt6(&bin[0], bin.size()));
     ASSERT_TRUE(pkt);
-    EXPECT_THROW(pkt->unpack(), BadValue);
+    EXPECT_THROW_MSG(pkt->unpack(), BadValue, "Mandatory options missing");
 }
 
 }  // namespace
