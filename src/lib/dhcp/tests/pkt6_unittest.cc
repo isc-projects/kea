@@ -318,7 +318,7 @@ TEST_F(Pkt6Test, unpackMalformed) {
                            // dereferencing an empty buffer.
 
     Pkt6Ptr empty_pkt(new Pkt6(&empty[0], 0));
-    string expected = "Received truncated UDP DHCPv6 packet of size 1, ";
+    string expected = "Received truncated UDP DHCPv6 packet of size 0, ";
     expected += "DHCPv6 header alone has 4 bytes.";
     EXPECT_THROW_MSG(empty_pkt->unpack(), isc::BadValue, expected);
 
@@ -328,7 +328,7 @@ TEST_F(Pkt6Test, unpackMalformed) {
     shorty.push_back(1);
     shorty.push_back(2);
     Pkt6Ptr too_short_pkt(new Pkt6(&shorty[0], shorty.size()));
-    expected = "Received truncated UDP DHCPv6 packet of size 3 ";
+    expected = "Received truncated UDP DHCPv6 packet of size 3, ";
     expected += "DHCPv6 header alone has 4 bytes.";
     EXPECT_THROW_MSG(too_short_pkt->unpack(), isc::BadValue, expected);
 
