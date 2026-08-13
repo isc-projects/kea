@@ -134,6 +134,7 @@ public:
     ///       - name
     ///       - host
     ///       - password
+    ///       - password-file
     ///       - port
     ///       - user
     ///       - trust-anchor
