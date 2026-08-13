@@ -37,6 +37,7 @@ namespace process {
 
 bool Daemon::verbose_ = false;
 bool Daemon::shutdown_on_failure_ = false;
+bool Daemon::cb_repair_mode_ = false;
 
 std::string Daemon::proc_name_("");
 

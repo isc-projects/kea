@@ -977,8 +977,11 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     if (status_code == CONTROL_RESULT_SUCCESS && (!check_only || extra_checks)) {
         try {
             // If there are config backends, fetch and merge into staging config
-            server.getCBControl()->databaseConfigFetch(srv_config,
-                                                       CBControlDHCPv4::FetchMode::FETCH_ALL);
+            // FETCH_NONE will still create back end connections but skip the fetch,
+            // thereby avoiding any fatal errors in the config data.
+            auto mode = (Daemon::getCBRepairMode() ? CBControlDHCPv4::FetchMode::FETCH_NONE
+                                                   : CBControlDHCPv4::FetchMode::FETCH_ALL);
+            server.getCBControl()->databaseConfigFetch(srv_config, mode);
         } catch (const isc::Exception& ex) {
             std::ostringstream err;
             err << "during update from config backend database: " << ex.what();

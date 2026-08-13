@@ -276,6 +276,21 @@ public:
         shutdown_on_failure_ = shutdown;
     }
 
+    /// @brief Get the CB repair mode flag.
+    ///
+    /// @return The repair mode flag.
+    static bool getCBRepairMode() {
+        return (cb_repair_mode_);
+    }
+
+    /// @brief Set the CB repair mode flag.
+    ///
+    /// @param cb_repair_mode The new value for the cb_repair_mode flag.
+    static void setCBRepairMode(bool cb_repair_mode) {
+        cb_repair_mode_ = cb_repair_mode;
+    }
+
+
 protected:
 
     /// @brief A pointer to the object installing custom signal handlers.
@@ -321,6 +336,9 @@ private:
     /// @brief Flag indicating if the server should exit on critical
     /// failure.
     static bool shutdown_on_failure_;
+
+    /// @brief Flag indicating if the server is in CB repair mode
+    static bool cb_repair_mode_;
 };
 
 } // namespace process

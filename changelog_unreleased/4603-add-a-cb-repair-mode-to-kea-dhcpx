@@ -1,0 +1,9 @@
+[func]		tmark
+	Added the command line switch, -R, to kea-dhcp4
+	and kea-dhcp6, which runs the server in config
+	back end repair mode. This is a recovery mode
+	that allows the server to start and process API
+	commands in the event that otherwise fatal data
+	errors have been introduced into config back
+	end data.
+	(Gitlab #4603)

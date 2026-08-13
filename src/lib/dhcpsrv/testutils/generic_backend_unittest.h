@@ -14,6 +14,7 @@
 #include <dhcp/option.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/srv_config.h>
+#include <testutils/log_utils.h>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <cstdint>
@@ -38,7 +39,8 @@ struct ExpAuditEntry {
 
 /// @brief Generic test fixture class with utility functions for
 /// testing database backends.
-class GenericBackendTest : public ::testing::Test {
+//class GenericBackendTest : public ::testing::Test {
+class GenericBackendTest : public LogContentTest {
 public:
 
     /// @brief Constructor.

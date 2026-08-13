@@ -703,7 +703,7 @@ PACKAGE_VERSION_TYPE=@PACKAGE_VERSION_TYPE@
 EXPECTED_OUTPUT=$(cat << EOF
 Kea DHCPv4 server, version $VERSION ($PACKAGE_VERSION_TYPE)
 
-Usage: kea-dhcp4 -[v|V|W|X] [-d] [-{c|t|T} cfgfile] [-p number] [-P number]
+Usage: kea-dhcp4 -[v|V|W|X|F|R] [-d] [-{c|t|T} cfgfile] [-p number] [-P number]
   -v: print version number and exit
   -V: print extended version and exit
   -W: display the configuration report and exit
@@ -715,6 +715,7 @@ Usage: kea-dhcp4 -[v|V|W|X] [-d] [-{c|t|T} cfgfile] [-p number] [-P number]
   -P number: specify non-standard client port number 1-65535 (useful for testing only)
   -X: disables security restrictions
   -F: exit on critical error
+  -R: Config Backend repair mode
 EOF
 )
 usage_test "dhcpv4.invalid-param" "-f" 1 "${EXPECTED_OUTPUT}"

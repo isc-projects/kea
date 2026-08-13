@@ -1332,7 +1332,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
 
     // Setup config backend polling, if configured for it.
     auto ctl_info = CfgMgr::instance().getStagingCfg()->getConfigControlInfo();
-    if (ctl_info) {
+    if (ctl_info && !Daemon::getCBRepairMode()) {
         long fetch_time = static_cast<long>(ctl_info->getConfigFetchWaitTime());
         // Only schedule the CB fetch timer if the fetch wait time is greater
         // than 0.
@@ -1356,6 +1356,11 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
                               asiolink::IntervalTimer::ONE_SHOT);
             TimerMgr::instance()->setup("Dhcp6CBFetchTimer");
         }
+    }
+
+    // Disable DHCP service if we're in Cb repair mode.
+    if (Daemon::getCBRepairMode()) {
+        server_->getNetworkState()->disableService(NetworkState::USER_COMMAND);
     }
 
     // Finally, we can commit runtime option definitions in libdhcp++. This is

@@ -55,7 +55,7 @@ usage() {
          << endl;
     cerr << endl;
     cerr << "Usage: " << DHCP6_NAME
-         << " -[v|V|W|X] [-d] [-{c|t|T} cfgfile] [-p number] [-P number]" << endl;
+         << " -[v|V|W|X|F|R] [-d] [-{c|t|T} cfgfile] [-p number] [-P number]" << endl;
     cerr << "  -v: print version number and exit" << endl;
     cerr << "  -V: print extended version and exit" << endl;
     cerr << "  -W: display the configuration report and exit" << endl;
@@ -70,6 +70,7 @@ usage() {
          << "(useful for testing only)" << endl;
     cerr << "  -X: disables security restrictions" << endl;
     cerr << "  -F: exit on critical error" << endl;
+    cerr << "  -R: Config Backend repair mode" << endl;
     exit(EXIT_FAILURE);
 }
 }  // namespace
@@ -102,7 +103,7 @@ main(int argc, char* argv[]) {
     opterr = 0;
     optind = 1;
 
-    while ((ch = getopt(argc, argv, "dvVWc:p:P:t:T:XF")) != -1) {
+    while ((ch = getopt(argc, argv, "dvVWc:p:P:t:T:XFR")) != -1) {
         switch (ch) {
         case 'd':
             verbose_mode = true;
@@ -171,6 +172,10 @@ main(int argc, char* argv[]) {
 
         case 'F': // exit on fatal error
             Daemon::setShutdownOnFailure(true);
+            break;
+
+        case 'R': // CB repair mode
+            Daemon::setCBRepairMode(true);
             break;
 
         default:
@@ -267,6 +272,10 @@ main(int argc, char* argv[]) {
 
         if (!PathChecker::shouldEnforceSecurity()) {
             LOG_WARN(dhcp6_logger, DHCP6_SECURITY_CHECKS_DISABLED);
+        }
+
+        if (Daemon::getCBRepairMode()) {
+            LOG_WARN(dhcp6_logger, DHCP6_CB_REPAIR_MODE_ENABLED);
         }
 
         // Create the server instance.

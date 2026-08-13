@@ -25,6 +25,7 @@ extern const isc::log::MessageID DHCP6_BUFFER_WAIT_SIGNAL = "DHCP6_BUFFER_WAIT_S
 extern const isc::log::MessageID DHCP6_CB_ON_DEMAND_FETCH_UPDATES_FAIL = "DHCP6_CB_ON_DEMAND_FETCH_UPDATES_FAIL";
 extern const isc::log::MessageID DHCP6_CB_PERIODIC_FETCH_UPDATES_FAIL = "DHCP6_CB_PERIODIC_FETCH_UPDATES_FAIL";
 extern const isc::log::MessageID DHCP6_CB_PERIODIC_FETCH_UPDATES_RETRIES_EXHAUSTED = "DHCP6_CB_PERIODIC_FETCH_UPDATES_RETRIES_EXHAUSTED";
+extern const isc::log::MessageID DHCP6_CB_REPAIR_MODE_ENABLED = "DHCP6_CB_REPAIR_MODE_ENABLED";
 extern const isc::log::MessageID DHCP6_CLASSES_ASSIGNED = "DHCP6_CLASSES_ASSIGNED";
 extern const isc::log::MessageID DHCP6_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION = "DHCP6_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION";
 extern const isc::log::MessageID DHCP6_CLASS_ASSIGNED = "DHCP6_CLASS_ASSIGNED";
@@ -213,6 +214,7 @@ const char* values[] = {
     "DHCP6_CB_ON_DEMAND_FETCH_UPDATES_FAIL", "error on demand attempt to fetch configuration updates from the configuration backend(s): %1",
     "DHCP6_CB_PERIODIC_FETCH_UPDATES_FAIL", "error on periodic attempt to fetch configuration updates from the configuration backend(s): %1",
     "DHCP6_CB_PERIODIC_FETCH_UPDATES_RETRIES_EXHAUSTED", "maximum number of configuration fetch attempts: 10, has been exhausted without success",
+    "DHCP6_CB_REPAIR_MODE_ENABLED", "Server is running in Config Back end repair mode.",
     "DHCP6_CLASSES_ASSIGNED", "%1: client packet has been assigned on %2 message to the following classes: %3",
     "DHCP6_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION", "%1: client packet has been assigned to the following classes: %2",
     "DHCP6_CLASS_ASSIGNED", "%1: client packet has been assigned to the following class: %2",

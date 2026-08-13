@@ -21,6 +21,8 @@
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/testutils/generic_backend_unittest.h>
 #include <dhcpsrv/testutils/test_config_backend_dhcp6.h>
+#include <process/daemon.h>
+#include <testutils/log_utils.h>
 
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/get_config_unittest.h>
@@ -38,6 +40,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::db;
+using namespace isc::process;
 using namespace std;
 
 namespace {
@@ -108,6 +111,7 @@ public:
 
     /// @brief Reset configuration singletons.
     void resetConfiguration() {
+        Daemon::setCBRepairMode(false);
         CfgMgr::instance().clear();
         ConfigBackendDHCPv6Mgr::destroy();
     }
@@ -554,6 +558,63 @@ TEST_F(Dhcp6CBTest, mergeSubnets) {
     // first found, first used?
     staged_subnet = subnets->getBySubnetId(3);
     ASSERT_FALSE(staged_subnet);
+}
+
+// This test verifies that the initial CB data fetch is
+// skipped when CBRepairMode is enabled.
+TEST_F(Dhcp6CBTest, cbRepairMode) {
+    string base_config =
+        "{ \n"
+        "    \"interfaces-config\": { \n"
+        "        \"interfaces\": [\"*\" ] \n"
+        "    }, \n"
+        "    \"valid-lifetime\": 4000, \n"
+        "    \"config-control\": { \n"
+        "       \"config-databases\": [ { \n"
+        "               \"type\": \"memfile\", \n"
+        "               \"host\": \"db1\" \n"
+        "           },{ \n"
+        "               \"type\": \"memfile\", \n"
+        "               \"host\": \"db2\" \n"
+        "           } \n"
+        "       ] \n"
+        "   }, \n"
+        "   \"subnet6\": [ \n"
+        "   { \n"
+        "       \"id\": 2,\n"
+        "       \"subnet\": \"2001:2::/64\" \n"
+        "   } ]\n"
+        "} \n";
+
+    extractConfig(base_config);
+
+    // Make a global:
+    StampedValuePtr valid_lifetime(new StampedValue("valid-lifetime", "3500"));
+
+    // Add it to the first backend.
+    db1_->createUpdateGlobalParameter6(ServerSelector::ALL(), valid_lifetime);
+
+    // Enable repair mode.
+    Daemon::setCBRepairMode(true);
+    
+    // Should parse without error.
+    configure(base_config, CONTROL_RESULT_SUCCESS, "");
+
+    // Verify the log says that we opened the back ends but did not fetch.
+    EXPECT_EQ(1U, countFile("DCTL_OPEN_CONFIG_DB Opening configuration database: host=db1 type=memfile"));
+    EXPECT_EQ(1U, countFile("DCTL_OPEN_CONFIG_DB Opening configuration database: host=db2 type=memfile"));
+    EXPECT_EQ(0U, countFile("DCTL_CONFIG_FETCH Fetching configuration data from config backends"));
+    EXPECT_EQ(0U, countFile("DHCPSRV_CFGMGR_CONFIG6_MERGED Configuration backend data has been merged."));
+    EXPECT_EQ(1U, countFile("DHCP6_CONFIG_COMPLETE DHCPv6 server has completed configuration"));
+
+    // Verify the composite staging is correct.  (Remember that
+    // CfgMgr::instance().commit() hasn't been called)
+    SrvConfigPtr staging_cfg = CfgMgr::instance().getStagingCfg();
+
+    // Verify that the implicit global from the backend is not there.
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, "valid-lifetime",
+                                                  Element::create(4000)));
+
 }
 
 }

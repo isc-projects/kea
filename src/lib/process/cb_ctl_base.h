@@ -21,7 +21,6 @@
 namespace isc {
 namespace process {
 
-
 /// @brief Base class for implementing server specific mechanisms to control
 /// the use of the Configuration Backends.
 ///
@@ -89,7 +88,8 @@ public:
     /// should be fetched.
     enum class FetchMode {
         FETCH_ALL,
-        FETCH_UPDATE
+        FETCH_UPDATE,
+        FETCH_NONE
     };
 
     /// @brief Constructor.
@@ -182,8 +182,12 @@ public:
                                      const FetchMode& fetch_mode = FetchMode::FETCH_ALL) {
         // If the server starts up we need to connect to the database(s).
         // If there are no databases available simply do nothing.
-        if ((fetch_mode == FetchMode::FETCH_ALL) && !databaseConfigConnect(srv_cfg)) {
+        if (fetch_mode != FetchMode::FETCH_UPDATE && !databaseConfigConnect(srv_cfg)) {
             // There are no CB databases so we're done
+            return;
+        }
+
+        if (fetch_mode == FetchMode::FETCH_NONE) {
             return;
         }
 

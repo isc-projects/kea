@@ -93,6 +93,10 @@ public:
                                      const FetchMode& fetch_mode) {
         ++db_total_config_fetch_calls_;
 
+        if (fetch_mode == FetchMode::FETCH_NONE) {
+            return;
+        }
+
         if (config == CfgMgr::instance().getCurrentCfg()) {
             ++db_current_config_fetch_calls_;
         } else if (config == CfgMgr::instance().getStagingCfg()) {
@@ -144,6 +148,7 @@ public:
     void enableThrow() {
         enable_throw_ = true;
     }
+
 
 private:
 
@@ -207,6 +212,7 @@ public:
 class JSONFileBackendTest : public dhcp::test::BaseServerTest {
 public:
     JSONFileBackendTest() {
+        process::Daemon::setCBRepairMode(false);
     }
 
     ~JSONFileBackendTest() {
@@ -214,6 +220,7 @@ public:
         isc::log::setDefaultLoggingOutput();
         static_cast<void>(remove(TEST_FILE));
         static_cast<void>(remove(TEST_INCLUDE));
+        process::Daemon::setCBRepairMode(false);
     };
 
     void writeFile(const std::string& file_name, const std::string& content) {
@@ -378,6 +385,60 @@ public:
                 EXPECT_EQ(0U, cb_control->getDatabaseCurrentConfigFetchCalls());
                 EXPECT_EQ(1U, cb_control->getDatabaseStagingConfigFetchCalls());
             }
+        }
+    }
+
+    /// @brief This test verifies that the timer used to periodically fetch
+    /// configuration updates from config back end only gets scheduled
+    /// if CB repair mode is disabled.
+    void testCBRepairMode(bool cb_repair_mode) {
+        std::string config =
+            "{ \"Dhcp6\": {"
+            "\"interfaces-config\": {"
+            "    \"interfaces\": [ ]"
+            "},"
+            "\"lease-database\": {"
+            "     \"type\": \"memfile\","
+            "     \"persist\": false"
+            "},"
+            "\"config-control\": {"
+            "     \"config-fetch-wait-time\": 30"
+            "},"
+            "\"rebind-timer\": 2000, "
+            "\"renew-timer\": 1000, \n"
+            "\"subnet6\": [ ],"
+            "\"valid-lifetime\": 4000 }"
+            "}";
+        writeFile(TEST_FILE, config);
+
+        // Create an instance of the server and initialize it.
+        boost::scoped_ptr<NakedControlledDhcpv6Srv> srv;
+        ASSERT_NO_THROW(srv.reset(new NakedControlledDhcpv6Srv()));
+
+        process::Daemon::setCBRepairMode(cb_repair_mode);
+        ASSERT_NO_THROW(srv->init(TEST_FILE));
+
+        // Get the CBControlDHCPv6 object belonging to this server.
+        auto cb_control = boost::dynamic_pointer_cast<TestCBControlDHCPv6>(srv->getCBControl());
+
+        if (cb_repair_mode) {
+            // Fetch should be called but should not touch current or staging.
+            EXPECT_EQ(1U, cb_control->getDatabaseTotalConfigFetchCalls());
+            EXPECT_EQ(0U, cb_control->getDatabaseCurrentConfigFetchCalls());
+            EXPECT_EQ(0U, cb_control->getDatabaseStagingConfigFetchCalls());
+
+            // Timer should not be scheduled.
+            EXPECT_FALSE(TimerMgr::instance()->isTimerRegistered("Dhcp6CBFetchTimer"));
+            EXPECT_FALSE(srv->getNetworkState()->isServiceEnabled());
+        } else {
+            // Fetch should be called and should increment staging.
+            EXPECT_EQ(1U, cb_control->getDatabaseTotalConfigFetchCalls());
+            EXPECT_EQ(0U, cb_control->getDatabaseCurrentConfigFetchCalls());
+            EXPECT_EQ(1U, cb_control->getDatabaseStagingConfigFetchCalls());
+
+            // Timer should be scheduled.
+            EXPECT_TRUE(TimerMgr::instance()->isTimerRegistered("Dhcp6CBFetchTimer"));
+            EXPECT_TRUE(srv->getNetworkState()->isServiceEnabled());
         }
     }
 
@@ -1204,5 +1265,13 @@ TEST_F(JSONFileBackendTest, reclaimOnlyWhenServiceEnabled) {
     );
     EXPECT_FALSE(lease_reclaimed);
 }
+
+TEST_F(JSONFileBackendTest, testCBRepairModeDisabled) {
+    testCBRepairMode(false);
+}   
+    
+TEST_F(JSONFileBackendTest, testCBRepairModeEnabled) {
+    testCBRepairMode(true);
+}   
 
 } // End of anonymous namespace
