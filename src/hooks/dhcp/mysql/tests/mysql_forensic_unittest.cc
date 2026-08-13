@@ -10,6 +10,7 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
+#include <database/testutils/password_file.h>
 #include <dhcpsrv/testutils/forensic_test_utils.h>
 #include <dhcpsrv/testutils/test_utils.h>
 #include <mysql/testutils/mysql_schema.h>
@@ -201,6 +202,44 @@ TEST_F(MySqlTest, open) {
 
     // Destructor close the database
     EXPECT_NO_THROW_LOG(store_.reset());
+}
+
+/// @brief Tests opening with password file.
+TEST_F(MySqlTest, passwordFile) {
+    // Construct the store_
+    DatabaseConnection::ParameterMap params;
+    params["name"] = "keatest";
+    params["user"] = "keatest";
+    params["password-file"] = PASSWORD_FILE;
+    ASSERT_NO_THROW_LOG(store_.reset(new MySqlStore(params)));
+
+    // Check the type is mysql
+    EXPECT_EQ("mysql", store_->getType());
+
+    // Open the database
+    ASSERT_NO_THROW_LOG(store_->open());
+
+    // Close does nothing
+    EXPECT_NO_THROW_LOG(store_->close());
+
+    // Destructor close the database
+    EXPECT_NO_THROW_LOG(store_.reset());
+}
+
+/// @brief Tests opening with bad password file.
+TEST_F(MySqlTest, badPasswordFile) {
+    // Construct the store_
+    DatabaseConnection::ParameterMap params;
+    params["name"] = "keatest";
+    params["user"] = "keatest";
+    params["password-file"] = BAD_PASSWORD_FILE;
+    ASSERT_NO_THROW_LOG(store_.reset(new MySqlStore(params)));
+
+    // Check the type is mysql
+    EXPECT_EQ("mysql", store_->getType());
+
+    // Open the database
+    EXPECT_THROW(store_->open(), DbOpenError);
 }
 
 /// @brief Tests opening MySqlStore with invalid SSL/TLS

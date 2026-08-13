@@ -62,12 +62,18 @@ LegalLogMgr::parseDatabase(const ConstElementPtr& parameters, DatabaseConnection
         isc_throw(BadValue, "no parameters specified for the hook library");
     }
 
+    // Reject password and password-file both being specified.
+    if (parameters->get("password") && parameters->get("password-file")) {
+        isc_throw(BadValue, "can't specify both 'password' and "
+                  << "'password-file'");
+    }
+
     DatabaseConnection::ParameterMap db_parameters;
 
     // Strings
     for (char const* const& key : {
-         "type", "user", "password", "host", "name", "trust-anchor",
-         "cert-file", "key-file", "ssl-mode", "cipher-list" }) {
+        "type", "user", "password", "password-file", "host", "name",
+        "trust-anchor", "cert-file", "key-file", "ssl-mode", "cipher-list" }) {
         ConstElementPtr const value(parameters->get(key));
         if (value) {
             db_parameters.emplace(key, value->stringValue());

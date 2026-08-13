@@ -5,6 +5,7 @@ endif
 current_source_dir = meson.current_source_dir()
 kea_database_testutils_lib = static_library(
     'kea-database-testutils',
+    'password_file.cc',
     'schema.cc',
     cpp_args: [
         f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
