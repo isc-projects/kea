@@ -487,7 +487,7 @@
                 "password": "1234",
 
                 // Database password file.
-                //"password-file": "hiddenp",
+                // "password-file": "hidden-password",
 
                 // Port on which the database is available.
                 "port": 3306,
@@ -553,7 +553,7 @@
                 "password": "1234",
 
                 // Database password file.
-                //"password-file": "hiddenp",
+                // "password-file": "hidden-password",
 
                 // Port on which the database is available.
                 "port": 5432,
