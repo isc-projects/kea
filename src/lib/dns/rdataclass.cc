@@ -794,7 +794,9 @@ OPT::OPT(InputBuffer& buffer, size_t rdata_len) {
 
         boost::shared_ptr<std::vector<uint8_t> >
             option_data(new std::vector<uint8_t>(option_length));
-        buffer.readData(&(*option_data)[0], option_length);
+        if (option_length > 0) {
+            buffer.readData(&(*option_data)[0], option_length);
+        }
         impl_->pseudo_rrs_.push_back(PseudoRR(option_code, option_data));
         impl_->rdlength_ += option_length;
         rdata_len -= option_length;
