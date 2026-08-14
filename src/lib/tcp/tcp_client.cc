@@ -2090,6 +2090,10 @@ TcpClient::asyncSendRequest(const IOAddress& address,
         isc_throw(TcpClientError, "TCP request must not be null");
     }
 
+    if (request->empty()) {
+        isc_throw(TcpClientError, "TCP request must not be empty");
+    }
+
     if (!response) {
         isc_throw(TcpClientError, "TCP response must not be null");
     }
