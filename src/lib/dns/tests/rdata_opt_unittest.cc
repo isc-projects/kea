@@ -195,4 +195,17 @@ TEST_F(Rdata_OPT_Test, getPseudoRRs) {
     EXPECT_EQ(0, std::memcmp(expected_data, actual_data,
                              sizeof(expected_data)));
 }
+
+TEST_F(Rdata_OPT_Test, emptyOpt) {
+    // pseudoRR with empty RDATA (#4741).
+    const vector<uint8_t> data = {
+        // Option code
+        0x00, 0x0b,
+        // Option length
+        0x00, 0x00
+    };
+    InputBuffer buffer(&data[0], data.size());
+    EXPECT_NO_THROW({ generic::OPT opt(buffer, data.size()); });
+}
+
 }
