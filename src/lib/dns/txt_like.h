@@ -142,7 +142,9 @@ public:
              it != string_list_.end();
              ++it)
         {
-            buffer.writeData(&(*it)[0], (*it).size());
+            if ((*it).size() > 0) {
+                buffer.writeData(&(*it)[0], (*it).size());
+            }
         }
     }
 
@@ -158,7 +160,9 @@ public:
              it != string_list_.end();
              ++it)
         {
-            renderer.writeData(&(*it)[0], (*it).size());
+            if ((*it).size() > 0) {
+                renderer.writeData(&(*it)[0], (*it).size());
+            }
         }
     }
 
