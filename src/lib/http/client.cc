@@ -441,6 +441,9 @@ private:
     /// @brief Output buffer.
     std::string buf_;
 
+    /// @brief Current output position.
+    size_t position_;
+
     /// @brief Input buffer.
     std::array<char, 32768> input_buf_;
 
@@ -1128,9 +1131,9 @@ Connection::Connection(const IOServicePtr& io_service,
     : io_service_(io_service), conn_pool_(conn_pool), url_(url),
       tls_context_(tls_context), tcp_socket_(), tls_socket_(),
       timer_(new IntervalTimer(io_service)), current_request_(),
-      current_response_(), parser_(), current_callback_(), buf_(), input_buf_(),
-      current_transid_(0), close_callback_(), started_(false),
-      need_handshake_(false), closed_(false) {
+      current_response_(), parser_(), current_callback_(), buf_(),
+      position_(0), input_buf_(), current_transid_(0), close_callback_(),
+      started_(false), need_handshake_(false), closed_(false) {
     if (!tls_context) {
         tcp_socket_.reset(new asiolink::TCPSocket<SocketCallback>(io_service));
     } else {
@@ -1260,6 +1263,10 @@ Connection::doTransactionInternal(const HttpRequestPtr& request,
         ++current_transid_;
 
         buf_ = request->toString();
+        if (buf_.empty()) {
+            isc_throw(Unexpected, "empty request");
+        }
+        position_ = 0;
 
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_DETAIL,
                   HTTP_CLIENT_REQUEST_SEND)
@@ -1498,13 +1505,14 @@ Connection::doSend(const uint64_t transid) {
                                        ph::_1,
                                        ph::_2));
     try {
+        size_t remaining = buf_.size() - position_;
         if (tcp_socket_) {
-            tcp_socket_->asyncSend(&buf_[0], buf_.size(), socket_cb);
+            tcp_socket_->asyncSend(&buf_[position_], remaining, socket_cb);
             return;
         }
 
         if (tls_socket_) {
-            tls_socket_->asyncSend(&buf_[0], buf_.size(), socket_cb);
+            tls_socket_->asyncSend(&buf_[position_], remaining, socket_cb);
             return;
         }
 
@@ -1656,13 +1664,15 @@ Connection::sendCallback(const uint64_t transid,
 
     // If any data have been sent, remove it from the buffer and only leave the
     // portion that still has to be sent.
-    if (length > 0) {
-        buf_.erase(0, length);
+    if (length >= buf_.size() - position_) {
+        position_ = buf_.size();
+    } else {
+        position_ += length;
     }
 
     // If there is no more data to be sent, start receiving a response. Otherwise,
     // continue sending.
-    if (buf_.empty()) {
+    if (position_ == buf_.size()) {
         doReceive(transid);
 
     } else {
