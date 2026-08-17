@@ -66,7 +66,7 @@ The server is supposed to send back packet A with address B assigned.
 <!--
 How can this bug be exploited in an attack situation? 
 What network access or privliges does the attacker have to have? 
-Please refer to https://kea.readthedocs.io/en/latest/arm/security.html for our guidelines on how to deploy Kea responsibly. 
+Please refer to https://kea.readthedocs.io/en/latest/arm/security.html for our guidelines on how to deploy Kea responsibly. Failure to follow the guidelines is not a software fault. 
 Please explain the impact on the Kea server, dhcp clients, or the network.
 -->
 
