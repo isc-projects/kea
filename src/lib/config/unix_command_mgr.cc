@@ -38,7 +38,7 @@ namespace ph = std::placeholders;
 
 namespace {
 
-/// @brief Maximum size of the data chunk sent/received over the socket.
+/// @brief Maximum size of the data chunk received over the socket.
 const size_t BUF_SIZE = 32768;
 
 class ConnectionPool;
@@ -164,14 +164,12 @@ public:
 
     /// @brief Starts asynchronous send over the unix domain socket.
     ///
-    /// This method doesn't block. Once the send operation (that covers the whole
-    /// data if it's small or first BUF_SIZE bytes if its large) is completed, the
+    /// This method doesn't block. Once the send operation is completed, the
     /// @c Connection::sendHandler callback is invoked. That handler will either
     /// close the connection gracefully if all data has been sent, or will
-    /// call @ref doSend() again to send the next chunk of data.
+    /// call @ref doSend() again to send remaining data.
     void doSend() {
-        size_t chunk_size = (response_.size() < BUF_SIZE) ? response_.size() : BUF_SIZE;
-        socket_->asyncSend(&response_[0], chunk_size,
+        socket_->asyncSend(&response_[0], response_.size(),
            std::bind(&Connection::sendHandler, shared_from_this(), ph::_1, ph::_2));
 
         if (use_external_) {
