@@ -53,7 +53,7 @@ CfgOptionDef::equals(const CfgOptionDef& other) const {
         OptionDefContainerPtr other_defs = other.getAll(name);
         // Compare sizes. If they hold different number of definitions,
         // they are unequal.
-        if (defs->size() != defs->size()) {
+        if (defs->size() != other_defs->size()) {
             return (false);
         }
         // For each option definition, try to find one in the other object.

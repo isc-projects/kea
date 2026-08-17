@@ -47,6 +47,12 @@ TEST(CfgOptionDefTest, equal) {
     EXPECT_TRUE(cfg1 == cfg2);
     EXPECT_FALSE(cfg1 != cfg2);
 
+    // Add an option in the second configuration only to check if sizes
+    // are corr4ctly compared *#4731).
+    cfg2.add(OptionDefinitionPtr(new OptionDefinition("option-bar", 6, "dns",
+                                                      "string")));
+    EXPECT_FALSE(cfg1 == cfg2);
+    EXPECT_TRUE(cfg1 != cfg2);
 }
 
 // This test verifies that multiple option definitions can be added
