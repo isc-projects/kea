@@ -1,6 +1,6 @@
 <!--
-If you found the problem using generative AI tools and you have verified it
-yourself to be true: write the report yourself and explain the problem as you
+If you found the problem using generative AI tools and you have verified it to 
+be true yourself: write the report yourself and explain the problem as you
 have learned it. This makes sure the AI-generated inaccuracies and invented
 issues are filtered out early before they waste more people's time.  Even if you
 write the report yourself, you must make sure to reveal the fact that 
