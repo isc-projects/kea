@@ -327,8 +327,7 @@ TLSSocket<C>::asyncSend(const void* data, size_t length, C& callback) {
     }
 
     // Send the data.
-    boost::asio::async_write(stream_, boost::asio::buffer(data, length),
-                             callback);
+    stream_.async_write_some(boost::asio::buffer(data, length), callback);
 }
 
 template <typename C> void
@@ -354,7 +353,7 @@ TLSSocket<C>::asyncSend(const void* data, size_t length,
         buffers.push_back(boost::asio::buffer(data, length));
 
         // ... and send it
-        boost::asio::async_write(stream_, buffers, callback);
+        stream_.async_write_some(buffers, callback);
     } catch (const boost::numeric::bad_numeric_cast&) {
         isc_throw(BufferTooLarge,
                   "attempt to send buffer larger than 64kB");
