@@ -1681,18 +1681,17 @@ Connection::receiveCallback(const uint64_t transid,
     if (ec) {
         if (ec.value() == boost::asio::error::operation_aborted) {
             return;
-
+        }
         // EAGAIN and EWOULDBLOCK don't indicate an error in this case. All
         // other errors should terminate the transaction.
-        }
         if ((ec.value() != boost::asio::error::try_again) &&
             (ec.value() != boost::asio::error::would_block)) {
             terminate(ec);
             return;
 
         } else {
-            // For EAGAIN and EWOULDBLOCK the length should be 0 anyway, but let's
-            // make sure.
+            // For EAGAIN and EWOULDBLOCK the length should be 0 anyway,
+            // but let's make sure.
             length = 0;
         }
     }
