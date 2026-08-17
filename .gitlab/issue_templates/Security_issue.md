@@ -73,7 +73,7 @@ Please explain the impact on the Kea server, dhcp clients, or the network.
 ### Environment:
 <!--
  - Kea version: which release? if it's compiled from git, which revision. Use kea-dhcp4 -V to find out.
- - OS: [e.g. Ubuntu 16.04 x64]
+ - OS: [e.g. Ubuntu 26.04 x64]
  - Which features were compiled in (in particular which backends)
  - If/which hooks where loaded in
 -->
