@@ -40,6 +40,28 @@ The arguments are as follows:
 ``-d``
    Enables the debug mode with extra verbosity.
 
+``-F``
+   As of Kea 3.3.0, makes the server exit immediately on any fatal error
+   detected when executing API commands. Default behavior (parameter not set)
+   is to just log the error and continue, making it possible for an
+   administrator to intervene and fix the issue without restarting the server.
+
+``-R``
+   As of Kea 3.3.1, starts the server in CB repair mode. DHCP service and
+   configuration back end data fetching are both disabled. The server will
+   still connect to configured config back ends but will not attempt to fetch
+   and use config back end data. It will however still process all config back
+   end API calls. This allows admins to correct fatal errors that may have been
+   introduced into the config back end data. This mode of operation is intended
+   to be a short term intervention only, once data corrections have been made
+   the server must be restarted without -R to resume normal operation.
+
+``-X``
+   As of Kea 3.0, disables security restrictions. The server will still check
+   for violations but will emit warning logs when they are found rather than
+   fail with an error. Please see :ref:`sec-kea-runtime-security-policy-checking`
+   for details.
+
 ``-c config-file``
    Specifies the configuration file with the configuration for the DHCPv6 server. It
    may also contain configuration entries for other Kea services.

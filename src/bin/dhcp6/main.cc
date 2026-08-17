@@ -55,11 +55,14 @@ usage() {
          << endl;
     cerr << endl;
     cerr << "Usage: " << DHCP6_NAME
-         << " -[v|V|W|X|F|R] [-d] [-{c|t|T} cfgfile] [-p number] [-P number]" << endl;
+         << " -[v|V|W] [-d|F|R|X] [-{c|t|T} cfgfile] [-p number] [-P number]" << endl;
     cerr << "  -v: print version number and exit" << endl;
     cerr << "  -V: print extended version and exit" << endl;
     cerr << "  -W: display the configuration report and exit" << endl;
     cerr << "  -d: debug mode with extra verbosity (former -v)" << endl;
+    cerr << "  -F: exit on critical error" << endl;
+    cerr << "  -R: config back end repair mode" << endl;
+    cerr << "  -X: disables security restrictions" << endl;
     cerr << "  -c file: specify configuration file" << endl;
     cerr << "  -t file: check the configuration file syntax and exit" << endl;
     cerr << "  -T file: check the configuration file doing hooks load and extra "
@@ -68,9 +71,6 @@ usage() {
          << "(useful for testing only)" << endl;
     cerr << "  -P number: specify non-standard client port number 1-65535 "
          << "(useful for testing only)" << endl;
-    cerr << "  -X: disables security restrictions" << endl;
-    cerr << "  -F: exit on critical error" << endl;
-    cerr << "  -R: Config Backend repair mode" << endl;
     exit(EXIT_FAILURE);
 }
 }  // namespace
@@ -103,12 +103,8 @@ main(int argc, char* argv[]) {
     opterr = 0;
     optind = 1;
 
-    while ((ch = getopt(argc, argv, "dvVWc:p:P:t:T:XFR")) != -1) {
+    while ((ch = getopt(argc, argv, "vVWdFRXc:t:T:p:P:")) != -1) {
         switch (ch) {
-        case 'd':
-            verbose_mode = true;
-            break;
-
         case 'v':
             cout << Dhcpv6Srv::getVersion(false) << endl;
             return (EXIT_SUCCESS);
@@ -121,9 +117,23 @@ main(int argc, char* argv[]) {
             cout << isc::detail::getConfigReport() << endl;
             return (EXIT_SUCCESS);
 
-        case 'T':
-            load_hooks = true;
-            check_mode = true;
+        case 'd':
+            verbose_mode = true;
+            break;
+
+        case 'F': // exit on fatal error
+            Daemon::setShutdownOnFailure(true);
+            break;
+
+        case 'R': // CB repair mode
+            Daemon::setCBRepairMode(true);
+            break;
+
+        case 'X': // relax security checks
+            PathChecker::enableEnforcement(false);
+            break;
+
+        case 'c': // config file
             config_file = optarg;
             break;
 
@@ -132,7 +142,9 @@ main(int argc, char* argv[]) {
             config_file = optarg;
             break;
 
-        case 'c': // config file
+        case 'T':
+            load_hooks = true;
+            check_mode = true;
             config_file = optarg;
             break;
 
@@ -164,18 +176,6 @@ main(int argc, char* argv[]) {
                      << "], 1-65535 allowed." << endl;
                 usage();
             }
-            break;
-
-        case 'X': // relax security checks
-            PathChecker::enableEnforcement(false);
-            break;
-
-        case 'F': // exit on fatal error
-            Daemon::setShutdownOnFailure(true);
-            break;
-
-        case 'R': // CB repair mode
-            Daemon::setCBRepairMode(true);
             break;
 
         default:

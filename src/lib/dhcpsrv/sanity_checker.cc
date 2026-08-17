@@ -10,12 +10,17 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+#include <process/daemon.h>
 #include <sstream>
 
 namespace isc {
 namespace dhcp {
 
 bool SanityChecker::leaseCheckingEnabled(bool current) {
+    if (isc::process::Daemon::getCBRepairMode()) {
+        return (false);
+    }
+
     SrvConfigPtr cfg;
     if (current) {
         cfg = CfgMgr::instance().getCurrentCfg();

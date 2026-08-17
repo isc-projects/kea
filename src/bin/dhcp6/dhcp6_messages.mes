@@ -1243,7 +1243,7 @@ use it to extend their leases. As a result, they will have to go through
 a rebinding phase to re-acquire their leases and associate them with a
 new server id.
 
-% DHCP6_CB_REPAIR_MODE_ENABLED Server is running in Config Back end repair mode.
+% DHCP6_CB_REPAIR_MODE_ENABLED Server is running in config back end repair mode.
 This warning is emitted when config back end repair mode is enabled. This allows
 the server to start and run without automatically fetching config back end data
 but can still process CB API commands. This allows admins to correct errors in

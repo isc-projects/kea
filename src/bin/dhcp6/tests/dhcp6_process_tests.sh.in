@@ -728,19 +728,19 @@ PACKAGE_VERSION_TYPE=@PACKAGE_VERSION_TYPE@
 EXPECTED_OUTPUT=$(cat << EOF
 Kea DHCPv6 server, version $VERSION ($PACKAGE_VERSION_TYPE)
 
-Usage: kea-dhcp6 -[v|V|W|X|F|R] [-d] [-{c|t|T} cfgfile] [-p number] [-P number]
+Usage: kea-dhcp6 -[v|V|W] [-d|F|R|X] [-{c|t|T} cfgfile] [-p number] [-P number]
   -v: print version number and exit
   -V: print extended version and exit
   -W: display the configuration report and exit
   -d: debug mode with extra verbosity (former -v)
+  -F: exit on critical error
+  -R: config back end repair mode
+  -X: disables security restrictions
   -c file: specify configuration file
   -t file: check the configuration file syntax and exit
   -T file: check the configuration file doing hooks load and extra checks and exit
   -p number: specify non-standard server port number 1-65535 (useful for testing only)
   -P number: specify non-standard client port number 1-65535 (useful for testing only)
-  -X: disables security restrictions
-  -F: exit on critical error
-  -R: Config Backend repair mode
 EOF
 )
 usage_test "dhcpv6.invalid-param" "-f" 1 "${EXPECTED_OUTPUT}"

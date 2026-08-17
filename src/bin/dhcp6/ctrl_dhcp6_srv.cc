@@ -1316,51 +1316,52 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     CfgMgr::instance().getStagingCfg()->getCfgIface()->
         openSockets(AF_INET6, srv->getServerPort());
 
-    // Install the timers for handling leases reclamation.
-    try {
-        CfgMgr::instance().getStagingCfg()->getCfgExpiration()->
-            setupTimers(&ControlledDhcpv6Srv::reclaimExpiredLeases,
-                        &ControlledDhcpv6Srv::deleteExpiredReclaimedLeases,
-                        server_);
-
-    } catch (const std::exception& ex) {
-        err << "unable to setup timers for periodically running the"
-            " reclamation of the expired leases: "
-            << ex.what() << ".";
-        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
-    }
-
-    // Setup config backend polling, if configured for it.
-    auto ctl_info = CfgMgr::instance().getStagingCfg()->getConfigControlInfo();
-    if (ctl_info && !Daemon::getCBRepairMode()) {
-        long fetch_time = static_cast<long>(ctl_info->getConfigFetchWaitTime());
-        // Only schedule the CB fetch timer if the fetch wait time is greater
-        // than 0.
-        if (fetch_time > 0) {
-            // When we run unit tests, we want to use milliseconds unit for the
-            // specified interval. Otherwise, we use seconds. Note that using
-            // milliseconds as a unit in unit tests prevents us from waiting 1
-            // second on more before the timer goes off. Instead, we wait one
-            // millisecond which significantly reduces the test time.
-            if (!server_->inTestMode()) {
-                fetch_time = 1000 * fetch_time;
-            }
-
-            boost::shared_ptr<unsigned> failure_count(new unsigned(0));
-            TimerMgr::instance()->
-                registerTimer("Dhcp6CBFetchTimer",
-                              std::bind(&ControlledDhcpv6Srv::cbFetchUpdates,
-                                        server_, CfgMgr::instance().getStagingCfg(),
-                                        failure_count),
-                              fetch_time,
-                              asiolink::IntervalTimer::ONE_SHOT);
-            TimerMgr::instance()->setup("Dhcp6CBFetchTimer");
-        }
-    }
-
-    // Disable DHCP service if we're in Cb repair mode.
+    // If we're in config back end repair mode disable DHCP service and
+    // skip scheduling reclamation and CB fetch timers.
     if (Daemon::getCBRepairMode()) {
         server_->getNetworkState()->disableService(NetworkState::USER_COMMAND);
+    } else {
+        // Install the timers for handling leases reclamation.
+        try {
+            // Schedule reclaim timer unless we're in Cb repair mode.
+            CfgMgr::instance().getStagingCfg()->getCfgExpiration()->
+                setupTimers(&ControlledDhcpv6Srv::reclaimExpiredLeases,
+                            &ControlledDhcpv6Srv::deleteExpiredReclaimedLeases,
+                            server_);
+        } catch (const std::exception& ex) {
+            err << "unable to setup timers for periodically running the"
+                " reclamation of the expired leases: "
+                << ex.what() << ".";
+            return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
+        }
+
+        // Setup config backend polling, if configured for it.
+        auto ctl_info = CfgMgr::instance().getStagingCfg()->getConfigControlInfo();
+        if (ctl_info) {
+            long fetch_time = static_cast<long>(ctl_info->getConfigFetchWaitTime());
+            // Only schedule the CB fetch timer if the fetch wait time is greater
+            // than 0.
+            if (fetch_time > 0) {
+                // When we run unit tests, we want to use milliseconds unit for the
+                // specified interval. Otherwise, we use seconds. Note that using
+                // milliseconds as a unit in unit tests prevents us from waiting 1
+                // second on more before the timer goes off. Instead, we wait one
+                // millisecond which significantly reduces the test time.
+                if (!server_->inTestMode()) {
+                    fetch_time = 1000 * fetch_time;
+                }
+
+                boost::shared_ptr<unsigned> failure_count(new unsigned(0));
+                TimerMgr::instance()->
+                    registerTimer("Dhcp6CBFetchTimer",
+                                  std::bind(&ControlledDhcpv6Srv::cbFetchUpdates,
+                                            server_, CfgMgr::instance().getStagingCfg(),
+                                            failure_count),
+                                  fetch_time,
+                                  asiolink::IntervalTimer::ONE_SHOT);
+                TimerMgr::instance()->setup("Dhcp6CBFetchTimer");
+            }
+        }
     }
 
     // Finally, we can commit runtime option definitions in libdhcp++. This is

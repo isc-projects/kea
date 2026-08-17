@@ -149,7 +149,6 @@ public:
         enable_throw_ = true;
     }
 
-
 private:
 
     /// @brief Counter holding number of invocations of the

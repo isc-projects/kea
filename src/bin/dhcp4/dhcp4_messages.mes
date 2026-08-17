@@ -1265,7 +1265,7 @@ An DHCPOFFER for the 0.0.0.0 address was generated for a client requesting
 the v6-only-preferred (108) option but the option is not in the response as
 expected: the erroneous response is dropped, the discover query is displayed.
 
-% DHCP4_CB_REPAIR_MODE_ENABLED Server is running in Config Back end repair mode.
+% DHCP4_CB_REPAIR_MODE_ENABLED Server is running in config back end repair mode.
 This warning is emitted when config back end repair mode is enabled. This allows
 the server to start and run without automatically fetching config back end data
 but can still process CB API commands. This allows admins to correct errors in

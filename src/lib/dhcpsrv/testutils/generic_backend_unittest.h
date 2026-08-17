@@ -39,7 +39,6 @@ struct ExpAuditEntry {
 
 /// @brief Generic test fixture class with utility functions for
 /// testing database backends.
-//class GenericBackendTest : public ::testing::Test {
 class GenericBackendTest : public LogContentTest {
 public:
 

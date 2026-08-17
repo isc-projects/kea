@@ -285,11 +285,10 @@ public:
 
     /// @brief Set the CB repair mode flag.
     ///
-    /// @param cb_repair_mode The new value for the cb_repair_mode flag.
+    /// @param cb_repair_mode The new value for the cb repair mode flag.
     static void setCBRepairMode(bool cb_repair_mode) {
         cb_repair_mode_ = cb_repair_mode;
     }
-
 
 protected:
 
