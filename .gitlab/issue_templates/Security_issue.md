@@ -52,6 +52,9 @@ Steps to reproduce the behavior:
 3.
 
 ### What is the current *bug* behavior?
+<!--
+What undesired behavior did Kea exhibit precisely?  Please be explicit here describing exactly what happens.
+-->
 
 ### What is the expected *correct* behavior?
 <!--
