@@ -237,22 +237,8 @@ private:
     /// @brief Underlying TCP socket.
     typename TlsStream<C>::lowest_layer_type& socket_;
 
-    /// @todo Remove temporary buffer
-    /// The current implementation copies the buffer passed to asyncSend() into
-    /// a temporary buffer and precedes it with a two-byte count field.  As
-    /// ASIO should really be just about sending and receiving data, the TCP
-    /// code should not do this.  If the protocol using this requires a two-byte
-    /// count, it should add it before calling this code.  (This may be best
-    /// achieved by altering isc::dns::buffer to have pairs of methods:
-    /// getLength()/getTCPLength(), getData()/getTCPData(), with the getTCPXxx()
-    /// methods taking into account a two-byte count field.)
-    ///
-    /// The option of sending the data in two operations, the count followed by
-    /// the data was discounted as that would lead to two callbacks which would
-    /// cause problems with the stackless coroutine code.
-
-    /// @brief Send buffer.
-    isc::util::OutputBufferPtr send_buffer_;
+    /// @brief Framing buffer.
+    isc::util::OutputBufferPtr header_;
 };
 
 // Constructor - caller manages socket.
@@ -260,7 +246,7 @@ private:
 template <typename C>
 TLSSocket<C>::TLSSocket(TlsStream<C>& stream) :
     stream_ptr_(), stream_(stream),
-    socket_(stream_.lowest_layer()), send_buffer_() {
+    socket_(stream_.lowest_layer()), header_() {
 }
 
 // Constructor - create socket on the fly.
@@ -269,7 +255,7 @@ template <typename C>
 TLSSocket<C>::TLSSocket(const IOServicePtr& io_service, TlsContextPtr context)
     : io_service_(io_service),
       stream_ptr_(new TlsStream<C>(io_service, context)),
-      stream_(*stream_ptr_), socket_(stream_.lowest_layer()), send_buffer_() {
+      stream_(*stream_ptr_), socket_(stream_.lowest_layer()), header_() {
 }
 
 // Destructor.
@@ -327,6 +313,11 @@ TLSSocket<C>::handshake(C& callback) {
 
 // Send a message.  Should never do this if the socket is not open, so throw
 // an exception if this is the case.
+//
+// This uses boost asio buffers which do not own the data so it is
+// the responsibility of the caller to keep the data valid.
+// The header holding the count is a member of the socket object.
+// Boost asio buffers themselves can be released after boot asio calls.
 
 template <typename C> void
 TLSSocket<C>::asyncSend(const void* data, size_t length, C& callback) {
@@ -335,19 +326,9 @@ TLSSocket<C>::asyncSend(const void* data, size_t length, C& callback) {
                   "attempt to send on a TLS socket that is not open");
     }
 
-    try {
-        send_buffer_.reset(new isc::util::OutputBuffer(length));
-        send_buffer_->writeData(data, length);
-
-        // Send the data.
-        boost::asio::async_write(stream_,
-                                 boost::asio::buffer(send_buffer_->getData(),
-                                                     send_buffer_->getLength()),
-                                 callback);
-    } catch (const boost::numeric::bad_numeric_cast&) {
-        isc_throw(BufferTooLarge,
-                  "attempt to send buffer larger than 64kB");
-    }
+    // Send the data.
+    boost::asio::async_write(stream_, boost::asio::buffer(data, length),
+                             callback);
 }
 
 template <typename C> void
@@ -358,23 +339,22 @@ TLSSocket<C>::asyncSend(const void* data, size_t length,
                   "attempt to send on a TLS socket that is not open");
     }
 
-    /// Need to copy the data into a temporary buffer and precede it with
-    /// a two-byte count field.
-    /// @todo arrange for the buffer passed to be preceded by the count
+    /// Need create a two-byte count buffer and use a sequence of buffers
+    /// with this header buffer and data buffer.
     try {
-        // Ensure it fits into 16 bits
+        /// Ensure it fits into 16 bits
         uint16_t count = boost::numeric_cast<uint16_t>(length);
+        header_.reset(new isc::util::OutputBuffer(2));
+        header_->writeUint16(count);
+        std::vector<boost::asio::const_buffer> buffers;
 
-        // Copy data into a buffer preceded by the count field.
-        send_buffer_.reset(new isc::util::OutputBuffer(length + 2));
-        send_buffer_->writeUint16(count);
-        send_buffer_->writeData(data, length);
+        // Prepare a buffer sequence.
+        buffers.push_back(boost::asio::buffer(header_->getData(),
+                                              header_->getLength()));
+        buffers.push_back(boost::asio::buffer(data, length));
 
         // ... and send it
-        boost::asio::async_write(stream_,
-                                 boost::asio::buffer(send_buffer_->getData(),
-                                                     send_buffer_->getLength()),
-                                 callback);
+        boost::asio::async_write(stream_, buffers, callback);
     } catch (const boost::numeric::bad_numeric_cast&) {
         isc_throw(BufferTooLarge,
                   "attempt to send buffer larger than 64kB");
