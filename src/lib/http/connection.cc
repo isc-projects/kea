@@ -37,7 +37,8 @@ HttpConnection::Transaction::Transaction(const HttpResponseCreatorPtr& response_
     : request_(request ? request : response_creator->createNewHttpRequest()),
       parser_(new HttpRequestParser(*request_)),
       input_buf_(),
-      output_buf_() {
+      output_buf_(),
+      position_(0) {
     parser_->initModel();
 }
 

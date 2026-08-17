@@ -184,23 +184,26 @@ protected:
         /// @return true if the output buffer contains data to be sent,
         /// false otherwise.
         bool outputDataAvail() const {
-            return (!output_buf_.empty());
+            return (position_ < output_buf_.size());
         }
 
         /// @brief Returns pointer to the first byte of the output buffer.
         const char* getOutputBufData() const {
-            return (output_buf_.data());
+            return (&output_buf_[position_]);
         }
 
         /// @brief Returns size of the output buffer.
         size_t getOutputBufSize() const {
-            return (output_buf_.size());
+            return (output_buf_.size() - position_);
         }
 
         /// @brief Replaces output buffer contents with new contents.
         ///
         /// @param response New contents for the output buffer.
         void setOutputBuf(const std::string& response) {
+            if (response.empty()) {
+                isc_throw(Unexpected, "empty response");
+            }
             output_buf_ = response;
         }
 
@@ -208,7 +211,11 @@ protected:
         ///
         /// @param length Number of bytes to be erased.
         void consumeOutputBuf(const size_t length) {
-            output_buf_.erase(0, length);
+            if (length >= output_buf_.size() - position_) {
+                position_ = output_buf_.size();
+            } else {
+                position_ += length;
+            }
         }
 
     private:
@@ -224,6 +231,9 @@ protected:
 
         /// @brief Buffer used for outbound data.
         std::string output_buf_;
+
+        /// @brief Position in outbound data.
+        size_t position_;
     };
 
 public:

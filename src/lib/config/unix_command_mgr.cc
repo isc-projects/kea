@@ -79,7 +79,7 @@ public:
                const long timeout,
                bool use_external)
         : io_service_(io_service), socket_(socket), timeout_timer_(io_service_),
-          timeout_(timeout), buf_(), response_(),
+          timeout_(timeout), buf_(), response_(), position_(0),
           connection_pool_(connection_pool), feed_(), watch_socket_(),
           use_external_(use_external), defer_shutdown_(false) {
 
@@ -169,7 +169,8 @@ public:
     /// close the connection gracefully if all data has been sent, or will
     /// call @ref doSend() again to send remaining data.
     void doSend() {
-        socket_->asyncSend(&response_[0], response_.size(),
+        size_t remaining = response_.size() - position_;
+        socket_->asyncSend(&response_[position_], remaining,
            std::bind(&Connection::sendHandler, shared_from_this(), ph::_1, ph::_2));
 
         if (use_external_) {
@@ -236,6 +237,9 @@ private:
 
     /// @brief Response created by the server.
     std::string response_;
+
+    /// @brief To send position in the response.
+    size_t position_;
 
     /// @brief Reference to the pool of connections.
     ConnectionPool& connection_pool_;
@@ -439,16 +443,20 @@ Connection::sendHandler(const boost::system::error_code& ec,
         scheduleTimer();
 
         // No error. We are in a process of sending a response. Need to
-        // remove the chunk that we have managed to sent with the previous
-        // attempt.
-        response_.erase(0, bytes_transferred);
+        // advance the to send position in the response.
+        if (bytes_transferred >= response_.size() - position_) {
+            position_ = response_.size();
+        } else {
+            position_ += bytes_transferred;
+        }
 
         LOG_DEBUG(command_logger, DBG_COMMAND, COMMAND_SOCKET_WRITE)
-            .arg(bytes_transferred).arg(response_.size())
+            .arg(bytes_transferred)
+            .arg(response_.size() - position_)
             .arg(socket_->getNative());
 
         // Check if there is any data left to be sent and sent it.
-        if (!response_.empty()) {
+        if (position_ < response_.size()) {
             doSend();
             return;
         }

@@ -448,6 +448,9 @@ private:
     /// @brief Output buffer.
     std::vector<uint8_t> buf_;
 
+    /// @brief Current output position.
+    size_t position_;
+
     /// @brief Input buffer.
     std::array<uint8_t, 32768> input_buf_;
 
@@ -1221,9 +1224,9 @@ Connection::Connection(const IOServicePtr& io_service,
       timer_(new IntervalTimer(io_service)), current_request_(),
       current_response_(), current_persistent_(false),
       current_response_complete_(false), current_complete_check_(),
-      current_callback_(), buf_(), input_buf_(), current_transid_(0),
-      close_callback_(), started_(false), need_handshake_(false),
-      closed_(false) {
+      current_callback_(), buf_(), position_(0), input_buf_(),
+      current_transid_(0), close_callback_(), started_(false),
+      need_handshake_(false), closed_(false) {
     if (!tls_context) {
         tcp_socket_.reset(new asiolink::TCPSocket<SocketCallback>(io_service));
     } else {
@@ -1358,6 +1361,10 @@ Connection::doTransactionInternal(const WireDataPtr& request,
         ++current_transid_;
 
         buf_ = *request;
+        if (buf_.empty()) {
+            isc_throw(Unexpected, "empty request");
+        }
+        position_ = 0;
 
         size_t to_dump = request->size();
         bool truncated = false;
@@ -1597,13 +1604,14 @@ Connection::doSend(const uint64_t transid) {
                                        ph::_1,
                                        ph::_2));
     try {
+        size_t remaining = buf_.size() - position_;
         if (tcp_socket_) {
-            tcp_socket_->asyncSend(&buf_[0], buf_.size(), socket_cb);
+            tcp_socket_->asyncSend(&buf_[position_], remaining, socket_cb);
             return;
         }
 
         if (tls_socket_) {
-            tls_socket_->asyncSend(&buf_[0], buf_.size(), socket_cb);
+            tls_socket_->asyncSend(&buf_[position_], remaining, socket_cb);
             return;
         }
 
@@ -1755,17 +1763,15 @@ Connection::sendCallback(const uint64_t transid,
 
     // If any data have been sent, remove it from the buffer and only leave the
     // portion that still has to be sent.
-    if (length > 0) {
-        if (length >= buf_.size()) {
-            buf_.clear();
-        } else {
-            buf_.erase(buf_.begin(), buf_.begin() + length);
-        }
+    if (length >= buf_.size() - position_) {
+        position_ = buf_.size();
+    } else {
+        position_ += length;
     }
 
     // If there is no more data to be sent, start receiving a response. Otherwise,
     // continue sending.
-    if (buf_.empty()) {
+    if (position_ == buf_.size()) {
         doReceive(transid);
 
     } else {

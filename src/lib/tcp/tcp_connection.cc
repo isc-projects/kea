@@ -24,12 +24,6 @@ namespace isc {
 namespace tcp {
 
 void
-TcpResponse::consumeWireData(const size_t length) {
-    send_in_progress_ = true;
-    wire_data_.erase(wire_data_.begin(), wire_data_.begin() + length);
-}
-
-void
 TcpConnection::
 SocketCallback::operator()(boost::system::error_code ec, size_t length) {
     if (ec.value() == boost::asio::error::operation_aborted) {
@@ -466,14 +460,6 @@ TcpConnection::socketWriteCallback(TcpResponsePtr response,
     LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA, TCP_DATA_SENT)
         .arg(length)
         .arg(getRemoteEndpointAddressAsText());
-
-    // Since each response has its own wire data, it is not really
-    // possible that the number of bytes written is larger than the size
-    // of the buffer. But, let's be safe and set the length to the size
-    // of the buffer if that unexpected condition occurs.
-    if (length > response->getWireDataSize()) {
-        length = response->getWireDataSize();
-    }
 
     // Eat the 'length' number of bytes from the output buffer and only
     // leave the part of the response that hasn't been sent.

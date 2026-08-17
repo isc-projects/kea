@@ -34,24 +34,44 @@ public:
     virtual ~TcpMessage() = default;
 
     /// @brief Returns pointer to the first byte of the wire data.
-    /// @throw InvalidOperation if wire data is empty (i.e. getWireDataSize() == 0).
+    virtual const uint8_t* getWireData() const = 0;
+
+    /// @brief Returns current size of the wire data.
+    virtual size_t getWireDataSize() const = 0;
+
+protected:
+    /// @brief Returns pointer to current byte of the wire data.
+    ///
+    /// @param position Position inside the data.
+    /// @throw InvalidOperation if position is out of bounds.
     /// @return Constant raw pointer to the data.
-    const uint8_t* getWireData() const {
-        if (wire_data_.empty()) {
-            isc_throw(InvalidOperation, "TcpMessage::getWireData() - cannot access empty wire data");
+    const uint8_t* getWireData(size_t position) const {
+        if (position >= wire_data_.size()) {
+            isc_throw(InvalidOperation, "position " << position
+                      << " is not less than size " << wire_data_.size());
         }
 
-        return (wire_data_.data());
+        return (&wire_data_[position]);
     }
 
     /// @brief Returns current size of the wire data.
-    size_t getWireDataSize() const {
-        return (wire_data_.size());
+    ///
+    /// @param position Position inside the data.
+    /// @throw InvalidOperation if position is out of bounds.
+    /// @return Remaining data size.
+    size_t getWireDataSize(size_t position) const {
+        if (position > wire_data_.size()) {
+            isc_throw(InvalidOperation, "position " << position
+                      << " is not less than size " << wire_data_.size());
+        }
+        return (wire_data_.size() - position);
     }
 
-protected:
     /// @brief Buffer used for data in wire format data.
     WireData wire_data_;
+
+    /// @brief Position in the data.
+    size_t position_;
 };
 
 /// @brief Abstract class used to receive an inbound message.
@@ -59,6 +79,16 @@ class TcpRequest : public TcpMessage {
 public:
     /// @brief Destructor
     virtual ~TcpRequest(){};
+
+    /// @brief Returns pointer to the first byte of the wire data.
+    virtual const uint8_t* getWireData() const {
+        return (TcpMessage::getWireData(0));
+    }
+
+    /// @brief Returns current size of the wire data.
+    virtual size_t getWireDataSize() const {
+        return (TcpMessage::getWireDataSize(0));
+    }
 
     /// @brief Adds data to an incomplete request
     ///
@@ -99,11 +129,20 @@ typedef boost::shared_ptr<TcpRequest> TcpRequestPtr;
 class TcpResponse : public TcpMessage {
 public:
     /// @brief Constructor
-    TcpResponse()
-    : send_in_progress_(false) {};
+    TcpResponse() : send_in_progress_(false), position_(0) {}
 
     /// @brief Destructor
-    virtual ~TcpResponse() {};
+    virtual ~TcpResponse() {}
+
+    /// @brief Returns pointer to the first byte of the wire data.
+    virtual const uint8_t* getWireData() const {
+        return (TcpMessage::getWireData(position_));
+    }
+
+    /// @brief Returns current size of the wire data.
+    virtual size_t getWireDataSize() const {
+        return (TcpMessage::getWireDataSize(position_));
+    }
 
     /// @brief Checks if the output buffer contains some data to be
     /// sent.
@@ -111,7 +150,7 @@ public:
     /// @return true if the output buffer contains data to be sent,
     /// false otherwise.
     bool wireDataAvail() const {
-        return (!wire_data_.empty());
+        return (position_ < wire_data_.size());
     }
 
     /// @brief Prepares the wire data content for writing.
@@ -120,7 +159,14 @@ public:
     /// @brief Erases n bytes from the beginning of the wire data.
     ///
     /// @param length Number of bytes to be erased.
-    virtual void consumeWireData(const size_t length);
+    virtual void consumeWireData(const size_t length) {
+        send_in_progress_ = true;
+        if (length > wire_data_.size() - position_) {
+            position_ = wire_data_.size();
+        } else {
+            position_ += length;
+        }
+    }
 
     bool sendInProgress() {
         return (send_in_progress_);
@@ -129,6 +175,9 @@ public:
 private:
     /// @brief Returns true once wire data consumption has begun.
     bool send_in_progress_;
+
+    /// @brief Current position.
+    size_t position_;
 };
 
 typedef boost::shared_ptr<TcpResponse> TcpResponsePtr;
