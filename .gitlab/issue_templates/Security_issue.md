@@ -23,9 +23,9 @@ preferably in one paragraph or less.
 
 ### Kea versions affected
 <!--
-Make sure you are testing with the **latest** supported version of Kea.
-See https://kea.readthedocs.io/en/latest/arm/intro.html#supported-platforms for the current list.
-The latest source is available from https://www.isc.org/download/#Kea
+Make sure you are testing with the **latest** supported version of Kea on a supported platform.
+See https://kea.readthedocs.io/en/latest/arm/intro.html#supported-platforms for the current list of supported platforms.
+The latest Kea source is available from https://www.isc.org/download/#Kea
 
 -->
 
