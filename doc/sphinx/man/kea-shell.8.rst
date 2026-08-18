@@ -16,7 +16,7 @@
 Synopsis
 ~~~~~~~~
 
-:program:`kea-shell` [**-h**] [**-v**] [**--host**] [**--port**] [**--path**] [**--ca**] [**--cert**] [**--key**] [**--auth-user**] [**--auth-user-file**] [**--auth-password**] [**--auth-password-file**] [**--timeout**] [**--service**] [command]
+:program:`kea-shell` [**-h**] [**-v**] [**--host** host] [**--port** port] [**--path** path] [**--ca** ca_file_or_dir] [**--cert** cert_file] [**--key** key_file] [**--auth-user** user] [**--auth-user-file** user_file] [**--auth-password** password] [**--auth-password-file** password_file] [**--timeout** timeout] [**--service** service] [command]
 
 Description
 ~~~~~~~~~~~

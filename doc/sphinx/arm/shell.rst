@@ -39,7 +39,7 @@ Shell Usage
 
 .. code-block:: console
 
-   $ kea-shell [--host hostname] [--port number] [--path path] [--auth-user] [--auth-user-file] [--auth-password] [--auth-password-file] [--timeout seconds] [command]
+   $ kea-shell [--host hostname] [--port number] [--path path] [--auth-user user] [--auth-user-file user_file] [--auth-password password] [--auth-password-file password_file] [--timeout seconds] [command]
 
 where:
 
