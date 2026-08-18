@@ -88,14 +88,15 @@ the following command-line switches:
    is to just log the error and continue, making it possible for an administrator
    to intervene and fix the issue without restarting the server.
 
--  ``-R`` - As of Kea 3.3.1, starts the server in CB repair mode. DHCP service
-   and configuration back end data fetching are both disabled. The server will
-   still connect to configured config back ends but will not attempt to fetch and
-   use config back end data. It will however still process all config back end
-   API calls. This allows admins to correct fatal errors that may have been
-   introduced into the config back end data. This mode of operation is intended
-   to be a short term intervention only, once data corrections have been made the
-   server must be restarted without -R to resume normal operation.
+-  ``-R`` - As of Kea 3.3.1, starts the server in CB repair mode. DHCP service,
+   lease reclamation, lease sanity checking, and configuration back end data
+   fetching are all disabled. The server will still connect to configured config
+   back ends but will not attempt to fetch and use config back end data. It will
+   however still process all config back end API calls. This allows admins to
+   correct fatal errors that may have been introduced into the config back end
+   data. This mode of operation is intended to be a short term intervention
+   only, once data corrections have been made the server must be restarted
+   without -R to resume normal operation.
 
 .. note::
 
