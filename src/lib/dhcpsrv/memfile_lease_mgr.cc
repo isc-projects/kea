@@ -3750,7 +3750,7 @@ Memfile_LeaseMgr::writeLeases4Internal(const std::string& filename) {
         // Rename the temp file and open it as the lease file.
         static_cast<void>(::rename(tmpname.c_str(), filename.c_str()));
         try {
-            // If no valid open will recreate it.
+            // If no valid open() will recreate it.
             if (!lease_file4_->valid()) {
                 isc_throw(Unexpected, "lease file '" << filename
                           << "' was lost");
@@ -3819,7 +3819,7 @@ Memfile_LeaseMgr::writeLeases6Internal(const std::string& filename) {
         // Rename the temp file and open it as the lease file.
         static_cast<void>(::rename(tmpname.c_str(), filename.c_str()));
         try {
-            // If no valid open will recreate it.
+            // If no valid open() will recreate it.
             if (!lease_file6_->valid()) {
                 isc_throw(Unexpected, "lease file '" << filename
                           << "' was lost");

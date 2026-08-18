@@ -407,7 +407,7 @@ public:
     /// @brief Checks if the CSV file is valid.
     ///
     /// This method checks if the file exists and is not empty.
-    /// It is called by open to check if the file must be recreate or not.
+    /// It is called by open to check if the file must be recreated or not.
     ///
     /// @return true if file is valid, false otherwise.
     bool valid() const;
