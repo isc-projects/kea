@@ -1,0 +1,6 @@
+[bug]		fdupont
+	Rewrote DHCPv4 and DHCPv6 server client handler logs
+	of dropped queries for the same client of a query
+	being processed which can crash over high load when
+	multi threading and debug logging is enabled.
+	(Gitlab #4659)

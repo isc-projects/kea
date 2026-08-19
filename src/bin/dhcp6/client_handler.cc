@@ -19,8 +19,27 @@ using namespace isc::log;
 namespace isc {
 namespace dhcp {
 
+namespace {
+
+string summary(ClientHandler::ClientPtr holder) {
+    if (!holder) {
+        return ("null");
+    }
+    stringstream tmp;
+    uint8_t msg_type = holder->msg_type_;
+    tmp << "msg_type=" << Pkt6::getName(msg_type)
+        << " (" << static_cast<int>(msg_type) << "), "
+        << ", trans_id=0x" << hex << holder->transid_ << dec;
+    if (holder->relayed_) {
+        tmp << " (relayed)";
+    }
+    return (tmp.str());
+}
+
+} // end of anonymous namespace.
+
 ClientHandler::Client::Client(Pkt6Ptr query, DuidPtr client_id)
-    : query_(query), thread_(this_thread::get_id()) {
+    : thread_(this_thread::get_id()) {
     // Sanity checks.
     if (!query) {
         isc_throw(InvalidParameter, "null query in ClientHandler");
@@ -29,7 +48,11 @@ ClientHandler::Client::Client(Pkt6Ptr query, DuidPtr client_id)
         isc_throw(InvalidParameter, "null client-id in ClientHandler");
     }
 
+    // Fill cached values.
     duid_ = client_id->getDuid();
+    msg_type_ = query->getType();
+    transid_ = query->getTransid();
+    relayed_ = !query->relay_info_.empty();
 }
 
 mutex ClientHandler::mutex_;
@@ -101,11 +124,10 @@ ClientHandler::tryLock(Pkt6Ptr query, ContinuationPtr cont) {
         // A lot of code assumes this will never happen...
         isc_throw(Unexpected, "empty DUID in ClientHandler::tryLock");
     }
+    client_.reset(new Client(query, duid));
 
     ClientPtr holder;
     Pkt6Ptr next_query;
-    client_.reset(new Client(query, duid));
-
     {
         // Try to acquire the lock and return the holder when it failed.
         lock_guard<mutex> lk(mutex_);
@@ -123,16 +145,17 @@ ClientHandler::tryLock(Pkt6Ptr query, ContinuationPtr cont) {
         }
     }
 
+
     if (cont) {
         if (next_query) {
             // Logging a warning as it is supposed to be a rare event
             // with well behaving clients...
+            // We replaced the next query so a packet was dropped as duplicate.
             LOG_DEBUG(bad_packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DUPLICATE)
-                .arg(next_query->makeLabel(next_query->getClientId(), nullptr))
+                .arg("duid[" + duid->toText() + "]")
                 .arg(next_query->toText())
                 .arg(this_thread::get_id())
-                .arg(holder->query_->makeLabel(holder->query_->getClientId(), nullptr))
-                .arg(holder->query_->toText())
+                .arg(summary(holder))
                 .arg(holder->thread_);
             stats::StatsMgr::instance().addValue("pkt6-duplicate",
                                                  static_cast<int64_t>(1));
@@ -142,17 +165,18 @@ ClientHandler::tryLock(Pkt6Ptr query, ContinuationPtr cont) {
     } else {
         // Logging a warning as it is supposed to be a rare event
         // with well behaving clients...
+        // There is no cont so the query is dropped as duplicate.
         LOG_DEBUG(bad_packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DUPLICATE)
-            .arg(query->makeLabel(query->getClientId(), nullptr))
+            .arg("duid[" + duid->toText() + "]")
             .arg(query->toText())
             .arg(this_thread::get_id())
-            .arg(holder->query_->makeLabel(holder->query_->getClientId(), nullptr))
-            .arg(holder->query_->toText())
+            .arg(summary(holder))
             .arg(holder->thread_);
         stats::StatsMgr::instance().addValue("pkt6-duplicate",
                                              static_cast<int64_t>(1));
         stats::StatsMgr::instance().addValue("pkt6-receive-drop",
                                              static_cast<int64_t>(1));
+
     }
     return (false);
 }

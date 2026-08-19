@@ -36,7 +36,7 @@ inline ContinuationPtr makeContinuation(Continuation&& cont) {
 
 /// @brief Client race avoidance RAII handler.
 class ClientHandler : public boost::noncopyable {
-private:
+public:
 
     /// Class (aka static) types, methods and members.
 
@@ -51,8 +51,7 @@ private:
         /// @throw if the query is null or client_id and hwaddr are null.
         Client(Pkt4Ptr query, ClientIdPtr client_id, HWAddrPtr hwaddr);
 
-        /// @brief The query being processed.
-        Pkt4Ptr query_;
+        /// @note No longer keep the query, instead cache some properties.
 
         /// @brief Cached binary client ID.
         std::vector<uint8_t> client_id_;
@@ -62,6 +61,12 @@ private:
 
         /// @brief Cached binary hardware address.
         std::vector<uint8_t> hwaddr_;
+
+        /// @brief Cached message type.
+        uint8_t msg_type_;
+
+        /// @brief Cached transaction ID.
+        uint32_t transid_;
 
         /// @brief The ID of the thread processing the query.
         std::thread::id thread_;
@@ -82,6 +87,7 @@ private:
     /// @brief The type of shared pointers to clients.
     typedef boost::shared_ptr<Client> ClientPtr;
 
+private:
     /// @brief The type of the client-by-id container.
     typedef boost::multi_index_container<
 
@@ -91,7 +97,7 @@ private:
         // Start specification of indexes here.
         boost::multi_index::indexed_by<
 
-            // First index is used to search by Duid.
+            // First index is used to search by client id.
             boost::multi_index::hashed_unique<
 
                 // Client ID binary content as a member of the Client object.
@@ -132,7 +138,7 @@ private:
     ///
     /// The mutex must be held by the caller.
     ///
-    /// @param client_id The duid of the query from the client.
+    /// @param client_id The client id of the query from the client.
     /// @return The client found in the by client id container or null.
     static ClientPtr lookup(const ClientIdPtr& client_id);
 
@@ -162,7 +168,7 @@ private:
     ///
     /// The mutex must be held by the caller.
     ///
-    /// @param client_id The duid to delete from the by id client container.
+    /// @param client_id The client id to delete from the by client id container.
     static void del(const ClientIdPtr& client_id);
 
     /// @brief Delete a client by hwaddr.

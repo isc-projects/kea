@@ -11,6 +11,7 @@
 #include <exceptions/exceptions.h>
 #include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
+#include <util/str.h>
 
 using namespace std;
 using namespace isc::util;
@@ -19,9 +20,28 @@ using namespace isc::log;
 namespace isc {
 namespace dhcp {
 
+namespace {
+
+string summary(ClientHandler::ClientPtr holder, bool byhw) {
+    if (!holder) {
+        return ("null");
+    }
+    stringstream tmp;
+    uint8_t msg_type = holder->msg_type_;
+    tmp << "msg_type=" << Pkt4::getName(msg_type)
+        << " (" << static_cast<int>(msg_type) << "), "
+        << ", trans_id=0x" << hex << holder->transid_ << dec;
+    if (!byhw && !holder->hwaddr_.empty()) {
+        tmp << ", hwaddr=" << str::dumpAsHex(holder->hwaddr_);
+    }
+    return (tmp.str());
+}
+
+} // end of anonymous namespace.
+
 ClientHandler::Client::Client(Pkt4Ptr query, ClientIdPtr client_id,
                               HWAddrPtr hwaddr)
-    : query_(query), htype_(HTYPE_ETHER), thread_(this_thread::get_id()) {
+    : thread_(this_thread::get_id()) {
     // Sanity checks.
     if (!query) {
         isc_throw(InvalidParameter, "null query in ClientHandler");
@@ -38,6 +58,8 @@ ClientHandler::Client::Client(Pkt4Ptr query, ClientIdPtr client_id,
         htype_ = hwaddr->htype_;
         hwaddr_ = hwaddr->hwaddr_;
     }
+    msg_type_ = query->getType();
+    transid_ = query->getTransid();
 }
 
 mutex ClientHandler::mutex_;
@@ -105,7 +127,7 @@ void
 ClientHandler::del(const ClientIdPtr& client_id) {
     // Sanity check.
     if (!client_id) {
-        isc_throw(InvalidParameter, "null duid in ClientHandler::del");
+        isc_throw(InvalidParameter, "null client id in ClientHandler::del");
     }
 
     // Assume erase will never fail so not checking its result.
@@ -189,16 +211,15 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
         // Can't do something useful: cross fingers.
         return (true);
     }
+    client_.reset(new Client(query, client_id, hwaddr));
 
     ClientPtr holder_id;
     ClientPtr holder_hw;
     Pkt4Ptr next_query_id;
     Pkt4Ptr next_query_hw;
-    client_.reset(new Client(query, client_id, hwaddr));
-
     {
         lock_guard<mutex> lk(mutex_);
-        // Try first duid.
+        // Try first client id.
         if (client_id) {
             // Try to acquire the by-client-id lock and return the holder
             // when it failed.
@@ -237,12 +258,12 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
             if (next_query_id) {
                 // Logging a warning as it is supposed to be a rare event
                 // with well behaving clients...
+                // We replaced the next query so a packet was dropped as duplicate.
                 LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0011)
-                    .arg(next_query_id->getHWAddrLabel())
+                    .arg("client_id=" + client_id->toText())
                     .arg(next_query_id->toText())
                     .arg(this_thread::get_id())
-                    .arg(holder_id->query_->getHWAddrLabel())
-                    .arg(holder_id->query_->toText())
+                    .arg(summary(holder_id, false))
                     .arg(holder_id->thread_);
                 stats::StatsMgr::instance().addValue("pkt4-duplicate",
                                                      static_cast<int64_t>(1));
@@ -252,12 +273,12 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
         } else {
             // Logging a warning as it is supposed to be a rare event
             // with well behaving clients...
+            // There is no cont so the query is dropped as duplicate.
             LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0011)
-                .arg(query->getHWAddrLabel())
+                .arg("client_id=" + client_id->toText())
                 .arg(query->toText())
                 .arg(this_thread::get_id())
-                .arg(holder_id->query_->getHWAddrLabel())
-                .arg(holder_id->query_->toText())
+                .arg(summary(holder_id, false))
                 .arg(holder_id->thread_);
             stats::StatsMgr::instance().addValue("pkt4-duplicate",
                                                  static_cast<int64_t>(1));
@@ -266,16 +287,22 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
         }
     } else {
         // This query is a by-hw duplicate so put the continuation.
+        auto makeHWAddrLabel = [hwaddr]() {
+            ostringstream label;
+            label << "hwtype=" << static_cast<int>(hwaddr->htype_)
+                  << " hwaddr=" << hwaddr->toText(false);
+            return (label.str());
+        };
         if (cont) {
             if (next_query_hw) {
                 // Logging a warning as it is supposed to be a rare event
                 // with well behaving clients...
+                // We replaced the next query so a packet was dropped as duplicate.
                 LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0012)
-                    .arg(next_query_hw->getHWAddrLabel())
+                    .arg(makeHWAddrLabel())
                     .arg(next_query_hw->toText())
                     .arg(this_thread::get_id())
-                    .arg(holder_hw->query_->getHWAddrLabel())
-                    .arg(holder_hw->query_->toText())
+                    .arg(summary(holder_hw, true))
                     .arg(holder_hw->thread_);
                 stats::StatsMgr::instance().addValue("pkt4-duplicate",
                                                      static_cast<int64_t>(1));
@@ -285,12 +312,12 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
         } else {
             // Logging a warning as it is supposed to be a rare event
             // with well behaving clients...
+            // There is no cont so the query is dropped as duplicate.
             LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0012)
-                .arg(query->getHWAddrLabel())
+                .arg(makeHWAddrLabel())
                 .arg(query->toText())
                 .arg(this_thread::get_id())
-                .arg(holder_hw->query_->getHWAddrLabel())
-                .arg(holder_hw->query_->toText())
+                .arg(summary(holder_hw, true))
                 .arg(holder_hw->thread_);
             stats::StatsMgr::instance().addValue("pkt4-duplicate",
                                                  static_cast<int64_t>(1));
