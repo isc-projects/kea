@@ -766,7 +766,7 @@ Logged at debug log level 15.
 This debug message is emitted when an incoming packet was classified
 into the special class 'DROP' and dropped. The packet details are displayed.
 
-% DHCP4_PACKET_DROP_0011 dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4 processed by thread %5
+% DHCP4_PACKET_DROP_0011 dropped as sent by the same client as a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4 processed by thread %5
 Logged at debug log level 15.
 Currently multi-threading processing avoids races between packets sent by
 a client using the same client id option by dropping new packets until
@@ -774,7 +774,7 @@ processing is finished.
 Packet details or summary, and thread identifiers are included for
 both packets in this warning message.
 
-% DHCP4_PACKET_DROP_0012 dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4 processed by thread %5
+% DHCP4_PACKET_DROP_0012 dropped as sent by the same client as a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4 processed by thread %5
 Logged at debug log level 15.
 Currently multi-threading processing avoids races between packets sent by
 a client using the same hardware address by dropping new packets until

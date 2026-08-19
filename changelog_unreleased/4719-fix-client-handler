@@ -1,6 +1,5 @@
 [bug]		fdupont
-	Rewrote DHCPv4 and DHCPv6 server client handler logs
-	of dropped queries for the same client of a query
-	being processed which can crash over high load when
-	multi threading and debug logging is enabled.
+	Fixed an issue in debug-level logging of dropped packets
+	that could cause the server to crash under heavy load.
+	Applies to both kea-dhcp4 and kea-dhcp6.
 	(Gitlab #4659)

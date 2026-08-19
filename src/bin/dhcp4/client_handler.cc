@@ -33,6 +33,8 @@ string summary(ClientHandler::ClientPtr holder, bool byhw) {
         << ", trans_id=0x" << hex << holder->transid_ << dec;
     if (!byhw && !holder->hwaddr_.empty()) {
         tmp << ", hwaddr=" << str::dumpAsHex(holder->hwaddr_);
+    } else if (byhw && !holder->client_id_.empty()) {
+        tmp << ", client_id=" << str::dumpAsHex(holder->client_id_);
     }
     return (tmp.str());
 }
@@ -290,7 +292,7 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
         auto makeHWAddrLabel = [hwaddr]() {
             ostringstream label;
             label << "hwtype=" << static_cast<int>(hwaddr->htype_)
-                  << " hwaddr=" << hwaddr->toText(false);
+                  << " hwaddr=" << str::dumpAsHex(hwaddr->hwaddr_);
             return (label.str());
         };
         if (cont) {
