@@ -231,6 +231,16 @@ Kea 2.1.7 added a new security feature with the ``restrict-commands`` HA config
 parameter: when set to ``true``, commands which are not used by the hook are
 rejected. The default is ``true`` since Kea 3.0.0.
 
+.. note::
+
+    The ``restrict-commands`` is not only a security feature which enforces
+    the dedicated HTTP listener to be used for communications between HA
+    peers. It also prevents to use the dedicated HTTP listener for commands
+    which require to be executed by the server main thread so can't be
+    executed by a thread of the thread pool of the dedicated HTTP listener.
+    To summary the dedicated HTTP listener can't replace a control socket
+    and there is no good reason to set ``restrict-commands`` to ``false``.
+
 The following is an example of an HA server pair for ``hot-standby`` with TLS.
 
 Server 1:
