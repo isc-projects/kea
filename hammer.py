@@ -495,7 +495,8 @@ def install_meson(python_v: str = 'python3',
     :param revision: system revision (e.g., '20.04')
     :type revision: str
     """
-    meson_version = '1.10.0'
+    meson_version = '1.12.0'
+    pyinstaller_version = '6.22.0'
 
     exit_code = execute('meson --version', quiet=True, raise_error=False)
     if exit_code == 0:
@@ -512,7 +513,7 @@ def install_meson(python_v: str = 'python3',
         if only is None or only == 'meson':
             execute('git clone https://github.com/mesonbuild/meson .meson-src')
             execute(f'git checkout {meson_version}', cwd='.meson-src')
-            execute('sudo /usr/local/share/.venv/bin/pip install pyinstaller')
+            execute(f'sudo /usr/local/share/.venv/bin/pip install pyinstaller=={pyinstaller_version}')
             execute('sudo /usr/local/share/.venv/bin/pyinstaller --additional-hooks-dir=packaging --clean '
                     '--dist ../.meson --onefile ./meson.py',
                     cwd='.meson-src')

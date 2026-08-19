@@ -8,7 +8,8 @@
 
 set -eu
 
-meson_version=1.10.0
+meson_version=1.12.0
+pyinstaller_version=6.22.0
 
 # Check if ${1} <= ${2}.
 le() {
@@ -111,7 +112,7 @@ else
                     git checkout "${meson_version}"
                 )
             fi
-            ${sudo} "${venv}/bin/pip" install pyinstaller
+            ${sudo} "${venv}/bin/pip" install "pyinstaller==${pyinstaller_version}"
             (
                 cd .meson-src || exit 1
                 "${top_level}/${venv}/bin/pyinstaller" --additional-hooks-dir=packaging --clean --dist "${top_level}/.meson" --onefile ./meson.py
