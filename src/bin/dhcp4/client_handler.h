@@ -97,7 +97,7 @@ private:
         // Start specification of indexes here.
         boost::multi_index::indexed_by<
 
-            // First index is used to search by client id.
+            // First index is used to search by Duid.
             boost::multi_index::hashed_unique<
 
                 // Client ID binary content as a member of the Client object.
@@ -138,7 +138,7 @@ private:
     ///
     /// The mutex must be held by the caller.
     ///
-    /// @param client_id The client id of the query from the client.
+    /// @param client_id The duid of the query from the client.
     /// @return The client found in the by client id container or null.
     static ClientPtr lookup(const ClientIdPtr& client_id);
 
@@ -168,7 +168,7 @@ private:
     ///
     /// The mutex must be held by the caller.
     ///
-    /// @param client_id The client id to delete from the by client id container.
+    /// @param client_id The duid to delete from the by id client container.
     static void del(const ClientIdPtr& client_id);
 
     /// @brief Delete a client by hwaddr.
