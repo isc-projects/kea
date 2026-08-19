@@ -2575,6 +2575,40 @@ TEST_F(MemfileLeaseMgrTest, wipeLeases6) {
     testWipeLeases6();
 }
 
+/// @brief Tests that leases from specific subnet can be removed.
+/// Throw when called in MT.
+TEST_F(MemfileLeaseMgrTest, wipeLeases4MultiThreading) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    EXPECT_THROW(lmptr_->wipeLeases4(1), InvalidOperation);
+}
+
+/// @brief Tests that leases from specific subnet can be removed.
+/// Throw when called in MT.
+TEST_F(MemfileLeaseMgrTest, wipeLeases6MultiThreading) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    EXPECT_THROW(lmptr_->wipeLeases6(1), InvalidOperation);
+}
+
+/// @brief Tests that leases from specific subnet can be removed.
+/// Requires a critical section when called in MT.
+TEST_F(MemfileLeaseMgrTest, wipeLeases4MultiThreadingCS) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingCriticalSection cs;
+    testWipeLeases4();
+}
+
+/// @brief Tests that leases from specific subnet can be removed.
+/// Requires a critical section when called in MT.
+TEST_F(MemfileLeaseMgrTest, wipeLeases6MultiThreadingCS) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    MultiThreadingCriticalSection cs;
+    testWipeLeases6();
+}
+
 /// @brief Tests v4 lease stats query variants.
 TEST_F(MemfileLeaseMgrTest, leaseStatsQuery4) {
     startBackend(V4);

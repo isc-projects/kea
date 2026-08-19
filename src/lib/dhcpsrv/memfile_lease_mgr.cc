@@ -2925,6 +2925,12 @@ Memfile_LeaseMgr::startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_
 
 size_t
 Memfile_LeaseMgr::wipeLeases4(const SubnetID& subnet_id) {
+    if (MultiThreadingMgr::instance().getMode() &&
+        !MultiThreadingMgr::instance().isInCriticalSection()) {
+        isc_throw(InvalidOperation, "wipeLeases4 can be called only in "
+                  "single thread mode or a multi thread critical section");
+    }
+
     LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_WIPE_LEASES4)
         .arg(subnet_id);
 
@@ -2954,6 +2960,12 @@ Memfile_LeaseMgr::wipeLeases4(const SubnetID& subnet_id) {
 
 size_t
 Memfile_LeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
+    if (MultiThreadingMgr::instance().getMode() &&
+        !MultiThreadingMgr::instance().isInCriticalSection()) {
+        isc_throw(InvalidOperation, "wipeLeases4 can be called only in "
+                  "single thread mode or a multi thread critical section");
+    }
+
     LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_WIPE_LEASES6)
         .arg(subnet_id);
 
