@@ -1,10 +1,12 @@
 # How to run the python script meson2spdx
 
+The following were tested on Linux. The same approach should work on
+other OSes, but the flags need some tweaking.
+
 ```shell
 # Assume necessary packages for kea build and pkg-config are already installed in the running environment.
 
 # Compile Kea and generate meson-info
-pushd kea
 export CXXFLAGS="${CXXFLAGS:-} -gdwarf-4"
 export LDFLAGS="${LDFLAGS:-} -gdwarf-4"
 
@@ -27,7 +29,7 @@ meson compile --verbose -C build
 cd tools/sbom
 python3 meson2spdx.py -b ../../build -o sbom.spdx.json -r ../..
 
-# Output in meson2spdx/sbom.spdx.json from the above command
+# Output in sbom.spdx.json from the above command
 cat sbom.spdx.json
 ```
 

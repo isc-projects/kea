@@ -152,6 +152,7 @@ def discover_meson(build_dir: Path, project_dir: Path) -> tuple[str, str, dict, 
     subprojects_dir = project_dir / 'subprojects'
     wrap_files = subprojects_dir.glob('*.wrap') if subprojects_dir.exists() else []
     wraps = {wrap_file.stem: _parse_wrap(wrap_file) for wrap_file in wrap_files}
+    wraps = {}
 
     # Scan subproject directories to extract version information from meson.build files
     # This provides version data for subprojects that may not be available elsewhere
