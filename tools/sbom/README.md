@@ -3,6 +3,13 @@
 The following were tested on Linux. The same approach should work on
 other OSes, but the flags need some tweaking.
 
+The generation of SBOM files does not require any extra dependencies,
+but verifying SBOM conformance does. If validation is necessary,
+the go compiler needs to be installed properly, i.e. the binary present,
+the PATH set, so its go binary is found, also go/bin, so the installed
+sbom-conformance tool is found. For details, see
+https://go.dev/doc/install.
+
 ```shell
 # Assume necessary packages for kea build and pkg-config are already installed in the running environment.
 
