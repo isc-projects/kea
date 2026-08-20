@@ -150,14 +150,15 @@ def discover_meson(build_dir: Path, project_dir: Path) -> tuple[str, str, dict, 
     # Process subprojects and extract metadata from .wrap files
     # .wrap files define how to download and integrate external dependencies
     subprojects_dir = project_dir / 'subprojects'
-    wrap_files = subprojects_dir.glob('*.wrap') if subprojects_dir.exists() else []
 
     # Wrap files are not always used in a build. Statically analyzing
     # them can result in an SBOM falsely claiming that the build has a
     # certain dependency. So as a quick fix, let us reset the list of
     # wrap files to empty.
 
-    wraps = {wrap_file.stem: _parse_wrap(wrap_file) for wrap_file in wrap_files}
+    # wrap_files = subprojects_dir.glob('*.wrap') if subprojects_dir.exists() else []
+    # wraps = {wrap_file.stem: _parse_wrap(wrap_file) for wrap_file in wrap_files}
+    wraps = {}
 
     # Scan subproject directories to extract version information from meson.build files
     # This provides version data for subprojects that may not be available elsewhere
