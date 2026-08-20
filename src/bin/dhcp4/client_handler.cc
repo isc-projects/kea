@@ -29,7 +29,7 @@ string summary(ClientHandler::ClientPtr holder, bool byhw) {
     stringstream tmp;
     uint8_t msg_type = holder->msg_type_;
     tmp << "msg_type=" << Pkt4::getName(msg_type)
-        << " (" << static_cast<int>(msg_type) << "), "
+        << " (" << static_cast<int>(msg_type) << ")"
         << ", trans_id=0x" << hex << holder->transid_ << dec;
     if (!byhw && !holder->hwaddr_.empty()) {
         tmp << ", hwaddr=" << str::dumpAsHex(holder->hwaddr_);

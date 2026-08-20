@@ -28,7 +28,7 @@ string summary(ClientHandler::ClientPtr holder) {
     stringstream tmp;
     uint8_t msg_type = holder->msg_type_;
     tmp << "msg_type=" << Pkt6::getName(msg_type)
-        << " (" << static_cast<int>(msg_type) << "), "
+        << " (" << static_cast<int>(msg_type) << ")"
         << ", trans_id=0x" << hex << holder->transid_ << dec;
     if (holder->relayed_) {
         tmp << " (relayed)";
