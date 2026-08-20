@@ -157,8 +157,7 @@ def discover_meson(build_dir: Path, project_dir: Path) -> tuple[str, str, dict, 
     # certain dependency. So as a quick fix, let us reset the list of
     # wrap files to empty.
 
-    # wraps = {wrap_file.stem: _parse_wrap(wrap_file) for wrap_file in wrap_files}
-    wraps = []
+    wraps = {wrap_file.stem: _parse_wrap(wrap_file) for wrap_file in wrap_files}
 
     # Scan subproject directories to extract version information from meson.build files
     # This provides version data for subprojects that may not be available elsewhere
