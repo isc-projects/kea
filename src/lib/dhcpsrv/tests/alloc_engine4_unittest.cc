@@ -2037,7 +2037,7 @@ TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4Stats) {
 
 // This test checks if a not expired declined lease can not be reused
 // when responding to DHCPDISCOVER (fake allocation)
-TEST_F(AllocEngine4Test, discoverNoReuseDeclinedLease4) {
+TEST_F(AllocEngine4Test, discoverBadReuseDeclinedLease4) {
 
     AllocEnginePtr engine(new AllocEngine(0));
     ASSERT_TRUE(engine);
@@ -2066,8 +2066,8 @@ TEST_F(AllocEngine4Test, discoverNoReuseDeclinedLease4) {
                                     IOAddress("192.0.2.15"), false, false,
                                     "", true);
     ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
-    Lease4Ptr assigned = engine->allocateLease4(ctx);
-    EXPECT_FALSE(assigned);
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+    EXPECT_FALSE(lease);
 }
 
 // This test checks if an expired declined lease can be reused when responding
@@ -2156,7 +2156,7 @@ TEST_F(AllocEngine4Test, requestReuseDeclinedLease4Stats) {
 
 // This test checks if a not expired declined lease can not be reused
 // when responding to REQUEST (actual allocation)
-TEST_F(AllocEngine4Test, requestNoReuseDeclinedLease4) {
+TEST_F(AllocEngine4Test, requestBadReuseDeclinedLease4) {
 
     AllocEnginePtr engine(new AllocEngine(0));
     ASSERT_TRUE(engine);
@@ -2185,8 +2185,8 @@ TEST_F(AllocEngine4Test, requestNoReuseDeclinedLease4) {
                                     IOAddress("192.0.2.15"), false, false,
                                     "", false);
     ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
-    Lease4Ptr assigned = engine->allocateLease4(ctx);
-    EXPECT_FALSE(assigned);
+    Lease4Ptr lease = engine->allocateLease4(ctx);
+    EXPECT_FALSE(lease);
 }
 
 // This test checks if a released lease can be reused in REQUEST (actual allocation)
