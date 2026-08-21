@@ -1,7 +1,0 @@
-[func]		tmark
-	Modified D2 logic to avoid orphaning
-	PTR records when clients have changed
-	subnets or there are forward resource
-	records of the other IP version in a
-	dual-stack environment.
-	(Gitlab #4437)

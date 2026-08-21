@@ -307,6 +307,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      database_map_param ::= database_type
                        | user
                        | password
+                       | password_file
                        | host
                        | port
                        | name
@@ -334,6 +335,8 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      user ::= "user" ":" STRING
 
      password ::= "password" ":" STRING
+
+     password_file ::= "password-file" ":" STRING
 
      host ::= "host" ":" STRING
 
@@ -1086,8 +1089,6 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                   | unknown_map_entry
 
      user_file ::= "user-file" ":" STRING
-
-     password_file ::= "password-file" ":" STRING
 
      dhcp_queue_control ::= "dhcp-queue-control" ":" "{" queue_control_params "}"
 

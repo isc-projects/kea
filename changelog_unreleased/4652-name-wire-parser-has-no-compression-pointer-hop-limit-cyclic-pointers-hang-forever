@@ -1,5 +1,0 @@
-[bug]		wlodek
-	The DNS Name wire parser now limits compression pointer
-	hops, rejecting cyclic or excessively long pointer chains
-	with FORMERR instead of looping.
-	(Gitlab #4652)

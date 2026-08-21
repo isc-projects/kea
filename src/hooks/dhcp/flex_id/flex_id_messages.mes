@@ -4,6 +4,17 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+% FLEX_ID_CID_AS_RFC4361_DUID_ENABLED cid-as-rfc4361-duid is true.
+Logged at debug log level 40.
+This debug message is issued to indicate that the library will format the
+new client identifier as containing a DUID per RFC 4361. This applies to
+v4 client packets only.
+
+% FLEX_ID_CID_AS_RFC4361_DUID_JSON_TYPE the cid-as-rfc4361-duid is %1 but expected boolean value
+This error message is printed when the flex-id library is being loaded,
+but the cid-as-rfc4361-duid parameter is malformed, i.e. it has a different
+type than expected. It is expected to be a boolean value.
+
 % FLEX_ID_EXPRESSION_EVALUATED Expression evaluated for packet to "%1" (size: %2)
 Logged at debug log level 40.
 This debug message is printed every time a packet evaluation is successful.
@@ -112,14 +123,3 @@ supplied DUID from the received message and is inserting flexible identifier
 based DUID instead. The server will use this new DUID for processing the
 packet. The original DUID will be restored in the pkt6_send callout and
 sent back to the client.
-
-% FLEX_ID_CID_AS_RFC4361_DUID_ENABLED cid-as-rfc4361-duid is true.
-Logged at debug log level 40.
-This debug message is issued to indicate that the library will format the
-new client identifier as containing a DUID per RFC 4361. This applies to
-v4 client packets only.
-
-% FLEX_ID_CID_AS_RFC4361_DUID_JSON_TYPE the cid-as-rfc4361-duid is %1 but expected boolean value
-This error message is printed when the flex-id library is being loaded,
-but the cid-as-rfc4361-duid parameter is malformed, i.e. it has a different
-type than expected. It is expected to be a boolean value.

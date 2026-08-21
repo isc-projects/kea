@@ -1,6 +1,0 @@
-[bug]		tmark
-	Kea now consistently prioritizes subnet-level
-	hosts over global hosts and allows subnet-level
-	hosts without a reserved address to select the
-	subnet.  Applies to kea-dhcp4 and kea-dhcp6.
-	(Gitlab #4678, #4679, #4562)

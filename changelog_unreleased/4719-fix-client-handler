@@ -1,5 +1,0 @@
-[bug]		fdupont
-	Fixed an issue in debug-level logging of dropped packets
-	that could cause the server to crash under heavy load.
-	Applies to both kea-dhcp4 and kea-dhcp6.
-	(Gitlab #4659)

@@ -1,3 +1,163 @@
+Kea 3.3.1 (development) released on August 26, 2026
+
+2552.	[build]		tsawka
+	The library version numbers have been bumped up for the Kea 3.3.1
+	development release.
+	(Gitlab #4762)
+
+2551.	[build]		AdaLogics
+	Added a new tool to generate SBOMs for the Kea project.
+	(Gitlab #3706)
+
+2550.	[bug]		fdupont
+	Fixed an issue in debug-level logging of dropped packets
+	that could cause the server to crash under heavy load.
+	Applies to both kea-dhcp4 and kea-dhcp6.
+	(Gitlab #4659)
+
+2549.	[bug]		fdupont
+	Extended the DUID sanity checks to refuse the 00:00:00
+	DUID used internally to represent the empty DUID.
+	Thank you to Qifan Zhang from Palo Alto Networks for
+	reporting the issue.
+	(Gitlab #4533)
+
+2548.	[bug]		fdupont
+	Errors that occur during "lease4-write" and "lease6-write"
+	commands that leave the lease file unusable are now fatal.
+	Recovery requires manual intervention.
+	(Gitlab #4649)
+
+2547.	[func]		fdupont
+	Added a new argument, '--auth-user-file', which provides
+	a secure method for supplying a user ID for basic HTTP
+	authentication in kea-shell.
+	(Gitlab #4128)
+
+2546.	[func]		tmark
+	Added -R command line switch to kea-dhcp4 and kea-dhcp6,
+	which runs the server in config back end repair mode.
+	This is a recovery mode that allows the server to start
+	and process API commands in the event that otherwise fatal
+	data errors have been introduced into config back end data.
+	(Gitlab #4603)
+
+2545.	[func]		fdupont
+	Added support for using a file to configure MySQL
+	and PostgreSQL passwords. Instead of configuring
+	a value, it is taken from the content of a file.
+	The new parameter is "password-file".
+	(Gitlab #3959)
+
+2544.	[bug]		wlodek
+	Fixed Bulk Lease Query TCP connection read handler
+	to erase only bytes consumed so message framing is
+	preserved.
+	(Gitlab #4660)
+
+2543.	[bug]		wlodek, andrei
+	Avoid logging passwords in clear text in log messages about
+	database connection errors.
+	(Gitlab #4643)
+
+2542.	[bug]		fdupont
+	Implemented HTTP basic authentication for HA dedicated
+	listener, before such configuration was silently ignored.
+	(Gitlab #4599)
+
+2541.	[bug]		fdupont
+	Limited recursive unpacking of DHCPv6 vendor options.
+	(Gitlab #4692)
+
+2540.	[bug]		wlodek, tmark
+	Path validation now rejects "." and ".." file names
+	as invalid (e.g. memfile lease database name "..").
+	(Gitlab #4647)
+
+2539.	[bug]		wlodek
+	The DNS Name wire parser now limits compression pointer
+	hops, rejecting cyclic or excessively long pointer chains
+	with FORMERR instead of looping.
+	(Gitlab #4652)
+
+2538.	[bug]		wlodek
+	Escaped single quotes and backslashes in
+	PostgreSQL connection string parameter values.
+	(Gitlab #4659)
+
+2537.	[bug]		wlodek, razvan
+	HttpConnection::socketWriteCallback now returns after fatal
+	write errors and treats EAGAIN/EWOULDBLOCK like the HTTP
+	client send path, avoiding fallthrough and duplicate doWrite.
+	(Gitlab #4656)
+
+2536.	[func]		fdupont
+	The "control-socket" keyword is deprecated in favor
+	of "control-sockets" in DHCPv4, DHCPv6 and DDNS server
+	configurations.
+	(Gitlab #4607)
+
+2535.	[build]		andrei, razvan, AdaLogics
+	More fuzz harnesses were added.
+	(Gitlab #4272)
+
+2534.	[bug]		fdupont
+	Fixed incorrect handling of double DHCPV6_RELEASE
+	when the lease affinity feature is enabled, e.g.
+	leading to incorrect assigned statistics.
+	(Gitlab #4670)
+
+2533.	[bug]		fdupont
+	Fixed spurious warnings emitted on shutdown when some
+	HTTP socket listen for new connections.
+	(Gitlab #4344)
+
+2532.	[bug]		wlodek,tmark
+	Fixed an issue which might result in incorrect
+	TCP message content under load.
+	(Gitlab #4661)
+
+2531.	[bug]		wlodek, tmark
+	Corrected an issue that could mask an invalid
+	row error while loading a Memfile lease file
+	generated from a newer version of Kea.
+	(Gitlab #4663)
+
+2530.	[bug]		wlodek,tmark
+	Fixed a null ElementPtr dereference in
+	TranslatorConfig::getInterfacesKea when the YANG
+	config has no interfaces-config node.
+	(Gitlab #4667)
+
+2529.	[func]		tmark
+	Modified D2 logic to avoid orphaning
+	PTR records when clients have changed
+	subnets or there are forward resource
+	records of the other IP version in a
+	dual-stack environment.
+	(Gitlab #4437)
+
+2528.	[bug]		tmark
+	Kea now consistently prioritizes subnet-level
+	hosts over global hosts and allows subnet-level
+	hosts without a reserved address to select the
+	subnet.  Applies to kea-dhcp4 and kea-dhcp6.
+	(Gitlab #4678, #4679, #4562)
+
+2527.	[func]		tmark
+	Added ``cid-as-rfc4361-duid`` flag to flex-id hook
+	library.  This allows the v4 flex-id to formatted
+	as an RFC 4361 compliant embedded DUID.
+	(Gitlab #3780)
+
+2526.	[bug]		andrei
+	Fixed an issue with some very old upgrade scripts that
+	could have lead to split MySQL schemas - specifically on the
+	8.1->8.2 upgrade path, the array column would have not been
+	renamed to is_array, and on 9.6->10.0, the sever tag column would
+	have not been resized.
+	(Gitlab #4580)
+
 2525.	[bug]		razvan
 	Corrected MLM_MYSQL_FETCH_FAILURE to 1 so MySQL
 	selectQuery and host lookups detect mysql_stmt_fetch

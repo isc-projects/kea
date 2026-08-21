@@ -1,4 +1,0 @@
-[bug]		wlodek, tmark
-	Path validation now rejects "." and ".." file names
-	as invalid (e.g. memfile lease database name "..").
-	(Gitlab #4647)

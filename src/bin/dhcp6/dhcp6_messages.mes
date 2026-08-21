@@ -123,6 +123,12 @@ The server will continue to operate but won't make any further attempts
 to fetch configuration updates. The administrator must fix the configuration
 in the database and reload (or restart) the server.
 
+% DHCP6_CB_REPAIR_MODE_ENABLED Server is running in config back end repair mode.
+This warning is emitted when config back end repair mode is enabled. This allows
+the server to start and run without automatically fetching config back end data
+but can still process CB API commands. This allows admins to correct errors in
+config back end data.
+
 % DHCP6_CLASSES_ASSIGNED %1: client packet has been assigned on %2 message to the following classes: %3
 Logged at debug log level 40.
 This debug message informs that incoming packet has been assigned to specified
@@ -1242,9 +1248,3 @@ such modification. The clients will remember previous server-id, and will
 use it to extend their leases. As a result, they will have to go through
 a rebinding phase to re-acquire their leases and associate them with a
 new server id.
-
-% DHCP6_CB_REPAIR_MODE_ENABLED Server is running in config back end repair mode.
-This warning is emitted when config back end repair mode is enabled. This allows
-the server to start and run without automatically fetching config back end data
-but can still process CB API commands. This allows admins to correct errors in
-config back end data.

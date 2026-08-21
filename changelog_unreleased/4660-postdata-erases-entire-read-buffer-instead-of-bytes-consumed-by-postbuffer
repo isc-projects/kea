@@ -1,5 +1,0 @@
-[bug]		wlodek
-	Fixed Bulk Lease Query TCP connection read handler
-	to erase only bytes consumed so message framing is
-	preserved.
-	(Gitlab #4660)

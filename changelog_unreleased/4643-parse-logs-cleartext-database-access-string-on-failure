@@ -1,4 +1,0 @@
-[bug]		wlodek, andrei
-	Avoid logging passwords in clear text in log messages about
-	database connection errors.
-	(Gitlab #4643)

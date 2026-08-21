@@ -1,4 +1,0 @@
-[bug]		fdupont
-	Fixed spurious warnings emitted on shutdown when some
-	HTTP socket listen for new connections.
-	(Gitlab #4344)

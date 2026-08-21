@@ -64,7 +64,7 @@ ddns/all-keys-netconf.json
         "ncr-format": "JSON",
 
         // Command control socket configuration parameters for Kea DHCP-DDNS server.
-        "control-socket": {
+        "control-sockets": [ {
 
             // Location of the UNIX domain socket file the DHCP-DDNS server uses
             // to receive control commands from the local server administrator.
@@ -73,7 +73,7 @@ ddns/all-keys-netconf.json
             // Control socket type used by the Kea DHCP-DDNS server.
             // The 'unix' socket is currently the only supported type.
             "socket-type": "unix"
-        },
+        } ],
 
         // List of hook libraries and their specific configuration parameters
         // to be loaded by Kea DHCP-DDNS server.
@@ -761,13 +761,13 @@ ddns/sample1.json
 
         "user-context": { "version": 1 },
 
-    // ----------------- Control Socket -----------------
+    // ----------------- Control Sockets -----------------
 
-        "control-socket":
+        "control-sockets": [
         {
             "socket-type": "unix",
             "socket-name": "kea-ddns-ctrl-socket"
-        },
+        } ],
 
     // ----------------- Hooks Libraries -----------------
 
@@ -935,13 +935,13 @@ ddns/template.json
     //    "ncr-protocol" : "UDP"
     //    "ncr-format" : "JSON"
 
-    // ----------------- Control Socket -----------------
+    // ----------------- Control Sockets -----------------
 
-    //    "control-socket":
+    //    "control-sockets": [
     //    {
     //        "socket-type": "unix",
     //        "socket-name": "kea-ddns-ctrl-socket"
-    //    },
+    //    } ],
 
     // ----------------- Forward DDNS  ------------------
         "forward-ddns" :
@@ -1137,10 +1137,10 @@ kea4/advanced.json
         // This defines a control socket. If defined, Kea will open a UNIX socket
         // and will listen for incoming commands. See section 15 of the Kea User's
         // Guide for list of supported commands.
-        "control-socket": {
+        "control-sockets": [ {
             "socket-type": "unix",
             "socket-name": "kea4-ctrl-socket"
-        },
+        } ],
 
         // Addresses will be assigned with a lifetime of 4000 seconds.
         // The client is told to start renewing after 1000 seconds. If the server
@@ -3247,6 +3247,9 @@ kea4/all-keys.json
                     // Database password.
                     "password": "1234",
 
+                    // Database password file.
+                    // "password-file": "hidden-password",
+
                     // Port on which the database is available.
                     "port": 3306,
 
@@ -3309,6 +3312,9 @@ kea4/all-keys.json
 
                     // Database password.
                     "password": "1234",
+
+                    // Database password file.
+                    // "password-file": "hidden-password",
 
                     // Port on which the database is available.
                     "port": 5432,
@@ -6827,10 +6833,10 @@ kea4/config-backend.json
         // This defines a control socket. If defined, Kea will open a UNIX socket
         // and will listen for incoming commands. See section 17 of the Kea ARM for
         // details.
-        "control-socket": {
+        "control-sockets": [ {
             "socket-type": "unix",
             "socket-name": "kea4-ctrl-socket"
-        },
+        } ],
 
         // Hooks libraries that enable configuration backend are loaded.
         "hooks-libraries": [
@@ -9184,7 +9190,7 @@ kea4/vendor-specific.json
             ],
     // Kea is told to listen on eth0 interface only.
             "interfaces-config": {
-                "interfaces": ["eth0"]
+                "interfaces": [ "eth0" ]
             },
     // We need to specify the database used to store leases.
             "lease-database": {
@@ -9497,10 +9503,10 @@ kea6/advanced.json
         // This defines a control socket. If defined, Kea will open a UNIX socket
         // and will listen for incoming commands. See section 15 of the Kea User's
         // Guide for list of supported commands.
-        "control-socket": {
+        "control-sockets": [ {
             "socket-type": "unix",
             "socket-name": "kea6-ctrl-socket"
-        },
+        } ],
 
         // Addresses will be assigned with preferred and valid lifetimes
         // being 3000 and 4000, respectively. Client is told to start
@@ -11532,6 +11538,9 @@ kea6/all-keys.json
                     // Database password.
                     "password": "1234",
 
+                    // Database password file.
+                    // "password-file": "hidden-password",
+
                     // Port on which the database is available.
                     "port": 3306,
 
@@ -11594,6 +11603,9 @@ kea6/all-keys.json
 
                     // Database password.
                     "password": "1234",
+
+                    // Database password file.
+                    // "password-file": "hidden-password",
 
                     // Port on which the database is available.
                     "port": 5432,
@@ -15395,10 +15407,10 @@ kea6/config-backend.json
         // This defines a control socket. If defined, Kea will open a UNIX socket
         // and will listen for incoming commands. See section 17 of the Kea ARM for
         // details.
-        "control-socket": {
+        "control-sockets": [ {
             "socket-type": "unix",
             "socket-name": "kea6-ctrl-socket"
-        },
+        } ],
 
         // Hooks libraries that enable configuration backend are loaded.
         "hooks-libraries": [

@@ -1,4 +1,0 @@
-[bug]		wlodek,tmark
-	Fixed an issue which might result in incorrect
-	TCP message content under load.
-	(Gitlab #4661)

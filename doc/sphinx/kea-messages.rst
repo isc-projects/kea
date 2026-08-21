@@ -2978,9 +2978,9 @@ DATABASE_INVALID_ACCESS
     invalid database access string: %1
 
 This is logged when an attempt has been made to parse a database access string
-and the attempt ended in error.  The access string in question - which
-should be of the form 'keyword=value keyword=value...' is included in
-the message.
+and the attempt ended in error.  A redacted form of the access string - which
+should be of the form 'keyword=value keyword=value...' with any password
+replaced by asterisks - is included in the message.
 
 DATABASE_MYSQL_COMMIT
 =====================
@@ -3035,6 +3035,16 @@ DATABASE_MYSQL_NO_INIT_NO_ADMIN
     Not attempting to initialize the MySQL schema. kea-admin seems to be missing.
 
 A warning message indicating that kea-admin is not available which makes db-init not possible.
+
+DATABASE_MYSQL_NO_INIT_NO_PASSWORD
+==================================
+
+.. code-block:: text
+
+    Not attempting to initialize the MySQL schema. Kea database password is not available.
+
+A warning message indicating that the password required to connect to the Kea
+database is no available and db-init will not be attempted.
 
 DATABASE_MYSQL_NO_INIT_READONLY
 ===============================
@@ -3148,6 +3158,16 @@ DATABASE_PGSQL_NO_INIT_NO_ADMIN
     Not attempting to initialize the PostgreSQL schema. kea-admin seems to be missing.
 
 A warning message indicating that kea-admin is not available which makes db-init not possible.
+
+DATABASE_PGSQL_NO_INIT_NO_PASSWORD
+==================================
+
+.. code-block:: text
+
+    Not attempting to initialize the PostgreSQL schema. Kea database password is not available.
+
+A warning message indicating that the password required to connect to the Kea
+database is no available and db-init will not be attempted.
 
 DATABASE_PGSQL_NO_INIT_READONLY
 ===============================
@@ -3875,6 +3895,18 @@ periodic attempts to fetch configuration updates from a configuration backend.
 The server will continue to operate but won't make any further attempts
 to fetch configuration updates. The administrator must fix the configuration
 in the database and reload (or restart) the server.
+
+DHCP4_CB_REPAIR_MODE_ENABLED
+============================
+
+.. code-block:: text
+
+    Server is running in config back end repair mode.
+
+This warning is emitted when config back end repair mode is enabled. This allows
+the server to start and run without automatically fetching config back end data
+but can still process CB API commands. This allows admins to correct errors in
+config back end data.
 
 DHCP4_CLASSES_ASSIGNED
 ======================
@@ -5262,28 +5294,28 @@ DHCP4_PACKET_DROP_0011
 
 .. code-block:: text
 
-    dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by thread %6
+    dropped as sent by the same client as a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4 processed by thread %5
 
 Logged at debug log level 15.
 Currently multi-threading processing avoids races between packets sent by
 a client using the same client id option by dropping new packets until
 processing is finished.
-Packet details and thread identifiers are included for both packets in
-this warning message.
+Packet details or summary, and thread identifiers are included for
+both packets in this warning message.
 
 DHCP4_PACKET_DROP_0012
 ======================
 
 .. code-block:: text
 
-    dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by thread %6
+    dropped as sent by the same client as a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4 processed by thread %5
 
 Logged at debug log level 15.
 Currently multi-threading processing avoids races between packets sent by
 a client using the same hardware address by dropping new packets until
 processing is finished.
-Packet details and thread identifiers are included for both packets in
-this warning message.
+Packet details or summary, and thread identifiers are included for
+both packets in this warning message.
 
 DHCP4_PACKET_DROP_0013
 ======================
@@ -5932,12 +5964,12 @@ DHCP4_SERVER_INITIATED_DECLINE_ADD_FAILED
 
 .. code-block:: text
 
-    %1: error adding a lease for address %2
+    %1: error adding a lease for address %2: %3
 
 This error message indicates that the server failed to add a DECLINED lease to
 the lease store. The first argument includes the client and the transaction
 identification information. The second argument holds the IPv4 address for which
-the decline was attempted.
+the decline was attempted, the last one the error message.
 
 DHCP4_SERVER_INITIATED_DECLINE_RESOURCE_BUSY
 ============================================
@@ -6388,6 +6420,18 @@ periodic attempts to fetch configuration updates from a configuration backend.
 The server will continue to operate but won't make any further attempts
 to fetch configuration updates. The administrator must fix the configuration
 in the database and reload (or restart) the server.
+
+DHCP6_CB_REPAIR_MODE_ENABLED
+============================
+
+.. code-block:: text
+
+    Server is running in config back end repair mode.
+
+This warning is emitted when config back end repair mode is enabled. This allows
+the server to start and run without automatically fetching config back end data
+but can still process CB API commands. This allows admins to correct errors in
+config back end data.
 
 DHCP6_CLASSES_ASSIGNED
 ======================
@@ -7630,13 +7674,13 @@ DHCP6_PACKET_DROP_DUPLICATE
 
 .. code-block:: text
 
-    dropped as sent by the same client than a packet being processed by another thread: dropped %1 %2 by thread %3 as duplicate of %4 %5 processed by thread %6
+    dropped as sent by the same client as a packet being processed by another thread: dropped %1 %2 by thread %3 as duplicate of %4 processed by thread %5
 
 Logged at debug log level 15.
 Currently multi-threading processing avoids races between packets sent by
 the same client by dropping new packets until processing is finished.
-Packet details and thread identifiers are included for both packets in
-this warning message.
+Packet details or summary, and thread identifiers are included for
+both packets in this warning message.
 
 DHCP6_PACKET_DROP_PARSE_FAIL
 ============================
@@ -8205,6 +8249,20 @@ argument holds the client and transaction identification information.
 The second and third argument hold the released address and IAID
 respectively.
 
+DHCP6_RELEASE_NA_FAIL_NOT_ASSIGNED
+==================================
+
+.. code-block:: text
+
+    %1: client tried to release address %2 which is not assigned
+
+Logged at debug log level 40.
+This debug message is issued when a client is trying to release an address
+for which there is no lease or the lease is not in default / assigned state
+(e.g. kept for the client by the lease affinity feature in the released state).
+The first argument includes the client and the transaction identification
+information. The second argument specifies the address.
+
 DHCP6_RELEASE_NA_FAIL_WRONG_DUID
 ================================
 
@@ -8282,6 +8340,20 @@ removed from the database during RELEASE message processing. The
 first argument hold the client and transaction identification
 information. The second and third argument define the prefix and
 its length. The fourth argument holds the IAID.
+
+DHCP6_RELEASE_PD_FAIL_NOT_ASSIGNED
+==================================
+
+.. code-block:: text
+
+    %1: client tried to release prefix %2/%3 which is not assigned
+
+Logged at debug log level 40.
+This debug message is issued when a client is trying to release a prefix
+for which there is no lease or the lease is not in default / assigned state
+(e.g. kept for the client by the lease affinity feature in the released state).
+The first argument includes the client and the transaction identification
+information. The second and third arguments specify the prefix.
 
 DHCP6_RELEASE_PD_FAIL_WRONG_DUID
 ================================
@@ -12473,6 +12545,29 @@ and vendor option was not found.
 ****
 FLEX
 ****
+
+FLEX_ID_CID_AS_RFC4361_DUID_ENABLED
+===================================
+
+.. code-block:: text
+
+    cid-as-rfc4361-duid is true.
+
+Logged at debug log level 40.
+This debug message is issued to indicate that the library will format the
+new client identifier as containing a DUID per RFC 4361. This applies to
+v4 client packets only.
+
+FLEX_ID_CID_AS_RFC4361_DUID_JSON_TYPE
+=====================================
+
+.. code-block:: text
+
+    the cid-as-rfc4361-duid is %1 but expected boolean value
+
+This error message is printed when the flex-id library is being loaded,
+but the cid-as-rfc4361-duid parameter is malformed, i.e. it has a different
+type than expected. It is expected to be a boolean value.
 
 FLEX_ID_EXPRESSION_EVALUATED
 ============================
@@ -17385,6 +17480,26 @@ LEASE_CMDS_DEL6_FAILED
 
 The attempt to delete an IPv6 lease (lease4-del command) has failed. Both the
 reason as well as the parameters passed are logged.
+
+LEASE_CMDS_FATAL_WRITE_LEASES4
+==============================
+
+.. code-block:: text
+
+    fatal lease4-write command failure: %1
+
+The attempt to write leases into the lease file failed. This situation
+requires a manual recovery. Details are logged.
+
+LEASE_CMDS_FATAL_WRITE_LEASES6
+==============================
+
+.. code-block:: text
+
+    fatal lease6-write command failure: %1
+
+The attempt to write leases into the lease file failed. This situation
+requires a manual recovery. Details are logged.
 
 LEASE_CMDS_GET4_FAILED
 ======================

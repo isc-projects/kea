@@ -1,3 +1,0 @@
-[build]		AdaLogics
-	Added a new tool to generate SBOMs for the Kea project.
-	(Gitlab #3706)

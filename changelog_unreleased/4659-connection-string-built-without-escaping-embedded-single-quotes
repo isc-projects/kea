@@ -1,4 +1,0 @@
-[bug]		wlodek
-	Escaped single quotes and backslashes in
-	PostgreSQL connection string parameter values.
-	(Gitlab #4659)

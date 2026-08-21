@@ -1,6 +1,0 @@
-[bug]		fdupont
-	Extended the DUID sanity checks to refuse the 00:00:00
-	DUID used internally to represent the empty DUID.
-	Thank you to Qifan Zhang from Palo Alto Networks for
-	reporting the issue.
-	(Gitlab #4533)
