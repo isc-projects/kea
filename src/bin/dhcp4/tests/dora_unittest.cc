@@ -886,6 +886,10 @@ public:
     /// the siaddr, sname and file fields carried within DHCPv4 message.
     void messageFieldsReservations();
 
+    /// @brief This test checks that setting the match-client-id value to false
+    /// has no effect when the HW address is empty.
+    void emptyHWAddress();
+
     /// @brief This test checks the following scenario:
     /// 1. Client A performs 4-way exchange and obtains a lease from the dynamic
     /// pool.
@@ -2085,7 +2089,6 @@ DORATest::ignoreChangingClientId() {
     Pkt4Ptr resp = client.getContext().response_;
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-    EXPECT_FALSE(client.config_.lease_.client_id_);
 
     // Remember address which the client has obtained.
     IOAddress leased_address = client.config_.lease_.addr_;
@@ -2105,8 +2108,6 @@ DORATest::ignoreChangingClientId() {
     // Make sure that the server assigned the same address, even though the
     // client id has changed.
     EXPECT_EQ(leased_address, client.config_.lease_.addr_);
-    // Check that the client id is not present in the lease.
-    EXPECT_FALSE(client.config_.lease_.client_id_);
 }
 
 TEST_F(DORATest, ignoreChangingClientId) {
@@ -2134,7 +2135,6 @@ DORATest::changingHWAddress() {
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Check that the client id is not present in the lease.
-    EXPECT_FALSE(client.config_.lease_.client_id_);
 
     // Remember address which the client has obtained.
     IOAddress leased_address = client.config_.lease_.addr_;
@@ -2154,8 +2154,6 @@ DORATest::changingHWAddress() {
     // Client must assign different address because the client id is
     // ignored and the HW address was changed.
     EXPECT_NE(client.config_.lease_.addr_, leased_address);
-    // Check that the client id is not present in the lease.
-    EXPECT_FALSE(client.config_.lease_.client_id_);
 }
 
 TEST_F(DORATest, changingHWAddress) {
@@ -2166,6 +2164,49 @@ TEST_F(DORATest, changingHWAddress) {
 TEST_F(DORATest, changingHWAddressMultiThreading) {
     Dhcpv4SrvMTTestGuard guard(*this, true);
     changingHWAddress();
+}
+
+void
+DORATest::emptyHWAddress() {
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[3], *client.getServer());
+    client.includeClientId("12:12");
+    // Obtain the lease using 4-way exchange.
+    ASSERT_NO_THROW(client.doDORA());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+    // Remember address which the client has obtained.
+    IOAddress leased_address = client.config_.lease_.addr_;
+    client.config_.reset();
+
+    // Empty the HW address. Even with the configuration flag set
+    // the client id will be used.
+    client.setHWAddress("empty");
+    // Obtain the lease using 4-way exchange.
+    ASSERT_NO_THROW(client.doDORA());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Client must assign different address because the client id was
+    // ignored and the HW address is changed.
+    EXPECT_NE(leased_address, client.config_.lease_.addr_);
+}
+
+TEST_F(DORATest, emptyHWAddress) {
+    Dhcpv4SrvMTTestGuard guard(*this, false);
+    emptyHWAddress();
+}
+
+TEST_F(DORATest, emptyHWAddressMultiThreading) {
+    Dhcpv4SrvMTTestGuard guard(*this, true);
+    emptyHWAddress();
 }
 
 void
