@@ -1961,6 +1961,46 @@ TEST_F(AllocEngine4Test, discoverReuseDeclinedLease4Stats) {
     EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 0, subnet_->getID()));
 }
 
+// This test checks if a not expired declined lease can not be reused
+// when responding to DHCPDISCOVER (fake allocation)
+TEST_F(AllocEngine4Test, discoverBadReuseDeclinedLease4) {
+
+    AllocEnginePtr engine(new AllocEngine(0));
+    ASSERT_TRUE(engine);
+
+    // Now prepare a configuration with single address pool.
+    IOAddress addr("192.0.2.15");
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    cfg_mgr.clear();
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24, 1, 2, 3, SubnetID(10));
+    pool_ = Pool4Ptr(new Pool4(addr, addr)); // just a single address
+    subnet_->addPool(pool_);
+    // Set match-client-id to false.
+    subnet_->setMatchClientId(false);
+    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+
+    // Now create a declined lease which is not yet expired.
+    Lease4Ptr declined = generateDeclinedLease("192.0.2.15", 100, 100);
+
+    // Set the hardware address to empty.
+    std::vector<uint8_t> empty;
+    hwaddr_.reset(new HWAddr(empty, HTYPE_ETHER));
+
+    // Asking specifically for this address (inline testReuseLease4).
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(declined));
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress("192.0.2.15"), false, false,
+                                    "", true);
+    ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+    Lease4Ptr assigned = engine->allocateLease4(ctx);
+    ASSERT_TRUE(assigned);
+    // Verify we did not get the declined address.
+    ASSERT_NE("192.0.2.15", assigned->addr_.toText());
+
+    // Check the lease.
+    checkLease4(assigned);
+}
+
 // This test checks if an expired declined lease can be reused when responding
 // to REQUEST (actual allocation)
 TEST_F(AllocEngine4Test, requestReuseDeclinedLease4) {
@@ -2043,6 +2083,46 @@ TEST_F(AllocEngine4Test, requestReuseDeclinedLease4Stats) {
     EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 1));
     EXPECT_TRUE(testStatistics("declined-addresses", -1, subnet_->getID()));
     EXPECT_TRUE(testStatistics("reclaimed-declined-addresses", 1, subnet_->getID()));
+}
+
+// This test checks if a not expired declined lease can not be reused
+// when responding to REQUEST (actual allocation)
+TEST_F(AllocEngine4Test, requestBadReuseDeclinedLease4) {
+
+    AllocEnginePtr engine(new AllocEngine(0));
+    ASSERT_TRUE(engine);
+
+    // Now prepare a configuration with single address pool.
+    IOAddress addr("192.0.2.15");
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    cfg_mgr.clear();
+    subnet_ = Subnet4::create(IOAddress("192.0.2.0"), 24, 1, 2, 3, SubnetID(10));
+    pool_ = Pool4Ptr(new Pool4(addr, addr)); // just a single address
+    subnet_->addPool(pool_);
+    // Set match-client-id to false.
+    subnet_->setMatchClientId(false);
+    cfg_mgr.getStagingCfg()->getCfgSubnets4()->add(subnet_);
+
+    // Now create a declined lease which is not yet expired.
+    Lease4Ptr declined = generateDeclinedLease("192.0.2.15", 100, 100);
+
+    // Set the hardware address to empty.
+    std::vector<uint8_t> empty;
+    hwaddr_.reset(new HWAddr(empty, HTYPE_ETHER));
+
+    // Asking specifically for this address (inline testReuseLease4).
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(declined));
+    AllocEngine::ClientContext4 ctx(subnet_, clientid_, hwaddr_,
+                                    IOAddress("192.0.2.15"), false, false,
+                                    "", false);
+    ctx.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    Lease4Ptr assigned = engine->allocateLease4(ctx);
+    ASSERT_TRUE(assigned);
+    // Verify we did not get the declined address.
+    ASSERT_NE("192.0.2.15", assigned->addr_.toText());
+
+    // Check the lease.
+    checkLease4(assigned);
 }
 
 // This test checks if a released lease can be reused in REQUEST (actual allocation)
