@@ -4430,7 +4430,7 @@ for a particular subnet. Consider the following simplified server configuration:
            "match-client-id": false
        },
        {
-           "id": 1,
+           "id": 2,
            "subnet": "10.0.0.0/8",
            "pools": [ { "pool": "10.0.0.23-10.0.2.99" } ]
        }
@@ -4486,6 +4486,50 @@ new lease will be allocated.
 
 For a more visual representation of how Kea recognizes the same client,
 please refer to :ref:`uml-recognizing-same-client`.
+
+Sin Kea 3.3.2 the ``match-client-id`` setting is ignored when the
+query hardware address is empty (i.e. ``hlen`` field is 0) because
+as the hardware address is not available the client identifier is
+the only way to identify the client. To restore the previous behavior
+the ``"pkt4.hlen != 0"`` expression can be used to create a client
+class to guard subnets where client identifiers must be ignored as in
+for instance:
+
+.. code-block:: json
+
+   {
+     "Dhcp4": {
+       "client-classes": [
+       {
+           "name": "has_chaddr",
+           "test": "pkt4.hlen != 0"
+       }
+       ],
+       "shared-networks": [
+       {
+           "name": "net",
+           "subnet4": [
+           {
+               "id": 1,
+               "subnet": "192.0.10.0/24",
+               "pools": [ { "pool": "192.0.2.23-192.0.2.87" } ],
+               "match-client-id": false,
+               "client-classes": [ "has_chaddr" ]
+           },
+           {
+               "id": 2,
+               "subnet": "192.0.10.1/24",
+               "match-client-id": true
+           }
+           ]
+       }
+       ]
+     }
+   }
+
+A query with a not empty hardware address will match the two subnets and
+will get an address from the pool of the first subnet. A query with an
+empty hardware address will match only the second subnet which has no pool.
 
 .. _dhcp4-authoritative:
 

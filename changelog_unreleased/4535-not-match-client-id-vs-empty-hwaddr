@@ -1,0 +1,4 @@
+[func]*		fdupont
+	Configuring 'match-client-id' to false has now no
+	effect when the query address is empty.
+	(Gitlab #4535)
