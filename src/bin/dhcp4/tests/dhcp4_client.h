@@ -132,7 +132,7 @@ public:
     /// NOT stored in the client configuration: @c config_.
     ///
     /// @param requested_addr A pointer to the IP Address to be sent in the
-    /// Requested IP Address option or NULL if the option should not be
+    /// Requested IP Address option or null if the option should not be
     /// included.
     void doDiscover(const boost::shared_ptr<asiolink::IOAddress>&
                     requested_addr = boost::shared_ptr<asiolink::IOAddress>());
@@ -326,7 +326,8 @@ public:
     /// @brief Sets the explicit hardware address for the client.
     ///
     /// @param hwaddr_str String representation of the HW address. Use an
-    /// empty string to set the NULL hardware address.
+    /// empty string to set the null hardware address, "empty" to set
+    /// the empty hardware address.
     void setHWAddress(const std::string& hwaddr_str);
 
     /// @brief Sets the interface over which the messages should be sent.
@@ -453,7 +454,7 @@ private:
     /// This function creates the instance of the PRL (Parameter Request List)
     /// option and adds option codes from the @c requested_options_ to it.
     /// It later adds the PRL option to the @c context_.query_ message
-    /// if it is non-NULL.
+    /// if it is non-null.
     void appendPRL();
 
     /// @brief Simulates reception of the message from the server.

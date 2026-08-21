@@ -576,6 +576,9 @@ void
 Dhcp4Client::setHWAddress(const std::string& hwaddr_str) {
     if (hwaddr_str.empty()) {
         hwaddr_.reset();
+    } else if (hwaddr_str == "empty") {
+        std::vector<uint8_t> empty;
+        hwaddr_.reset(new HWAddr(empty, HTYPE_ETHER));
     } else {
         hwaddr_.reset(new HWAddr(HWAddr::fromText(hwaddr_str)));
     }

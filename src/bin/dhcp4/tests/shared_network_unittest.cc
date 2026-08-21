@@ -2233,7 +2233,7 @@ TEST_F(Dhcpv4SharedNetworkTest, matchClientId) {
     client.includeClientId("01:01:01:01");
     client.setState(Dhcp4Client::RENEWING);
 
-    // Try to renew the lease with modified MAC address.
+    // Try to renew the lease with modified client id.
     testAssigned([&client] {
         ASSERT_NO_THROW(client.doRequest());
     });
@@ -2243,6 +2243,55 @@ TEST_F(Dhcpv4SharedNetworkTest, matchClientId) {
 
     // The lease should get renewed.
     EXPECT_EQ(resp2->getYiaddr().toText(), resp1->getYiaddr().toText());
+
+    // The fact the client id was ignored was registered.
+    EXPECT_EQ(1U, countFile("DHCP4_CLIENTID_IGNORED_FOR_LEASES"));
+}
+
+// Client id matching gets disabled on the shared network level.
+TEST_F(Dhcpv4SharedNetworkTest, matchClientId2) {
+    // Create client using client identifier besides MAC address.
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
+    client.includeClientId("01:02:03:04");
+    client.setIfaceName("eth1");
+    client.setIfaceIndex(ETH1_INDEX);
+
+    // Create server configuration with match-client-id value initially
+    // set to true. The client should be allocated a lease and the
+    // client identifier should be included in this lease.
+    configure(NETWORKS_CONFIG[11], *client.getServer());
+
+    // Perform 4-way exchange.
+    testAssigned([&client] {
+        ASSERT_NO_THROW(client.doDORA());
+    });
+    Pkt4Ptr resp1 = client.getContext().response_;
+    ASSERT_TRUE(resp1);
+    ASSERT_EQ(DHCPACK, resp1->getType());
+
+    // Reconfigure the server and turn off client identifier matching
+    // on the shared network level. The subnet from which the client
+    // is allocated an address should derive the match-client-id value
+    // but with the empty hardware address it still uses the client
+    // identifier which is the only available way to identify the client.
+    configure(NETWORKS_CONFIG[12], *client.getServer());
+
+    client.setHWAddress("empty");
+    client.setState(Dhcp4Client::RENEWING);
+
+    // Try to renew the lease with same client id and empty hw address.
+    testAssigned([&client] {
+        ASSERT_NO_THROW(client.doRequest());
+    });
+    Pkt4Ptr resp2 = client.getContext().response_;
+    ASSERT_TRUE(resp2);
+    ASSERT_EQ(DHCPACK, resp2->getType());
+
+    // The lease should get renewed.
+    EXPECT_EQ(resp2->getYiaddr().toText(), resp1->getYiaddr().toText());
+
+    // The fact the client was not ignored was registered.
+    EXPECT_EQ(1U, countFile("DHCP4_CLIENTID_FORCED_USE_FOR_LEASES"));
 }
 
 // Shared network is selected based on the client class specified.
