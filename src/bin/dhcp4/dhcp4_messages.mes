@@ -122,6 +122,18 @@ which cannot be found in the configuration. Either a hook written
 before the classification was added to Kea is used, or class naming is
 inconsistent.
 
+% DHCP4_CLIENTID_FORCED_USE_FOR_LEASES %1: forced using client identifier for lease allocation for subnet %2
+Logged at debug log level 50.
+This debug message is issued when the server is processing the DHCPv4 message
+for which client identifier is used when allocating new lease or renewing
+existing lease. The server is explicitly configured to not use client
+identifier but the client hardware address was empty so was not available
+for identifying the client. The first argument includes the client and
+transaction identification information. The second argument specifies
+the identifier of the subnet where the client is connected and for which
+the not matching client identifier mode of operation is configured on
+the server.
+
 % DHCP4_CLIENTID_IGNORED_FOR_LEASES %1: not using client identifier for lease allocation for subnet %2
 Logged at debug log level 50.
 This debug message is issued when the server is processing the DHCPv4 message

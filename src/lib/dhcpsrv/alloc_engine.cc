@@ -3769,6 +3769,10 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
 /// @param [out] client_lease A pointer to the lease returned by this function
 /// or null value if no has been lease found.
 void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) {
+    // At least the client identifier or the hardware address can be used
+    // to identify the client.
+    bool hwaddr_empty = (!ctx.hwaddr_ || ctx.hwaddr_->hwaddr_.empty());
+
     LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
 
     ConstSubnet4Ptr original_subnet = ctx.subnet_;
@@ -3781,7 +3785,7 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
         SharedNetwork4::subnetsIncludeMatchClientId(original_subnet, classes));
 
     // If it is possible to use client identifier to try to find client's lease.
-    if (try_clientid_lookup) {
+    if (try_clientid_lookup || hwaddr_empty) {
         // Get all leases for this client identifier. When shared networks are
         // in use it is more efficient to make a single query rather than
         // multiple queries, one for each subnet.
@@ -3795,7 +3799,7 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
             // If client identifier has been supplied and the server wasn't
             // explicitly configured to ignore client identifiers for this subnet
             // check if there is a lease within this subnet.
-            if (subnet->getMatchClientId()) {
+            if (subnet->getMatchClientId() || hwaddr_empty) {
                 for (auto const& l : leases_client_id) {
                     if (l->subnet_id_ == subnet->getID()) {
                         // Lease found, so stick to this lease.
@@ -3809,8 +3813,8 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
     }
 
     // If no lease found using the client identifier, try the lookup using
-    // the HW address.
-    if (!client_lease && ctx.hwaddr_) {
+    // the HW address if not empty.
+    if (!client_lease && !hwaddr_empty) {
 
         // Get all leases for this HW address.
         Lease4Collection leases_hw_address = lease_mgr.getLease4(*ctx.hwaddr_);
@@ -4328,8 +4332,7 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
         // If it is in use by another client, the address can't be
         // allocated.
         if (existing && !existing->expired() &&
-            !existing->belongsToClient(ctx.hwaddr_, ctx.subnet_->getMatchClientId() ?
-                                       ctx.clientid_ : ClientIdPtr())) {
+            !existing->belongsToClient(ctx.hwaddr_, ctx.getClientId())) {
 
             LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                       ALLOC_ENGINE_V4_REQUEST_IN_USE)
@@ -4384,11 +4387,12 @@ AllocEngine::requestLease4(AllocEngine::ClientContext4& ctx) {
         // so offered a different lease (existing) that was temporarily
         // allocated because offer-lifetime is greater than zero. We need to
         // delete the unusable lease and renew the temporary lease.
-        if (((client_lease && existing) && (client_lease->addr_ != existing->addr_) &&
-             (existing->addr_ == ctx.requested_address_) &&
-             (existing->belongsToClient(ctx.hwaddr_, ctx.subnet_->getMatchClientId() ?
-                                        ctx.clientid_ : ClientIdPtr())))
-             && getOfferLft(ctx, false)) {
+        if ((client_lease && existing) &&
+            (client_lease->addr_ != existing->addr_) &&
+            (existing->addr_ == ctx.requested_address_) &&
+            existing->belongsToClient(ctx.hwaddr_, ctx.getClientId()) &&
+            getOfferLft(ctx, false)) {
+
             auto conflicted_lease = client_lease;
             client_lease = existing;
             deleteAssignedLease(conflicted_lease);
@@ -4637,10 +4641,7 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
 
     time_t now = time(0);
 
-    ClientIdPtr client_id;
-    if (ctx.subnet_->getMatchClientId()) {
-        client_id = ctx.clientid_;
-    }
+    ClientIdPtr client_id = ctx.getClientId();
 
     Lease4Ptr lease(new Lease4(addr, ctx.hwaddr_, client_id,
                                valid_lft, now, ctx.subnet_->getID()));
@@ -4851,8 +4852,7 @@ AllocEngine::renewLease4(const Lease4Ptr& lease,
         // is false.
         ctx.callout_handle_->setArgument("query4", ctx.query_);
         ctx.callout_handle_->setArgument("subnet4", subnet4);
-        ctx.callout_handle_->setArgument("clientid", subnet4->getMatchClientId() ?
-                                         ctx.clientid_ : ClientIdPtr());
+        ctx.callout_handle_->setArgument("clientid", ctx.getClientId());
         ctx.callout_handle_->setArgument("hwaddr", ctx.hwaddr_);
 
         // Pass the lease to be updated
@@ -5123,9 +5123,13 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
 
     auto const& classes = ctx.query_->getClasses();
 
+    // At least the client identifier or the hardware address can be used
+    // to identify the client.
+    bool hwaddr_empty = (!ctx.hwaddr_ || ctx.hwaddr_->hwaddr_.empty());
+
     while (subnet) {
         ClientIdPtr client_id;
-        if (subnet->getMatchClientId()) {
+        if (subnet->getMatchClientId() || hwaddr_empty) {
             client_id = ctx.clientid_;
         }
 
@@ -5326,10 +5330,11 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
         changed = true;
         lease->hwaddr_ = ctx.hwaddr_;
     }
-    if (ctx.subnet_->getMatchClientId() && ctx.clientid_) {
-        if (!lease->client_id_ || (*ctx.clientid_ != *lease->client_id_)) {
+    auto clientid = ctx.getClientId();
+    if (clientid) {
+        if (!lease->client_id_ || (*clientid != *lease->client_id_)) {
             changed = true;
-            lease->client_id_ = ctx.clientid_;
+            lease->client_id_ = clientid;
         }
     } else if (lease->client_id_) {
         changed = true;

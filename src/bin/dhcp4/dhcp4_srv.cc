@@ -3418,7 +3418,10 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // client identifier matching is disabled, we want to make sure that
         // the user is notified.
         if (!ctx->subnet_->getMatchClientId()) {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENTID_IGNORED_FOR_LEASES)
+            bool hw_empty = (!ctx->hwaddr_ || ctx->hwaddr_->hwaddr_.empty());
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL,
+                      hw_empty ? DHCP4_CLIENTID_FORCED_USE_FOR_LEASES
+                      : DHCP4_CLIENTID_IGNORED_FOR_LEASES)
                 .arg(ctx->query_->getLabel())
                 .arg(ctx->subnet_->getID());
         }

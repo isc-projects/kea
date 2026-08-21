@@ -1327,6 +1327,18 @@ public:
         /// a dynamic pool the server knows about.
         bool unknown_requested_addr_;
 
+        /// @brief Returns the client identifier when the subnet
+        ///  match-client-id flag is true or the HW address empty.
+        ClientIdPtr getClientId() const {
+            if (!subnet_ ||
+                (subnet_ && subnet_->getMatchClientId()) ||
+                !hwaddr_ || hwaddr_->hwaddr_.empty()) {
+                return (clientid_);
+            } else {
+                return (ClientIdPtr());
+            }
+        }
+
         /// @brief Returns the set of DDNS behavioral parameters based on
         /// the selected subnet.
         ///
@@ -1335,7 +1347,6 @@ public:
         ///
         /// @return pointer to a DdnsParams instance
         DdnsParamsPtr getDdnsParams();
-
 
         /// @brief Convenience function adding host identifier into
         /// @ref host_identifiers_ list.

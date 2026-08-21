@@ -24,6 +24,7 @@ extern const isc::log::MessageID DHCP4_CLASSES_ASSIGNED = "DHCP4_CLASSES_ASSIGNE
 extern const isc::log::MessageID DHCP4_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION = "DHCP4_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION";
 extern const isc::log::MessageID DHCP4_CLASS_ASSIGNED = "DHCP4_CLASS_ASSIGNED";
 extern const isc::log::MessageID DHCP4_CLASS_UNCONFIGURED = "DHCP4_CLASS_UNCONFIGURED";
+extern const isc::log::MessageID DHCP4_CLIENTID_FORCED_USE_FOR_LEASES = "DHCP4_CLIENTID_FORCED_USE_FOR_LEASES";
 extern const isc::log::MessageID DHCP4_CLIENTID_IGNORED_FOR_LEASES = "DHCP4_CLIENTID_IGNORED_FOR_LEASES";
 extern const isc::log::MessageID DHCP4_CLIENT_FQDN_DATA = "DHCP4_CLIENT_FQDN_DATA";
 extern const isc::log::MessageID DHCP4_CLIENT_FQDN_PROCESS = "DHCP4_CLIENT_FQDN_PROCESS";
@@ -216,6 +217,7 @@ const char* values[] = {
     "DHCP4_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION", "%1: client packet has been assigned to the following classes: %2",
     "DHCP4_CLASS_ASSIGNED", "%1: client packet has been assigned to the following class: %2",
     "DHCP4_CLASS_UNCONFIGURED", "%1: client packet belongs to an unconfigured class: %2",
+    "DHCP4_CLIENTID_FORCED_USE_FOR_LEASES", "%1: forced using client identifier for lease allocation for subnet %2",
     "DHCP4_CLIENTID_IGNORED_FOR_LEASES", "%1: not using client identifier for lease allocation for subnet %2",
     "DHCP4_CLIENT_FQDN_DATA", "%1: Client sent FQDN option: %2",
     "DHCP4_CLIENT_FQDN_PROCESS", "%1: processing Client FQDN option",

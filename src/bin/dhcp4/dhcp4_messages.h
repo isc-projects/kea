@@ -25,6 +25,7 @@ extern const isc::log::MessageID DHCP4_CLASSES_ASSIGNED;
 extern const isc::log::MessageID DHCP4_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION;
 extern const isc::log::MessageID DHCP4_CLASS_ASSIGNED;
 extern const isc::log::MessageID DHCP4_CLASS_UNCONFIGURED;
+extern const isc::log::MessageID DHCP4_CLIENTID_FORCED_USE_FOR_LEASES;
 extern const isc::log::MessageID DHCP4_CLIENTID_IGNORED_FOR_LEASES;
 extern const isc::log::MessageID DHCP4_CLIENT_FQDN_DATA;
 extern const isc::log::MessageID DHCP4_CLIENT_FQDN_PROCESS;
