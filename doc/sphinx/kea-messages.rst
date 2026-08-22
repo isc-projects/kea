@@ -3044,7 +3044,7 @@ DATABASE_MYSQL_NO_INIT_NO_PASSWORD
     Not attempting to initialize the MySQL schema. Kea database password is not available.
 
 A warning message indicating that the password required to connect to the Kea
-database is no available and db-init will not be attempted.
+database is not available and db-init will not be attempted.
 
 DATABASE_MYSQL_NO_INIT_READONLY
 ===============================
@@ -3167,7 +3167,7 @@ DATABASE_PGSQL_NO_INIT_NO_PASSWORD
     Not attempting to initialize the PostgreSQL schema. Kea database password is not available.
 
 A warning message indicating that the password required to connect to the Kea
-database is no available and db-init will not be attempted.
+database is not available and db-init will not be attempted.
 
 DATABASE_PGSQL_NO_INIT_READONLY
 ===============================

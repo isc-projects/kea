@@ -146,15 +146,15 @@ Kea 3.3.1 (development) released on August 26, 2026
 
 2527.	[func]		tmark
 	Added ``cid-as-rfc4361-duid`` flag to flex-id hook
-	library.  This allows the v4 flex-id to formatted
+	library.  This allows the v4 flex-id to be formatted
 	as an RFC 4361 compliant embedded DUID.
 	(Gitlab #3780)
 
 2526.	[bug]		andrei
 	Fixed an issue with some very old upgrade scripts that
-	could have lead to split MySQL schemas - specifically on the
+	could have led to split MySQL schemas - specifically on the
 	8.1->8.2 upgrade path, the array column would have not been
-	renamed to is_array, and on 9.6->10.0, the sever tag column would
+	renamed to is_array, and on 9.6->10.0, the server tag column would
 	have not been resized.
 	(Gitlab #4580)
 
