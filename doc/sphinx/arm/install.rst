@@ -322,7 +322,7 @@ Some commonly used options are:
    Use the Botan cryptographic library instead of OpenSSL.
    Meson searches the 'botan-3' and 'botan' pkg-config library.
 
- - ``--D crypto=openssl``
+ - ``-D crypto=openssl``
    Use the OpenSSL cryptographic library. By default the value of
    the 'crypto' option is 'openssl'.
 
