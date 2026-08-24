@@ -145,7 +145,6 @@ ClientHandler::tryLock(Pkt6Ptr query, ContinuationPtr cont) {
         }
     }
 
-
     if (cont) {
         if (next_query) {
             // Logging a warning as it is supposed to be a rare event
@@ -176,7 +175,6 @@ ClientHandler::tryLock(Pkt6Ptr query, ContinuationPtr cont) {
                                              static_cast<int64_t>(1));
         stats::StatsMgr::instance().addValue("pkt6-receive-drop",
                                              static_cast<int64_t>(1));
-
     }
     return (false);
 }

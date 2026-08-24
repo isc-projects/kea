@@ -1875,8 +1875,8 @@ public:
 
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
-        // RESRV_COLUMNS -1 as we do not set reservation_id.
-        std::vector<MYSQL_BIND> vec(&bind_[0], &bind_[RESRV_COLUMNS-1]);
+        // RESRV_COLUMNS - 1 as we do not set reservation_id.
+        std::vector<MYSQL_BIND> vec(&bind_[0], &bind_[RESRV_COLUMNS - 1]);
 
         // When checking whether the IP is unique we need to bind the IPv6 address
         // and prefix length at the end of the query as it has additional binding

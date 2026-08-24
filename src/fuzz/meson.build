@@ -195,10 +195,7 @@ if cpp.get_id() == 'clang'
         )
     endforeach
     if MYSQL_DEP.found()
-        foreach i : [
-            'fuzz_mysql4',
-            'fuzz_mysql6',
-        ]
+        foreach i : ['fuzz_mysql4', 'fuzz_mysql6']
             FUZZING_HARNESSES += static_library(
                 i,
                 f'@i@.cc',

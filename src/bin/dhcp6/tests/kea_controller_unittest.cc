@@ -1267,10 +1267,10 @@ TEST_F(JSONFileBackendTest, reclaimOnlyWhenServiceEnabled) {
 
 TEST_F(JSONFileBackendTest, testCBRepairModeDisabled) {
     testCBRepairMode(false);
-}   
-    
+}
+
 TEST_F(JSONFileBackendTest, testCBRepairModeEnabled) {
     testCBRepairMode(true);
-}   
+}
 
 } // End of anonymous namespace

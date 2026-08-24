@@ -596,7 +596,7 @@ TEST_F(Dhcp6CBTest, cbRepairMode) {
 
     // Enable repair mode.
     Daemon::setCBRepairMode(true);
-    
+
     // Should parse without error.
     configure(base_config, CONTROL_RESULT_SUCCESS, "");
 

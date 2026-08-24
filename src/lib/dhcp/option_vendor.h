@@ -45,7 +45,7 @@ public:
     /// @param end iterator to end of option data (first byte after option end).
     /// @param rec_level recursion level.
     ///
-    /// @Throw isc::OutOfRange if provided buffer is shorter than data size.
+    /// @throw isc::OutOfRange if provided buffer is shorter than data size.
     /// @todo Extend constructor to set encapsulated option space name.
     OptionVendor(Option::Universe u, OptionBufferConstIter begin,
                  OptionBufferConstIter end, size_t rec_level = 0);
