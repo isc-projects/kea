@@ -25,6 +25,7 @@ using namespace isc::dhcp_ddns;
 using namespace isc::d2;
 using namespace isc::process;
 using namespace isc::util;
+using namespace isc::asiolink;
 
 namespace {
 
@@ -38,7 +39,7 @@ public:
     ///
     /// Parameters match those needed by D2UpdateMgr.
     D2UpdateMgrWrapper(D2QueueMgrPtr& queue_mgr, D2CfgMgrPtr& cfg_mgr,
-                       asiolink::IOServicePtr& io_service,
+                       IOServicePtr& io_service,
                        const size_t max_transactions = MAX_TRANSACTIONS_DEFAULT)
         : D2UpdateMgr(queue_mgr, cfg_mgr, io_service, max_transactions) {
     }
@@ -99,17 +100,22 @@ public:
         " \"forward-change\" : true , "
         " \"reverse-change\" : false , "
         " \"fqdn\" : \"my.example.com.\" , "
-        " \"ip-address\" : \"192.168.1.2\" , "
+        " \"ip-address\" : \"192.168.1.1\" , "
         " \"dhcid\" : \"0102030405060708\" , "
         " \"lease-length\" : 1300, "
         " \"conflict-resolution-mode\" : \"check-with-dhcid\""
         "}";
 
         const char* dhcids[] = { "111111", "222222", "333333", "444444" };
+        const char* ips[] = { "192.168.1.1", "192.168.1.2", "192.168.1.3", "192.168.1.4" };
+        const char* fqdns[] = { "one.example.com.", "two.example.com.", 
+                                "three.example.com", "four.example.com"};
         canned_count_ = 4;
         for (size_t i = 0; i < canned_count_; i++) {
             dhcp_ddns::NameChangeRequestPtr ncr = NameChangeRequest::
                                                   fromJSON(msg_str);
+            ncr->setFqdn(fqdns[i]);
+            ncr->setIpAddress(ips[i]);
             ncr->setDhcid(dhcids[i]);
             ncr->setChangeType(i % 2 == 0 ?
                                dhcp_ddns::CHG_ADD : dhcp_ddns::CHG_REMOVE);
@@ -164,19 +170,17 @@ public:
             ADD_FAILURE() << "request index is out of range: " << index;
         }
 
-        const dhcp_ddns::D2Dhcid key = canned_ncrs_[index]->getDhcid();
-
-        // locate the transaction based on the request DHCID
-        TransactionList::iterator pos = update_mgr_->findTransaction(key);
-        if (pos == update_mgr_->transactionListEnd()) {
-            ADD_FAILURE() << "cannot find transaction for key: " << key.toStr();
+        std::string fqdn = canned_ncrs_[index]->getFqdn();
+        // locate the transaction based on the request FQDN
+        auto pos = update_mgr_->findTransactionByFqdn(fqdn);
+        if (pos == update_mgr_->transactionFqdnEnd()) {
+            ADD_FAILURE() << "cannot find transaction for fdqn: " << fqdn;
         }
 
-        NameChangeTransactionPtr trans = (*pos).second;
         // Update the status of the request
-        trans->getNcr()->setStatus(status);
+        (*pos)->getNcr()->setStatus(status);
         // End the model.
-        trans->endModel();
+        (*pos)->endModel();
     }
 
     /// @brief Determines if any transactions are waiting for IO completion.
@@ -184,9 +188,9 @@ public:
     /// @returns True if isModelWaiting() is true for at least one of the current
     /// transactions.
     bool anyoneWaiting() {
-        TransactionList::iterator it = update_mgr_->transactionListBegin();
-        while (it != update_mgr_->transactionListEnd()) {
-            if (((*it).second)->isModelWaiting()) {
+        auto it = update_mgr_->transactionSequenceBegin();
+        while (it != update_mgr_->transactionSequenceEnd()) {
+            if ((*it)->isModelWaiting()) {
                 return (true);
             }
         }
@@ -251,7 +255,7 @@ public:
 /// 4. Default construction works and max transactions is defaulted properly
 /// 5. Construction with custom max transactions works properly
 TEST(D2UpdateMgr, construction) {
-    asiolink::IOServicePtr io_service(new isc::asiolink::IOService());
+    IOServicePtr io_service(new IOService());
     D2QueueMgrPtr queue_mgr;
     D2CfgMgrPtr cfg_mgr;
     D2UpdateMgrPtr update_mgr;
@@ -273,7 +277,7 @@ TEST(D2UpdateMgr, construction) {
     io_service.reset();
     EXPECT_THROW(D2UpdateMgr(queue_mgr, cfg_mgr, io_service),
                  D2UpdateMgrError);
-    io_service.reset(new isc::asiolink::IOService());
+    io_service.reset(new IOService());
 
     // Verify that max transactions cannot be zero.
     EXPECT_THROW(D2UpdateMgr(queue_mgr, cfg_mgr, io_service, 0),
@@ -296,48 +300,54 @@ TEST(D2UpdateMgr, construction) {
     EXPECT_EQ(100U, update_mgr->getMaxTransactions());
 }
 
-/// @brief Tests the D2UpdateManager's transaction list services
+/// @brief Tests the D2UpdateManager's transaction store services
 /// This test verifies that:
-/// 1. A transaction can be added to the list.
-/// 2. Finding a transaction in the list by key works correctly.
+/// 1. A transaction can be added to the store.
+/// 2. Finding a transaction 0in the store by key works correctly.
 /// 3. Looking for a non-existent transaction works properly.
-/// 4. Attempting to add a transaction for a DHCID already in the list fails.
-/// 5. Removing a transaction by key works properly.
-/// 6. Attempting to remove an non-existent transaction does no harm.
-TEST_F(D2UpdateMgrTest, transactionList) {
+/// 4. Attempting to add a transaction for an FQDN or address already in the store fails.
+TEST_F(D2UpdateMgrTest, transactionStore) {
     // Grab a canned request for test purposes.
     NameChangeRequestPtr& ncr = canned_ncrs_[0];
-    TransactionList::iterator pos;
+    auto zero_address = IOAddress::IPV4_ZERO_ADDRESS();
 
     // Verify that we can add a transaction.
     EXPECT_NO_THROW(update_mgr_->makeTransaction(ncr));
     EXPECT_EQ(1U, update_mgr_->getTransactionCount());
 
-    // Verify that we can find a transaction by key.
-    EXPECT_NO_THROW(pos = update_mgr_->findTransaction(ncr->getDhcid()));
-    EXPECT_TRUE(pos != update_mgr_->transactionListEnd());
+    // Verify that we can find the transaction by FQDN.
+    TransactionFqdnIndex::iterator fqdn_pos;
+    EXPECT_NO_THROW(fqdn_pos = update_mgr_->findTransactionByFqdn(ncr->getFqdn()));
+    EXPECT_TRUE(fqdn_pos != update_mgr_->transactionFqdnEnd());
+    EXPECT_TRUE(update_mgr_->hasTransaction(ncr));
 
-    // Verify that convenience method has same result.
-    EXPECT_TRUE(update_mgr_->hasTransaction(ncr->getDhcid()));
+    // Verify that we will not find an FQDN that isn't there.
+    EXPECT_NO_THROW(fqdn_pos = update_mgr_->findTransactionByFqdn("not-there"));
+    EXPECT_TRUE(fqdn_pos == update_mgr_->transactionFqdnEnd());
 
-    // Verify that we will not find a transaction that isn't there.
-    dhcp_ddns::D2Dhcid bogus_id("FFFF");
-    EXPECT_NO_THROW(pos = update_mgr_->findTransaction(bogus_id));
-    EXPECT_TRUE(pos == update_mgr_->transactionListEnd());
+    // Verify that we can find the transaction by address.
+    TransactionAddressIndex::iterator addr_pos;
+    EXPECT_NO_THROW(addr_pos = update_mgr_->findTransactionByAddress(ncr->getIOAddress()));
+    EXPECT_TRUE(addr_pos != update_mgr_->transactionAddressEnd());
+    EXPECT_TRUE(update_mgr_->hasTransaction(ncr));
 
-    // Verify that convenience method has same result.
-    EXPECT_FALSE(update_mgr_->hasTransaction(bogus_id));
+    // Verify that we will not find an address that isn't there.
+    EXPECT_NO_THROW(addr_pos = update_mgr_->findTransactionByAddress(zero_address));
+    EXPECT_TRUE(addr_pos == update_mgr_->transactionAddressEnd());
 
-    // Verify that adding a transaction for the same key fails.
-    EXPECT_THROW(update_mgr_->makeTransaction(ncr), D2UpdateMgrError);
+    // Verify that adding a transaction for the same FQDN fails.
+    NameChangeRequestPtr ncopy(new NameChangeRequest(*ncr));
+    ncopy->setIpAddress(zero_address);
+
+    EXPECT_THROW(update_mgr_->makeTransaction(ncopy), D2UpdateMgrError);
     EXPECT_EQ(1U, update_mgr_->getTransactionCount());
 
-    // Verify the we can remove a transaction by key.
-    EXPECT_NO_THROW(update_mgr_->removeTransaction(ncr->getDhcid()));
-    EXPECT_EQ(0U, update_mgr_->getTransactionCount());
+    // Verify that adding a transaction for the same address fails.
+    ncopy.reset(new NameChangeRequest(*ncr));
+    ncopy->setFqdn("not-there");
 
-    // Verify the we can try to remove a non-existent transaction without harm.
-    EXPECT_NO_THROW(update_mgr_->removeTransaction(ncr->getDhcid()));
+    EXPECT_THROW(update_mgr_->makeTransaction(ncr), D2UpdateMgrError);
+    EXPECT_EQ(1U, update_mgr_->getTransactionCount());
 }
 
 /// @brief Checks transaction creation when both update directions are enabled.
@@ -425,7 +435,6 @@ TEST_F(D2UpdateMgrTest, bothDisabled) {
     // Grab a canned request for test purposes.
     NameChangeRequestPtr& ncr = canned_ncrs_[0];
     ncr->setReverseChange(true);
-    TransactionList::iterator pos;
 
     // Wipe out both forward and reverse domain lists.
     DdnsDomainMapPtr emptyDomains(new DdnsDomainMap());
@@ -461,13 +470,11 @@ TEST_F(D2UpdateMgrTest, checkFinishedTransaction) {
     EXPECT_EQ(canned_count_, update_mgr_->getTransactionCount());
 
     // Verify that all four transactions have been started.
-    TransactionList::iterator pos;
-    EXPECT_NO_THROW(pos = update_mgr_->transactionListBegin());
-    while (pos != update_mgr_->transactionListEnd()) {
-        NameChangeTransactionPtr trans = (*pos).second;
+    for (auto pos = update_mgr_->transactionSequenceBegin();
+         pos != update_mgr_->transactionSequenceEnd(); ++pos) {
+        NameChangeTransactionPtr trans = (*pos);
         ASSERT_EQ(dhcp_ddns::ST_PENDING, trans->getNcrStatus());
         ASSERT_TRUE(trans->isModelRunning());
-        ++pos;
     }
 
     // Verify that invoking checkFinishedTransactions does not throw.
@@ -491,10 +498,10 @@ TEST_F(D2UpdateMgrTest, checkFinishedTransaction) {
     EXPECT_EQ(canned_count_ - 2, update_mgr_->getTransactionCount());
 
     // Verify that the transaction list is correct.
-    EXPECT_TRUE(update_mgr_->hasTransaction(canned_ncrs_[0]->getDhcid()));
-    EXPECT_FALSE(update_mgr_->hasTransaction(canned_ncrs_[1]->getDhcid()));
-    EXPECT_TRUE(update_mgr_->hasTransaction(canned_ncrs_[2]->getDhcid()));
-    EXPECT_FALSE(update_mgr_->hasTransaction(canned_ncrs_[3]->getDhcid()));
+    EXPECT_TRUE(update_mgr_->hasTransaction(canned_ncrs_[0]));
+    EXPECT_FALSE(update_mgr_->hasTransaction(canned_ncrs_[1]));
+    EXPECT_TRUE(update_mgr_->hasTransaction(canned_ncrs_[2]));
+    EXPECT_FALSE(update_mgr_->hasTransaction(canned_ncrs_[3]));
 }
 
 /// @brief Tests D2UpdateManager's pickNextJob method.
@@ -519,31 +526,41 @@ TEST_F(D2UpdateMgrTest, pickNextJob) {
     for (size_t i = 0; i < canned_count_; i++) {
         EXPECT_NO_THROW(update_mgr_->pickNextJob());
         EXPECT_EQ(i + 1, update_mgr_->getTransactionCount());
-        EXPECT_TRUE(update_mgr_->hasTransaction(canned_ncrs_[i]->getDhcid()));
+        EXPECT_TRUE(update_mgr_->hasTransaction(canned_ncrs_[i]));
     }
 
     // Verify that the queue has been drained.
     EXPECT_EQ(0U, update_mgr_->getQueueCount());
 
-    // Now verify that a subsequent request for a DCHID for which a
-    // transaction is in progress, is not dequeued.
-    // First add the "subsequent" request.
-    dhcp_ddns::NameChangeRequestPtr
-        subsequent_ncr(new dhcp_ddns::NameChangeRequest(*(canned_ncrs_[2])));
-    EXPECT_NO_THROW(queue_mgr_->enqueue(subsequent_ncr));
+    // Add a duplicate of an in-progress NCR.
+    NameChangeRequestPtr duplicate_ncr(new NameChangeRequest(*(canned_ncrs_[2])));
+    EXPECT_NO_THROW(queue_mgr_->enqueue(duplicate_ncr));
     EXPECT_EQ(1U, update_mgr_->getQueueCount());
 
+    // Add an NCR for the same FQDN but different address.
+    NameChangeRequestPtr diff_addr_ncr(new NameChangeRequest(*duplicate_ncr));
+    diff_addr_ncr->setIpAddress("192.168.1.100");
+    EXPECT_NO_THROW(queue_mgr_->enqueue(diff_addr_ncr));
+    EXPECT_EQ(2, update_mgr_->getQueueCount());
+        
     // Verify that invoking pickNextJob:
     // 1. Does not throw
     // 2. Does not make a new transaction
-    // 3. Does not dequeue the entry
+    // 3. Dequeues the duplicate entry
     EXPECT_NO_THROW(update_mgr_->pickNextJob());
     EXPECT_EQ(canned_count_, update_mgr_->getTransactionCount());
     EXPECT_EQ(1U, update_mgr_->getQueueCount());
 
-    // Clear out the queue and transaction list.
+    // Clear the transactions, and try again. Should dequeue the
+    // remaining NCR and create a transaction for it.
+    update_mgr_->clearTransactions();
+    EXPECT_NO_THROW(update_mgr_->pickNextJob());
+    EXPECT_EQ(1, update_mgr_->getTransactionCount());
+    EXPECT_EQ(0U, update_mgr_->getQueueCount());
+
+    // Clear out the queue and transactions.
     queue_mgr_->clearQueue();
-    update_mgr_->clearTransactionList();
+    update_mgr_->clearTransactions();
 
     // Make a forward change NCR with an FQDN that has no forward match.
     dhcp_ddns::NameChangeRequestPtr
@@ -611,15 +628,15 @@ TEST_F(D2UpdateMgrTest, pickNextJobSkips) {
     // Invoke pickNextJob once.
     EXPECT_NO_THROW(update_mgr_->pickNextJob());
     EXPECT_EQ(1U, update_mgr_->getTransactionCount());
-    EXPECT_TRUE(update_mgr_->hasTransaction(canned_ncrs_[0]->getDhcid()));
+    EXPECT_TRUE(update_mgr_->hasTransaction(canned_ncrs_[0]));
 
     // Verify that the queue has all but one of the canned requests still queued.
     EXPECT_EQ(canned_count_ - 1, update_mgr_->getQueueCount());
 
-    // Empty the queue and transaction list.
+    // Empty the queue and transactions.
     queue_mgr_->clearQueue();
     ASSERT_EQ(0U, update_mgr_->getQueueCount());
-    update_mgr_->clearTransactionList();
+    update_mgr_->clearTransactions();
     EXPECT_EQ(0U, update_mgr_->getTransactionCount());
 
     // Add two no match requests.
@@ -655,7 +672,7 @@ TEST_F(D2UpdateMgrTest, sweep) {
     for (size_t i = 0; i < canned_count_; i++) {
         EXPECT_NO_THROW(update_mgr_->sweep());
         EXPECT_EQ(i + 1, update_mgr_->getTransactionCount());
-        EXPECT_TRUE(update_mgr_->hasTransaction(canned_ncrs_[i]->getDhcid()));
+        EXPECT_TRUE(update_mgr_->hasTransaction(canned_ncrs_[i]));
     }
 
     // Verify that the queue has been drained.
@@ -688,7 +705,10 @@ TEST_F(D2UpdateMgrTest, sweep) {
     // Queue up a request from a new DHCID.
     dhcp_ddns::NameChangeRequestPtr
         another_ncr(new dhcp_ddns::NameChangeRequest(*(canned_ncrs_[0])));
-    another_ncr->setDhcid("AABBCCDDEEFF");
+
+    another_ncr->setFqdn("five.example.com");
+    another_ncr->setIpAddress("192.168.1.5");
+
     EXPECT_NO_THROW(queue_mgr_->enqueue(another_ncr));
     EXPECT_EQ(1U, update_mgr_->getQueueCount());
 
@@ -698,7 +718,7 @@ TEST_F(D2UpdateMgrTest, sweep) {
     EXPECT_EQ(canned_count_, update_mgr_->getTransactionCount());
     EXPECT_EQ(1U, update_mgr_->getQueueCount());
 
-    // Set max transactions to same as current transaction count.
+    // Set max transactions to same as current transaction count + 1.
     EXPECT_NO_THROW(update_mgr_->setMaxTransactions(canned_count_ + 1));
 
     // Verify that invoking sweep, dequeues the request and creates
@@ -707,8 +727,8 @@ TEST_F(D2UpdateMgrTest, sweep) {
     EXPECT_EQ(canned_count_ + 1, update_mgr_->getTransactionCount());
     EXPECT_EQ(0U, update_mgr_->getQueueCount());
 
-    // Verify that clearing transaction list works.
-    EXPECT_NO_THROW(update_mgr_->clearTransactionList());
+    // Verify that clearing transactions works.
+    EXPECT_NO_THROW(update_mgr_->clearTransactions());
     EXPECT_EQ(0U, update_mgr_->getTransactionCount());
 }
 
@@ -730,10 +750,10 @@ TEST_F(D2UpdateMgrTest, addTransaction) {
     // 3. Start the transaction
     ASSERT_NO_THROW(update_mgr_->sweep());
 
-    // Get a copy of the transaction.
-    TransactionList::iterator pos = update_mgr_->transactionListBegin();
-    ASSERT_TRUE (pos != update_mgr_->transactionListEnd());
-    NameChangeTransactionPtr trans = (*pos).second;
+    // Get a pointer to the transaction.
+    auto pos = update_mgr_->transactionSequenceBegin();
+    ASSERT_TRUE (pos != update_mgr_->transactionSequenceEnd());
+    NameChangeTransactionPtr trans = (*pos);
     ASSERT_TRUE(trans);
 
     // Verify the correct type of transaction was created.
@@ -787,10 +807,10 @@ TEST_F(D2UpdateMgrTest, removeTransaction) {
     // 3. Start the transaction
     ASSERT_NO_THROW(update_mgr_->sweep());
 
-    // Get a copy of the transaction.
-    TransactionList::iterator pos = update_mgr_->transactionListBegin();
-    ASSERT_TRUE (pos != update_mgr_->transactionListEnd());
-    NameChangeTransactionPtr trans = (*pos).second;
+    // Get the transaction.
+    auto pos = update_mgr_->transactionSequenceBegin();
+    ASSERT_TRUE (pos != update_mgr_->transactionSequenceEnd());
+    NameChangeTransactionPtr trans = *pos;
     ASSERT_TRUE(trans);
 
     // Verify the correct type of transaction was created.
@@ -826,7 +846,6 @@ TEST_F(D2UpdateMgrTest, removeTransaction) {
               trans->getLastEvent());
 }
 
-
 /// @brief Tests handling of a transaction which fails.
 /// This test verifies that update manager correctly concludes a transaction
 /// which fails to complete successfully.  The failure simulated is repeated
@@ -842,10 +861,10 @@ TEST_F(D2UpdateMgrTest, errorTransaction) {
     // 3. Start the transaction
     ASSERT_NO_THROW(update_mgr_->sweep());
 
-    // Get a copy of the transaction.
-    TransactionList::iterator pos = update_mgr_->transactionListBegin();
-    ASSERT_TRUE (pos != update_mgr_->transactionListEnd());
-    NameChangeTransactionPtr trans = (*pos).second;
+    // Get the transaction.
+    auto pos = update_mgr_->transactionSequenceBegin();
+    ASSERT_TRUE (pos != update_mgr_->transactionSequenceEnd());
+    NameChangeTransactionPtr trans = (*pos);
     ASSERT_TRUE(trans);
 
     ASSERT_TRUE(trans->isModelRunning());
@@ -890,7 +909,7 @@ TEST_F(D2UpdateMgrTest, multiTransaction) {
     // Create a server and start it listening. Note this relies on the fact
     // that all of configured servers have the same address.
     // and start it listening.
-    asiolink::IOAddress server_ip("127.0.0.1");
+    IOAddress server_ip("127.0.0.1");
     server_.reset(new FauxServer(io_service_, server_ip, 5301));
     server_->receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
@@ -944,10 +963,10 @@ TEST_F(D2UpdateMgrTest, simpleAddTransaction) {
     // 3. Start the transaction
     ASSERT_NO_THROW(update_mgr_->sweep());
 
-    // Get a copy of the transaction.
-    TransactionList::iterator pos = update_mgr_->transactionListBegin();
-    ASSERT_TRUE (pos != update_mgr_->transactionListEnd());
-    NameChangeTransactionPtr trans = (*pos).second;
+    // Get the transaction.
+    auto pos = update_mgr_->transactionSequenceBegin();
+    ASSERT_TRUE (pos != update_mgr_->transactionSequenceEnd());
+    NameChangeTransactionPtr trans = (*pos);
     ASSERT_TRUE(trans);
 
     // Verify the correct type of transaction was created.
@@ -1002,10 +1021,10 @@ TEST_F(D2UpdateMgrTest, simpleRemoveTransaction) {
     // 3. Start the transaction
     ASSERT_NO_THROW(update_mgr_->sweep());
 
-    // Get a copy of the transaction.
-    TransactionList::iterator pos = update_mgr_->transactionListBegin();
-    ASSERT_TRUE (pos != update_mgr_->transactionListEnd());
-    NameChangeTransactionPtr trans = (*pos).second;
+    // Get the transaction.
+    auto pos = update_mgr_->transactionSequenceBegin();
+    ASSERT_TRUE (pos != update_mgr_->transactionSequenceEnd());
+    NameChangeTransactionPtr trans = (*pos);
     ASSERT_TRUE(trans);
 
     // Verify the correct type of transaction was created.

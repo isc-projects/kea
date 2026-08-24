@@ -20,6 +20,8 @@
 #include <iostream>
 #include <vector>
 
+using namespace isc::dhcp_ddns;
+
 namespace isc {
 namespace d2 {
 
@@ -47,7 +49,7 @@ D2UpdateMgr::D2UpdateMgr(D2QueueMgrPtr& queue_mgr, D2CfgMgrPtr& cfg_mgr,
 }
 
 D2UpdateMgr::~D2UpdateMgr() {
-    transaction_list_.clear();
+    transaction_store_.clear();
 }
 
 void D2UpdateMgr::sweep() {
@@ -80,41 +82,44 @@ D2UpdateMgr::checkFinishedTransactions() {
     // for finished transactions.
     // At the moment all we do is remove them from the list. This is likely
     // to expand as DHCP_DDNS matures.
-    // NOTE: One must use postfix increments of the iterator on the calls
-    // to erase.  This replaces the old iterator which becomes invalid by the
-    // erase with the next valid iterator.  Prefix incrementing will not
-    // work.
-    TransactionList::iterator it = transaction_list_.begin();
-    while (it != transaction_list_.end()) {
-        NameChangeTransactionPtr trans = (*it).second;
-        if (trans->isModelDone()) {
-            // @todo Additional actions based on NCR status could be
-            // performed here.
-            transaction_list_.erase(it++);
+    auto& sidx = transaction_store_.get<SequenceTag>();
+    auto siter = transactionSequenceBegin();
+    while (siter != sidx.end()) {
+        if ((*siter)->isModelDone()) {
+            siter = transaction_store_.get<SequenceTag>().erase(siter);
         } else {
-            ++it;
+            ++siter;
         }
-    }
+    };
 }
 
 void D2UpdateMgr::pickNextJob() {
     // Start at the front of the queue, looking for the first entry for
-    // which no transaction is in progress.  If we find an eligible entry
-    // remove it from the queue and make a transaction for it.  If the
+    // which no transaction is in progress. If we find an eligible entry
+    // remove it from the queue and make a transaction for it. If the
     // transaction creation fails try the next entry in the queue.
     // Requests and transactions are associated by DHCID.  If a request has
     // the same DHCID as a transaction, they are presumed to be for the same
     // "end user".
     size_t queue_count = getQueueCount();
     for (size_t index = 0; index < queue_count; ) {
-        dhcp_ddns::NameChangeRequestPtr found_ncr = queue_mgr_->peekAt(index);
-        if (hasTransaction(found_ncr->getDhcid())) {
-            // Leave it on the queue, move on to the next.
-            ++index;
+        NameChangeRequestPtr queued_ncr = queue_mgr_->peekAt(index);
+        NameChangeRequestPtr active_ncr = hasTransaction(queued_ncr);
+        if (active_ncr) {
+            // Already working same FQDN or address.
+            if (*active_ncr == *queued_ncr) {
+                // Working an equivalent NCR, dequeue and
+                // discard the duplicate
+                queue_mgr_->dequeueAt(index);
+                --queue_count;
+            } else {
+                // Working same FQDN or address, skip this one.
+                ++index;
+            }
         } else {
             // Dequeue it and try to make transaction for it.
             queue_mgr_->dequeueAt(index);
-            if (makeTransaction(found_ncr)) {
+            if (makeTransaction(queued_ncr)) {
                 return;
             }
 
@@ -131,17 +136,7 @@ void D2UpdateMgr::pickNextJob() {
 }
 
 bool
-D2UpdateMgr::makeTransaction(dhcp_ddns::NameChangeRequestPtr& next_ncr) {
-    // First lets ensure there is not a transaction in progress for this
-    // DHCID. (pickNextJob should ensure this, as it is the only real caller
-    // but for safety's sake we'll check).
-    const TransactionKey& key = next_ncr->getDhcid();
-    if (findTransaction(key) != transactionListEnd()) {
-        // This is programmatic error.  Caller(s) should be checking this.
-        isc_throw(D2UpdateMgrError, "Transaction already in progress for: "
-            << key.toStr());
-    }
-
+D2UpdateMgr::makeTransaction(NameChangeRequestPtr& next_ncr) {
     int direction_count = 0;
     // If forward change is enabled, match to forward servers.
     DdnsDomainPtr forward_domain;
@@ -211,25 +206,25 @@ D2UpdateMgr::makeTransaction(dhcp_ddns::NameChangeRequestPtr& next_ncr) {
     // the transaction to instantiate its own, separate IOService to handle
     // the transaction's IO.
     NameChangeTransactionPtr trans;
-    if (next_ncr->getChangeType() == dhcp_ddns::CHG_ADD) {
+    if (next_ncr->getChangeType() == CHG_ADD) {
         switch(next_ncr->getConflictResolutionMode()) {
-        case dhcp_ddns::CHECK_WITH_DHCID:
+        case CHECK_WITH_DHCID:
             trans.reset(new NameAddTransaction(io_service_, next_ncr,
                                                forward_domain, reverse_domain,
                                                cfg_mgr_));
             break;
-        case dhcp_ddns::CHECK_EXISTS_WITH_DHCID:
+        case CHECK_EXISTS_WITH_DHCID:
             trans.reset(new CheckExistsAddTransaction(io_service_, next_ncr,
                                                       forward_domain, reverse_domain,
                                                       cfg_mgr_));
             break;
-        case dhcp_ddns::NO_CHECK_WITHOUT_DHCID:
+        case NO_CHECK_WITHOUT_DHCID:
             trans.reset(new SimpleAddWithoutDHCIDTransaction(io_service_, next_ncr,
                                                              forward_domain, reverse_domain,
                                                              cfg_mgr_));
             break;
         default:
-            // dhcp_ddns::NO_CHECK_WITH_DHCID
+            // NO_CHECK_WITH_DHCID
             trans.reset(new SimpleAddTransaction(io_service_, next_ncr,
                                                  forward_domain, reverse_domain,
                                                  cfg_mgr_));
@@ -237,23 +232,23 @@ D2UpdateMgr::makeTransaction(dhcp_ddns::NameChangeRequestPtr& next_ncr) {
         }
     } else {
         switch(next_ncr->getConflictResolutionMode()) {
-        case dhcp_ddns::CHECK_WITH_DHCID:
+        case CHECK_WITH_DHCID:
             trans.reset(new NameRemoveTransaction(io_service_, next_ncr,
                                                   forward_domain, reverse_domain,
                                                   cfg_mgr_));
             break;
-        case dhcp_ddns::CHECK_EXISTS_WITH_DHCID:
+        case CHECK_EXISTS_WITH_DHCID:
             trans.reset(new CheckExistsRemoveTransaction(io_service_, next_ncr,
                                                          forward_domain, reverse_domain,
                                                          cfg_mgr_));
             break;
-        case dhcp_ddns::NO_CHECK_WITHOUT_DHCID:
+        case NO_CHECK_WITHOUT_DHCID:
             trans.reset(new SimpleRemoveWithoutDHCIDTransaction(io_service_, next_ncr,
                                                                 forward_domain, reverse_domain,
                                                                 cfg_mgr_));
             break;
         default:
-            // dhcp_ddns::NO_CHECK_WITH_DHCID
+            // NO_CHECK_WITH_DHCID
             trans.reset(new SimpleRemoveTransaction(io_service_, next_ncr,
                                                     forward_domain, reverse_domain,
                                                     cfg_mgr_));
@@ -261,47 +256,48 @@ D2UpdateMgr::makeTransaction(dhcp_ddns::NameChangeRequestPtr& next_ncr) {
         }
     }
 
-    // Add the new transaction to the list.
-    transaction_list_[key] = trans;
+    // Add the new transaction to the store
+    auto ret = transaction_store_.emplace_back(trans);
+    if (ret.second == false) {
+        // Shouldn't happen, as pickNextJob() just checked.
+        isc_throw(D2UpdateMgrError, "Transaction already in progress for FQDN "
+            << trans->getFqdn() << " or address " << trans->getIOAddress());
+    }
 
     // Start it.
     trans->startTransaction();
     return (true);
 }
 
-TransactionList::iterator
-D2UpdateMgr::findTransaction(const TransactionKey& key) {
-    return (transaction_list_.find(key));
-}
-
-bool
-D2UpdateMgr::hasTransaction(const TransactionKey& key) {
-   return (findTransaction(key) != transactionListEnd());
-}
-
-void
-D2UpdateMgr::removeTransaction(const TransactionKey& key) {
-    TransactionList::iterator pos = findTransaction(key);
-    if (pos != transactionListEnd()) {
-        transaction_list_.erase(pos);
+NameChangeRequestPtr
+D2UpdateMgr::hasTransaction(const dhcp_ddns::NameChangeRequestPtr& ncr) const {
+    if (!ncr) {
+        isc_throw(D2UpdateMgrError,
+                  "D2UpdateMgr::hasTransaction() ncr cannot be null");
     }
-}
 
-TransactionList::iterator
-D2UpdateMgr::transactionListBegin() {
-    return (transaction_list_.begin());
-}
+    // Check for fqdn first.
+    auto& fidx = transaction_store_.get<FqdnTag>();
+    auto fiter = fidx.find(ncr->getFqdn());
+    if (fiter != fidx.end()) {
+        return ((*fiter)->getNcr());
+    }
 
-TransactionList::iterator
-D2UpdateMgr::transactionListEnd() {
-    return (transaction_list_.end());
+    // Check for fqdn first.
+    auto& aidx = transaction_store_.get<AddressTag>();
+    auto aiter = aidx.find(ncr->getIOAddress());
+    if (aiter != aidx.end()) {
+        return ((*aiter)->getNcr());
+    }
+
+    return (NameChangeRequestPtr());
 }
 
 void
-D2UpdateMgr::clearTransactionList() {
+D2UpdateMgr::clearTransactions() {
     // @todo for now this just wipes them out. We might need something
     // more elegant, that allows a cancel first.
-    transaction_list_.clear();
+    transaction_store_.clear();
 }
 
 void
@@ -329,7 +325,47 @@ D2UpdateMgr::getQueueCount() const {
 
 size_t
 D2UpdateMgr::getTransactionCount() const {
-    return (transaction_list_.size());
+    return (transaction_store_.size());
+}
+
+TransactionSequenceIndex::iterator
+D2UpdateMgr::transactionSequenceBegin() {
+    return (transaction_store_.get<SequenceTag>().begin());
+}
+
+TransactionSequenceIndex::iterator
+D2UpdateMgr::transactionSequenceEnd() {
+    return (transaction_store_.get<SequenceTag>().end());
+}
+
+TransactionFqdnIndex::iterator
+D2UpdateMgr::findTransactionByFqdn(const std::string& fqdn) {
+    return (transaction_store_.get<FqdnTag>().find(fqdn));
+}
+
+TransactionFqdnIndex::iterator
+D2UpdateMgr::transactionFqdnBegin() {
+    return (transaction_store_.get<FqdnTag>().begin());
+}
+
+TransactionFqdnIndex::iterator
+D2UpdateMgr::transactionFqdnEnd() {
+    return (transaction_store_.get<FqdnTag>().end());
+}
+
+TransactionAddressIndex::iterator
+D2UpdateMgr::findTransactionByAddress(const asiolink::IOAddress& address) {
+    return (transaction_store_.get<AddressTag>().find(address));
+}
+
+TransactionAddressIndex::iterator
+D2UpdateMgr::transactionAddressBegin() {
+    return (transaction_store_.get<AddressTag>().begin());
+}
+
+TransactionAddressIndex::iterator
+D2UpdateMgr::transactionAddressEnd() {
+    return (transaction_store_.get<AddressTag>().end());
 }
 
 

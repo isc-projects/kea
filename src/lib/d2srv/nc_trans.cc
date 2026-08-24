@@ -431,6 +431,21 @@ NameChangeTransaction::getTransactionKey() const {
     return (ncr_->getDhcid());
 }
 
+const dhcp_ddns::D2Dhcid&
+NameChangeTransaction::getDhcid() const {
+    return (ncr_->getDhcid());
+}
+
+const std::string&
+NameChangeTransaction::getFqdn() const {
+    return (ncr_->getFqdn());
+}
+
+const asiolink::IOAddress&
+NameChangeTransaction::getIOAddress() const {
+    return (ncr_->getIOAddress());
+}
+
 std::string
 NameChangeTransaction::getRequestId() const {
     return (ncr_->getRequestId());

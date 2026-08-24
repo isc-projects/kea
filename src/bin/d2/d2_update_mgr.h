@@ -17,6 +17,12 @@
 #include <exceptions/exceptions.h>
 
 #include <boost/noncopyable.hpp>
+#include <boost/multi_index/indexed_by.hpp>
+#include <boost/multi_index/member.hpp>
+#include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/sequenced_index.hpp>
 #include <boost/shared_ptr.hpp>
 #include <map>
 
@@ -30,8 +36,49 @@ public:
         isc::Exception(file, line, what) { }
 };
 
-/// @brief Defines a list of transactions.
-typedef std::map<TransactionKey, NameChangeTransactionPtr> TransactionList;
+/// @brief Tag for insertion order index.
+struct SequenceTag { };
+
+/// @brief Tag for index by ip-address.
+struct AddressTag { };
+
+/// @brief Tag for index by Fqdn.
+struct FqdnTag { };
+
+/// @brief A multi index container holding NameChangeTransaction pointers.
+///
+/// The transactions in the container may be accessed using different indexes:
+/// - by FQDN or lease address
+typedef boost::multi_index_container<
+    // It holds pointers to NameChangeTransactions.
+    NameChangeTransactionPtr,
+    boost::multi_index::indexed_by<
+        // Index by insertion order
+        boost::multi_index::sequenced<
+            boost::multi_index::tag<SequenceTag>
+        >,
+
+        // Index by FQDN
+        boost::multi_index::hashed_unique<
+            boost::multi_index::tag<FqdnTag>,
+            boost::multi_index::const_mem_fun<NameChangeTransaction, const std::string&,
+                                              &NameChangeTransaction::getFqdn>
+        >,
+
+        // Index by lease address
+        boost::multi_index::hashed_unique<
+            boost::multi_index::tag<AddressTag>,
+            boost::multi_index::const_mem_fun<NameChangeTransaction, const asiolink::IOAddress&,
+                                              &NameChangeTransaction::getIOAddress>
+        >
+    >
+> TransactionStore;
+
+typedef TransactionStore::index<SequenceTag>::type TransactionSequenceIndex;
+
+typedef TransactionStore::index<FqdnTag>::type TransactionFqdnIndex;
+
+typedef TransactionStore::index<AddressTag>::type TransactionAddressIndex;
 
 /// @brief D2UpdateMgr creates and manages update transactions.
 ///
@@ -114,11 +161,13 @@ protected:
     ///
     /// This method will scan the request queue for the next request to
     /// dequeue.  The current implementation starts at the front of the queue
-    /// and looks for the first request for whose DHCID there is no current
-    /// transaction in progress.
-    ///
-    /// If a request is selected, it is removed from the queue and transaction
-    /// is constructed for it.
+    /// and looks for the first request for whose FQDN and ip address there is
+    /// no current transaction in progress.  If request is a duplicate (same
+    /// client, FQDN, address, and flags) for an active transaction, the request
+    /// is discarded. If the request is partial match it is skipped but left
+    /// in place on the queue to be checked on a subsequent call. If a request
+    /// is selected, it is removed from the queue and transaction is constructed
+    /// for it.
     ///
     /// It is possible that no such request exists, though this is likely to be
     /// rather rare unless a system is frequently seeing requests for the same
@@ -177,47 +226,61 @@ public:
     /// queue.
     void setMaxTransactions(const size_t max_transactions);
 
-    /// @brief Search the transaction list for the given key.
+    /// @brief Checks if there is an active transaction matching the
+    /// FQDN or ip address of an NCR.
     ///
-    /// @param key the transaction key value for which to search.
+    /// @param ncr NameChangeRequest to search with
     ///
-    /// @return Iterator pointing to the entry found.  If no entry is
-    /// it will point to the list end position.
-    TransactionList::iterator findTransaction(const TransactionKey& key);
-
-    /// @brief Returns the transaction list end position.
-    TransactionList::iterator transactionListEnd();
-
-    /// @brief Returns the transaction list beg position.
-    TransactionList::iterator transactionListBegin();
-
-    /// @brief Convenience method that checks transaction list for the given key
-    ///
-    /// @param key the transaction key value for which to search.
-    ///
-    /// @return Returns true if the key is found within the list, false
-    /// otherwise.
-    bool hasTransaction(const TransactionKey& key);
-
-    /// @brief Removes the entry pointed to by key from the transaction list.
-    ///
-    /// Removes the entry referred to by key if it exists.  It has no effect
-    /// if the entry is not found.
-    ///
-    /// @param key of the transaction to remove
-    void removeTransaction(const TransactionKey& key);
+    /// @return A pointer to the NCR of the active transaction (if one)
+    dhcp_ddns::NameChangeRequestPtr hasTransaction(
+        const dhcp_ddns::NameChangeRequestPtr& ncr) const;
 
     /// @brief Immediately discards all entries in the transaction list.
     ///
     /// @todo For now this just wipes them out. We might need something
     /// more elegant, that allows a cancel first.
-    void clearTransactionList();
+    void clearTransactions();
 
     /// @brief Convenience method that returns the number of requests queued.
     size_t getQueueCount() const;
 
     /// @brief Returns the current number of transactions.
     size_t getTransactionCount() const;
+
+    /// @brief Returns the transaction store sequence begin position.
+    TransactionSequenceIndex::iterator transactionSequenceBegin();
+
+    /// @brief Returns the transaction store sequence end position.
+    TransactionSequenceIndex::iterator transactionSequenceEnd();
+
+    /// @brief Search the transaction store for an FQDN.
+    ///
+    /// @param fqdn transaction fqdn value for which to search.
+    ///
+    /// @return Iterator pointing to the entry found.  If no entry is
+    /// it will point to the list end position.
+    TransactionFqdnIndex::iterator findTransactionByFqdn(const std::string& fqdn);
+
+    /// @brief Returns the transaction store begin iterator, ordered by FQDN
+    TransactionFqdnIndex::iterator transactionFqdnBegin();
+
+    /// @brief Returns the transaction store end iterator, ordered by FQDN
+    TransactionFqdnIndex::iterator transactionFqdnEnd();
+
+    /// @brief Search the transaction store for a given address.
+    ///
+    /// @param address the transaction address value for which to search.
+    ///
+    /// @return Iterator pointing to the entry found.  If no entry is
+    /// it will point to the list end position.
+    TransactionAddressIndex::iterator findTransactionByAddress(
+                                                const asiolink::IOAddress& address);
+
+    /// @brief Returns the transaction store begin iterator, ordered by address.
+    TransactionAddressIndex::iterator transactionAddressBegin();
+
+    /// @brief Returns the transaction store end iterator, ordered by address.
+    TransactionAddressIndex::iterator transactionAddressEnd();
 
 private:
     /// @brief Pointer to the queue manager.
@@ -237,13 +300,12 @@ private:
     /// @brief Maximum number of concurrent transactions.
     size_t max_transactions_;
 
-    /// @brief List of transactions.
-    TransactionList transaction_list_;
+    /// @brief Container of current transactions.
+    TransactionStore transaction_store_;
 };
 
 /// @brief Defines a pointer to a D2UpdateMgr instance.
 typedef boost::shared_ptr<D2UpdateMgr> D2UpdateMgrPtr;
-
 
 } // namespace isc::d2
 } // namespace isc

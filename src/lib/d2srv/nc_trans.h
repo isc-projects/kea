@@ -441,6 +441,21 @@ public:
     /// @return A const reference to the TransactionKey.
     const TransactionKey& getTransactionKey() const;
 
+    /// @brief Fetches the DHCID of this transaction.
+    ///
+    /// @return A const reference to the DHCID.
+    const dhcp_ddns::D2Dhcid& getDhcid() const;
+
+    /// @brief Fetches the request FQDN
+    ///
+    /// @return a string containing the FQDN
+    const std::string& getFqdn() const;
+
+    /// @brief Fetches the request IP address.
+    ///
+    /// @return the IP address
+    const asiolink::IOAddress& getIOAddress() const;
+
     /// @brief Fetches the request id that identifies this transaction.
     ///
     /// This is a wrapper around getRequestId from the NCR which currently

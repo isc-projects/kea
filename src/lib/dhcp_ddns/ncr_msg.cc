@@ -583,6 +583,11 @@ NameChangeRequest::setIpAddress(const std::string& value) {
 }
 
 void
+NameChangeRequest::setIpAddress(const asiolink::IOAddress& value) {
+    ip_io_address_ = value;
+}
+
+void
 NameChangeRequest::setIpAddress(isc::data::ConstElementPtr element) {
     setIpAddress(element->stringValue());
 }
