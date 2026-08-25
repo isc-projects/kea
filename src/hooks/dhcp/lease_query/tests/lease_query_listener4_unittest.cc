@@ -196,6 +196,7 @@ public:
         BulkLeaseQueryService::reset();
         LeaseMgrFactory::destroy();
         CfgMgr::instance().clear();
+        run_io_service_timer_.cancel();
         test_timer_.cancel();
         io_service_->stopAndPoll();
     }

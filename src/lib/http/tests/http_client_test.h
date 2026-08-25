@@ -29,6 +29,7 @@ public:
     ///
     /// Removes active HTTP clients.
     virtual ~HttpListenerTest() {
+        run_io_service_timer_.cancel();
         test_timer_.cancel();
         io_service_->stopAndPoll();
     }

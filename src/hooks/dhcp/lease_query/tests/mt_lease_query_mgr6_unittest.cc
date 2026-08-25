@@ -120,6 +120,7 @@ public:
         CfgMgr::instance().clear();
         static_cast<void>(remove(duid_file_.c_str()));
 
+        run_io_service_timer_.cancel();
         test_timer_.cancel();
         io_service_->stopAndPoll();
 
