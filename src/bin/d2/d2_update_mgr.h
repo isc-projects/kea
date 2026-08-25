@@ -231,9 +231,8 @@ public:
     ///
     /// @param ncr NameChangeRequest to search with
     ///
-    /// @return A pointer to the NCR of the active transaction (if one)
-    dhcp_ddns::NameChangeRequestPtr hasTransaction(
-        const dhcp_ddns::NameChangeRequestPtr& ncr) const;
+    /// @return True if a matching transaction exists
+    bool hasTransaction( const dhcp_ddns::NameChangeRequestPtr& ncr) const;
 
     /// @brief Immediately discards all entries in the transaction list.
     ///

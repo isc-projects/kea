@@ -108,7 +108,7 @@ public:
 
         const char* dhcids[] = { "111111", "222222", "333333", "444444" };
         const char* ips[] = { "192.168.1.1", "192.168.1.2", "192.168.1.3", "192.168.1.4" };
-        const char* fqdns[] = { "one.example.com.", "two.example.com.", 
+        const char* fqdns[] = { "one.example.com.", "two.example.com.",
                                 "three.example.com", "four.example.com"};
         canned_count_ = 4;
         for (size_t i = 0; i < canned_count_; i++) {
@@ -537,16 +537,10 @@ TEST_F(D2UpdateMgrTest, pickNextJob) {
     EXPECT_NO_THROW(queue_mgr_->enqueue(duplicate_ncr));
     EXPECT_EQ(1U, update_mgr_->getQueueCount());
 
-    // Add an NCR for the same FQDN but different address.
-    NameChangeRequestPtr diff_addr_ncr(new NameChangeRequest(*duplicate_ncr));
-    diff_addr_ncr->setIpAddress("192.168.1.100");
-    EXPECT_NO_THROW(queue_mgr_->enqueue(diff_addr_ncr));
-    EXPECT_EQ(2, update_mgr_->getQueueCount());
-        
     // Verify that invoking pickNextJob:
     // 1. Does not throw
     // 2. Does not make a new transaction
-    // 3. Dequeues the duplicate entry
+    // 3. Does not dequeue the skipped entry
     EXPECT_NO_THROW(update_mgr_->pickNextJob());
     EXPECT_EQ(canned_count_, update_mgr_->getTransactionCount());
     EXPECT_EQ(1U, update_mgr_->getQueueCount());

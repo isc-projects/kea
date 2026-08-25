@@ -94,28 +94,18 @@ D2UpdateMgr::checkFinishedTransactions() {
 }
 
 void D2UpdateMgr::pickNextJob() {
-    // Start at the front of the queue, looking for the first entry for
-    // which no transaction is in progress. If we find an eligible entry
-    // remove it from the queue and make a transaction for it. If the
-    // transaction creation fails try the next entry in the queue.
-    // Requests and transactions are associated by DHCID.  If a request has
-    // the same DHCID as a transaction, they are presumed to be for the same
-    // "end user".
+    // Start at the front of the queue, looking for the first request for
+    // which no transaction is working the same FQDN or ip address. If a
+    // request is currently ineligible we levae it on the queue, and try
+    // the next one. If it is eligible wee remove it from the queue and
+    // make a transaction for it. If the transaction creation fails try
+    // the next request in the queue.
     size_t queue_count = getQueueCount();
     for (size_t index = 0; index < queue_count; ) {
         NameChangeRequestPtr queued_ncr = queue_mgr_->peekAt(index);
-        NameChangeRequestPtr active_ncr = hasTransaction(queued_ncr);
-        if (active_ncr) {
-            // Already working same FQDN or address.
-            if (*active_ncr == *queued_ncr) {
-                // Working an equivalent NCR, dequeue and
-                // discard the duplicate
-                queue_mgr_->dequeueAt(index);
-                --queue_count;
-            } else {
-                // Working same FQDN or address, skip this one.
-                ++index;
-            }
+        if (hasTransaction(queued_ncr)) {
+            // Leave it on the queue, move on to the next.
+            ++index;
         } else {
             // Dequeue it and try to make transaction for it.
             queue_mgr_->dequeueAt(index);
@@ -269,7 +259,7 @@ D2UpdateMgr::makeTransaction(NameChangeRequestPtr& next_ncr) {
     return (true);
 }
 
-NameChangeRequestPtr
+bool
 D2UpdateMgr::hasTransaction(const dhcp_ddns::NameChangeRequestPtr& ncr) const {
     if (!ncr) {
         isc_throw(D2UpdateMgrError,
@@ -280,17 +270,17 @@ D2UpdateMgr::hasTransaction(const dhcp_ddns::NameChangeRequestPtr& ncr) const {
     auto& fidx = transaction_store_.get<FqdnTag>();
     auto fiter = fidx.find(ncr->getFqdn());
     if (fiter != fidx.end()) {
-        return ((*fiter)->getNcr());
+        return (true);
     }
 
     // Check for fqdn first.
     auto& aidx = transaction_store_.get<AddressTag>();
     auto aiter = aidx.find(ncr->getIOAddress());
     if (aiter != aidx.end()) {
-        return ((*aiter)->getNcr());
+        return (true);
     }
 
-    return (NameChangeRequestPtr());
+    return (false);
 }
 
 void
