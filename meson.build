@@ -278,11 +278,8 @@ if netconf_opt.allowed()
         netconf_deps = netconf_deps + {dep: dependency(dep, required: false)}
         if not netconf_deps[dep].found()
             # Try adding lib to it. yang and yang-cpp define the wrong pkg-config.
-            netconf_deps = (
-                netconf_deps + {
-                                    dep: dependency('lib' + dep, required: false),
-                                                }
-            )
+            lib_dep = {dep: dependency('lib' + dep, required: false)}
+            netconf_deps = netconf_deps + lib_dep
         endif
 
         if not netconf_deps[dep].found()
