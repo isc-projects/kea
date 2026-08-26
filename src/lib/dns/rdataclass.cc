@@ -2353,6 +2353,9 @@ DHCID::constructFromLexer(MasterLexer& lexer) {
     lexer.ungetToken();
 
     decodeBase64(digest_txt, digest_);
+    if (digest_.size() < 3) {
+        isc_throw(InvalidRdataText, "Invalid DHCID digest");
+    }
 }
 
 /// \brief Constructor from string.
