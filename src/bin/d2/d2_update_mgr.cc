@@ -268,7 +268,7 @@ D2UpdateMgr::hasTransaction(const dhcp_ddns::NameChangeRequestPtr& ncr) const {
 
     // Check for fqdn first.
     auto& fidx = transaction_store_.get<FqdnTag>();
-    auto fiter = fidx.find(dns::Name(ncr->getFqdn()));
+    auto fiter = fidx.find(ncr->getFqdnLower());
     if (fiter != fidx.end()) {
         return (true);
     }
@@ -329,8 +329,8 @@ D2UpdateMgr::transactionSequenceEnd() {
 }
 
 TransactionFqdnIndex::iterator
-D2UpdateMgr::findTransactionByFqdn(const dns::Name& name) const {
-    return (transaction_store_.get<FqdnTag>().find(name));
+D2UpdateMgr::findTransactionByFqdn(const std::string& fqdn) const {
+    return (transaction_store_.get<FqdnTag>().find(fqdn));
 }
 
 TransactionFqdnIndex::iterator

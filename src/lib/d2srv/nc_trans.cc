@@ -13,7 +13,7 @@
 #include <dns/rdataclass.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
-
+#include <boost/algorithm/string.hpp>
 #include <sstream>
 
 using namespace isc::dns;
@@ -437,9 +437,9 @@ NameChangeTransaction::getFqdn() const {
     return (ncr_->getFqdn());
 }
 
-dns::Name
-NameChangeTransaction::getDnsName() const {
-    return (Name(ncr_->getFqdn()));
+std::string
+NameChangeTransaction::getFqdnLower() const {
+    return (ncr_->getFqdnLower());
 }
 
 const asiolink::IOAddress&

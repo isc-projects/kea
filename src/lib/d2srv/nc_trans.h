@@ -447,10 +447,10 @@ public:
     /// @return a std::string containing the FQDN
     const std::string& getFqdn() const;
 
-    /// @brief Fetches the request FQDN as dns::Name
+    /// @brief Fetches the request FQDN converted to lower-case
     ///
-    /// @return a dns::Name containing the FQDN
-    dns::Name getDnsName() const;
+    /// @return string containing lower-cased FQDN
+    std::string getFqdnLower() const;
 
     /// @brief Fetches the request IP address.
     ///
@@ -554,6 +554,7 @@ private:
     asiolink::IOServicePtr io_service_;
 
     /// @brief The NameChangeRequest that the transaction is to fulfill.
+    /// Constructor guarantees it can never be null.
     dhcp_ddns::NameChangeRequestPtr ncr_;
 
     /// @brief The forward domain that matches the request.

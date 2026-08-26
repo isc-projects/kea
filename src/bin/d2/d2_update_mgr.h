@@ -17,10 +17,10 @@
 #include <exceptions/exceptions.h>
 
 #include <boost/multi_index_container.hpp>
+#include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/indexed_by.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/mem_fun.hpp>
-#include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -59,10 +59,10 @@ typedef boost::multi_index_container<
         >,
 
         // Index by FQDN as dns::Name for case insensitive comparison.
-        boost::multi_index::ordered_unique<
+        boost::multi_index::hashed_unique<
             boost::multi_index::tag<FqdnTag>,
-            boost::multi_index::const_mem_fun<NameChangeTransaction, dns::Name,
-                                              &NameChangeTransaction::getDnsName>
+            boost::multi_index::const_mem_fun<NameChangeTransaction, std::string,
+                                              &NameChangeTransaction::getFqdnLower>
         >,
 
         // Index by lease address
@@ -259,7 +259,7 @@ public:
     /// @return Iterator pointing to the entry found.  If no entry is
     /// it will point to the list end position.
     TransactionFqdnIndex::iterator
-    findTransactionByFqdn(const dns::Name& fqdn) const;
+    findTransactionByFqdn(const std::string& fqdn) const;
 
     /// @brief Returns the transaction store begin iterator, ordered by FQDN
     TransactionFqdnIndex::iterator transactionFqdnBegin();

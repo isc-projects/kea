@@ -20,6 +20,7 @@
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 
+#include <boost/algorithm/string/case_conv.hpp>
 #include <time.h>
 #include <string>
 
@@ -515,6 +516,13 @@ public:
     /// @return a string containing the FQDN
     const std::string& getFqdn() const {
         return (fqdn_);
+    }
+
+    /// @brief Fetches the request FQDN lower-cased
+    ///
+    /// @return a string containing the FQDN lower-cased
+    std::string getFqdnLower() const {
+        return (boost::algorithm::to_lower_copy(fqdn_));
     }
 
     /// @brief Sets the FQDN to the given value.

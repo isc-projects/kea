@@ -170,9 +170,9 @@ public:
             ADD_FAILURE() << "request index is out of range: " << index;
         }
 
-        std::string fqdn = canned_ncrs_[index]->getFqdn();
+        std::string fqdn = canned_ncrs_[index]->getFqdnLower();
         // locate the transaction based on the request FQDN
-        auto pos = update_mgr_->findTransactionByFqdn(dns::Name(fqdn));
+        auto pos = update_mgr_->findTransactionByFqdn(fqdn);
         if (pos == update_mgr_->transactionFqdnEnd()) {
             ADD_FAILURE() << "cannot find transaction for fdqn: " << fqdn;
         }
@@ -317,12 +317,12 @@ TEST_F(D2UpdateMgrTest, transactionStore) {
 
     // Verify that we can find the transaction by FQDN.
     TransactionFqdnIndex::iterator fqdn_pos;
-    EXPECT_NO_THROW(fqdn_pos = update_mgr_->findTransactionByFqdn(dns::Name(ncr->getFqdn())));
+    EXPECT_NO_THROW(fqdn_pos = update_mgr_->findTransactionByFqdn(ncr->getFqdnLower()));
     EXPECT_TRUE(fqdn_pos != update_mgr_->transactionFqdnEnd());
     EXPECT_TRUE(update_mgr_->hasTransaction(ncr));
 
     // Verify that we will not find an FQDN that isn't there.
-    EXPECT_NO_THROW(fqdn_pos = update_mgr_->findTransactionByFqdn(dns::Name("not-there")));
+    EXPECT_NO_THROW(fqdn_pos = update_mgr_->findTransactionByFqdn("not-there"));
     EXPECT_TRUE(fqdn_pos == update_mgr_->transactionFqdnEnd());
 
     // Verify that we can find the transaction by address.
