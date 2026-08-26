@@ -56,6 +56,7 @@ Some of these checks and updates can be made before the actual freeze.
    * In case of no developers available, it can be done by running: [./tools/bump-lib-versions.sh](https://gitlab.isc.org/isc-projects/kea/-/blob/master/tools/bump-lib-versions.sh).
    * Example command: `./tools/bump-lib-versions.sh`
    * <mark>🟩 Stable</mark>: The target version needs to be provided. Call `./tools/bump-lib-versions.sh Kea-A.B.C` instead.
+   * [ ] Check updated libs if update is really necessary (i.e diff only in comments)
 1. [ ] <mark>🟩 Stable</mark>: Update the table in SECURITY.md with the stable branch and the upcoming dev branch.
 1. [ ] Look at the issue numbers in the commit descriptions. Add to ChangeLog a mention of any change with visible impact that had not been mentioned already.
 1. [ ] If any changes have been made to database schemas, then:
@@ -81,7 +82,6 @@ The following steps may involve changing files in the repository.
    The script makes the following changes and actions:
       1. Runs [prepare_kea_release.sh](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/release/prepare_kea_release.sh) that:
          1. Adds release entries in ChangeLogs.
-         1. Updates Kea version in `meson.build`.
          1. Updates copyright years in files that were changed in the current year.
          1. Sort messages in message files in alphabetical order.
          1. Regenerates message files headers.
@@ -164,14 +164,14 @@ This is the last moment to freeze the code! :snowflake:
 Now it's time to publish the code.
 
 1. [ ] Update Release Notes with ChangeLog entries.
-1. [ ] Sanitize the release notes with script `sanitize-release-notes.sh` from kea.wiki. Review the output of `git diff --color-words`. If it looks good, commit and push.
-    * Example: `./Release-Notes/sanitize-release-notes.sh release-notes-3.2.0.md`
 1. Mark Jenkins jobs with release artifacts to be kept forever and update description of build by adding there version of released Kea `Kea-A.B.C`).
     * Go to the following Jenkins jobs, click release build and then, on the build page, click `Keep this build forever` button and edit the description:
         1. [ ] [build-tarball](https://jenkins.aws.isc.org/job/kea-dev/job/build-tarball/).
         1. [ ] [pkg job](https://jenkins.aws.isc.org/job/kea-dev/job/pkg/).
 1. [ ] Confirm with Tomek that the release notes are ready.
 1. [ ] Notify Marketing that the release notes are ready for review.
+1. [ ] Sanitize the release notes with script `sanitize-release-notes.sh` from kea.wiki. Review the output of `git diff --color-words`. If it looks good, commit and push.
+    * Example: `./Release-Notes/sanitize-release-notes.sh release-notes-3.2.0.md`
 1. [ ] Create a signed tag. Run QA script [sign-tag.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/release/sign-tag.py) for project `isc-projects/kea`.
     1. [ ] <mark>🟥 Security</mark>: Run it for project `isc-private/kea` instead.
     * It will create tags automatically for other repos of interest too.
