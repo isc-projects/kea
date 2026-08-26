@@ -16,13 +16,13 @@
 #include <d2srv/d2_log.h>
 #include <exceptions/exceptions.h>
 
-#include <boost/noncopyable.hpp>
+#include <boost/multi_index_container.hpp>
 #include <boost/multi_index/indexed_by.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/ordered_index.hpp>
-#include <boost/multi_index_container.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <map>
 
@@ -58,11 +58,11 @@ typedef boost::multi_index_container<
             boost::multi_index::tag<SequenceTag>
         >,
 
-        // Index by FQDN
-        boost::multi_index::hashed_unique<
+        // Index by FQDN as dns::Name for case insensitive comparison.
+        boost::multi_index::ordered_unique<
             boost::multi_index::tag<FqdnTag>,
-            boost::multi_index::const_mem_fun<NameChangeTransaction, const std::string&,
-                                              &NameChangeTransaction::getFqdn>
+            boost::multi_index::const_mem_fun<NameChangeTransaction, dns::Name,
+                                              &NameChangeTransaction::getDnsName>
         >,
 
         // Index by lease address
@@ -232,7 +232,7 @@ public:
     /// @param ncr NameChangeRequest to search with
     ///
     /// @return True if a matching transaction exists
-    bool hasTransaction( const dhcp_ddns::NameChangeRequestPtr& ncr) const;
+    bool hasTransaction(const dhcp_ddns::NameChangeRequestPtr& ncr) const;
 
     /// @brief Immediately discards all entries in the transaction list.
     ///
@@ -258,7 +258,8 @@ public:
     ///
     /// @return Iterator pointing to the entry found.  If no entry is
     /// it will point to the list end position.
-    TransactionFqdnIndex::iterator findTransactionByFqdn(const std::string& fqdn);
+    TransactionFqdnIndex::iterator
+    findTransactionByFqdn(const dns::Name& fqdn) const;
 
     /// @brief Returns the transaction store begin iterator, ordered by FQDN
     TransactionFqdnIndex::iterator transactionFqdnBegin();
@@ -272,8 +273,8 @@ public:
     ///
     /// @return Iterator pointing to the entry found.  If no entry is
     /// it will point to the list end position.
-    TransactionAddressIndex::iterator findTransactionByAddress(
-                                                const asiolink::IOAddress& address);
+    TransactionAddressIndex::iterator
+    findTransactionByAddress( const asiolink::IOAddress& address) const;
 
     /// @brief Returns the transaction store begin iterator, ordered by address.
     TransactionAddressIndex::iterator transactionAddressBegin();

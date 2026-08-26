@@ -16,6 +16,7 @@
 
 #include <sstream>
 
+using namespace isc::dns;
 using namespace isc::hooks;
 using namespace isc::util;
 
@@ -431,14 +432,14 @@ NameChangeTransaction::getTransactionKey() const {
     return (ncr_->getDhcid());
 }
 
-const dhcp_ddns::D2Dhcid&
-NameChangeTransaction::getDhcid() const {
-    return (ncr_->getDhcid());
-}
-
 const std::string&
 NameChangeTransaction::getFqdn() const {
     return (ncr_->getFqdn());
+}
+
+dns::Name
+NameChangeTransaction::getDnsName() const {
+    return (Name(ncr_->getFqdn()));
 }
 
 const asiolink::IOAddress&

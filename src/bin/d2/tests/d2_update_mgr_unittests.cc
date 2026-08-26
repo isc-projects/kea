@@ -172,7 +172,7 @@ public:
 
         std::string fqdn = canned_ncrs_[index]->getFqdn();
         // locate the transaction based on the request FQDN
-        auto pos = update_mgr_->findTransactionByFqdn(fqdn);
+        auto pos = update_mgr_->findTransactionByFqdn(dns::Name(fqdn));
         if (pos == update_mgr_->transactionFqdnEnd()) {
             ADD_FAILURE() << "cannot find transaction for fdqn: " << fqdn;
         }
@@ -317,12 +317,12 @@ TEST_F(D2UpdateMgrTest, transactionStore) {
 
     // Verify that we can find the transaction by FQDN.
     TransactionFqdnIndex::iterator fqdn_pos;
-    EXPECT_NO_THROW(fqdn_pos = update_mgr_->findTransactionByFqdn(ncr->getFqdn()));
+    EXPECT_NO_THROW(fqdn_pos = update_mgr_->findTransactionByFqdn(dns::Name(ncr->getFqdn())));
     EXPECT_TRUE(fqdn_pos != update_mgr_->transactionFqdnEnd());
     EXPECT_TRUE(update_mgr_->hasTransaction(ncr));
 
     // Verify that we will not find an FQDN that isn't there.
-    EXPECT_NO_THROW(fqdn_pos = update_mgr_->findTransactionByFqdn("not-there"));
+    EXPECT_NO_THROW(fqdn_pos = update_mgr_->findTransactionByFqdn(dns::Name("not-there")));
     EXPECT_TRUE(fqdn_pos == update_mgr_->transactionFqdnEnd());
 
     // Verify that we can find the transaction by address.
@@ -549,7 +549,7 @@ TEST_F(D2UpdateMgrTest, pickNextJob) {
     // remaining NCR and create a transaction for it.
     update_mgr_->clearTransactions();
     EXPECT_NO_THROW(update_mgr_->pickNextJob());
-    EXPECT_EQ(1, update_mgr_->getTransactionCount());
+    EXPECT_EQ(1U, update_mgr_->getTransactionCount());
     EXPECT_EQ(0U, update_mgr_->getQueueCount());
 
     // Clear out the queue and transactions.

@@ -83,14 +83,14 @@ D2UpdateMgr::checkFinishedTransactions() {
     // At the moment all we do is remove them from the list. This is likely
     // to expand as DHCP_DDNS matures.
     auto& sidx = transaction_store_.get<SequenceTag>();
-    auto siter = transactionSequenceBegin();
+    auto siter = sidx.begin();
     while (siter != sidx.end()) {
         if ((*siter)->isModelDone()) {
             siter = transaction_store_.get<SequenceTag>().erase(siter);
         } else {
             ++siter;
         }
-    };
+    }
 }
 
 void D2UpdateMgr::pickNextJob() {
@@ -247,7 +247,7 @@ D2UpdateMgr::makeTransaction(NameChangeRequestPtr& next_ncr) {
     }
 
     // Add the new transaction to the store
-    auto ret = transaction_store_.emplace_back(trans);
+    auto ret = transaction_store_.push_back(trans);
     if (ret.second == false) {
         // Shouldn't happen, as pickNextJob() just checked.
         isc_throw(D2UpdateMgrError, "Transaction already in progress for FQDN "
@@ -268,7 +268,7 @@ D2UpdateMgr::hasTransaction(const dhcp_ddns::NameChangeRequestPtr& ncr) const {
 
     // Check for fqdn first.
     auto& fidx = transaction_store_.get<FqdnTag>();
-    auto fiter = fidx.find(ncr->getFqdn());
+    auto fiter = fidx.find(dns::Name(ncr->getFqdn()));
     if (fiter != fidx.end()) {
         return (true);
     }
@@ -329,8 +329,8 @@ D2UpdateMgr::transactionSequenceEnd() {
 }
 
 TransactionFqdnIndex::iterator
-D2UpdateMgr::findTransactionByFqdn(const std::string& fqdn) {
-    return (transaction_store_.get<FqdnTag>().find(fqdn));
+D2UpdateMgr::findTransactionByFqdn(const dns::Name& name) const {
+    return (transaction_store_.get<FqdnTag>().find(name));
 }
 
 TransactionFqdnIndex::iterator
@@ -344,7 +344,7 @@ D2UpdateMgr::transactionFqdnEnd() {
 }
 
 TransactionAddressIndex::iterator
-D2UpdateMgr::findTransactionByAddress(const asiolink::IOAddress& address) {
+D2UpdateMgr::findTransactionByAddress(const asiolink::IOAddress& address) const {
     return (transaction_store_.get<AddressTag>().find(address));
 }
 

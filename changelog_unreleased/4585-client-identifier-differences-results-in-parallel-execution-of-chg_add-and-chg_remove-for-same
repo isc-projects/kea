@@ -1,6 +1,7 @@
 [bug]		tmark
-	Modified kea-dhcp-ddns to avoid starting
-	a transaction for a request if there is
-	already a transaction for the request's
-	FQDN or ip address.
+	Modified kea-dhcp-ddns to avoid starting a
+	transaction for a request if there is already
+	a transaction for the request's FQDN or ip address.
+	Prior to this it used the DHCID to guard against
+	concurrent work.
 	(Gitlab #4585)

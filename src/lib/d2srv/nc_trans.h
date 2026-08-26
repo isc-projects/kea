@@ -13,6 +13,7 @@
 #include <d2srv/dns_client.h>
 #include <d2srv/d2_cfg_mgr.h>
 #include <d2srv/d2_tsig_key.h>
+#include <dns/name.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <exceptions/exceptions.h>
 #include <util/state_model.h>
@@ -441,15 +442,15 @@ public:
     /// @return A const reference to the TransactionKey.
     const TransactionKey& getTransactionKey() const;
 
-    /// @brief Fetches the DHCID of this transaction.
-    ///
-    /// @return A const reference to the DHCID.
-    const dhcp_ddns::D2Dhcid& getDhcid() const;
-
     /// @brief Fetches the request FQDN
     ///
-    /// @return a string containing the FQDN
+    /// @return a std::string containing the FQDN
     const std::string& getFqdn() const;
+
+    /// @brief Fetches the request FQDN as dns::Name
+    ///
+    /// @return a dns::Name containing the FQDN
+    dns::Name getDnsName() const;
 
     /// @brief Fetches the request IP address.
     ///
