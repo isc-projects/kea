@@ -1,6 +1,6 @@
 [func]*		fdupont
 	Configuring 'match-client-id' to false has now no
-	effect when the query address is empty.
+	effect when the query hardware address is empty.
 	Thank you to Qifan Zhang from Palo Alto Networks
 	for reporting the issue.
 	(Gitlab #4535)

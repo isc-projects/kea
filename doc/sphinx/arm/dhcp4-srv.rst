@@ -4487,13 +4487,13 @@ new lease will be allocated.
 For a more visual representation of how Kea recognizes the same client,
 please refer to :ref:`uml-recognizing-same-client`.
 
-Sin Kea 3.3.2 the ``match-client-id`` setting is ignored when the
-query hardware address is empty (i.e. ``hlen`` field is 0) because
-as the hardware address is not available the client identifier is
+Since Kea 3.3.2 the ``match-client-id`` setting is ignored when the
+query hardware address is empty (i.e. ``hlen`` field is 0). When
+the hardware address is not available the client identifier is
 the only way to identify the client. To restore the previous behavior
 the ``"pkt4.hlen != 0"`` expression can be used to create a client
-class to guard subnets where client identifiers must be ignored as in
-for instance:
+class to guard subnets where client identifiers must be ignored.
+For example:
 
 .. code-block:: json
 

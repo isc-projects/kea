@@ -2184,8 +2184,8 @@ DORATest::emptyHWAddress() {
     IOAddress leased_address = client.config_.lease_.addr_;
     client.config_.reset();
 
-    // Empty the HW address. Even with the configuration flag set
-    // the client id will be used.
+    // Empty the HW address. Even with the "match-client-id" flag set
+    // to false the client id will be used.
     client.setHWAddress("empty");
     // Obtain the lease using 4-way exchange.
     ASSERT_NO_THROW(client.doDORA());
