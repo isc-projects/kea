@@ -140,8 +140,7 @@ public:
         for (std::vector<std::vector<uint8_t> >::const_iterator it =
                  string_list_.begin();
              it != string_list_.end();
-             ++it)
-        {
+             ++it) {
             if ((*it).size() > 0) {
                 buffer.writeData(&(*it)[0], (*it).size());
             }
@@ -158,8 +157,7 @@ public:
         for (std::vector<std::vector<uint8_t> >::const_iterator it =
                  string_list_.begin();
              it != string_list_.end();
-             ++it)
-        {
+             ++it) {
             if ((*it).size() > 0) {
                 renderer.writeData(&(*it)[0], (*it).size());
             }

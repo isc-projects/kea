@@ -489,6 +489,7 @@ Name::Name(InputBuffer& buffer, bool downcase) {
     }
 
     labelcount_ = offsets.size();
+    isc_throw_assert(labelcount_ > 0 && labelcount_ <= Name::MAX_LABELS);
     length_ = nused;
     offsets_.assign(offsets.begin(), offsets.end());
     buffer.setPosition(pos_begin + cused);

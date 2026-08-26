@@ -433,7 +433,7 @@ Dhcpv6Srv::setHostIdentifiers(AllocEngine::ClientContext6& ctx) {
             break;
 
         case Host::IDENT_HWADDR:
-            if (ctx.hwaddr_) {
+            if (ctx.hwaddr_ && !ctx.hwaddr_->hwaddr_.empty()) {
                 ctx.addHostIdentifier(id_type, ctx.hwaddr_->hwaddr_);
             }
             break;

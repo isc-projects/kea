@@ -446,7 +446,7 @@ private:
     TcpClient::RequestHandler current_callback_;
 
     /// @brief Output buffer.
-    std::vector<uint8_t>  buf_;
+    std::vector<uint8_t> buf_;
 
     /// @brief Input buffer.
     std::array<uint8_t, 32768> input_buf_;
