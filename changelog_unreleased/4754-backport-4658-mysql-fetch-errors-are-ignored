@@ -1,0 +1,5 @@
+[bug]		razvan,tmark
+	Corrected MLM_MYSQL_FETCH_FAILURE to 1 so MySQL
+	selectQuery and host lookups detect mysql_stmt_fetch
+	errors instead of silently ignoring them.
+	(Gitlab #4754,#4658)
