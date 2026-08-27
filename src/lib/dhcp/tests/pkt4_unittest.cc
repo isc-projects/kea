@@ -323,6 +323,24 @@ TEST_F(Pkt4Test, fixedFieldsPack) {
     EXPECT_EQ(0, memcmp(exp, got, Pkt4::DHCPV4_PKT_HDR_LEN));
 }
 
+TEST_F(Pkt4Test, tooShortBuffer) {
+    vector<uint8_t> expectedFormat = generateTestPacket2();
+
+    boost::shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0],
+                                         expectedFormat.size()));
+
+    pkt->data_.resize(pkt->data_.size() - 1);
+
+    EXPECT_THROW_MSG(pkt->unpack(), OutOfRange,
+                     "Received truncated DHCPv4 packet (len=235 received, "
+                     "at least 236 is expected.");
+
+    EXPECT_THROW_MSG(pkt.reset(new Pkt4(&expectedFormat[0],
+                                        expectedFormat.size() - 1)), OutOfRange,
+                                        "Truncated DHCPv4 packet (len=235) received, "
+                                        "at least 236 is expected.");
+}
+
 /// TODO Uncomment when ticket #1226 is implemented
 TEST_F(Pkt4Test, fixedFieldsUnpack) {
     vector<uint8_t> expectedFormat = generateTestPacket2();
@@ -337,7 +355,7 @@ TEST_F(Pkt4Test, fixedFieldsUnpack) {
     expectedFormat.push_back(0x1);
 
     boost::shared_ptr<Pkt4> pkt(new Pkt4(&expectedFormat[0],
-                                         expectedFormat.size()));;
+                                         expectedFormat.size()));
 
 
     EXPECT_NO_THROW(

@@ -453,6 +453,7 @@ TEST_F(OptionTest, getUintX) {
     OptionPtr opt3(new Option(Option::V6, 258, buf_.begin(), buf_.begin() + 3));
     OptionPtr opt4(new Option(Option::V6, 258, buf_.begin(), buf_.begin() + 4));
     OptionPtr opt5(new Option(Option::V6, 258, buf_.begin(), buf_.begin() + 5));
+    OptionPtr opt6(new Option(Option::V6, 258, buf_.begin(), buf_.begin()));
 
     EXPECT_EQ(5U, opt1->getUint8());
     EXPECT_THROW(opt1->getUint16(), OutOfRange);
@@ -475,6 +476,9 @@ TEST_F(OptionTest, getUintX) {
     EXPECT_EQ(0x0504U, opt5->getUint16());
     EXPECT_EQ(0x05040302U, opt5->getUint32());
 
+    EXPECT_THROW(opt6->getUint8(), OutOfRange);
+    EXPECT_THROW(opt6->getUint16(), OutOfRange);
+    EXPECT_THROW(opt6->getUint16(), OutOfRange);
 }
 
 TEST_F(OptionTest, setUintX) {

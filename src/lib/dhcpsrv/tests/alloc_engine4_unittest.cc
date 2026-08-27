@@ -3434,6 +3434,10 @@ TEST_F(AllocEngine4Test, findReservation) {
                                     IOAddress("0.0.0.0"), false, false,
                                     "", false);
     ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+
+    // Adding an empty identifier should throw.
+    EXPECT_THROW(ctx.addHostIdentifier(Host::IDENT_HWADDR, {}), BadValue);
+
     ctx.addHostIdentifier(Host::IDENT_HWADDR, hwaddr_->hwaddr_);
     ctx.addHostIdentifier(Host::IDENT_DUID, clientid_->getClientId());
 
