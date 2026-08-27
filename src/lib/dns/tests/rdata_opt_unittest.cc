@@ -214,6 +214,7 @@ TEST_F(Rdata_OPT_Test, emptyOpt) {
     EXPECT_EQ(1U, rrs.size());
     EXPECT_EQ(0x0b, rrs.at(0).getCode());
     EXPECT_EQ(0U, rrs.at(0).getLength());
+    EXPECT_THROW(rrs.at(0).getData(), isc::Unexpected);
 }
 
 }

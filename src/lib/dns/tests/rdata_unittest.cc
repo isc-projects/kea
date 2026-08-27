@@ -411,12 +411,18 @@ TEST_F(Rdata_Unknown_Test, toWireBuffer) {
     rdata_unknown.toWire(obuffer);
     matchWireData(wiredata_unknown, sizeof(wiredata_unknown),
                   obuffer.getData(), obuffer.getLength());
+    InputBuffer in({}, 0);
+    generic::Generic empty(in, 0);
+    EXPECT_NO_THROW(empty.toWire(obuffer));
 }
 
 TEST_F(Rdata_Unknown_Test, toWireRenderer) {
     rdata_unknown.toWire(renderer);
     matchWireData(wiredata_unknown, sizeof(wiredata_unknown),
                   renderer.getData(), renderer.getLength());
+    InputBuffer in({}, 0);
+    generic::Generic empty(in, 0);
+    EXPECT_NO_THROW(empty.toWire(renderer));
 }
 
 TEST_F(Rdata_Unknown_Test, compare) {

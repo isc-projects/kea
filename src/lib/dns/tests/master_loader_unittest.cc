@@ -35,6 +35,9 @@ using std::endl;
 using boost::lexical_cast;
 namespace ph = std::placeholders;
 
+// This is a name of maximum allowed number of labels
+extern const char* max_labels_str;
+
 namespace {
 class MasterLoaderTest : public ::testing::Test {
 public:
@@ -962,6 +965,21 @@ TEST_F(MasterLoaderTest, numericOwnerName) {
     EXPECT_TRUE(warnings_.empty());
 
     checkRR("1.example.org", RRType::A(), "192.0.2.1");
+}
+
+TEST_F(MasterLoaderTest, tooLargeName) {
+    string input("$ORIGIN example.org.\n"
+                       "1 3600 IN SOA ");
+    input += max_labels_str;
+    input += ".7\n";
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    EXPECT_THROW(loader_->load(), isc::Unexpected);
+    EXPECT_FALSE(loader_->loadedSuccessfully());
+    EXPECT_TRUE(errors_.empty());
+    EXPECT_TRUE(warnings_.empty());
 }
 
 }

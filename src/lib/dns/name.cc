@@ -124,8 +124,7 @@ typedef enum {
 template<class Iterator, class Offsets, class Data>
 void
 stringParse(Iterator s, Iterator send, bool downcase, Offsets& offsets,
-            Data& ndata)
-{
+            Data& ndata) {
     const Iterator orig_s(s);
     //
     // Initialize things to make the compiler happy; they're not required.

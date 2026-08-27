@@ -240,6 +240,17 @@ TEST_F(TranslatorTest, getItem) {
     EXPECT_EQ("foobar", element->stringValue());
     element.reset();
 
+    // Empty Binary.
+    xpath = "/keatest-module:main/raw";
+    value = "";
+    EXPECT_NO_THROW_LOG(sess.setItem(xpath, value));
+    sess.applyChanges();
+    EXPECT_NO_THROW_LOG(element = translator->getItemFromAbsoluteXpath(xpath));
+    ASSERT_TRUE(element);
+    ASSERT_EQ(Element::string, element->getType());
+    EXPECT_EQ("", element->stringValue());
+    element.reset();
+
     // Leaf-list: not yet exist.
     xpath = "/keatest-module:main/numbers";
     EXPECT_NO_THROW_LOG(element = translator->getItemFromAbsoluteXpath(xpath));
@@ -696,6 +707,17 @@ TEST_F(TranslatorTest, setItem) {
     ASSERT_TRUE(data_node);
     ASSERT_EQ(LeafBaseType::Binary, data_node->schema().asLeaf().valueType().base());
     EXPECT_EQ("Zm9vYmFy", string(data_node->asTerm().valueStr()));
+
+    // Empty Binary.
+    xpath = "/keatest-module:main/raw";
+    element = Element::create("");
+    EXPECT_NO_THROW_LOG(translator->setItem(xpath, element, LeafBaseType::Binary));
+    EXPECT_NO_THROW_LOG(data_node = sess.getData(xpath));
+    ASSERT_TRUE(data_node);
+    EXPECT_NO_THROW_LOG(data_node = data_node->findPath(xpath));
+    ASSERT_TRUE(data_node);
+    ASSERT_EQ(LeafBaseType::Binary, data_node->schema().asLeaf().valueType().base());
+    EXPECT_EQ("", string(data_node->asTerm().valueStr()));
 
     // Bits.
     xpath = "/keatest-module:main/options";
