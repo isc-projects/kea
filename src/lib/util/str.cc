@@ -341,6 +341,11 @@ dumpAsHex(const uint8_t* data, size_t length) {
 }
 
 string
+dumpAsHex(const std::vector<uint8_t>& vec) {
+   return (dumpAsHex(vec.data(), vec.size()));
+}
+
+string
 dumpDouble(double val, size_t precision) {
     std::stringstream oss;
     oss << setprecision(precision) << val;
