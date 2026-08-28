@@ -1,3 +1,7 @@
+2553.	[bug]		razvan
+	Fixed bugs related to out of bound container access.
+	(Gitlab #4708)
+
 Kea 3.3.1 (development) released on August 26, 2026
 
 2552.	[build]		tsawka
