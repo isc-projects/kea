@@ -70,6 +70,17 @@ TEST_F(TcpClientTest, singleRequestMultiThreading) {
     ASSERT_NO_FATAL_FAILURE(testSingleRequest());
 }
 
+/// @brief Test a null request.
+TEST_F(TcpClientTest, nullRequest) {
+    ASSERT_NO_FATAL_FAILURE(testNullRequest());
+}
+
+/// @brief Test a null request.
+TEST_F(TcpClientTest, nullRequestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    ASSERT_NO_FATAL_FAILURE(testNullRequest());
+}
+
 /// @brief Test an empty request.
 TEST_F(TcpClientTest, emptyRequest) {
     ASSERT_NO_FATAL_FAILURE(testEmptyRequest());
@@ -79,6 +90,17 @@ TEST_F(TcpClientTest, emptyRequest) {
 TEST_F(TcpClientTest, emptyRequestMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     ASSERT_NO_FATAL_FAILURE(testEmptyRequest());
+}
+
+/// @brief Test a null response.
+TEST_F(TcpClientTest, nullResponse) {
+    ASSERT_NO_FATAL_FAILURE(testNullResponse());
+}
+
+/// @brief Test a null response.
+TEST_F(TcpClientTest, nullResponseMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    ASSERT_NO_FATAL_FAILURE(testNullResponse());
 }
 
 /// @brief Test a large request.

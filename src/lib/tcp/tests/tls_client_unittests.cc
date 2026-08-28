@@ -84,6 +84,18 @@ TEST_F(TlsClientTest, singleRequestMultiThreading) {
     MultiThreadingMgr::instance().setMode(true);
     ASSERT_NO_FATAL_FAILURE(testSingleRequest());
 }
+
+/// @brief Test a null request.
+TEST_F(TlsClientTest, nullRequest) {
+    ASSERT_NO_FATAL_FAILURE(testNullRequest());
+}
+
+/// @brief Test a null request.
+TEST_F(TlsClientTest, nullRequestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    ASSERT_NO_FATAL_FAILURE(testNullRequest());
+}
+
 /// @brief Test an empty request.
 TEST_F(TlsClientTest, emptyRequest) {
     ASSERT_NO_FATAL_FAILURE(testEmptyRequest());
@@ -95,6 +107,16 @@ TEST_F(TlsClientTest, emptyRequestMultiThreading) {
     ASSERT_NO_FATAL_FAILURE(testEmptyRequest());
 }
 
+/// @brief Test a null response.
+TEST_F(TlsClientTest, nullResponse) {
+    ASSERT_NO_FATAL_FAILURE(testNullResponse());
+}
+
+/// @brief Test a null response.
+TEST_F(TlsClientTest, nullResponseMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    ASSERT_NO_FATAL_FAILURE(testNullResponse());
+}
 
 /// @brief Test a large request.
 TEST_F(TlsClientTest, largeRequest) {

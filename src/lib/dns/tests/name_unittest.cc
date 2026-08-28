@@ -297,8 +297,7 @@ TEST_F(NameTest, fromText) {
 TEST_F(NameTest, fromWireTooLong) {
     Name maxlabels = Name(string(max_labels_str));
     EXPECT_EQ(Name::MAX_LABELS, maxlabels.getLabelCount());
-
-    EXPECT_NO_THROW(maxlabels = Name(string(max_labels_str), &Name::ROOT_NAME()));
+    EXPECT_NO_THROW(maxlabels = Name(string(max_labels_str)));
 
     OutputBuffer o_data(0);
     maxlabels.toWire(o_data);
