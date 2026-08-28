@@ -1,5 +1,10 @@
 2553.	[bug]		razvan
-	Fixed bugs related to out of bound container access.
+	Fixed bugs related to out of bound container access which can
+	cause Kea to crash if -D_GLIBCXX_ASSERTIONS flag is used at
+	compilation time. This affected perfdhcp, host_cache hook
+	library, kea-dhcp4, kea-dhcp6, kea-dhcp-ddns and kea-netconf.
+	Thank you to Joseph Bisch (joseph.bisch@gmail.com) for reporting
+	this issue.
 	(Gitlab #4708)
 
 Kea 3.3.1 (development) released on August 26, 2026
