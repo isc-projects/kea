@@ -3875,7 +3875,7 @@ AllocEngine::ClientContext4::ClientContext4(const ConstSubnet4Ptr& subnet,
       ddns_params_(new DdnsParams()) {
 
     // Initialize host identifiers.
-    if (hwaddr) {
+    if (hwaddr && !hwaddr->hwaddr_.empty()) {
         addHostIdentifier(Host::IDENT_HWADDR, hwaddr->hwaddr_);
     }
 }

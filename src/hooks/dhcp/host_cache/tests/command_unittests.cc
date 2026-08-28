@@ -286,6 +286,9 @@ public:
     /// @brief Test cache-get-by-id command using multiple identifiers.
     void testByIdsCommand();
 
+    /// @brief Test cache-get-by-id command using empty identifier.
+    void testByEmptyIdCommand();
+
     /// @brief Test cache-insert command.
     void testInsertCommand();
 
@@ -638,6 +641,19 @@ CommandTest::testByIdsCommand() {
 
     checkCommand(get_by_id_handler, get_by_id_cmd, 1, 1,
                  "only one identifier can be specified");
+}
+
+// Verifies that cache-get-by-id rejects multiple identifiers.
+void
+CommandTest::testByEmptyIdCommand() {
+    // Prepare
+    handlerType get_by_id_handler = std::bind(&getByIdHandler, hcptr_, ph::_1);
+    string get_by_id_cmd = "{ "
+      "\"command\": \"cache-get-by-id\","
+      "\"arguments\": { \"hw-address\": \"\" } }";
+
+    checkCommand(get_by_id_handler, get_by_id_cmd, 1, 1,
+                 "invalid (empty) identifier");
 }
 
 // Verifies that cache-insert inserts entries into the cache.
@@ -1169,6 +1185,15 @@ TEST_F(CommandTest, byIds) {
 TEST_F(CommandTest, byIdsMultiThreading) {
     MultiThreadingTest mt(true);
     testByIdsCommand();
+}
+
+TEST_F(CommandTest, byEmptyId) {
+    testByEmptyIdCommand();
+}
+
+TEST_F(CommandTest, byEmptyIdMultiThreading) {
+    MultiThreadingTest mt(true);
+    testByEmptyIdCommand();
 }
 
 TEST_F(CommandTest, insert) {

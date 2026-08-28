@@ -410,8 +410,12 @@ public:
         ///
         /// @param id_type Identifier type.
         /// @param identifier Identifier value.
+        /// @throw BadValue if identifier is empty
         void addHostIdentifier(const Host::IdentifierType& id_type,
                                const std::vector<uint8_t>& identifier) {
+            if (identifier.empty()) {
+                isc_throw(BadValue, "identifier is empty");
+            }
             host_identifiers_.push_back(IdentifierPair(id_type, identifier));
         }
 
@@ -1342,8 +1346,12 @@ public:
         ///
         /// @param id_type Identifier type.
         /// @param identifier Identifier value.
+        /// @throw BadValue if identifier is empty
         void addHostIdentifier(const Host::IdentifierType& id_type,
                                const std::vector<uint8_t>& identifier) {
+            if (identifier.empty()) {
+                isc_throw(BadValue, "identifier is empty");
+            }
             host_identifiers_.push_back(IdentifierPair(id_type, identifier));
         }
 

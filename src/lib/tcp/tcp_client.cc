@@ -446,7 +446,7 @@ private:
     TcpClient::RequestHandler current_callback_;
 
     /// @brief Output buffer.
-    std::vector<uint8_t>  buf_;
+    std::vector<uint8_t> buf_;
 
     /// @brief Input buffer.
     std::array<uint8_t, 32768> input_buf_;
@@ -2088,6 +2088,10 @@ TcpClient::asyncSendRequest(const IOAddress& address,
                             const TcpClient::CloseHandler& close_callback) {
     if (!request) {
         isc_throw(TcpClientError, "TCP request must not be null");
+    }
+
+    if (request->empty()) {
+        isc_throw(TcpClientError, "TCP request must not be empty");
     }
 
     if (!response) {

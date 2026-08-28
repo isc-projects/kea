@@ -721,6 +721,7 @@ OPT::PseudoRR::getCode() const {
 
 const uint8_t*
 OPT::PseudoRR::getData() const {
+    isc_throw_assert(!data_->empty());
     return (&(*data_)[0]);
 }
 
@@ -794,7 +795,9 @@ OPT::OPT(InputBuffer& buffer, size_t rdata_len) {
 
         boost::shared_ptr<std::vector<uint8_t> >
             option_data(new std::vector<uint8_t>(option_length));
-        buffer.readData(&(*option_data)[0], option_length);
+        if (option_length > 0) {
+            buffer.readData(&(*option_data)[0], option_length);
+        }
         impl_->pseudo_rrs_.push_back(PseudoRR(option_code, option_data));
         impl_->rdlength_ += option_length;
         rdata_len -= option_length;
@@ -1203,7 +1206,9 @@ RRSIG::toWire(OutputBuffer& buffer) const {
     buffer.writeUint32(impl_->timeinception_);
     buffer.writeUint16(impl_->tag_);
     impl_->signer_.toWire(buffer);
-    buffer.writeData(&impl_->signature_[0], impl_->signature_.size());
+    if (!impl_->signature_.empty()) {
+        buffer.writeData(&impl_->signature_[0], impl_->signature_.size());
+    }
 }
 
 void
@@ -1216,7 +1221,9 @@ RRSIG::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint32(impl_->timeinception_);
     renderer.writeUint16(impl_->tag_);
     renderer.writeName(impl_->signer_, false);
-    renderer.writeData(&impl_->signature_[0], impl_->signature_.size());
+    if (!impl_->signature_.empty()) {
+        renderer.writeData(&impl_->signature_[0], impl_->signature_.size());
+    }
 }
 
 int
@@ -1257,8 +1264,11 @@ RRSIG::compare(const Rdata& other) const {
     size_t this_len = impl_->signature_.size();
     size_t other_len = other_rrsig.impl_->signature_.size();
     size_t cmplen = min(this_len, other_len);
-    cmp = memcmp(&impl_->signature_[0], &other_rrsig.impl_->signature_[0],
-                 cmplen);
+    cmp = 0;
+    if (cmplen > 0) {
+        cmp = memcmp(&impl_->signature_[0], &other_rrsig.impl_->signature_[0],
+                     cmplen);
+    }
     if (cmp != 0) {
         return (cmp);
     } else {
@@ -2343,6 +2353,9 @@ DHCID::constructFromLexer(MasterLexer& lexer) {
     lexer.ungetToken();
 
     decodeBase64(digest_txt, digest_);
+    if (digest_.size() < 3) {
+        isc_throw(InvalidRdataText, "Invalid DHCID digest");
+    }
 }
 
 /// \brief Constructor from string.
@@ -2407,7 +2420,9 @@ DHCID::DHCID(const DHCID& other) : Rdata(), digest_(other.digest_) {
 /// \param buffer An output buffer to store the wire data.
 void
 DHCID::toWire(OutputBuffer& buffer) const {
-    buffer.writeData(&digest_[0], digest_.size());
+    if (!digest_.empty()) {
+        buffer.writeData(&digest_[0], digest_.size());
+    }
 }
 
 /// \brief Render the \c DHCID in the wire format into a
@@ -2417,7 +2432,9 @@ DHCID::toWire(OutputBuffer& buffer) const {
 /// output buffer in which the \c DHCID is to be stored.
 void
 DHCID::toWire(AbstractMessageRenderer& renderer) const {
-    renderer.writeData(&digest_[0], digest_.size());
+    if (!digest_.empty()) {
+        renderer.writeData(&digest_[0], digest_.size());
+    }
 }
 
 /// \brief Convert the \c DHCID to a string.
@@ -2440,7 +2457,10 @@ DHCID::compare(const Rdata& other) const {
     size_t this_len = digest_.size();
     size_t other_len = other_dhcid.digest_.size();
     size_t cmplen = min(this_len, other_len);
-    int cmp = memcmp(&digest_[0], &other_dhcid.digest_[0], cmplen);
+    int cmp = 0;
+    if (cmplen > 0) {
+        cmp = memcmp(&digest_[0], &other_dhcid.digest_[0], cmplen);
+    }
     if (cmp != 0) {
         return (cmp);
     } else {

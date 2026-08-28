@@ -406,6 +406,7 @@ UdpExchange::open() {
             // Send request message.
             buffer_ = sent_->getBuffer();
             size_ = buffer_.size();
+            // Note from a message the buffer can't be empty.
 
             LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                       RADIUS_UDP_EXCHANGE_SEND_NEW)
@@ -503,6 +504,7 @@ UdpExchange::open() {
         // Send request message.
         buffer_ = sent_->getBuffer();
         size_ = buffer_.size();
+        // Note from a message the buffer can't be empty.
 
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_UDP_EXCHANGE_SEND_RETRY)
@@ -510,9 +512,7 @@ UdpExchange::open() {
             .arg(buffer_.size())
             .arg(retries_);
 
-        socket_->asyncSend(&buffer_[0],
-                           buffer_.size(),
-                           ep_.get(),
+        socket_->asyncSend(&buffer_[0], buffer_.size(), ep_.get(),
                            std::bind(&UdpExchange::sentHandler,
                                      shared_from_this(),
                                      ph::_1,   // error_code.

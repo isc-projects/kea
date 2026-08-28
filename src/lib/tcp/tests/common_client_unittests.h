@@ -148,6 +148,88 @@ public:
         EXPECT_EQ(request->size(), response->size());
     }
 
+    /// @brief Test null request.
+    void testNullRequest() {
+        // Start the server.
+        ASSERT_NO_THROW(listener_->start());
+
+        // Create a client and specify the server.
+        TcpClient client(io_service_, false);
+        asiolink::IOAddress address("127.0.0.1");
+        uint16_t port = 18123;
+
+        // Leave the request null.
+        WireDataPtr request;
+        WireDataPtr response(new WireData());
+        ASSERT_THROW(client.asyncSendRequest(address, port,
+                                             client_context_,
+                                             request, response,
+                                             true, TestCompleteCheck,
+            [this](const boost::system::error_code& ec,
+                   const WireDataPtr&,
+                   const std::string&) {
+                io_service_->stop();
+                if (ec) {
+                    ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
+                }
+            }), TcpClientError);
+    }
+
+    /// @brief Test empty request.
+    void testEmptyRequest() {
+        // Start the server.
+        ASSERT_NO_THROW(listener_->start());
+
+        // Create a client and specify the server.
+        TcpClient client(io_service_, false);
+        asiolink::IOAddress address("127.0.0.1");
+        uint16_t port = 18123;
+
+        // Leave the request empty.
+        WireDataPtr request(new WireData());
+        WireDataPtr response(new WireData());
+        ASSERT_THROW(client.asyncSendRequest(address, port,
+                                             client_context_,
+                                             request, response,
+                                             true, TestCompleteCheck,
+            [this](const boost::system::error_code& ec,
+                   const WireDataPtr&,
+                   const std::string&) {
+                io_service_->stop();
+                if (ec) {
+                    ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
+                }
+            }), TcpClientError);
+    }
+
+    /// @brief Test null response.
+    void testNullResponse() {
+        // Start the server.
+        ASSERT_NO_THROW(listener_->start());
+
+        // Create a client and specify the server.
+        TcpClient client(io_service_, false);
+        asiolink::IOAddress address("127.0.0.1");
+        uint16_t port = 18123;
+
+        // Initiate request to the server.
+        WireDataPtr request = createRequest("sequence", 0);
+        // Leave the response null.
+        WireDataPtr response;
+        ASSERT_THROW(client.asyncSendRequest(address, port,
+                                             client_context_,
+                                             request, response,
+                                             true, TestCompleteCheck,
+            [this](const boost::system::error_code& ec,
+                   const WireDataPtr&,
+                   const std::string&) {
+                io_service_->stop();
+                if (ec) {
+                    ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
+                }
+            }), TcpClientError);
+    }
+
     /// @brief Test a large request.
     void testLargeRequest() {
         // Start the server.

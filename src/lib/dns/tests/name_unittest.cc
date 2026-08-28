@@ -286,6 +286,28 @@ TEST_F(NameTest, fromText) {
     // an error, and its length should be the max value.
     Name maxlabels = Name(string(max_labels_str));
     EXPECT_EQ(Name::MAX_LABELS, maxlabels.getLabelCount());
+
+    std::string larger = string(max_labels_str) + ".7";
+
+    EXPECT_THROW(maxlabels = Name(larger), isc::Unexpected);
+
+    EXPECT_THROW(maxlabels = Name(larger.c_str(), larger.size()), isc::Unexpected);
+}
+
+TEST_F(NameTest, fromWireTooLong) {
+    Name maxlabels = Name(string(max_labels_str));
+    EXPECT_EQ(Name::MAX_LABELS, maxlabels.getLabelCount());
+    EXPECT_NO_THROW(maxlabels = Name(string(max_labels_str)));
+
+    OutputBuffer o_data(0);
+    maxlabels.toWire(o_data);
+    o_data.trim(1);
+    o_data.writeUint8(1);
+    o_data.writeUint8('7');
+    o_data.writeUint8(0);
+
+    InputBuffer i_data(o_data.getData(), o_data.getLength());
+    EXPECT_THROW(maxlabels = Name(i_data), isc::dns::DNSMessageFORMERR);
 }
 
 // The following test uses a name data that was produced by

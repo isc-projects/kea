@@ -13,6 +13,7 @@ perfdhcp_tests = executable(
     'perf_pkt4_unittest.cc',
     'perf_pkt6_unittest.cc',
     'perf_socket_unittest.cc',
+    'pkt_transform_unittest.cc',
     'rate_control_unittest.cc',
     'receiver_unittest.cc',
     'run_unittests.cc',

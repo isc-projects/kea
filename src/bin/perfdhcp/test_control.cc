@@ -767,12 +767,13 @@ TestControl::readPacketTemplate(const std::string& file_name) {
         isc_throw(BadValue, "unable to open template file " << file_name);
     }
     // Read template file contents.
-    std::streampos temp_size = temp_file.tellg();
-    if (temp_size == std::streampos(0)) {
+    std::streampos pos = temp_file.tellg();
+    if (pos == std::streampos(0)) {
         temp_file.close();
         isc_throw(OutOfRange, "the template file " << file_name << " is empty");
     }
     temp_file.seekg(0, ios::beg);
+    size_t temp_size = static_cast<size_t>(pos);
     std::vector<char> file_contents(temp_size);
     temp_file.read(&file_contents[0], temp_size);
     temp_file.close();

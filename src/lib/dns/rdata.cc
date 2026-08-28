@@ -342,12 +342,16 @@ Generic::toText() const {
 
 void
 Generic::toWire(OutputBuffer& buffer) const {
-    buffer.writeData(&impl_->data_[0], impl_->data_.size());
+    if (!impl_->data_.empty()) {
+        buffer.writeData(&impl_->data_[0], impl_->data_.size());
+    }
 }
 
 void
 Generic::toWire(AbstractMessageRenderer& renderer) const {
-    renderer.writeData(&impl_->data_[0], impl_->data_.size());
+    if (!impl_->data_.empty()) {
+        renderer.writeData(&impl_->data_[0], impl_->data_.size());
+    }
 }
 
 namespace {

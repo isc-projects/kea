@@ -144,6 +144,9 @@ Message::encode() {
     if (secret_.empty()) {
         isc_throw(InvalidOperation, "empty secret");
     }
+    if (auth_.size() != AUTH_VECTOR_LEN) {
+        isc_throw(BadValue, "Bad auth");
+    }
 
     // Header.
     buffer_.resize(AUTH_HDR_LEN);
@@ -233,6 +236,7 @@ Message::decode() {
     } else if (auth_.size() != AUTH_VECTOR_LEN) {
         isc_throw(InvalidOperation, "bad authenticator");
     }
+    // Note that now the auth_ is AUTH_VECTOR_LEN (16) octet long.
     if (length_ > buffer_.size()) {
         isc_throw(BadValue, "truncated " << msgCodeToText(code_)
                   << " length " << length_ << ", got " << buffer_.size());
@@ -329,7 +333,8 @@ ConstAttributePtr
 Message::encodeUserPassword(const ConstAttributePtr& attr) {
     if (!attr || (attr->getValueType() != PW_TYPE_STRING) ||
         (attr->getValueLen() == 0) ||
-        (auth_.size() != AUTH_VECTOR_LEN)) {
+        (auth_.size() != AUTH_VECTOR_LEN) ||
+        secret_.empty()) {
         isc_throw(Unexpected, "can't encode User-Password");
     }
 
@@ -373,7 +378,8 @@ Message::decodeUserPassword(const ConstAttributePtr& attr) {
     if (!attr || (attr->getValueType() != PW_TYPE_STRING) ||
         (attr->getValueLen() == 0) ||
         ((attr->getValueLen() % AUTH_VECTOR_LEN) != 0) ||
-        (auth_.size() != AUTH_VECTOR_LEN)) {
+        (auth_.size() != AUTH_VECTOR_LEN) ||
+        secret_.empty()) {
         isc_throw(Unexpected, "can't decode User-Password");
     }
 
@@ -429,7 +435,8 @@ void
 Message::signMessageAuthenticator(size_t ptr) {
     if ((ptr < AUTH_HDR_LEN) || (ptr > buffer_.size() - 2 - AUTH_VECTOR_LEN) ||
         (buffer_[ptr + 1] != 2 + AUTH_VECTOR_LEN) ||
-        (auth_.size() != AUTH_VECTOR_LEN)) {
+        (auth_.size() != AUTH_VECTOR_LEN) ||
+        secret_.empty()) {
         isc_throw(Unexpected, "can't sign Message-Authenticator");
     }
 
@@ -449,7 +456,8 @@ void
 Message::verifyMessageAuthenticator(size_t ptr) {
     if ((ptr < AUTH_HDR_LEN) || (ptr > buffer_.size() - 2 - AUTH_VECTOR_LEN) ||
         (buffer_[ptr + 1] != 2 + AUTH_VECTOR_LEN) ||
-        (auth_.size() != AUTH_VECTOR_LEN)) {
+        (auth_.size() != AUTH_VECTOR_LEN) ||
+        secret_.empty()) {
         isc_throw(BadValue, "can't verify Message-Authenticator");
     }
 

@@ -13,11 +13,13 @@
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 
-#include <gtest/gtest.h>
-
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 #include <util/unittests/wiredata.h>
+
+#include <gtest/gtest.h>
+
+#include <boost/scoped_ptr.hpp>
 
 using namespace std;
 using namespace isc::dns;
@@ -195,4 +197,24 @@ TEST_F(Rdata_OPT_Test, getPseudoRRs) {
     EXPECT_EQ(0, std::memcmp(expected_data, actual_data,
                              sizeof(expected_data)));
 }
+
+TEST_F(Rdata_OPT_Test, emptyOpt) {
+    // pseudoRR with empty RDATA (#4741).
+    const vector<uint8_t> data = {
+        // Option code
+        0x00, 0x0b,
+        // Option length
+        0x00, 0x00
+    };
+    InputBuffer buffer(&data[0], data.size());
+    boost::scoped_ptr<generic::OPT> opt;
+    EXPECT_NO_THROW(opt.reset(new generic::OPT(buffer, data.size())));
+    ASSERT_TRUE(opt);
+    const std::vector<generic::OPT::PseudoRR>& rrs = opt->getPseudoRRs();
+    EXPECT_EQ(1U, rrs.size());
+    EXPECT_EQ(0x0b, rrs.at(0).getCode());
+    EXPECT_EQ(0U, rrs.at(0).getLength());
+    EXPECT_THROW(rrs.at(0).getData(), isc::Unexpected);
+}
+
 }

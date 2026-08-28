@@ -2223,6 +2223,9 @@ TEST_F(AllocEngine6Test, reservedAddress) {
     Lease6Collection leases = engine.allocateLeases6(ctx);
     ASSERT_EQ(1U, leases.size());
     EXPECT_EQ("2001:db8:1::12", leases[0]->addr_.toText());
+
+    // Adding an empty identifier should throw.
+    EXPECT_THROW(ctx.addHostIdentifier(Host::IDENT_DUID, {}), BadValue);
 }
 
 // Checks if the allocateLeases throws exceptions for invalid input data.

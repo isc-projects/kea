@@ -308,12 +308,14 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, toWireBuffer) {
     this->rdata_txt_like.toWire(this->obuffer);
     matchWireData(wiredata_txt_like, sizeof(wiredata_txt_like),
                   this->obuffer.getData(), this->obuffer.getLength());
+    EXPECT_NO_THROW(this->rdata_txt_like_empty.toWire(this->obuffer));
 }
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, toWireRenderer) {
     this->rdata_txt_like.toWire(this->renderer);
     matchWireData(wiredata_txt_like, sizeof(wiredata_txt_like),
                   this->renderer.getData(), this->renderer.getLength());
+    EXPECT_NO_THROW(this->rdata_txt_like_empty.toWire(this->renderer));
 }
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, toText) {

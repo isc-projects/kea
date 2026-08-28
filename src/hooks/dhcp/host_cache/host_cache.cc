@@ -642,7 +642,7 @@ HostCache::cacheGetByIdHandler(hooks::CalloutHandle& handle) {
 
         // Get the entry list and build the result.
         ConstHostCollection hosts;
-        {
+        if (!ident.empty()) {
             MultiThreadingLock lock(*mutex_);
             hosts = impl_->get(id_type, &ident[0], ident.size());
         }
@@ -1007,6 +1007,8 @@ HostCache::cacheRemoveHandler(hooks::CalloutHandle& handle) {
             } else {
                 del_txt = impl_->del6(subnet_id, addr);
             }
+        } else if (ident.empty()) {
+            isc_throw(BadValue, "empty identifier");
         } else if (family == AF_INET) {
             del_txt = impl_->del4(subnet_id, id_type, &ident[0], ident.size());
         } else {

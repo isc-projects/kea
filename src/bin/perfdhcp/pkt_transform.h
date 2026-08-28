@@ -56,6 +56,7 @@ public:
     /// \param out_buffer Output buffer holding "packed" data
     ///
     /// \return false, if pack operation failed.
+    /// \throw isc::Unexpected if in_buffer is empty.
     static bool pack(const dhcp::Option::Universe universe,
                      const dhcp::OptionBuffer& in_buffer,
                      const dhcp::OptionCollection& options,
@@ -92,20 +93,28 @@ public:
     /// \param dest_pos position in destination buffer.
     /// \param first beginning of data range in source vector.
     /// \param last end of data range in source vector.
+    /// \throw isc::OutOfRange if not enough room is available in destination.
     static void writeAt(dhcp::OptionBuffer& in_buffer, size_t dest_pos,
                         std::vector<uint8_t>::iterator first,
                         std::vector<uint8_t>::iterator last);
 
-    /// \brief Replace contents of one vector with uint16 value.
+    /// \brief Replace contents of one vector with a value of type T.
     ///
-    /// Function replaces data inside one vector with uint16_t value.
+    /// Function replaces data inside one vector with a value of Type T.
     ///
+    /// \tparam T type of the value, e.g. uint16_t.
     /// \param in_buffer destination buffer.
     /// \param dest_pos position in destination buffer.
     /// \param val value to be written.
+    /// \throw isc::OutOfRange if not enough room is available in destination.
     template<typename T>
     static void writeValueAt(dhcp::OptionBuffer& in_buffer, size_t dest_pos,
-                        T val) {
+                             T val) {
+        if (in_buffer.size() < dest_pos + sizeof(T)) {
+            isc_throw(isc::OutOfRange, "writeValueAt: pos=" << dest_pos
+                      << ", length=" << sizeof(T)
+                      << ", size=" << in_buffer.size());
+        }
         // @todo consider replacing the loop with switch statement
         // checking sizeof(T).
         for (size_t i = 0; i < sizeof(T); ++i) {

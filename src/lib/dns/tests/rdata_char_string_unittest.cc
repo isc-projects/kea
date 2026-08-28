@@ -209,8 +209,6 @@ TEST_F(CharStringTest, bufferToCharString_bad) {
 
 }
 
-
-
 TEST_F(CharStringTest, compareCharString) {
     CharString charstr;
     CharString charstr2;
@@ -241,6 +239,10 @@ TEST_F(CharStringTest, compareCharString) {
     EXPECT_EQ(-1, compareCharStrings(charstr_empty, charstr));
     EXPECT_EQ(1, compareCharStrings(charstr, charstr_empty));
     EXPECT_EQ(0, compareCharStrings(charstr_empty, charstr_empty));
+
+    charstr.resize(charstr.size() - 1);
+    EXPECT_THROW(compareCharStrings(charstr, charstr2), isc::Unexpected);
+    EXPECT_THROW(compareCharStrings(charstr2, charstr), isc::Unexpected);
 }
 
 } // unnamed namespace
