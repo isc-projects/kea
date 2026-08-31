@@ -160,6 +160,10 @@ TEST_F(Lease4Test, leaseBelongsToClient) {
     // HW Address that doesn't match the one in the lease.
     HWAddrPtr diff_hw(new HWAddr(HWAddr::fromText("00:01:02:03:04:06",
                                                   HTYPE_ETHER)));
+    // HW Address that matches the one in the lease with a different htype.
+    HWAddrPtr htype_hw(new HWAddr(HWAddr::fromText("00:01:02:03:04:05",
+                                                   HTYPE_IEEE802)));
+
     // Null HW Address.
     HWAddrPtr null_hw;
 
@@ -174,6 +178,9 @@ TEST_F(Lease4Test, leaseBelongsToClient) {
     EXPECT_TRUE(lease.belongsToClient(diff_hw, matching_client_id));
     EXPECT_FALSE(lease.belongsToClient(diff_hw, diff_client_id));
     EXPECT_FALSE(lease.belongsToClient(diff_hw, null_client_id));
+    EXPECT_TRUE(lease.belongsToClient(htype_hw, matching_client_id));
+    EXPECT_FALSE(lease.belongsToClient(htype_hw, diff_client_id));
+    EXPECT_TRUE(lease.belongsToClient(htype_hw, null_client_id));
     EXPECT_TRUE(lease.belongsToClient(null_hw, matching_client_id));
     EXPECT_FALSE(lease.belongsToClient(null_hw, diff_client_id));
     EXPECT_FALSE(lease.belongsToClient(null_hw, null_client_id));
@@ -186,6 +193,9 @@ TEST_F(Lease4Test, leaseBelongsToClient) {
     EXPECT_FALSE(lease.belongsToClient(diff_hw, matching_client_id));
     EXPECT_FALSE(lease.belongsToClient(diff_hw, diff_client_id));
     EXPECT_FALSE(lease.belongsToClient(diff_hw, null_client_id));
+    EXPECT_TRUE(lease.belongsToClient(htype_hw, matching_client_id));
+    EXPECT_TRUE(lease.belongsToClient(htype_hw, diff_client_id));
+    EXPECT_TRUE(lease.belongsToClient(htype_hw, null_client_id));
     EXPECT_FALSE(lease.belongsToClient(null_hw, matching_client_id));
     EXPECT_FALSE(lease.belongsToClient(null_hw, diff_client_id));
     EXPECT_FALSE(lease.belongsToClient(null_hw, null_client_id));
@@ -199,6 +209,9 @@ TEST_F(Lease4Test, leaseBelongsToClient) {
     EXPECT_TRUE(lease.belongsToClient(diff_hw, matching_client_id));
     EXPECT_FALSE(lease.belongsToClient(diff_hw, diff_client_id));
     EXPECT_FALSE(lease.belongsToClient(diff_hw, null_client_id));
+    EXPECT_TRUE(lease.belongsToClient(htype_hw, matching_client_id));
+    EXPECT_FALSE(lease.belongsToClient(htype_hw, diff_client_id));
+    EXPECT_FALSE(lease.belongsToClient(htype_hw, null_client_id));
     EXPECT_TRUE(lease.belongsToClient(null_hw, matching_client_id));
     EXPECT_FALSE(lease.belongsToClient(null_hw, diff_client_id));
     EXPECT_FALSE(lease.belongsToClient(null_hw, null_client_id));
