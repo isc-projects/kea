@@ -337,7 +337,7 @@ public:
 
             // hostname : VARCHAR(255) NULL
             strncpy(hostname_, host->getHostname().c_str(), HOSTNAME_MAX_LEN - 1);
-            hostname_length_ = host->getHostname().length();
+            hostname_length_ = std::min(host->getHostname().length(), HOSTNAME_MAX_LEN - 1);
             bind_[6].buffer_type = MYSQL_TYPE_STRING;
             bind_[6].buffer = reinterpret_cast<char*>(hostname_);
             bind_[6].buffer_length = hostname_length_;
@@ -348,7 +348,7 @@ public:
             string classes4_txt = host->getClientClasses4().toText(",");
             strncpy(dhcp4_client_classes_, classes4_txt.c_str(), CLIENT_CLASSES_MAX_LEN - 1);
             bind_[7].buffer = dhcp4_client_classes_;
-            bind_[7].buffer_length = classes4_txt.length();
+            bind_[7].buffer_length = std::min(classes4_txt.length(), CLIENT_CLASSES_MAX_LEN - 1);
 
             // dhcp6_client_classes : VARCHAR(255) NULL
             bind_[8].buffer_type = MYSQL_TYPE_STRING;
@@ -356,7 +356,7 @@ public:
             string classes6_txt = host->getClientClasses6().toText(",");
             strncpy(dhcp6_client_classes_, classes6_txt.c_str(), CLIENT_CLASSES_MAX_LEN - 1);
             bind_[8].buffer = dhcp6_client_classes_;
-            bind_[8].buffer_length = classes6_txt.length();
+            bind_[8].buffer_length = std::min(classes6_txt.length(), CLIENT_CLASSES_MAX_LEN - 1);
 
             // user_context : TEXT NULL
             ConstElementPtr ctx = host->getContext();
@@ -365,7 +365,7 @@ public:
                 string ctx_txt = ctx->str();
                 strncpy(user_context_, ctx_txt.c_str(), USER_CONTEXT_MAX_LEN - 1);
                 bind_[9].buffer = user_context_;
-                bind_[9].buffer_length = ctx_txt.length();
+                bind_[9].buffer_length = std::min(ctx_txt.length(), USER_CONTEXT_MAX_LEN - 1);
             } else {
                 bind_[9].buffer_type = MYSQL_TYPE_NULL;
             }
@@ -386,7 +386,8 @@ public:
             strncpy(dhcp4_server_hostname_, server_hostname.c_str(),
                     SERVER_HOSTNAME_MAX_LEN - 1);
             bind_[11].buffer = dhcp4_server_hostname_;
-            bind_[11].buffer_length = server_hostname.length();
+            bind_[11].buffer_length = std::min(server_hostname.length(),
+                                               SERVER_HOSTNAME_MAX_LEN - 1);
 
             // dhcp4_boot_file_name
             bind_[12].buffer_type = MYSQL_TYPE_STRING;
@@ -394,7 +395,8 @@ public:
             strncpy(dhcp4_boot_file_name_, boot_file_name.c_str(),
                     BOOT_FILE_NAME_MAX_LEN - 1);
             bind_[12].buffer = dhcp4_boot_file_name_;
-            bind_[12].buffer_length = boot_file_name.length();
+            bind_[12].buffer_length = std::min(boot_file_name.length(),
+                                               BOOT_FILE_NAME_MAX_LEN - 1);
 
             // auth key
             bind_[13].buffer_type = MYSQL_TYPE_STRING;
@@ -402,7 +404,7 @@ public:
             std::strncpy(auth_key_, auth_key.c_str(), TEXT_AUTH_KEY_LEN - 1);
             auth_key_null_ = auth_key.empty() ? MLM_TRUE : MLM_FALSE;
             bind_[13].buffer = auth_key_;
-            bind_[13].buffer_length = auth_key.length();
+            bind_[13].buffer_length = std::min(auth_key.length(), TEXT_AUTH_KEY_LEN - 1);
 
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
@@ -1808,7 +1810,7 @@ public:
             addr6_length_ = isc::asiolink::V6ADDRESS_LEN;
             bind_[0].buffer_type = MYSQL_TYPE_BLOB;
             bind_[0].buffer = reinterpret_cast<char*>(&addr6_[0]);
-            bind_[0].buffer_length = isc::asiolink::V6ADDRESS_LEN;
+            bind_[0].buffer_length = addr6_length_;
             bind_[0].length = &addr6_length_;
 
             // prefix_len tinyint
@@ -2033,7 +2035,7 @@ public:
             bind_[6].buffer = reinterpret_cast<char*>(&cancelled_);
             bind_[6].is_unsigned = MLM_TRUE;
 
-            // user_context: TEST NULL,
+            // user_context: TEXT NULL,
             ConstElementPtr ctx = opt_desc.getContext();
             if (ctx) {
                 user_context_ = ctx->str();
@@ -3506,7 +3508,7 @@ MySqlHostDataSource::del(const SubnetID& subnet_id,
     unsigned long addr6_length = isc::asiolink::V6ADDRESS_LEN;
     inbind[1].buffer_type = MYSQL_TYPE_BLOB;
     inbind[1].buffer = reinterpret_cast<char*>(&addr6[0]);
-    inbind[1].buffer_length = isc::asiolink::V6ADDRESS_LEN;
+    inbind[1].buffer_length = addr6_length;
     inbind[1].length = &addr6_length;
 
     return (impl_->delStatement(ctx, MySqlHostDataSourceImpl::DEL_HOST_ADDR6, inbind));
@@ -3615,7 +3617,7 @@ MySqlHostDataSource::getAll(const Host::IdentifierType& identifier_type,
     // Identifier value.
     std::vector<char> identifier_vec(identifier_begin,
                                      identifier_begin + identifier_len);
-    unsigned long int length = identifier_vec.size();
+    unsigned long length = identifier_vec.size();
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
     inbind[0].buffer = &identifier_vec[0];
     inbind[0].buffer_length = length;
@@ -3681,11 +3683,12 @@ MySqlHostDataSource::getAllbyHostname(const std::string& hostname) const {
     memset(inbind, 0, sizeof(inbind));
 
     // Hostname
-    char hostname_[HOSTNAME_MAX_LEN];
-    strncpy(hostname_, hostname.c_str(), HOSTNAME_MAX_LEN - 1);
-    unsigned long length = hostname.length();
+    char hostname_c[HOSTNAME_MAX_LEN];
+    memset(hostname_c, 0, sizeof(hostname_c));
+    strncpy(hostname_c, hostname.c_str(), HOSTNAME_MAX_LEN - 1);
+    unsigned long length = std::min(hostname.length(), HOSTNAME_MAX_LEN - 1);
     inbind[0].buffer_type = MYSQL_TYPE_STRING;
-    inbind[0].buffer = reinterpret_cast<char*>(hostname_);
+    inbind[0].buffer = reinterpret_cast<char*>(hostname_c);
     inbind[0].buffer_length = length;
     inbind[0].length = &length;
 
@@ -3708,11 +3711,12 @@ MySqlHostDataSource::getAllbyHostname4(const std::string& hostname,
     memset(inbind, 0, sizeof(inbind));
 
     // Hostname
-    char hostname_[HOSTNAME_MAX_LEN];
-    strncpy(hostname_, hostname.c_str(), HOSTNAME_MAX_LEN - 1);
-    unsigned long length = hostname.length();
+    char hostname_c[HOSTNAME_MAX_LEN];
+    memset(hostname_c, 0, sizeof(hostname_c));
+    strncpy(hostname_c, hostname.c_str(), HOSTNAME_MAX_LEN - 1);
+    unsigned long length = std::min(hostname.length(), HOSTNAME_MAX_LEN - 1);
     inbind[0].buffer_type = MYSQL_TYPE_STRING;
-    inbind[0].buffer = reinterpret_cast<char*>(hostname_);
+    inbind[0].buffer = reinterpret_cast<char*>(hostname_c);
     inbind[0].buffer_length = length;
     inbind[0].length = &length;
 
@@ -3741,11 +3745,12 @@ MySqlHostDataSource::getAllbyHostname6(const std::string& hostname,
     memset(inbind, 0, sizeof(inbind));
 
     // Hostname
-    char hostname_[HOSTNAME_MAX_LEN];
-    strncpy(hostname_, hostname.c_str(), HOSTNAME_MAX_LEN - 1);
-    unsigned long length = hostname.length();
+    char hostname_c[HOSTNAME_MAX_LEN];
+    memset(hostname_c, 0, sizeof(hostname_c));
+    strncpy(hostname_c, hostname.c_str(), HOSTNAME_MAX_LEN - 1);
+    unsigned long length = std::min(hostname.length(), HOSTNAME_MAX_LEN - 1);
     inbind[0].buffer_type = MYSQL_TYPE_STRING;
-    inbind[0].buffer = reinterpret_cast<char*>(hostname_);
+    inbind[0].buffer = reinterpret_cast<char*>(hostname_c);
     inbind[0].buffer_length = length;
     inbind[0].length = &length;
 
@@ -4044,7 +4049,7 @@ MySqlHostDataSource::get6(const asiolink::IOAddress& prefix,
     unsigned long addr6_length = isc::asiolink::V6ADDRESS_LEN;
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
     inbind[0].buffer = reinterpret_cast<char*>(&addr6[0]);
-    inbind[0].buffer_length = isc::asiolink::V6ADDRESS_LEN;
+    inbind[0].buffer_length = addr6_length;
     inbind[0].length = &addr6_length;
 
     uint8_t tmp = prefix_len;
@@ -4095,7 +4100,7 @@ MySqlHostDataSource::get6(const SubnetID& subnet_id,
     unsigned long addr6_length = isc::asiolink::V6ADDRESS_LEN;
     inbind[1].buffer_type = MYSQL_TYPE_BLOB;
     inbind[1].buffer = reinterpret_cast<char*>(&addr6[0]);
-    inbind[1].buffer_length = isc::asiolink::V6ADDRESS_LEN;
+    inbind[1].buffer_length = addr6_length;
     inbind[1].length = &addr6_length;
 
     ConstHostCollection collection;
@@ -4141,7 +4146,7 @@ MySqlHostDataSource::getAll6(const SubnetID& subnet_id,
     unsigned long addr6_length = isc::asiolink::V6ADDRESS_LEN;
     inbind[1].buffer_type = MYSQL_TYPE_BLOB;
     inbind[1].buffer = reinterpret_cast<char*>(&addr6[0]);
-    inbind[1].buffer_length = isc::asiolink::V6ADDRESS_LEN;
+    inbind[1].buffer_length = addr6_length;
     inbind[1].length = &addr6_length;
 
     ConstHostCollection collection;
@@ -4174,7 +4179,7 @@ MySqlHostDataSource::getAll6(const IOAddress& address) const {
     unsigned long addr6_length = isc::asiolink::V6ADDRESS_LEN;
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
     inbind[0].buffer = reinterpret_cast<char*>(&addr6[0]);
-    inbind[0].buffer_length = isc::asiolink::V6ADDRESS_LEN;
+    inbind[0].buffer_length = addr6_length;
     inbind[0].length = &addr6_length;
 
     ConstHostCollection collection;

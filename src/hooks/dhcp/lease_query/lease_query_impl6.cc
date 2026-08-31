@@ -952,7 +952,7 @@ LeaseQueryImpl6::makeRelayOption(const Lease6& lease) {
         buffer_out.writeData(&(relay->linkaddr_.toBytes()[0]),
                              isc::asiolink::V6ADDRESS_LEN);
         buffer_out.writeData(&relay->peeraddr_.toBytes()[0],
-                              isc::asiolink::V6ADDRESS_LEN);
+                             isc::asiolink::V6ADDRESS_LEN);
 
         // Store every option in this relay's scope.
         for (auto const& opt : relay->options_) {
