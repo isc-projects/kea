@@ -12,11 +12,12 @@
 
 #include <cstdint>
 #include <exception>
+#include <iomanip>
+#include <list>
 #include <sstream>
 #include <string>
 #include <unordered_set>
 #include <vector>
-#include <list>
 
 #include <gtest/gtest.h>
 
@@ -578,6 +579,15 @@ TEST_F(StringUtilTest, printOrDump) {
     for ( auto const& scenario : scenarios ) {
         EXPECT_EQ(printOrDump(scenario.input_, scenario.max_length_),
                               scenario.exp_output_);
+    }
+}
+
+// Verifies the byteToHex tool.
+TEST_F(StringUtilTest, byteToHex) {
+    for (unsigned i = 0; i < 256; i++) {
+        std::ostringstream ss;
+        ss << std::hex << std::setw(2) << std::setfill('0') << i;
+        EXPECT_EQ(ss.str(), byteToHex(i));
     }
 }
 
