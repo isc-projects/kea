@@ -143,7 +143,7 @@ public:
     static HWAddr fromText(const std::string& text,
                            const uint16_t htype = HTYPE_ETHER);
 
-    /// @brief Comapres two hardware addresses for equality
+    /// @brief Compares two hardware addresses for equality
     ///
     /// @note: the hardware type is now informative only so operators
     /// below do not include it. When previous behavior is needed use
