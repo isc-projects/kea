@@ -554,9 +554,14 @@ TEST(ParserTest, errors) {
     testError("\"foo\\x\\\"bar\"",
               Parser6Context::PARSER_JSON,
               "<string>:1.1-8 (near 5): Bad escape in \"foo\\x\\\"...");
+    // Not so easy to insert a null in a string literal.
     testError(string{ '"', '\\', '\0', '"' },
               Parser6Context::PARSER_JSON,
-              "<string>:1.1-x (near 1): Bad escape in \"\\\"...");
+              "<string>:1.1-4 (near 2): Bad escape in \"\\");
+    // The null hides everything after including a ... trailer.
+    testError(string{ '"', '\\', '\0', '\\', '"', '"' },
+              Parser6Context::PARSER_JSON,
+              "<string>:1.1-5 (near 2): Bad escape in \"\\");
 
     // from data_unittest.c
     testError("\\a",

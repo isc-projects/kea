@@ -5849,7 +5849,7 @@ YY_RULE_SETUP
 #line 2512 "dhcp6_lexer.ll"
 {
     /* Bad string with a forbidden control character inside */
-    std::string raw(yytext+1);
+    std::string raw(yytext+1, yyleng-1);
     size_t len = raw.size() - 1;
     size_t pos = 0;
     for (; pos < len; ++pos) {
@@ -5859,7 +5859,7 @@ YY_RULE_SETUP
         }
     }
     driver.error(driver.loc_,
-                 "Invalid control in " + std::string(yytext),
+                 "Invalid control in " + std::string(yytext, yyleng),
                  pos + 1);
 }
 	YY_BREAK
@@ -5869,7 +5869,7 @@ YY_RULE_SETUP
 #line 2528 "dhcp6_lexer.ll"
 {
     /* Bad string with a bad escape inside */
-    std::string raw(yytext+1);
+    std::string raw(yytext+1, yyleng-1);
     size_t len = raw.size() - 1;
     size_t pos = 0;
     bool found = false;
@@ -5912,7 +5912,7 @@ YY_RULE_SETUP
         trailer = "...";
     }
     driver.error(driver.loc_,
-                 "Bad escape in " + std::string(yytext) + trailer,
+                 "Bad escape in " + std::string(yytext, yyleng) + trailer,
                  pos);
 }
 	YY_BREAK
