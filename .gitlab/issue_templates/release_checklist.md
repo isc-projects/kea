@@ -146,7 +146,7 @@ This is the last moment to freeze the code! :snowflake:
    1. Submit the job that will automatically:
       1. Upload the tarballs.
       1. Create a GitLab issue for sanity checks. Put the announcement there.
-      1. Send Sanity Checks announcement on the Kea/DHCP channel on Mattermost.\
+      1. Send Sanity Checks announcement on the `kea` channel on Zulip.\
          The announcement includes:
          - a link to chapter 4 Sanity Checks of the release process: [KeaReleaseProcess - SanityChecks](https://wiki.isc.org/bin/view/QA/KeaReleaseProcess#4.%20Sanity%20Checks)
          - a link to the GitLab issue
@@ -259,6 +259,7 @@ Now it's time to publish the code.
    1. [ ] Return to the working directory where you called the script from.
    1. [ ] Run again with `--upload-only` which will create an issue and a merge request.
    1. [ ] Ask for review, and eventually and hopefully merge.
+1. [ ] Announce that the code freeze is over on the `kea` channel on Zulip.
 1. [ ] Contact the Marketing team, and find a member who will continue work on this release:
     1. [ ] Assign this ticket to the person who will continue.
     1. [ ] Share the link to signing the ticket either directly or as a comment in this issue.
