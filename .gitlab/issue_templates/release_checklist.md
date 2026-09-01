@@ -82,6 +82,7 @@ The following steps may involve changing files in the repository.
    The script makes the following changes and actions:
       1. Runs [prepare_kea_release.sh](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/release/prepare_kea_release.sh) that:
          1. Adds release entries in ChangeLogs.
+         1. Updates Kea version in `meson.build` (if not already updated)
          1. Updates copyright years in files that were changed in the current year.
          1. Sort messages in message files in alphabetical order.
          1. Regenerates message files headers.
