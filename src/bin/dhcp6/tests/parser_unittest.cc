@@ -545,6 +545,18 @@ TEST(ParserTest, errors) {
     testError("\"\x02\\u\"",
               Parser6Context::PARSER_JSON,
               "<string>:1.1-5 (near 1): Invalid control in \"\x02\\u\"");
+    testError("\"\\x\"",
+              Parser6Context::PARSER_JSON,
+              "<string>:1.1-4 (near 2): Bad escape in \"\\x\"");
+    testError("\"\\x\\\"\"",
+              Parser6Context::PARSER_JSON,
+              "<string>:1.1-5 (near 2): Bad escape in \"\\x\\\"...");
+    testError("\"foo\\x\\\"bar\"",
+              Parser6Context::PARSER_JSON,
+              "<string>:1.1-8 (near 5): Bad escape in \"foo\\x\\\"...");
+    testError(string{ '"', '\\', '\0', '"' },
+              Parser6Context::PARSER_JSON,
+              "<string>:1.1-x (near 1): Bad escape in \"\\\"...");
 
     // from data_unittest.c
     testError("\\a",
