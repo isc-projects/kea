@@ -436,9 +436,26 @@ const std::string& byteToHex(uint8_t byte) {
         "f8", "f9", "fa", "fb", "fc", "fd", "fe", "ff"
     };
 
-    return(byte_strs[byte]);
+    return (byte_strs[byte]);
 }
 
+std::string escapeNulls(std::string str) {
+    std::string tmp;
+    tmp.reserve(str.size());
+    bool escaped = false;
+    for (auto const& c : str) {
+        if (c != 0) {
+            tmp.push_back(c);
+        } else {
+            escaped = true;
+            tmp.append("\\0");
+        }
+    }
+    if (!escaped) {
+        return (str);
+    }
+    return (tmp);
+}
 
 }  // namespace str
 }  // namespace util

@@ -591,4 +591,16 @@ TEST_F(StringUtilTest, byteToHex) {
     }
 }
 
+// Verifies the escapeNulls tool.
+TEST_F(StringUtilTest, escapeNulls) {
+    std::string ret = escapeNulls("");
+    EXPECT_EQ("", ret);
+    ret = escapeNulls("abcd");
+    EXPECT_EQ("abcd", ret);
+    ret = escapeNulls(string{ 'a', 0, 'b', 'c', 0, 'd', 0});
+    EXPECT_EQ("a\\0bc\\0d\\0", ret);
+    // escapeNulls() was designed to make this an invariant.
+    EXPECT_EQ(string(ret.c_str()), ret);
+}
+
 }  // namespace
