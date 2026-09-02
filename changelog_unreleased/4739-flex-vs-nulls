@@ -1,0 +1,4 @@
+[bug]		fdupont
+	Made lexical analyzers more robust with null characters
+	in input, e.g. in server or agent configuration files.
+	(Gitlab #4739)
