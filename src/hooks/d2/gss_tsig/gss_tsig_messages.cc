@@ -48,6 +48,7 @@ extern const isc::log::MessageID TKEY_EXCHANGE_FAIL_TO_INIT = "TKEY_EXCHANGE_FAI
 extern const isc::log::MessageID TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_ANSWER_COUNT = "TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_ANSWER_COUNT";
 extern const isc::log::MessageID TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_ANSWER_TYPE = "TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_ANSWER_TYPE";
 extern const isc::log::MessageID TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_OPCODE = "TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_OPCODE";
+extern const isc::log::MessageID TKEY_EXCHANGE_IO_FETCH_RESULT = "TKEY_EXCHANGE_IO_FETCH_RESULT";
 extern const isc::log::MessageID TKEY_EXCHANGE_NOT_A_RESPONSE = "TKEY_EXCHANGE_NOT_A_RESPONSE";
 extern const isc::log::MessageID TKEY_EXCHANGE_OUT_TOKEN_NOT_EMPTY = "TKEY_EXCHANGE_OUT_TOKEN_NOT_EMPTY";
 extern const isc::log::MessageID TKEY_EXCHANGE_RDATA_COUNT = "TKEY_EXCHANGE_RDATA_COUNT";
@@ -104,6 +105,7 @@ const char* values[] = {
     "TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_ANSWER_COUNT", "GSS-TKEY exchange failed because the response contains invalid number of RRs: %1.",
     "TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_ANSWER_TYPE", "GSS-TKEY exchange failed because the response contains wrong answer type: %1.",
     "TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_OPCODE", "GSS-TKEY exchange failed because the response contains invalid opcode: %1.",
+    "TKEY_EXCHANGE_IO_FETCH_RESULT", "exchange callback handling IO result: %1.",
     "TKEY_EXCHANGE_NOT_A_RESPONSE", "GSS-TKEY exchange received a non response type.",
     "TKEY_EXCHANGE_OUT_TOKEN_NOT_EMPTY", "GSS-TKEY exchange output token is not empty.",
     "TKEY_EXCHANGE_RDATA_COUNT", "GSS-TKEY exchange received a response with rdata count: %1.",

@@ -187,6 +187,11 @@ contains wrong answer type. The argument contains the wrong answer type.
 This error message indicates that the GSS-TKEY exchange failed because the response
 contains invalid opcode. The argument contains the wrong opcode.
 
+% TKEY_EXCHANGE_IO_FETCH_RESULT exchange callback handling IO result: %1.
+Logged at debug log level 40.
+This debug message indicates that the exchange callback has been called with the
+IOFetch result contained in the message argument.
+
 % TKEY_EXCHANGE_NOT_A_RESPONSE GSS-TKEY exchange received a non response type.
 Logged at debug log level 40.
 This debug message indicates that the GSS-TKEY exchange received a non response

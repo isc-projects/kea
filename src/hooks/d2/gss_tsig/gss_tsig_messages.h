@@ -49,6 +49,7 @@ extern const isc::log::MessageID TKEY_EXCHANGE_FAIL_TO_INIT;
 extern const isc::log::MessageID TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_ANSWER_COUNT;
 extern const isc::log::MessageID TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_ANSWER_TYPE;
 extern const isc::log::MessageID TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_OPCODE;
+extern const isc::log::MessageID TKEY_EXCHANGE_IO_FETCH_RESULT;
 extern const isc::log::MessageID TKEY_EXCHANGE_NOT_A_RESPONSE;
 extern const isc::log::MessageID TKEY_EXCHANGE_OUT_TOKEN_NOT_EMPTY;
 extern const isc::log::MessageID TKEY_EXCHANGE_RDATA_COUNT;

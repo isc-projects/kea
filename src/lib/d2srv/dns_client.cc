@@ -183,6 +183,8 @@ DNSClientImpl::operator()(asiodns::IOFetch::Result result) {
     if (stopped_) {
         return;
     }
+    LOG_DEBUG(d2_to_dns_logger, isc::log::DBGLVL_TRACE_DETAIL,
+              DHCP_DDNS_IO_FETCH_RESULT).arg(IOFetch::resultToText(result));
     // Get the status from IO. If no success, we just call user's callback
     // and pass the status code.
     DNSClient::Status status = getStatus(result);

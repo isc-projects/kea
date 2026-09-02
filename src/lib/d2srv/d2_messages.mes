@@ -195,6 +195,11 @@ This is a debug message issued when the DHCP-DDNS application encountered an
 error while decoding a response to DNS Update message. Typically, this error
 will be encountered when a response message is malformed.
 
+% DHCP_DDNS_IO_FETCH_RESULT DNS update callback handling IO result: %1.
+Logged at debug log level 50.
+This debug message indicates that the DNS update callback has been called with the
+IOFetch result contained in the message argument.
+
 % DHCP_DDNS_LISTENING_ON_ALL_INTERFACES the DHCP-DDNS server has been configured to listen on %1. This is an insecure configuration supported for testing purposes only
 This is a warning message issued when the DHCP-DDNS server is configured to
 listen at either `0.0.0.0` or `::`. It is possible for a malicious attacker to send

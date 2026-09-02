@@ -226,6 +226,8 @@ void
 TKeyExchangeImpl::operator()(IOFetch::Result result) {
     // Get the status from IO. If no success, we just call user's callback
     // and pass the status code.
+    LOG_DEBUG(gss_tsig_logger, DBGLVL_TRACE_BASIC, TKEY_EXCHANGE_IO_FETCH_RESULT)
+        .arg(IOFetch::resultToText(result));
     GssApiBufferPtr intoken;
     switch (result) {
     case IOFetch::SUCCESS:
