@@ -1,0 +1,5 @@
+[func]		tmark
+	Modified kea-dhcp4 and kea-dhcp6 to avoid
+	scheduling unnecessary DDNS entry removals
+	when renewing leases.
+	(Gitlab #4794)

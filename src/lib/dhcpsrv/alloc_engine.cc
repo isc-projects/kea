@@ -5059,8 +5059,8 @@ AllocEngine::allocateOrReuseLease4(const IOAddress& candidate, ClientContext4& c
     if (exist_lease) {
         if (exist_lease->expired()) {
             ctx.old_lease_ = Lease4Ptr(new Lease4(*exist_lease));
-            // reuseExpiredLease4() will reclaim the use which will
-            // queue an NCR remove it needed.  Clear the DNS fields in
+            // reuseExpiredLease4() will reclaim the lease which will
+            // queue an NCR remove if needed.  Clear the DNS fields in
             // the old lease to avoid a redundant remove in server logic.
             ctx.old_lease_->hostname_.clear();
             ctx.old_lease_->fqdn_fwd_ = false;
@@ -5213,6 +5213,12 @@ AllocEngine::allocateUnreservedLease4(ClientContext4& ctx) {
                 if (exist_lease->expired() &&
                     (check_reservation_first || !addressReserved(candidate, ctx))) {
                     ctx.old_lease_ = Lease4Ptr(new Lease4(*exist_lease));
+                    // reuseExpiredLease4() will reclaim the lease which will
+                    // queue an NCR remove if needed.  Clear the DNS fields in
+                    // the old lease to avoid a redundant remove in server logic.
+                    ctx.old_lease_->hostname_.clear();
+                    ctx.old_lease_->fqdn_fwd_ = false;
+                    ctx.old_lease_->fqdn_rev_ = false;
                     new_lease = reuseExpiredLease4(exist_lease, ctx, callout_status);
                 }
             }

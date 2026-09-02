@@ -2558,21 +2558,24 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
         // to determine if the changes included changes to the FQDN. If so
         // then we may need to do a CHG_REMOVE.
         for (auto const& l : ia_ctx.changed_leases_) {
-
             if (l->addr_ == ia_address) {
                 // The address is the same so this must be renewal. If we're not
                 // always updating on renew, then we only renew if DNS info has
-                // changed.
+                // changed. 
+                bool ddns_changed = ((*(ctx.duid_) != *(l->duid_)) ||
+                                     (l->hostname_ != opt_fqdn->getDomainName()) ||
+                                     (l->fqdn_fwd_ != do_fwd) || (l->fqdn_rev_ != do_rev));
+
                 if ((l->reuseable_valid_lft_ > 0) ||
-                    (!ctx.getDdnsParams()->getUpdateOnRenew() &&
-                    (l->hostname_ == opt_fqdn->getDomainName() &&
-                     l->fqdn_fwd_ == do_fwd && l->fqdn_rev_ == do_rev))) {
+                    (!ctx.getDdnsParams()->getUpdateOnRenew() && !ddns_changed)) {
                     extended_only = true;
                 } else {
-                    // Queue a CHG_REMOVE of the old data.
+                    // Queue a CHG_REMOVE of the old data if it's different.
                     // NCR will only be created if the lease hostname is not
                     // empty and at least one of the direction flags is true
-                    queueNCR(CHG_REMOVE, l);
+                    if (ddns_changed) {
+                        queueNCR(CHG_REMOVE, l);
+                    }
                 }
 
                 break;

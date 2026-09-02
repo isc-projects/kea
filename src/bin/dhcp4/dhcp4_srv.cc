@@ -3028,11 +3028,16 @@ Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
         return;
     }
 
-    if ((lease->reuseable_valid_lft_ == 0) &&
-        (!old_lease || ddns_params.getUpdateOnRenew() ||
-         !lease->hasIdenticalFqdn(*old_lease))) {
-        if (old_lease) {
-            // Queue's up a remove of the old lease's DNS (if needed)
+    // DDNS changed if there's an old lease with a different client, FQDN, or address.
+    bool ddns_changed = (old_lease &&
+                         ((!old_lease->belongsToClient(lease->hwaddr_, lease->client_id_)) ||
+                          (!old_lease->hasIdenticalFqdn(*lease)) ||
+                          (old_lease->addr_ != lease->addr_)));
+
+    if (lease->reuseable_valid_lft_ == 0 &&
+        (!old_lease || ddns_params.getUpdateOnRenew() || ddns_changed)) {
+        if (ddns_changed) {
+            // Queue up a remove of the old lease's DNS (if needed)
             queueNCR(CHG_REMOVE, old_lease);
         }
 
