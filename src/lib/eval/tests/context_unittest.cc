@@ -940,9 +940,9 @@ TEST_F(EvalContextTest, string) {
 
     ASSERT_EQ(3U, eval.expression_.size());
 
-    TokenPtr tmp1  = eval.expression_.at(0);
-    TokenPtr tmp2  = eval.expression_.at(1);
-    TokenPtr tmp3  = eval.expression_.at(2);
+    TokenPtr tmp1 = eval.expression_.at(0);
+    TokenPtr tmp2 = eval.expression_.at(1);
+    TokenPtr tmp3 = eval.expression_.at(2);
 
     checkTokenString(tmp1, "foo");
     checkTokenString(tmp2, "bar");
@@ -960,9 +960,9 @@ TEST_F(EvalContextTest, stringComplex) {
 
     ASSERT_EQ(3U, eval.expression_.size());
 
-    TokenPtr tmp1  = eval.expression_.at(0);
-    TokenPtr tmp2  = eval.expression_.at(1);
-    TokenPtr tmp3  = eval.expression_.at(2);
+    TokenPtr tmp1 = eval.expression_.at(0);
+    TokenPtr tmp2 = eval.expression_.at(1);
+    TokenPtr tmp3 = eval.expression_.at(2);
 
     char l_data[] = "12345~!@#$%^&*()_+{}[];:<>/?\\67890\t \0\b\r\f";
     char r_data[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -982,8 +982,8 @@ TEST_F(EvalContextTest, stringNulls) {
     ASSERT_EQ(3U, eval.expression_.size());
 
     TokenPtr tmp1 = eval.expression_.at(0);
-    TokenPtr tmp2  = eval.expression_.at(1);
-    TokenPtr tmp3  = eval.expression_.at(2);
+    TokenPtr tmp2 = eval.expression_.at(1);
+    TokenPtr tmp3 = eval.expression_.at(2);
 
     checkTokenString(tmp1, string(2, 0));
     checkTokenString(tmp2, string(2, 2));

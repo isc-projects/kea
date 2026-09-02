@@ -326,7 +326,7 @@ printOrDump(const std::vector<uint8_t>& data, size_t max_dump);
 /// @return two hex digit string.
 const std::string& byteToHex(uint8_t byte);
 
-/// @brief Escape null character.s
+/// @brief Escape null characters.
 ///
 /// To be used to avoid an embedded null character to hide everything
 /// after it when the string is converted to a C-style string, e.g.

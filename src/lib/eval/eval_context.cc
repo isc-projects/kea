@@ -22,8 +22,7 @@
 EvalContext::EvalContext(const Option::Universe& option_universe,
                          CheckDefined check_defined)
     : label_(0), trace_scanning_(false), trace_parsing_(false),
-      option_universe_(option_universe), check_defined_(check_defined)
-{
+      option_universe_(option_universe), check_defined_(check_defined) {
 }
 
 EvalContext::~EvalContext() {
@@ -58,7 +57,7 @@ EvalContext::error(const isc::eval::location& loc, const std::string& what) {
 }
 
 void
-EvalContext::error (const std::string& what) {
+EvalContext::error(const std::string& what) {
     isc_throw(EvalParseError, util::str::escapeNulls(what));
 }
 

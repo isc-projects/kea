@@ -2484,7 +2484,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"{JSONStringCharacter}*\\{BadJSONEscapeSequence}[^"]*\" {
     /* Bad string with a bad escape inside */
-    std::string raw(yytext+1,  yyleng-1);
+    std::string raw(yytext+1, yyleng-1);
     size_t len = raw.size() - 1;
     size_t pos = 0;
     bool found = false;

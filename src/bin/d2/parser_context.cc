@@ -21,17 +21,14 @@ namespace isc {
 namespace d2 {
 
 D2ParserContext::D2ParserContext()
-  : sfile_(0), ctx_(NO_KEYWORD), trace_scanning_(false), trace_parsing_(false)
-{
+  : sfile_(0), ctx_(NO_KEYWORD), trace_scanning_(false), trace_parsing_(false) {
 }
 
-D2ParserContext::~D2ParserContext()
-{
+D2ParserContext::~D2ParserContext() {
 }
 
 isc::data::ElementPtr
-D2ParserContext::parseString(const std::string& str, ParserType parser_type)
-{
+D2ParserContext::parseString(const std::string& str, ParserType parser_type) {
     scanStringBegin(str, parser_type);
     return (parseCommon());
 }
@@ -73,8 +70,7 @@ D2ParserContext::parseCommon() {
 void
 D2ParserContext::error(const isc::d2::location& loc,
                        const std::string& what,
-                       size_t pos)
-{
+                       size_t pos) {
     std::string escaped = util::str::escapeNulls(what);
     if (pos == 0) {
         isc_throw(D2ParseError, loc << ": " << escaped);
@@ -84,20 +80,17 @@ D2ParserContext::error(const isc::d2::location& loc,
 }
 
 void
-D2ParserContext::error (const std::string& what)
-{
+D2ParserContext::error(const std::string& what) {
     isc_throw(D2ParseError, util::str::escapeNulls(what));
 }
 
 void
-D2ParserContext::fatal (const std::string& what)
-{
+D2ParserContext::fatal(const std::string& what) {
     isc_throw(D2ParseError, util::str::escapeNulls(what));
 }
 
 isc::data::Element::Position
-D2ParserContext::loc2pos(isc::d2::location& loc)
-{
+D2ParserContext::loc2pos(isc::d2::location& loc) {
     const std::string& file = *loc.begin.filename;
     const uint32_t line = loc.begin.line;
     const uint32_t pos = loc.begin.column;
@@ -107,8 +100,7 @@ D2ParserContext::loc2pos(isc::d2::location& loc)
 void
 D2ParserContext::require(const std::string& name,
                          isc::data::Element::Position open_loc,
-                         isc::data::Element::Position close_loc)
-{
+                         isc::data::Element::Position close_loc) {
     ConstElementPtr value = stack_.back()->get(name);
     if (!value) {
         isc_throw(D2ParseError,
@@ -121,8 +113,7 @@ D2ParserContext::require(const std::string& name,
 
 void
 D2ParserContext::unique(const std::string& name,
-                        isc::data::Element::Position loc)
-{
+                        isc::data::Element::Position loc) {
     ConstElementPtr value = stack_.back()->get(name);
     if (value) {
         if (ctx_ != NO_KEYWORD) {
@@ -138,15 +129,13 @@ D2ParserContext::unique(const std::string& name,
 }
 
 void
-D2ParserContext::enter(const ParserContext& ctx)
-{
+D2ParserContext::enter(const ParserContext& ctx) {
     cstack_.push_back(ctx_);
     ctx_ = ctx;
 }
 
 void
-D2ParserContext::leave()
-{
+D2ParserContext::leave() {
     if (cstack_.empty()) {
         fatal("unbalanced syntactic context");
     }
@@ -156,8 +145,7 @@ D2ParserContext::leave()
 }
 
 const std::string
-D2ParserContext::contextName()
-{
+D2ParserContext::contextName() {
     switch (ctx_) {
     case NO_KEYWORD:
         return ("__no keyword__");
