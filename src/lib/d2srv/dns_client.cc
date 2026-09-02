@@ -184,7 +184,8 @@ DNSClientImpl::operator()(asiodns::IOFetch::Result result) {
         return;
     }
     LOG_DEBUG(d2_to_dns_logger, isc::log::DBGLVL_TRACE_DETAIL,
-              DHCP_DDNS_IO_FETCH_RESULT).arg(IOFetch::resultToText(result));
+              DHCP_DDNS_IO_FETCH_RESULT)
+        .arg(IOFetch::resultToText(result));
     // Get the status from IO. If no success, we just call user's callback
     // and pass the status code.
     DNSClient::Status status = getStatus(result);
@@ -204,7 +205,8 @@ DNSClientImpl::operator()(asiodns::IOFetch::Result result) {
         } catch (const isc::Exception& ex) {
             status = DNSClient::INVALID_RESPONSE;
             LOG_DEBUG(d2_to_dns_logger, isc::log::DBGLVL_TRACE_DETAIL,
-                      DHCP_DDNS_INVALID_RESPONSE).arg(ex.what());
+                      DHCP_DDNS_INVALID_RESPONSE)
+                .arg(ex.what());
             incrStats("update-error");
         }
 
