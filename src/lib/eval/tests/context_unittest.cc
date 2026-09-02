@@ -971,6 +971,25 @@ TEST_F(EvalContextTest, stringComplex) {
     checkTokenEq(tmp3);
 }
 
+// Test the parsing of a string with embedded null characters.
+TEST_F(EvalContextTest, stringNulls) {
+    EvalContext eval(Option::V6);
+
+    string str{ '\'', 0, 0, '\'', ' ', '=', '=', ' ', '\'', 2, 2, '\'' };
+    EXPECT_NO_THROW(parsed_ = eval.parseString(str));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(3U, eval.expression_.size());
+
+    TokenPtr tmp1 = eval.expression_.at(0);
+    TokenPtr tmp2  = eval.expression_.at(1);
+    TokenPtr tmp3  = eval.expression_.at(2);
+
+    checkTokenString(tmp1, string(2, 0));
+    checkTokenString(tmp2, string(2, 2));
+    checkTokenEq(tmp3);
+}
+
 // Test the parsing of a basic expression using integers
 TEST_F(EvalContextTest, equalInteger) {
 
@@ -2219,6 +2238,9 @@ TEST_F(EvalContextTest, scanErrors) {
     checkError("0x123h", "<string>:1.6: Invalid character: h");
     checkError(":1", "<string>:1.1: Invalid character: :");
     checkError("=", "<string>:1.1: Invalid character: =");
+    checkError("\x02", "<string>:1.1: Invalid character: \x02");
+    checkError(string{ 0 }, "<string>:1.1: Invalid character: \\0");
+    checkError(string{ ' ', 0 }, "<string>:1.2: Invalid character: \\0");
 
     // Typo should be handled as well.
     checkError("subtring", "<string>:1.1: Invalid character: s");

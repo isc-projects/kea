@@ -1878,7 +1878,7 @@ return isc::eval::EvalParser::make_PLUS(loc);
 case 68:
 YY_RULE_SETUP
 #line 249 "lexer.ll"
-driver.error (loc, "Invalid character: " + std::string(evaltext));
+driver.error (loc, "Invalid character: " + std::string(evaltext, evalleng));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 #line 250 "lexer.ll"

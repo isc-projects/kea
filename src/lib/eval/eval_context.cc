@@ -14,6 +14,7 @@
 #include <eval/eval_context.h>
 #include <eval/parser.h>
 #include <exceptions/exceptions.h>
+#include <util/str.h>
 #include <boost/lexical_cast.hpp>
 #include <fstream>
 #include <limits>
@@ -53,12 +54,12 @@ EvalContext::parseString(const std::string& str, ParserType type) {
 
 void
 EvalContext::error(const isc::eval::location& loc, const std::string& what) {
-    isc_throw(EvalParseError, loc << ": " << what);
+    isc_throw(EvalParseError, loc << ": " << util::str::escapeNulls(what));
 }
 
 void
 EvalContext::error (const std::string& what) {
-    isc_throw(EvalParseError, what);
+    isc_throw(EvalParseError, util::str::escapeNulls(what));
 }
 
 uint16_t
@@ -256,5 +257,5 @@ EvalContext::isClientClassDefined(const ClientClass& client_class) {
 
 void
 EvalContext::fatal(const std::string& what) {
-    isc_throw(Unexpected, what);
+    isc_throw(Unexpected, util::str::escapeNulls(what));
 }
