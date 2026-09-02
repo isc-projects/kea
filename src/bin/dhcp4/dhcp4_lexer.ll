@@ -2468,7 +2468,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
 \"{JSONStringCharacter}*{ControlCharacter}{ControlCharacterFill}*\" {
     /* Bad string with a forbidden control character inside */
-    std::string raw(yytext+1);
+    std::string raw(yytext+1, yyleng-1);
     size_t len = raw.size() - 1;
     size_t pos = 0;
     for (; pos < len; ++pos) {
@@ -2478,13 +2478,13 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         }
     }
     driver.error(driver.loc_,
-                 "Invalid control in " + std::string(yytext),
+                 "Invalid control in " + std::string(yytext, yyleng),
                  pos + 1);
 }
 
 \"{JSONStringCharacter}*\\{BadJSONEscapeSequence}[^"]*\" {
     /* Bad string with a bad escape inside */
-    std::string raw(yytext+1);
+    std::string raw(yytext+1,  yyleng-1);
     size_t len = raw.size() - 1;
     size_t pos = 0;
     bool found = false;
@@ -2527,7 +2527,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         trailer = "...";
     }
     driver.error(driver.loc_,
-                 "Bad escape in " + std::string(yytext) + trailer,
+                 "Bad escape in " + std::string(yytext, yyleng) + trailer,
                  pos);
 }
 

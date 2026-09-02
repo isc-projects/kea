@@ -573,6 +573,22 @@ TEST(ParserTest, errors) {
     testError("\"\x02\\u\"",
               ParserContext::PARSER_JSON,
               "<string>:1.1-5 (near 1): Invalid control in \"\x02\\u\"");
+    testError("\"\\x\"",
+              ParserContext::PARSER_JSON,
+              "<string>:1.1-4 (near 2): Bad escape in \"\\x\"");
+    testError("\"\\x\\\"\"",
+              ParserContext::PARSER_JSON,
+              "<string>:1.1-5 (near 2): Bad escape in \"\\x\\\"...");
+    testError("\"foo\\x\\\"bar\"",
+              ParserContext::PARSER_JSON,
+              "<string>:1.1-8 (near 5): Bad escape in \"foo\\x\\\"...");
+    // Not so easy to insert a null in a string literal.
+    testError(string{ '"', '\\', '\0', '"' },
+              ParserContext::PARSER_JSON,
+              "<string>:1.1-4 (near 2): Bad escape in \"\\\\0\"");
+    testError(string{ '"', '\\', '\0', '\\', '"', '"' },
+              ParserContext::PARSER_JSON,
+              "<string>:1.1-5 (near 2): Bad escape in \"\\\\0\\\"...");
 
     // from data_unittest.c
     testError("\\a",

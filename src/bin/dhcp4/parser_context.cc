@@ -11,6 +11,7 @@
 #include <dhcp4/dhcp4_log.h>
 #include <exceptions/exceptions.h>
 #include <cc/data.h>
+#include <util/str.h>
 #include <boost/lexical_cast.hpp>
 #include <fstream>
 #include <sstream>
@@ -71,21 +72,22 @@ void
 Parser4Context::error(const isc::dhcp::location& loc,
                       const std::string& what,
                       size_t pos) {
+    std::string escaped = util::str::escapeNulls(what);
     if (pos == 0) {
-        isc_throw(Dhcp4ParseError, loc << ": " << what);
+        isc_throw(Dhcp4ParseError, loc << ": " << escaped);
     } else {
-        isc_throw(Dhcp4ParseError, loc << " (near " << pos << "): " << what);
+        isc_throw(Dhcp4ParseError, loc << " (near " << pos << "): " << escaped);
     }
 }
 
 void
 Parser4Context::error(const std::string& what) {
-    isc_throw(Dhcp4ParseError, what);
+    isc_throw(Dhcp4ParseError, util::str::escapeNulls(what));
 }
 
 void
 Parser4Context::fatal(const std::string& what) {
-    isc_throw(Dhcp4ParseError, what);
+    isc_throw(Dhcp4ParseError, util::str::escapeNulls(what));
 }
 
 isc::data::Element::Position
