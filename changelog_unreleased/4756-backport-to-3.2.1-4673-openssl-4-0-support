@@ -1,0 +1,3 @@
+[build]		fdupont
+	Added OpenSSL 4.0.x support.
+	(Gitlab #4756, #4673)
