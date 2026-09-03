@@ -3030,8 +3030,8 @@ Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
 
     // DDNS changed if there's an old lease with a different client, FQDN, or address.
     bool ddns_changed = (old_lease &&
-                         ((!old_lease->belongsToClient(lease->hwaddr_, lease->client_id_)) ||
-                          (!old_lease->hasIdenticalFqdn(*lease)) ||
+                         (!old_lease->belongsToClient(lease->hwaddr_, lease->client_id_) ||
+                          !old_lease->hasIdenticalFqdn(*lease) ||
                           (old_lease->addr_ != lease->addr_)));
 
     if (lease->reuseable_valid_lft_ == 0 &&
