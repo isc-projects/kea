@@ -56,6 +56,18 @@ generateNCR(const dhcp_ddns::NameChangeType& chg_type, const Lease4Ptr& lease);
 /// @param lease Pointer to the lease.
 void queueNCR(const dhcp_ddns::NameChangeType& chg_type, const Lease6Ptr& lease);
 
+/// @brief Creates NameChangeRequest from the DHCPv6 lease.
+///
+/// This function creates name change request from the information contained
+/// in the DHCPv6 lease. 
+///
+/// @param chg_type Type of the name change request
+/// @param lease Pointer to the lease.
+/// @return A pointer to the newly created NameChangeRequest or an empty
+/// pointer.
+dhcp_ddns::NameChangeRequestPtr
+generateNCR(const dhcp_ddns::NameChangeType& chg_type, const Lease6Ptr& lease);
+
 /// @brief Calculates TTL for a DNS resource record based on lease life time.
 ///
 /// The logic for calculating TTL is as follow:

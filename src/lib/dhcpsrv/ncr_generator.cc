@@ -176,6 +176,21 @@ void queueNCR(const NameChangeType& chg_type, const Lease6Ptr& lease) {
     }
 }
 
+NameChangeRequestPtr
+generateNCR(const NameChangeType& chg_type, const Lease6Ptr& lease) {
+    NameChangeRequestPtr ncr;
+    // DUID is required to generate NCR.
+    if (lease && (lease->type_ != Lease::TYPE_PD) && lease->duid_) {
+        // Figure out from the lease's subnet if we should use conflict resolution.
+        // If there's no subnet, something hinky is going on so we'll set it true.
+        ConstSubnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()
+                            ->getCfgSubnets6()->getSubnet(lease->subnet_id_);
+        ncr = generateNCRCommon(chg_type, lease, *(lease->duid_), subnet);
+    }
+
+    return (ncr);
+}
+
 uint32_t calculateDdnsTtl(uint32_t lease_lft,
                           const util::Optional<double>& ddns_ttl_percent,
                           const util::Optional<uint32_t>& ddns_ttl,

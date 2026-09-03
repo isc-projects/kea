@@ -661,6 +661,83 @@ public:
         ASSERT_NO_THROW(d2_mgr_.runReadyIO());
     }
 
+    /// @brief Verify that a nested NameChangeRequest at the given position
+    /// holds expected values.
+    ///
+    /// Peeks at the NCR at the top of the send queue and checks the contents
+    /// of the NCR at a given position within an NCR chain against a number of
+    /// expected parameters.  It does NOT remove the NCR from the send queue.
+    ///
+    /// @param index - zero-based position within a chain of NCRs
+    /// @param type An expected type of the NameChangeRequest (Add or Remove).
+    /// @param reverse An expected setting of the reverse update flag.
+    /// @param forward An expected setting of the forward update flag.
+    /// @param addr A string representation of the IPv6 address held in the
+    /// NameChangeRequest.
+    /// @param dhcid An expected DHCID value.  Ignored if blank.
+    /// @note This value is the value that is produced by
+    /// dhcp_ddns::D2Dhcid::createDigest() with the appropriate arguments. This
+    /// method uses encryption tools to produce the value which cannot be
+    /// easily duplicated by hand.  It is more or less necessary to generate
+    /// these values programmatically and place them here. Should the
+    /// underlying implementation of createDigest() change these test values
+    /// will likely need to be updated as well.
+    /// @param expires The cltt of the lease associated with the
+    /// NameChangeRequest, and used to calculate NCR expires value.
+    /// @param valid_lft the valid lifetime of the lease associated with the
+    /// NameChangeRequest.
+    /// @param fqdn The expected string value of the FQDN, if blank the
+    /// check is skipped
+    /// @param exp_cr_mode expected value of NCR::conflict_resolution_mode_
+    /// @param ddns_ttl_percent expected value of ddns_ttl_percent used for
+    /// the NCR
+    /// @param exp_ddns_ttl expected configured value for ddns-ttl
+    /// @param exp_ddns_ttl_min expected configured value for ddns-ttl-min
+    /// @param exp_ddns_ttl_max expected configured value for ddns-ttl-max
+    void 
+    verifyNestedNameChangeRequest(const size_t index,
+                                  const isc::dhcp_ddns::NameChangeType type,
+                                  const bool reverse, const bool forward,
+                                  const std::string& addr,
+                                  const std::string& dhcid,
+                                  const uint16_t valid_lft,
+                                  const std::string& fqdn = "",
+                                  const ConflictResolutionMode exp_cr_mode = CHECK_WITH_DHCID,
+                                  util::Optional<double> exp_ddns_ttl_percent = util::Optional<double>(),
+                                  Optional<uint32_t> exp_ddns_ttl = Optional<uint32_t>(),
+                                  Optional<uint32_t> exp_ddns_ttl_min = Optional<uint32_t>(),
+                                  Optional<uint32_t> exp_ddns_ttl_max = Optional<uint32_t>()) {
+        NameChangeRequestPtr ncr;
+        ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
+        ASSERT_TRUE(ncr);
+
+        for (size_t i = 0; i < index; ++i) {
+            ncr = ncr->getNextNcr();
+            ASSERT_TRUE(ncr) << "Nested NCR index " << index << " is out of range" << std::endl;
+        }
+
+        EXPECT_EQ(type, ncr->getChangeType());
+        EXPECT_EQ(forward, ncr->isForwardChange());
+        EXPECT_EQ(reverse, ncr->isReverseChange());
+        EXPECT_EQ(addr, ncr->getIpAddress());
+        if (!dhcid.empty()) {
+            EXPECT_EQ(dhcid, ncr->getDhcid().toStr());
+        }
+
+        uint32_t ttl = calculateDdnsTtl(valid_lft, exp_ddns_ttl_percent, exp_ddns_ttl,
+                                        exp_ddns_ttl_min, exp_ddns_ttl_max);
+
+        EXPECT_EQ(ttl, ncr->getLeaseLength());
+
+        EXPECT_EQ(isc::dhcp_ddns::ST_NEW, ncr->getStatus());
+
+        if (! fqdn.empty()) {
+           EXPECT_EQ(fqdn, ncr->getFqdn());
+        }
+
+        EXPECT_EQ(exp_cr_mode, ncr->getConflictResolutionMode());
+    }
+
     /// @brief Updates inherited subnet and pool members
     ///
     /// Hack added to set subnet_ and pool_ members that are buried into lower
@@ -1124,17 +1201,23 @@ TEST_F(FqdnDhcpv6SrvTest, processTwoRequestsDiffFqdn) {
     // remove the existing entries, one to add new entries.
     testProcessMessage(DHCPV6_REQUEST, "otherhost.example.com",
                        "otherhost.example.com.");
-    ASSERT_EQ(2U, d2_mgr_.getQueueSize());
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
+
+    // Should have 1 NCR, a remove with a nested add.
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
+    verifyNestedNameChangeRequest(0, isc::dhcp_ddns::CHG_REMOVE, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             lease_->valid_lft_);
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+
+    verifyNestedNameChangeRequest(1, isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201D422AA463306223D269B6CB7AFE7AAD265FC"
                             "EA97F93623019B2E0D14E5323D5A",
                             lease_->valid_lft_);
+
+    // Process the message off the queue
+    ASSERT_NO_THROW(d2_mgr_.runReadyIO());
 }
 
 // Test that client may send two requests, each carrying FQDN option with
@@ -1230,17 +1313,22 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewDiffFqdn) {
     // remove the existing entries, one to add new entries.
     testProcessMessage(DHCPV6_RENEW, "otherhost.example.com",
                        "otherhost.example.com.");
-    ASSERT_EQ(2U, d2_mgr_.getQueueSize());
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
-                            "2001:db8:1:1::dead:beef",
-                            "000201415AA33D1187D148275136FA30300478"
-                            "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            lease_->valid_lft_);
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                            "2001:db8:1:1::dead:beef",
-                            "000201D422AA463306223D269B6CB7AFE7AAD265FC"
-                            "EA97F93623019B2E0D14E5323D5A",
-                            lease_->valid_lft_);
+    // Should have 1 NCR, a remove with a nested add.
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
+    verifyNestedNameChangeRequest(0, isc::dhcp_ddns::CHG_REMOVE, true, true,
+                                 "2001:db8:1:1::dead:beef",
+                                 "000201415AA33D1187D148275136FA30300478"
+                                 "FAAAA3EBD29826B5C907B2C9268A6F52",
+                                 lease_->valid_lft_);
+
+    verifyNestedNameChangeRequest(1, isc::dhcp_ddns::CHG_ADD, true, true,
+                                  "2001:db8:1:1::dead:beef",
+                                  "000201D422AA463306223D269B6CB7AFE7AAD265FC"
+                                  "EA97F93623019B2E0D14E5323D5A",
+                                  lease_->valid_lft_);
+
+    // Process the message off the queue
+    ASSERT_NO_THROW(d2_mgr_.runReadyIO());
 }
 
 // Test that client may send Request followed by the Renew, both holding
@@ -1319,24 +1407,28 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewFqdnFlags) {
                                   IOAddress("2001:db8:1:1::dead:beef"));
     ASSERT_TRUE(lease_);
 
-    // We should have two NCRs, one remove and one add.
-    ASSERT_EQ(2U, d2_mgr_.getQueueSize());
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, false,
-                            "2001:db8:1:1::dead:beef",
-                            "000201415AA33D1187D148275136FA30300478"
-                            "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            lease_->valid_lft_);
+    // Should have 1 NCR, a remove with a nested add.
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
+    verifyNestedNameChangeRequest(0, isc::dhcp_ddns::CHG_REMOVE, true, false,
+                                 "2001:db8:1:1::dead:beef",
+                                 "000201415AA33D1187D148275136FA30300478"
+                                 "FAAAA3EBD29826B5C907B2C9268A6F52",
+                                 lease_->valid_lft_);
 
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                            "2001:db8:1:1::dead:beef",
-                            "000201415AA33D1187D148275136FA30300478"
-                            "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            lease_->valid_lft_);
+    verifyNestedNameChangeRequest(1, isc::dhcp_ddns::CHG_ADD, true, true,
+                                  "2001:db8:1:1::dead:beef",
+                                  "000201415AA33D1187D148275136FA30300478"
+                                  "FAAAA3EBD29826B5C907B2C9268A6F52",
+                                  lease_->valid_lft_);
+
+    // Process the message off the queue
+    ASSERT_NO_THROW(d2_mgr_.runReadyIO());
 
     // Lastly, we renew with the N flag = 1 (which means no updates) so we
     // should have a dual direction remove NCR but NO add NCR.
     testProcessMessage(DHCPV6_RENEW, "myhost.example.com",
                        "myhost.example.com.", Option6ClientFqdn::FLAG_N);
+
     // We should only have the removal NCR.
     ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
@@ -2193,25 +2285,41 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
                                                                         IOAddress("2001:db8:1:1::dead:beef"));
             ASSERT_TRUE(new_lease);
 
-            // Verify queue count is correct.
-            ASSERT_EQ((scenario.remove_ + scenario.add_), d2_mgr_.getQueueSize());
-
-            // If we expect a remove, check it.
-            if (scenario.remove_ > 0) {
+            if ((scenario.remove_ + scenario.add_) == 2) {
                 // Verify NCR content
-                verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
-                                        old_lease->addr_.toText(), "",
-                                        old_lease->valid_lft_,
-                                        old_lease->hostname_);
-            }
-
-            // If we expect an add, check it.
-            if (scenario.add_ > 0) {
+                verifyNestedNameChangeRequest(0, isc::dhcp_ddns::CHG_REMOVE, true, true,
+                                              old_lease->addr_.toText(), "",
+                                              old_lease->valid_lft_,
+                                              old_lease->hostname_);
                 // Verify NCR content
-                verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                                        new_lease->addr_.toText(), "",
-                                        new_lease->valid_lft_,
-                                        new_lease->hostname_);
+                verifyNestedNameChangeRequest(1, isc::dhcp_ddns::CHG_ADD, true, true,
+                                              new_lease->addr_.toText(), "",
+                                              new_lease->valid_lft_,
+                                              new_lease->hostname_);
+
+                // Process the message off the queue
+                ASSERT_NO_THROW(d2_mgr_.runReadyIO());
+            } else {
+                // Verify queue count is correct.
+                ASSERT_EQ((scenario.remove_ + scenario.add_), d2_mgr_.getQueueSize());
+
+                // If we expect a remove, check it.
+                if (scenario.remove_ > 0) {
+                    // Verify NCR content
+                    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
+                                            old_lease->addr_.toText(), "",
+                                            old_lease->valid_lft_,
+                                            old_lease->hostname_);
+                }
+
+                // If we expect an add, check it.
+                if (scenario.add_ > 0) {
+                    // Verify NCR content
+                    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                                            new_lease->addr_.toText(), "",
+                                            new_lease->valid_lft_,
+                                            new_lease->hostname_);
+                }
             }
 
             // Now delete the lease.

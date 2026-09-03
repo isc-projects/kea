@@ -878,7 +878,7 @@ public:
     /// if the value supplied is not empty):w
     /// @param lifetime - lease's valid lifetime from which NCR ttl was
     /// generated
-    /// @param exp_conflict_resolution_mode expected value of conflict resolution mode
+    /// @param exp_cr_mode expected value of conflict resolution mode
     /// @param ddns_ttl_percent expected configured value for ddns-ttl-percent
     /// @param ddns_ttl expected configured value for ddns-ttl
     /// @param ddns_ttl_min expected configured value for ddns-ttl-min
@@ -889,7 +889,7 @@ public:
                                  const std::string& fqdn,
                                  const std::string& dhcid,
                                  const uint16_t valid_lft,
-                                 const ConflictResolutionMode exp_conflict_resolution_mode = CHECK_WITH_DHCID,
+                                 const ConflictResolutionMode exp_cr_mode = CHECK_WITH_DHCID,
                                  Optional<double> ddns_ttl_percent = Optional<double>(),
                                  Optional<uint32_t> ddns_ttl = Optional<uint32_t>(),
                                  Optional<uint32_t> ddns_ttl_min = Optional<uint32_t>(),
@@ -914,7 +914,7 @@ public:
 
         EXPECT_EQ(ttl, ncr->getLeaseLength());
         EXPECT_EQ(isc::dhcp_ddns::ST_NEW, ncr->getStatus());
-        EXPECT_EQ(exp_conflict_resolution_mode, ncr->getConflictResolutionMode());
+        EXPECT_EQ(exp_cr_mode, ncr->getConflictResolutionMode());
 
         EXPECT_FALSE(ncr->getNextNcr()) << "NCR should not have next_ncr" << std::endl;
 
@@ -922,7 +922,7 @@ public:
         ASSERT_NO_THROW(d2_mgr_.runReadyIO());
     }
 
-    ///@brief Verify that the Nested NameChangeRequest holds valid values.
+    ///@brief Verify that the nested NameChangeRequest holds valid values.
     ///
     /// Peeks at the NCR at the top of the send queue and checks the contents
     /// of the NCR at a given position within an NCR chain against a number of
@@ -940,24 +940,23 @@ public:
     /// if the value supplied is not empty):w
     /// @param lifetime - lease's valid lifetime from which NCR ttl was
     /// generated
-    /// @param exp_conflict_resolution_mode expected value of conflict resolution mode
+    /// @param exp_cr_mode expected value of conflict resolution mode
     /// @param ddns_ttl_percent expected configured value for ddns-ttl-percent
     /// @param ddns_ttl expected configured value for ddns-ttl
     /// @param ddns_ttl_min expected configured value for ddns-ttl-min
     /// @param ddns_ttl_max expected configured value for ddns-ttl-max
-    void verifyNestedNameChangeRequest(
-                                 const size_t index,
-                                 const isc::dhcp_ddns::NameChangeType type,
-                                 const bool reverse, const bool forward,
-                                 const std::string& addr,
-                                 const std::string& fqdn,
-                                 const std::string& dhcid,
-                                 const uint16_t valid_lft,
-                                 const ConflictResolutionMode exp_conflict_resolution_mode = CHECK_WITH_DHCID,
-                                 Optional<double> ddns_ttl_percent = Optional<double>(),
-                                 Optional<uint32_t> ddns_ttl = Optional<uint32_t>(),
-                                 Optional<uint32_t> ddns_ttl_min = Optional<uint32_t>(),
-                                 Optional<uint32_t> ddns_ttl_max = Optional<uint32_t>()) {
+    void verifyNestedNameChangeRequest(const size_t index,
+                                       const isc::dhcp_ddns::NameChangeType type,
+                                       const bool reverse, const bool forward,
+                                       const std::string& addr,
+                                       const std::string& fqdn,
+                                       const std::string& dhcid,
+                                       const uint16_t valid_lft,
+                                       const ConflictResolutionMode exp_cr_mode = CHECK_WITH_DHCID,
+                                       Optional<double> ddns_ttl_percent = Optional<double>(),
+                                       Optional<uint32_t> ddns_ttl = Optional<uint32_t>(),
+                                       Optional<uint32_t> ddns_ttl_min = Optional<uint32_t>(),
+                                       Optional<uint32_t> ddns_ttl_max = Optional<uint32_t>()) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
         ASSERT_TRUE(ncr);
@@ -983,7 +982,7 @@ public:
 
         EXPECT_EQ(ttl, ncr->getLeaseLength());
         EXPECT_EQ(isc::dhcp_ddns::ST_NEW, ncr->getStatus());
-        EXPECT_EQ(exp_conflict_resolution_mode, ncr->getConflictResolutionMode());
+        EXPECT_EQ(exp_cr_mode, ncr->getConflictResolutionMode());
     }
 
     /// @brief Tests processing a request with the given client flags
