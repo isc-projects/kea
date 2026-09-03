@@ -163,6 +163,12 @@ and then start over from the `build_image` command.
 Some test cases require building with a different sanitizer. You can see this on the OSS-Fuzz test case page under
 `Job Type` e.g. `Job Type: libfuzzer_asan_kea`. Adjust the value passed to the `--sanitizer` flag accordingly.
 
+An easier way to replicate without cloning the oss-fuzz project is to copy the minimized testcase to
+`build/src/fuzz/corp` and then run the affected fuzz harness. Example:
+
+$ cp ~/Downloads/clusterfuzz-testcase-minimized-fuzz_dhcp_pkt_process4-6414999708041216 ./build/src/fuzz/corp
+$ ./build/src/fuzz/tests/test_fuzz_dhcp_pkt_process4
+
 @section usingAFL Using AFL
 
 In this, Kea is built using an AFL-supplied program that not only compiles the

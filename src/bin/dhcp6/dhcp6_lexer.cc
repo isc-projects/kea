@@ -1,6 +1,6 @@
-#line 1 "dhcp6_lexer.cc"
+#line 2 "dhcp6_lexer.cc"
 
-#line 3 "dhcp6_lexer.cc"
+#line 4 "dhcp6_lexer.cc"
 
 #define  YY_INT_ALIGNED short int
 
@@ -2335,7 +2335,7 @@ using namespace isc::dhcp;
 
 /* To avoid the call to exit... oops! */
 #define YY_FATAL_ERROR(msg) isc::dhcp::Parser6Context::fatal(msg)
-#line 2338 "dhcp6_lexer.cc"
+#line 2339 "dhcp6_lexer.cc"
 /* noyywrap disables automatic rewinding for the next file to parse. Since we
    always parse only a single string, there's no need to do any wraps. And
    using yywrap requires linking with -lfl, which provides the default yywrap
@@ -2361,8 +2361,8 @@ using namespace isc::dhcp;
    by moving it ahead by yyleng bytes. yyleng specifies the length of the
    currently matched token. */
 #define YY_USER_ACTION  driver.loc_.columns(yyleng);
-#line 2364 "dhcp6_lexer.cc"
 #line 2365 "dhcp6_lexer.cc"
+#line 2366 "dhcp6_lexer.cc"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -2692,7 +2692,7 @@ YY_DECL
     }
 
 
-#line 2695 "dhcp6_lexer.cc"
+#line 2696 "dhcp6_lexer.cc"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -5858,7 +5858,7 @@ YY_RULE_SETUP
 #line 2518 "dhcp6_lexer.ll"
 {
     /* Bad string with a forbidden control character inside */
-    std::string raw(yytext+1);
+    std::string raw(yytext+1, yyleng-1);
     size_t len = raw.size() - 1;
     size_t pos = 0;
     for (; pos < len; ++pos) {
@@ -5868,7 +5868,7 @@ YY_RULE_SETUP
         }
     }
     driver.error(driver.loc_,
-                 "Invalid control in " + std::string(yytext),
+                 "Invalid control in " + std::string(yytext, yyleng),
                  pos + 1);
 }
 	YY_BREAK
@@ -5878,7 +5878,7 @@ YY_RULE_SETUP
 #line 2534 "dhcp6_lexer.ll"
 {
     /* Bad string with a bad escape inside */
-    std::string raw(yytext+1);
+    std::string raw(yytext+1, yyleng-1);
     size_t len = raw.size() - 1;
     size_t pos = 0;
     bool found = false;
@@ -5921,7 +5921,7 @@ YY_RULE_SETUP
         trailer = "...";
     }
     driver.error(driver.loc_,
-                 "Bad escape in " + std::string(yytext) + trailer,
+                 "Bad escape in " + std::string(yytext, yyleng) + trailer,
                  pos);
 }
 	YY_BREAK
@@ -6134,7 +6134,7 @@ YY_RULE_SETUP
 #line 2723 "dhcp6_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 6137 "dhcp6_lexer.cc"
+#line 6138 "dhcp6_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{

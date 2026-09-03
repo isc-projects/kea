@@ -245,7 +245,7 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 ","            return isc::eval::EvalParser::make_COMA(loc);
 "*"            return isc::eval::EvalParser::make_ANY(loc);
 "+"            return isc::eval::EvalParser::make_PLUS(loc);
-.          driver.error (loc, "Invalid character: " + std::string(evaltext));
+.          driver.error (loc, "Invalid character: " + std::string(evaltext, evalleng));
 <<EOF>>    return isc::eval::EvalParser::make_END(loc);
 %%
 

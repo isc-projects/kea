@@ -934,9 +934,9 @@ TEST_F(EvalContextTest, string) {
 
     ASSERT_EQ(3U, eval.expression_.size());
 
-    TokenPtr tmp1  = eval.expression_.at(0);
-    TokenPtr tmp2  = eval.expression_.at(1);
-    TokenPtr tmp3  = eval.expression_.at(2);
+    TokenPtr tmp1 = eval.expression_.at(0);
+    TokenPtr tmp2 = eval.expression_.at(1);
+    TokenPtr tmp3 = eval.expression_.at(2);
 
     checkTokenString(tmp1, "foo");
     checkTokenString(tmp2, "bar");
@@ -954,14 +954,33 @@ TEST_F(EvalContextTest, stringComplex) {
 
     ASSERT_EQ(3U, eval.expression_.size());
 
-    TokenPtr tmp1  = eval.expression_.at(0);
-    TokenPtr tmp2  = eval.expression_.at(1);
-    TokenPtr tmp3  = eval.expression_.at(2);
+    TokenPtr tmp1 = eval.expression_.at(0);
+    TokenPtr tmp2 = eval.expression_.at(1);
+    TokenPtr tmp3 = eval.expression_.at(2);
 
     char l_data[] = "12345~!@#$%^&*()_+{}[];:<>/?\\67890\t \0\b\r\f";
     char r_data[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     checkTokenString(tmp1, string(l_data, sizeof(l_data) - 1));
     checkTokenString(tmp2, string(r_data, sizeof(r_data) - 1));
+    checkTokenEq(tmp3);
+}
+
+// Test the parsing of a string with embedded null characters.
+TEST_F(EvalContextTest, stringNulls) {
+    EvalContext eval(Option::V6);
+
+    string str{ '\'', 0, 0, '\'', ' ', '=', '=', ' ', '\'', 2, 2, '\'' };
+    EXPECT_NO_THROW(parsed_ = eval.parseString(str));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(3U, eval.expression_.size());
+
+    TokenPtr tmp1 = eval.expression_.at(0);
+    TokenPtr tmp2 = eval.expression_.at(1);
+    TokenPtr tmp3 = eval.expression_.at(2);
+
+    checkTokenString(tmp1, string(2, 0));
+    checkTokenString(tmp2, string(2, 2));
     checkTokenEq(tmp3);
 }
 
@@ -1225,7 +1244,7 @@ TEST_F(EvalContextTest, relay6OptionReverse) {
                      -1, 123, TokenOption::TEXTUAL, 3);
 }
 
-// Test the nest level of a relay6 option should be in [-32..32[
+// Test the nest level of a relay6 option should be in [-32..32]
 TEST_F(EvalContextTest, relay6OptionLimits) {
     EvalContext eval(Option::V6);
 
@@ -2066,6 +2085,9 @@ TEST_F(EvalContextTest, scanErrors) {
     checkError("0x123h", "<string>:1.6: Invalid character: h");
     checkError(":1", "<string>:1.1: Invalid character: :");
     checkError("=", "<string>:1.1: Invalid character: =");
+    checkError("\x02", "<string>:1.1: Invalid character: \x02");
+    checkError(string{ 0 }, "<string>:1.1: Invalid character: \\0");
+    checkError(string{ ' ', 0 }, "<string>:1.2: Invalid character: \\0");
 
     // Typo should be handled as well.
     checkError("subtring", "<string>:1.1: Invalid character: s");
