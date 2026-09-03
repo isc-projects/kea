@@ -421,6 +421,8 @@ public:
     /// @throw NcrMessageError if an error occurs creating new request.
     static NameChangeRequestPtr fromJSON(const std::string& json);
 
+    static NameChangeRequestPtr fromJSON(isc::data::ConstElementPtr elements);
+
     /// @brief Instance method for marshalling the contents of the request
     /// into a string of JSON text.
     ///
@@ -689,6 +691,18 @@ public:
         return (status_);
     }
 
+    /// @brief Fetches the next NCR (if one)
+    ///
+    /// @return NameChangeRequestPtr to the next NCR or an empty pointer.
+    NameChangeRequestPtr getNextNcr() const {
+        return (next_ncr_);
+    }
+
+    /// @brief Fetches the next NCR (if one)
+    void setNextNcr(NameChangeRequestPtr next_ncr) {
+        next_ncr_ = next_ncr;
+    }
+
     /// @brief Sets the request status to the given value.
     ///
     /// @param value contains the new value to assign to request status
@@ -752,6 +766,9 @@ private:
 
     /// @brief The processing status of the request.  Used internally.
     NameChangeStatus status_;
+
+    /// @brief Points to the next NCR in the chain, if one.
+    NameChangeRequestPtr next_ncr_;
 };
 
 }  // namespace dhcp_ddns

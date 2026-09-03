@@ -818,5 +818,97 @@ TEST(NameChangeRequestTest, ConflictResolutionModeParsing) {
     EXPECT_EQ(ncr->getConflictResolutionMode(), CHECK_WITH_DHCID);
 }
 
+TEST(NameChangeRequestTest, nestedNCRTest) {
+    // Define valid JSON rendition of a request.
+    std::string msg_str =
+    "{"
+        "\"change-type\":1,"
+        "\"forward-change\":true,"
+        "\"reverse-change\":false,"
+        "\"fqdn\":\"one.org.\","
+        "\"ip-address\":\"192.168.2.1\","
+        "\"dhcid\":\"010203040A7F8E3D\","
+        "\"lease-length\":1300,"
+        "\"conflict-resolution-mode\":\"check-with-dhcid\","
+        "\"next-ncr\":{"
+            "\"change-type\":1,"
+            "\"forward-change\":true,"
+            "\"reverse-change\":false,"
+            "\"fqdn\":\"two.org.\","
+            "\"ip-address\":\"192.168.2.1\","
+            "\"dhcid\":\"010203040A7F8E3D\","
+            "\"lease-length\":1300,"
+            "\"conflict-resolution-mode\":\"check-with-dhcid\","
+            "\"next-ncr\":{"
+                "\"change-type\":1,"
+                "\"forward-change\":true,"
+                "\"reverse-change\":false,"
+                "\"fqdn\":\"three.org.\","
+                "\"ip-address\":\"192.168.2.1\","
+                "\"dhcid\":\"010203040A7F8E3D\","
+                "\"lease-length\":1300,"
+                "\"conflict-resolution-mode\":\"check-with-dhcid\""
+            "}"
+        "}"
+    "}";
+
+    // Verify that a NameChangeRequests can be instantiated from the
+    // a valid JSON rendition.
+    NameChangeRequestPtr ncr;
+    ASSERT_NO_THROW_LOG(ncr  = NameChangeRequest::fromJSON(msg_str));
+    ASSERT_TRUE(ncr);
+
+    // Verify that the JSON string created by the new request equals the
+    // original input string.
+    std::string json_str = ncr->toJSON();
+    EXPECT_EQ(msg_str, json_str);
+
+    std::string exp_to_text =
+        "Type: 1 (CHG_REMOVE)\nForward Change: yes\nReverse Change: no\nFQDN: [one.org.]\n"
+        "IP Address: [192.168.2.1]\nDHCID: [010203040A7F8E3D]\nTTL: 1300\nConflict Resolut"
+        "ion Mode: check-with-dhcid\nNext NCR:\nType: 1 (CHG_REMOVE)\nForward Change: yes\n"
+        "Reverse Change: no\nFQDN: [two.org.]\nIP Address: [192.168.2.1]\nDHCID: [010203040"
+        "A7F8E3D]\nTTL: 1300\nConflict Resolution Mode: check-with-dhcid\nNext NCR:\nType: "
+        "1 (CHG_REMOVE)\nForward Change: yes\nReverse Change: no\nFQDN: [three.org.]\nIP Ad"
+        "dress: [192.168.2.1]\nDHCID: [010203040A7F8E3D]\nTTL: 1300\nConflict Resolution Mo"
+        "de: check-with-dhcid\n";
+
+    std::string to_text_str = ncr->toText();
+    EXPECT_EQ(to_text_str, exp_to_text);
+}
+
+TEST(NameChangeRequestTest, nestedNCRInvalidTest) {
+    // Define valid JSON containing an invalid "next-ncr"
+    std::string msg_str =
+    "{"
+        "\"change-type\":1,"
+        "\"forward-change\":true,"
+        "\"reverse-change\":false,"
+        "\"fqdn\":\"one.org.\","
+        "\"ip-address\":\"192.168.2.1\","
+        "\"dhcid\":\"010203040A7F8E3D\","
+        "\"lease-length\":1300,"
+        "\"conflict-resolution-mode\":\"check-with-dhcid\","
+        "\"next-ncr\":{"
+            "\"change-type\":1,"
+            "\"forward-change\":true,"
+            "\"reverse-change\":false,"
+            "\"fqdn\":\"two.org.\","
+            "\"ip-address\":\"192.168.2.1\","
+            "\"dhcid\":\"010203040A7F8E3D\","
+            "\"lease-length\":1300,"
+            "\"conflict-resolution-mode\":\"check-with-dhcid\","
+            "\"next-ncr\":{"
+                "\"bogus\":1"
+            "}"
+        "}"
+    "}";
+
+    // fromJSON should throw.
+    ASSERT_THROW_MSG(NameChangeRequest::fromJSON(msg_str), NcrMessageError,
+                     "NameChangeRequest value missing for: change-type");
+}
+
+
 } // end of anonymous namespace
 
