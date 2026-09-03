@@ -40,15 +40,46 @@ template<typename LeasePtrType, typename IdentifierType>
 void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
                     const IdentifierType& identifier, const std::string& label,
                     const ConstSubnetPtr subnet) {
+
+    try {
+        NameChangeRequestPtr ncr = generateNCRCommon(chg_type, lease, identifier, subnet);
+        if (!ncr) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_QUEUE_NCR_SKIP)
+                .arg(label)
+                .arg(lease->addr_.toText());
+            return;
+        }
+
+        // Send name change request.
+        CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL_DATA, DHCPSRV_QUEUE_NCR)
+            .arg(label)
+            .arg(chg_type == CHG_ADD ? "add" : "remove")
+            .arg(ncr->toText());
+    } catch (const std::exception& ex) {
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_QUEUE_NCR_FAILED)
+            .arg(label)
+            .arg(chg_type == CHG_ADD ? "add" : "remove")
+            .arg(lease->addr_.toText())
+            .arg(ex.what());
+    }
+}
+
+
+} // end of anonymous namespace
+
+namespace isc {
+namespace dhcp {
+
+template<typename LeasePtrType, typename IdentifierType>
+NameChangeRequestPtr
+generateNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
+             const IdentifierType& identifier,
+             const ConstSubnetPtr subnet) {
     // Check if there is a need for update.
     if (lease->hostname_.empty() || (!lease->fqdn_fwd_ && !lease->fqdn_rev_)
         || !CfgMgr::instance().getD2ClientMgr().ddnsEnabled()) {
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-                  DHCPSRV_QUEUE_NCR_SKIP)
-            .arg(label)
-            .arg(lease->addr_.toText());
-
-        return;
+        return (NameChangeRequestPtr());
     }
 
     ConflictResolutionMode conflict_resolution_mode = CHECK_WITH_DHCID;
@@ -72,44 +103,23 @@ void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
         ddns_ttl_max = ddns_params.getTtlMax();
     }
 
-    try {
-        // Create DHCID
-        std::vector<uint8_t> hostname_wire;
-        OptionDataTypeUtil::writeFqdn(lease->hostname_, hostname_wire, true);
-        D2Dhcid dhcid = D2Dhcid(identifier, hostname_wire);
+    // Create DHCID
+    std::vector<uint8_t> hostname_wire;
+    OptionDataTypeUtil::writeFqdn(lease->hostname_, hostname_wire, true);
+    D2Dhcid dhcid = D2Dhcid(identifier, hostname_wire);
 
-        // Calculate the TTL based on lease life time.
-        uint32_t ttl = calculateDdnsTtl(lease->valid_lft_,
-                                        ddns_ttl_percent, ddns_ttl,
-                                        ddns_ttl_min, ddns_ttl_max);
-
-        // Create name change request.
-        NameChangeRequestPtr ncr
+    // Calculate the TTL based on lease life time.
+    uint32_t ttl = calculateDdnsTtl(lease->valid_lft_,
+                                    ddns_ttl_percent, ddns_ttl,
+                                    ddns_ttl_min, ddns_ttl_max);
+    // Create name change request.
+    NameChangeRequestPtr ncr
             (new NameChangeRequest(chg_type, lease->fqdn_fwd_, lease->fqdn_rev_,
                                    lease->hostname_, lease->addr_.toText(),
                                    dhcid, ttl, conflict_resolution_mode));
 
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL_DATA, DHCPSRV_QUEUE_NCR)
-            .arg(label)
-            .arg(chg_type == CHG_ADD ? "add" : "remove")
-            .arg(ncr->toText());
-
-        // Send name change request.
-        CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
-
-    } catch (const std::exception& ex) {
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_QUEUE_NCR_FAILED)
-            .arg(label)
-            .arg(chg_type == CHG_ADD ? "add" : "remove")
-            .arg(lease->addr_.toText())
-            .arg(ex.what());
-    }
+    return (ncr);
 }
-
-} // end of anonymous namespace
-
-namespace isc {
-namespace dhcp {
 
 void queueNCR(const NameChangeType& chg_type, const Lease4Ptr& lease) {
     if (lease) {
@@ -129,6 +139,29 @@ void queueNCR(const NameChangeType& chg_type, const Lease4Ptr& lease) {
                            Pkt4::makeLabel(lease->hwaddr_, lease->client_id_), subnet);
         }
     }
+}
+
+NameChangeRequestPtr
+generateNCR(const NameChangeType& chg_type, const Lease4Ptr& lease) {
+    NameChangeRequestPtr ncr;
+    if (lease) {
+        // Figure out from the lease's subnet if we should use conflict resolution.
+        // If there's no subnet, something hinky is going on so we'll set it true.
+        ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()
+                                 ->getCfgSubnets4()->getSubnet(lease->subnet_id_);
+
+        // Client id takes precedence over HW address.
+        if (lease->client_id_) {
+            ncr = generateNCRCommon(chg_type, lease,
+                                    lease->client_id_->getClientId(), subnet);
+        } else {
+            // Client id is not specified for the lease. Use HW address
+            // instead.
+            ncr = generateNCRCommon(chg_type, lease, lease->hwaddr_, subnet);
+        }
+    }
+
+    return (ncr);
 }
 
 void queueNCR(const NameChangeType& chg_type, const Lease6Ptr& lease) {

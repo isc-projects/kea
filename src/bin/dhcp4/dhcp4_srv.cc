@@ -3036,15 +3036,25 @@ Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
 
     if (lease->reuseable_valid_lft_ == 0 &&
         (!old_lease || ddns_params.getUpdateOnRenew() || ddns_changed)) {
+        NameChangeRequestPtr remove_ncr;
+        NameChangeRequestPtr add_ncr;
         if (ddns_changed) {
             // Queue up a remove of the old lease's DNS (if needed)
-            queueNCR(CHG_REMOVE, old_lease);
+            remove_ncr = generateNCR(CHG_REMOVE, old_lease);
         }
 
         // We may need to generate the NameChangeRequest for the new lease. It
         // will be generated only if hostname is set and if forward or reverse
         // update has been requested.
-        queueNCR(CHG_ADD, lease);
+        add_ncr = generateNCR(CHG_ADD, lease);
+        if (remove_ncr) {
+            // Chain the add (if one) to the remove so they are sent together to
+            // ensure they arrive in order.
+            remove_ncr->setNextNcr(add_ncr);
+            CfgMgr::instance().getD2ClientMgr().sendRequest(remove_ncr);
+        } else if (add_ncr) {
+            CfgMgr::instance().getD2ClientMgr().sendRequest(add_ncr);
+        }
     }
 }
 
