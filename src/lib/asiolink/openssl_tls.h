@@ -179,12 +179,12 @@ public:
         if (!cert) {
             return ("");
         }
-#if defined(CONST_OPENSSL_X509_NAME) && defined(HAVE_NEW_SSL_API)
+#ifdef CONST_OPENSSL_X509_NAME
         const
 #endif
         ::X509_NAME *name = ::X509_get_subject_name(cert);
         int loc = ::X509_NAME_get_index_by_NID(name, NID_commonName, -1);
-#if defined(CONST_OPENSSL_X509_NAME) && defined(HAVE_NEW_SSL_API)
+#ifdef CONST_OPENSSL_X509_NAME
         const
 #endif
         ::X509_NAME_ENTRY* ne = ::X509_NAME_get_entry(name, loc);
@@ -223,12 +223,12 @@ public:
         if (!cert) {
             return ("");
         }
-#if defined(CONST_OPENSSL_X509_NAME) && defined(HAVE_NEW_SSL_API)
+#ifdef CONST_OPENSSL_X509_NAME
         const
 #endif
         ::X509_NAME *name = ::X509_get_issuer_name(cert);
         int loc = ::X509_NAME_get_index_by_NID(name, NID_commonName, -1);
-#if defined(CONST_OPENSSL_X509_NAME) && defined(HAVE_NEW_SSL_API)
+#ifdef CONST_OPENSSL_X509_NAME
         const
 #endif
         ::X509_NAME_ENTRY* ne = ::X509_NAME_get_entry(name, loc);
