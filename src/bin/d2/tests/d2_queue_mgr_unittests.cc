@@ -475,4 +475,73 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
     EXPECT_EQ(1U, queue_mgr_->getQueueSize());
 }
 
+// Verifies that nested NCRs are enqueued individually.
+TEST_F(QueueMgrUDPTest, nestedNCRs) {
+
+    // Create the queue manager and start listening..
+    ASSERT_NO_THROW(queue_mgr_.reset(new D2QueueMgr(io_service_,
+                                                    VALID_MSG_CNT)));
+    ASSERT_EQ(D2QueueMgr::NOT_INITTED, queue_mgr_->getMgrState());
+
+    isc::asiolink::IOAddress addr(TEST_ADDRESS);
+    ASSERT_NO_THROW(queue_mgr_->initUDPListener(addr, LISTENER_PORT,
+                                                FMT_JSON, true));
+    ASSERT_EQ(D2QueueMgr::INITTED, queue_mgr_->getMgrState());
+
+    ASSERT_NO_THROW(queue_mgr_->startListening());
+    ASSERT_EQ(D2QueueMgr::RUNNING, queue_mgr_->getMgrState());
+
+    // Place the sender into sending state.
+    ASSERT_NO_THROW(sender_->startSending(io_service_));
+    ASSERT_TRUE(sender_->amSending());
+
+    // Create an NCR chain from the valid messages.
+    NameChangeRequestPtr first_ncr;
+    NameChangeRequestPtr prev_ncr;
+    NameChangeRequestPtr next_ncr;
+    for (size_t i = 0; i < VALID_MSG_CNT; i++) {
+        // Create the ncr and add to our reference list.
+        ASSERT_NO_THROW(next_ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
+        if (i == 0) {
+            first_ncr = next_ncr;
+        } else {
+            prev_ncr->setNextNcr(next_ncr);
+        }
+
+        prev_ncr = next_ncr;
+    }
+
+    // Send the NCR chain.
+    ASSERT_NO_THROW(sender_->sendRequest(first_ncr));
+
+    // Running twice should do the send then the receive.
+    io_service_->runOne();
+    io_service_->runOne();
+
+    // Verify that there are three NCRs on the queue.
+    EXPECT_EQ(3U, queue_mgr_->getQueueSize());
+
+    // Verify queued NCRs are as expected.
+    next_ncr = first_ncr;
+    for (size_t i = 0; i < VALID_MSG_CNT; i++) {
+        NameChangeRequestPtr received_ncr;
+        EXPECT_NO_THROW(received_ncr = queue_mgr_->peek());
+        EXPECT_TRUE(checkSendVsReceived(next_ncr, received_ncr));
+        next_ncr = next_ncr->getNextNcr();
+
+        // Verify that we and dequeue the request.
+        EXPECT_NO_THROW(queue_mgr_->dequeue());
+    }
+
+    // Verify stats are correct.
+    StatMap stats_ncr = {
+        { "ncr-received", 3},
+        { "ncr-invalid", 0},
+        { "ncr-error", 0},
+        { "queue-mgr-queue-full", 0}
+    };
+
+    checkStats(stats_ncr);
+}
+
 } // end of anonymous namespace
