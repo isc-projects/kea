@@ -119,4 +119,4 @@
 #mesondefine HAVE_OPENSSL_VERSION
 
 /* Const OpenSSL X509_NAME and X509_NAME_ENTRY pointers */
-#mesondefine CONST_OPENSSL_X09_NAME
+#mesondefine CONST_OPENSSL_X509_NAME
