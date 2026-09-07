@@ -987,7 +987,7 @@ LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffer& buf,
                       "Attempt to parse truncated vendor option");
         }
 
-        uint8_t offset_end = offset + data_len;
+        size_t offset_end = offset + data_len;
 
         // beginning of data-chunk parser
         while (offset < offset_end) {
