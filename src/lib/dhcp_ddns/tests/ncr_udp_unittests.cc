@@ -422,7 +422,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTests) {
 
     // Make sure select_fd does evaluates to not ready via select and
     // that ioReady() method agrees.
-    ASSERT_EQ(0, selectCheck(select_fd));
+    ASSERT_EQ(0U, selectCheck(select_fd));
     ASSERT_FALSE(sender.ioReady());
 
     // Iterate over a series of messages, sending each one. Since we
@@ -468,7 +468,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTests) {
 
     // Make sure select_fd does evaluates to not ready via select and
     // that ioReady() method agrees.
-    ASSERT_EQ(0, selectCheck(select_fd));
+    ASSERT_EQ(0U, selectCheck(select_fd));
     ASSERT_FALSE(sender.ioReady());
 
     // Verify that the queue is empty.
@@ -550,7 +550,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTestsMultiThreading) {
 
     // Make sure select_fd does evaluates to not ready via select and
     // that ioReady() method agrees.
-    ASSERT_EQ(0, selectCheck(select_fd));
+    ASSERT_EQ(0U, selectCheck(select_fd));
     ASSERT_FALSE(sender.ioReady());
 
     // Iterate over a series of messages, sending each one. Since we
@@ -596,7 +596,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTestsMultiThreading) {
 
     // Make sure select_fd does evaluates to not ready via select and
     // that ioReady() method agrees.
-    ASSERT_EQ(0, selectCheck(select_fd));
+    ASSERT_EQ(0U, selectCheck(select_fd));
     ASSERT_FALSE(sender.ioReady());
 
     // Verify that the queue is empty.
@@ -1229,8 +1229,8 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequest) {
 
     // Completion handling should finish the in-flight send.
     ASSERT_NO_THROW(sender.runReadyIO());
-    EXPECT_EQ(1, ncr_handler->pass_count_);
-    EXPECT_EQ(0, ncr_handler->error_count_);
+    EXPECT_EQ(1U, ncr_handler->pass_count_);
+    EXPECT_EQ(0U, ncr_handler->error_count_);
     EXPECT_FALSE(sender.isSendInProgress());
     EXPECT_EQ(0U, sender.getQueueSize());
 }
@@ -1265,8 +1265,8 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequestMultiThreading)
 
     // Completion handling should finish the in-flight send.
     ASSERT_NO_THROW(sender.runReadyIO());
-    EXPECT_EQ(1, ncr_handler->pass_count_);
-    EXPECT_EQ(0, ncr_handler->error_count_);
+    EXPECT_EQ(1U, ncr_handler->pass_count_);
+    EXPECT_EQ(0U, ncr_handler->error_count_);
     EXPECT_FALSE(sender.isSendInProgress());
     EXPECT_EQ(0U, sender.getQueueSize());
 }
@@ -1298,15 +1298,15 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequest) {
     // First completion should succeed and initiate the second send even if
     // markReady fails for the follow-on send.
     ASSERT_NO_THROW(sender.runReadyIO());
-    EXPECT_EQ(1, ncr_handler->pass_count_);
-    EXPECT_EQ(0, ncr_handler->error_count_);
+    EXPECT_EQ(1U, ncr_handler->pass_count_);
+    EXPECT_EQ(0U, ncr_handler->error_count_);
     EXPECT_TRUE(sender.isSendInProgress());
     EXPECT_EQ(1U, sender.getQueueSize());
 
     // Complete the second in-flight send.
     ASSERT_NO_THROW(sender.runReadyIO());
-    EXPECT_EQ(2, ncr_handler->pass_count_);
-    EXPECT_EQ(0, ncr_handler->error_count_);
+    EXPECT_EQ(2U, ncr_handler->pass_count_);
+    EXPECT_EQ(0U, ncr_handler->error_count_);
     EXPECT_FALSE(sender.isSendInProgress());
     EXPECT_EQ(0U, sender.getQueueSize());
 }
@@ -1341,15 +1341,15 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequestMultiThreading) 
     // First completion should succeed and initiate the second send even if
     // markReady fails for the follow-on send.
     ASSERT_NO_THROW(sender.runReadyIO());
-    EXPECT_EQ(1, ncr_handler->pass_count_);
-    EXPECT_EQ(0, ncr_handler->error_count_);
+    EXPECT_EQ(1U, ncr_handler->pass_count_);
+    EXPECT_EQ(0U, ncr_handler->error_count_);
     EXPECT_TRUE(sender.isSendInProgress());
     EXPECT_EQ(1U, sender.getQueueSize());
 
     // Complete the second in-flight send.
     ASSERT_NO_THROW(sender.runReadyIO());
-    EXPECT_EQ(2, ncr_handler->pass_count_);
-    EXPECT_EQ(0, ncr_handler->error_count_);
+    EXPECT_EQ(2U, ncr_handler->pass_count_);
+    EXPECT_EQ(0U, ncr_handler->error_count_);
     EXPECT_FALSE(sender.isSendInProgress());
     EXPECT_EQ(0U, sender.getQueueSize());
 }
@@ -1392,15 +1392,15 @@ TEST_F(NameChangeUDPSenderBasicTest, watchSocketBadRead) {
     // watch socket should fail, which will close the socket, but not
     // result in a throw.  The next send is still initiated.
     ASSERT_NO_THROW(sender.runReadyIO());
-    EXPECT_EQ(1, ncr_handler->pass_count_);
-    EXPECT_EQ(0, ncr_handler->error_count_);
+    EXPECT_EQ(1U, ncr_handler->pass_count_);
+    EXPECT_EQ(0U, ncr_handler->error_count_);
     EXPECT_TRUE(sender.isSendInProgress());
     EXPECT_EQ(1U, sender.getQueueSize());
 
     // Complete the second in-flight send.
     ASSERT_NO_THROW(sender.runReadyIO());
-    EXPECT_EQ(2, ncr_handler->pass_count_);
-    EXPECT_EQ(0, ncr_handler->error_count_);
+    EXPECT_EQ(2U, ncr_handler->pass_count_);
+    EXPECT_EQ(0U, ncr_handler->error_count_);
     EXPECT_FALSE(sender.isSendInProgress());
     EXPECT_EQ(0U, sender.getQueueSize());
 }
@@ -1443,15 +1443,15 @@ TEST_F(NameChangeUDPSenderBasicTest, watchSocketBadReadMultiThreading) {
     // Run one handler. clearReady fails and closes the watch socket; the
     // next send is still initiated despite markReady failure.
     ASSERT_NO_THROW(sender.runReadyIO());
-    EXPECT_EQ(1, ncr_handler->pass_count_);
-    EXPECT_EQ(0, ncr_handler->error_count_);
+    EXPECT_EQ(1U, ncr_handler->pass_count_);
+    EXPECT_EQ(0U, ncr_handler->error_count_);
     EXPECT_TRUE(sender.isSendInProgress());
     EXPECT_EQ(1U, sender.getQueueSize());
 
     // Complete the second in-flight send.
     ASSERT_NO_THROW(sender.runReadyIO());
-    EXPECT_EQ(2, ncr_handler->pass_count_);
-    EXPECT_EQ(0, ncr_handler->error_count_);
+    EXPECT_EQ(2U, ncr_handler->pass_count_);
+    EXPECT_EQ(0U, ncr_handler->error_count_);
     EXPECT_FALSE(sender.isSendInProgress());
     EXPECT_EQ(0U, sender.getQueueSize());
 }
@@ -1500,8 +1500,8 @@ TEST_F(NameChangeUDPSenderBasicTest, oversizedNcrDoesNotStallSendQueue) {
     // Queueing the oversized request should not throw; the send handler
     // receives ERROR and the queue must not remain blocked.
     ASSERT_NO_THROW(sender.sendRequest(oversized));
-    EXPECT_EQ(1, ncr_handler->error_count_);
-    EXPECT_EQ(0, ncr_handler->pass_count_);
+    EXPECT_EQ(1U, ncr_handler->error_count_);
+    EXPECT_EQ(0U, ncr_handler->pass_count_);
     EXPECT_FALSE(sender.isSendInProgress());
     EXPECT_EQ(0U, sender.getQueueSize());
 
@@ -1513,8 +1513,8 @@ TEST_F(NameChangeUDPSenderBasicTest, oversizedNcrDoesNotStallSendQueue) {
     EXPECT_EQ(1U, sender.getQueueSize());
 
     ASSERT_NO_THROW(sender.runReadyIO());
-    EXPECT_EQ(1, ncr_handler->pass_count_);
-    EXPECT_EQ(1, ncr_handler->error_count_);
+    EXPECT_EQ(1U, ncr_handler->pass_count_);
+    EXPECT_EQ(1U, ncr_handler->error_count_);
     EXPECT_FALSE(sender.isSendInProgress());
     EXPECT_EQ(0U, sender.getQueueSize());
 }
