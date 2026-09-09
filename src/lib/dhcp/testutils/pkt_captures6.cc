@@ -12,9 +12,9 @@
 
 #include <string>
 
-/// @file   pkt_captures6.cc
+/// @file pkt_captures6.cc
 ///
-/// @brief  contains packet captures imported from Wireshark
+/// @brief contains packet captures imported from Wireshark
 ///
 /// These are actual packets captured over wire. They are used in various
 /// tests.
@@ -54,7 +54,7 @@ void PktCaptures::captureSetDefaultFields(const Pkt6Ptr& pkt) {
 // This function returns buffer for very simple Solicit
 Pkt6Ptr PktCaptures::captureSimpleSolicit() {
     uint8_t data[] = {
-        1,  // type 1 = SOLICIT
+        1, // type 1 = SOLICIT
         0xca, 0xfe, 0x01, // trans-id = 0xcafe01
         0, 1, // option type 1 (client-id)
         0, 10, // option length 10
@@ -204,15 +204,15 @@ DHCPv6
                 Length: 112
                 Value: 0000118b0002000745524f555445520003000b45434d3a45...
                 Enterprise ID: Cable Television Laboratories, Inc. (4491)
-                Suboption: Device Type =  (2)"EROUTER"
-                Suboption: Embedded Components =  (3)"ECM:EROUTER"
-                Suboption: Serial Number =  (4)"2BR229U40044C"
-                Suboption: Hardware Version =  (5)"1.04"
-                Suboption: Software Version =  (6)"V1.33.03"
-                Suboption: Boot ROM Version =  (7)"2.3.0R2"
-                Suboption: Organization Unique Identifier =  (8)"00095B"
-                Suboption: Model Number =  (9)"CG3000DCR"
-                Suboption: Vendor Name =  (10)"Netgear"
+                Suboption: Device Type = (2)"EROUTER"
+                Suboption: Embedded Components = (3)"ECM:EROUTER"
+                Suboption: Serial Number = (4)"2BR229U40044C"
+                Suboption: Hardware Version = (5)"1.04"
+                Suboption: Software Version = (6)"V1.33.03"
+                Suboption: Boot ROM Version = (7)"2.3.0R2"
+                Suboption: Organization Unique Identifier = (8)"00095B"
+                Suboption: Model Number = (9)"CG3000DCR"
+                Suboption: Vendor Name = (10)"Netgear"
             Client Identifier
                 Option: Client Identifier (1)
                 Length: 10
@@ -253,8 +253,8 @@ DHCPv6
         Length: 22
         Value: 0000118b0402000620e52ab815140401000401020300
         Enterprise ID: Cable Television Laboratories, Inc. (4491)
-        Suboption: CM MAC Address Option =  (1026)20:e5:2a:b8:15:14
-        Suboption: CMTS Capabilities Option :  (1025)
+        Suboption: CM MAC Address Option = (1026)20:e5:2a:b8:15:14
+        Suboption: CMTS Capabilities Option: (1025)
     Interface-Id
         Option: Interface-Id (18)
         Length: 4
@@ -396,39 +396,39 @@ isc::dhcp::Pkt6Ptr PktCaptures::captureRelayed2xRSOO() {
 
 isc::dhcp::Pkt6Ptr PktCaptures::captureSolicitWithVIVSO() {
 
-    // Message type:   Solicit (1)
+    // Message type: Solicit (1)
     // Transaction ID: 0xba048e
-    // Client  Identifier
-    //     Option: Client  Identifier  (1)
+    // Client Identifier
+    //     Option: Client Identifier (1)
     //     Length: 10
-    //     Value:  0003000108002725d3f4
-    //     DUID:   0003000108002725d3f4
-    //     DUID    Type:   link-layer  address (3)
-    //     Hardware    type:   Ethernet    (1)
-    //     Link-layer  address:    08:00:27:25:d3:f4
-    //     Identity    Association for Non-temporary   Address
-    // Option: Identity    Association for Non-temporary   Address (3)
+    //     Value: 0003000108002725d3f4
+    //     DUID: 0003000108002725d3f4
+    //     DUID Type: link-layer address (3)
+    //     Hardware type: Ethernet (1)
+    //     Link-layer address: 08:00:27:25:d3:f4
+    //     Identity Association for Non-temporary Address
+    // Option: Identity Association for Non-temporary Address (3)
     //     Length: 40
-    //     Value:  00aabbcc0000000000000000000500180000000000000000...
-    //     IAID:   00aabbcc
+    //     Value: 00aabbcc0000000000000000000500180000000000000000...
+    //     IAID: 00aabbcc
     //     T1: 0
     //     T2: 0
-    //     IA  Address
-    //         Option: IA  Address (5)
+    //     IA Address
+    //         Option: IA Address (5)
     //         Length: 24
-    //         Value:  000000000000000000000000000000000000000000000000
-    //         IPv6    address:    ::
-    //         Preferred   lifetime:   0
-    //         Valid   lifetime:
-    //     Option  Request
-    //         Option: Option  Request (6)
+    //         Value: 000000000000000000000000000000000000000000000000
+    //         IPv6 address: ::
+    //         Preferred lifetime: 0
+    //         Valid lifetime:
+    //     Option Request
+    //         Option: Option Request (6)
     //         Length: 6
-    //         Value:  00d100d2000c
+    //         Value: 00d100d2000c
     //     Vendor-specific Information
     //         Option: Vendor-specific Information (17)
     //         Length: 4
-    //         Value:  00001e61
-    //         Enterprise  ID: E-DYNAMICS.ORG  (7777)
+    //         Value: 00001e61
+    //         EnterpriseID: E-DYNAMICS.ORG (7777)
     string hex_string =
         "01ba048e0001000a0003000108002725d3f40003002800aabbcc"
         "00000000000000000005001800000000000000000000000000000"
@@ -452,39 +452,39 @@ isc::dhcp::Pkt6Ptr PktCaptures::captureSolicitWithVIVSO() {
 
 isc::dhcp::Pkt6Ptr PktCaptures::captureSolicitWithTruncatedVIVSO() {
 
-    // Message type:   Solicit (1)
+    // Message type: Solicit (1)
     // Transaction ID: 0xba048e
-    // Client  Identifier
-    //     Option: Client  Identifier  (1)
+    // Client Identifier
+    //     Option: ClientIdentifier (1)
     //     Length: 10
-    //     Value:  0003000108002725d3f4
-    //     DUID:   0003000108002725d3f4
-    //     DUID    Type:   link-layer  address (3)
-    //     Hardware    type:   Ethernet    (1)
-    //     Link-layer  address:    08:00:27:25:d3:f4
-    //     Identity    Association for Non-temporary   Address
-    // Option: Identity    Association for Non-temporary   Address (3)
+    //     Value: 0003000108002725d3f4
+    //     DUID: 0003000108002725d3f4
+    //     DUID Type: link-layer address (3)
+    //     Hardware type: Ethernet (1)
+    //     Link-layer address: 08:00:27:25:d3:f4
+    //     Identity Association for Non-temporary Address
+    // Option: Identity Association for Non-temporary Address (3)
     //     Length: 40
-    //     Value:  00aabbcc0000000000000000000500180000000000000000...
-    //     IAID:   00aabbcc
+    //     Value: 00aabbcc0000000000000000000500180000000000000000...
+    //     IAID: 00aabbcc
     //     T1: 0
     //     T2: 0
-    //     IA  Address
-    //         Option: IA  Address (5)
+    //     IA Address
+    //         Option: IA Address (5)
     //         Length: 24
-    //         Value:  000000000000000000000000000000000000000000000000
-    //         IPv6    address:    ::
-    //         Preferred   lifetime:   0
-    //         Valid   lifetime:
-    //     Option  Request
-    //         Option: Option  Request (6)
+    //         Value: 000000000000000000000000000000000000000000000000
+    //         IPv6 address: ::
+    //         Preferred lifetime: 0
+    //         Valid lifetime:
+    //     Option Request
+    //         Option: Option Request (6)
     //         Length: 6
-    //         Value:  00d100d2000c
+    //         Value: 00d100d2000c
     //     Vendor-specific Information
     //         Option: Vendor-specific Information (17)
-    //         Length: 1                                <-------- length too short!
-    //         Value:  00001e61
-    //         Enterprise  ID: E-DYNAMICS.ORG  (7777)
+    //         Length: 1 <-------- length too short!
+    //         Value: 00001e61
+    //         Enterprise ID: E-DYNAMICS.ORG (7777)
     string hex_string =
         "01ba048e0001000a0003000108002725d3f40003002800aabbcc"
         "00000000000000000005001800000000000000000000000000000"

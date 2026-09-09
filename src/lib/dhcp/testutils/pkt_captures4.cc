@@ -12,9 +12,9 @@
 
 #include <string>
 
-/// @file   pkt_captures.cc
+/// @file pkt_captures.cc
 ///
-/// @brief  contains packet captures imported from Wireshark
+/// @briefcontains packet captures imported from Wireshark
 ///
 /// These are actual packets captured over wire. They are used in various
 /// tests.
@@ -235,34 +235,36 @@ Bootstrap Protocol
 
 Pkt4Ptr PktCaptures::discoverWithValidVIVSO() {
 /* DISCOVER that contains a valid VIVSO option 125
-User    Datagram    Protocol,   Src Port:   67, Dst Port:   67
-Bootstrap   Protocol    (Discover)
-    Message type:   Boot    Request (1)
-    Hardware    type:   Ethernet    (0x01)
-    Hardware    address length: 6
-    Hops:   1
+User Datagram Protocol, Src Port: 67, Dst Port: 67
+Bootstrap Protocol (Discover)
+    Message type: Boot Request (1)
+    Hardware type: Ethernet (0x01)
+    Hardware address length: 6
+    Hops: 1
     Transaction ID: 0x2d5d43cb
-    Seconds elapsed:    0
-    Bootp   flags:  0x8000, Broadcast   flag    (Broadcast)
-    Client  IP  address:    0.0.0.0
-    Your    (client)    IP  address:    0.0.0.0
-    Next    server  IP  address:    0.0.0.0
-    Relay   agent   IP  address:    10.206.80.1
-    Client  MAC address:    ArrisGro_5e:f7:af   (78:96:84:5e:f7:af)
-    Client  hardware    address padding:    00000000000000000000
-    Server  host    name    not given
-    Boot    file    name    not given
-    Magic   cookie: DHCP
-    Option: (53)    DHCP    Message Type    (Discover)
-    Option: (55)    Parameter   Request List
-    Option: (60)    Vendor  class   identifier
-    Option: (125)   V-I Vendor-specific Information
-    Option: (43)    Vendor-Specific Information (CableLabs)
-    Option: (61)    Client  identifier
-    Option: (57)    Maximum DHCP    Message Size
-    Option: (82)    Agent   Information Option
-    Option: (255)   End
-*/
+    Seconds elapsed: 0
+    Bootp flags: 0x8000, Broadcast flag (Broadcast)
+    Client IP address: 0.0.0.0
+    Your (client) IP address: 0.0.0.0
+    Next server IP address: 0.0.0.0
+    Relay agent IP address: 10.206.80.1
+    Client MAC address: ArrisGro_5e:f7:af (78:96:84:5e:f7:af)
+    Client hardware address padding: 00000000000000000000
+    Server host name not given
+    Boot file name not given
+    Magic cookie: DHCP
+    Option: (53) DHCP Message Type (Discover)
+    Option: (55) Parameter Request List
+    Option: (60) Vendor class identifier
+    Option: (125) V-I Vendor-specific Information
+      - suboption 1 (Option Request): requesting option 2
+      - suboption 5 (Modem Caps): 117 bytes
+    Option: (43) Vendor-Specific Information (CableLabs)
+    Option: (61) Client identifier
+    Option: (57) Maximum DHCP Message Size
+    Option: (82) Agent Information Option
+    Option: (255) End */
+
     string hex_string =
         "010106012d5d43cb000080000000000000000000000000000ace50017896845ef7af0"
         "000000000000000000000000000000000000000000000000000000000000000000000"
@@ -287,34 +289,34 @@ Bootstrap   Protocol    (Discover)
 
 Pkt4Ptr PktCaptures::discoverWithTruncatedVIVSO() {
 /* DISCOVER that contains VIVSO option 125 with an INVALID length of 01
-User    Datagram    Protocol,   Src Port:   67, Dst Port:   67
-Bootstrap   Protocol    (Discover)
-    Message type:   Boot    Request (1)
-    Hardware    type:   Ethernet    (0x01)
-    Hardware    address length: 6
-    Hops:   1
+User Datagram Protocol, Src Port: 67, Dst Port: 67
+Bootstrap Protocol (Discover)
+    Message type: Boot Request (1)
+    Hardware type: Ethernet (0x01)
+    Hardware address length: 6
+    Hops: 1
     Transaction ID: 0x2d5d43cb
-    Seconds elapsed:    0
-    Bootp   flags:  0x8000, Broadcast   flag    (Broadcast)
-    Client  IP  address:    0.0.0.0
-    Your    (client)    IP  address:    0.0.0.0
-    Next    server  IP  address:    0.0.0.0
-    Relay   agent   IP  address:    10.206.80.1
-    Client  MAC address:    ArrisGro_5e:f7:af   (78:96:84:5e:f7:af)
-    Client  hardware    address padding:    00000000000000000000
-    Server  host    name    not given
-    Boot    file    name    not given
-    Magic   cookie: DHCP
-    Option: (53)    DHCP    Message Type    (Discover)
-    Option: (55)    Parameter   Request List
-    Option: (60)    Vendor  class   identifier
-    Option: (125)   V-I Vendor-specific Information - truncated
-    Option: (43)    Vendor-Specific Information (CableLabs)
-    Option: (61)    Client  identifier
-    Option: (57)    Maximum DHCP    Message Size
-    Option: (82)    Agent   Information Option
-    Option: (255)   End
-*/
+    Seconds elapsed: 0
+    Bootp flags:0x8000, Broadcast flag (Broadcast)
+    Client IP address:0.0.0.0
+    Your (client) IP address: 0.0.0.0
+    Next server IP address: 0.0.0.0
+    Relay agent IP address: 10.206.80.1
+    Client MAC address: ArrisGro_5e:f7:af (78:96:84:5e:f7:af)
+    Client hardware address padding: 00000000000000000000
+    Server host name not given
+    Boot file name not given
+    Magic cookie: DHCP
+    Option: (53) DHCP Message Type (Discover)
+    Option: (55) Parameter Request List
+    Option: (60) Vendor class identifier
+    Option: (125) V-I Vendor-specific Information - truncated
+    Option: (43) Vendor-Specific Information (CableLabs)
+    Option: (61) Client identifier
+    Option: (57) Maximum DHCP Message Size
+    Option: (82) Agent Information Option
+    Option: (255) End */
+
     string hex_string =
         "010106012d5d43cb000080000000000000000000000000000ace50017896845ef7af0"
         "000000000000000000000000000000000000000000000000000000000000000000000"
@@ -329,6 +331,66 @@ Bootstrap   Protocol    (Discover)
         "2d3937312d4e4f5348070432343030090a534247363738322d41430a144d6f746f726"
         "f6c6120436f72706f726174696f6e3d0fff845ef7af000300017896845ef7af390205"
         "dc521b0104800503f802067896845ef7af090b0000118b06010401020300ff";
+
+    return (packetFromCapture(hex_string));
+}
+
+Pkt4Ptr PktCaptures::discoverWithMaximumVIVSO() {
+/* DISCOVER that contains VIVSO option 125 with an suboption with maximum length of 255
+User Datagram Protocol, Src Port: 67, Dst Port: 67
+Bootstrap Protocol (Discover)
+    Message type: Boot Request (1)
+    Hardware type: Ethernet (0x01)
+    Hardware address length: 6
+    Hops: 1
+    Transaction ID: 0x2d5d43cb
+    Seconds elapsed: 0
+    Bootp flags: 0x8000, Broadcast flag (Broadcast)
+    Client IP address: 0.0.0.0
+    Your (client) IP address: 0.0.0.0
+    Next server IP address: 0.0.0.0
+    Relay agent IP address: 10.206.80.1
+    Client MAC address: ArrisGro_5e:f7:af (78:96:84:5e:f7:af)
+    Client hardware address padding: 00000000000000000000
+    Server host name not given
+    Boot file name not given
+    Magic cookie: DHCP
+    Option: (53) DHCP Message Type (Discover)
+    Option: (55) Parameter Request List
+    Option: (60) Vendor class identifier
+    Option: (125) V-I Vendor-specific Information
+      - suboption 1 (Option Request): requesting option 2
+      - suboption 5 (Modem Caps): 255 bytes - bogus value - truncated to 123 bytes
+    Option: (125) V-I Vendor-specific Information
+      - suboption 5 (Modem Caps): 122 bytes - continuation bogus value
+    Option: (43) Vendor-Specific Information (CableLabs)
+    Option: (61) Client identifier
+    Option: (57) Maximum DHCP Message Size
+    Option: (82) Agent Information Option
+    Option: (255) End */
+
+    string hex_string =
+        "010106012d5d43cb000080000000000000000000000000000ace50017896845ef7af0"
+        "000000000000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000000000063825363350"
+        "10137070102030407067d3c0a646f63736973332e303a7d850000118bff010102057b"
+        "01010102010303010104010105010106010107010f0801100901030a01010b01180c0"
+        "1010d0201000e0201000f010110040000000211010113010114010015013f16010117"
+        "01011801041901041a01041b01201c01021d01081e01201f011020011021010222010"
+        "1230100240100250101260200ff2701012801d87d7f0000118b7a0578010101020103"
+        "03010104010105010106010107010f0801100901030a01010b01180c01010d0201000"
+        "e0201000f010110040000000211010113010114010015013f16010117010118010419"
+        "01041a01041b01201c01021d01081e01201f011020011021010222010123010024010"
+        "0250101260200f80101022b7c020345434d030b45434d3a45524f5554455208030020"
+        "400418333936373739343234343335353037373031303134303035050131061e53424"
+        "7365838322d382e362e302e302d47412d30312d3937312d4e4f534807043234303009"
+        "0a534247363738322d41430a144d6f746f726f6c6120436f72706f726174696f6e3d0"
+        "fff845ef7af000300017896845ef7af390205dc521b0104800503f802067896845ef7"
+        "af090b0000118b06010401020300ff";
 
     return (packetFromCapture(hex_string));
 }

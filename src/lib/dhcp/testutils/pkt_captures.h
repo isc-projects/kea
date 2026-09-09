@@ -55,6 +55,13 @@ public:
     /// @return relayed DISCOVER
     static isc::dhcp::Pkt4Ptr discoverWithTruncatedVIVSO();
 
+    /// @brief returns captured DISCOVER that contains a maximum length VIVSO option
+    ///
+    /// See method code for a detailed explanation.
+    ///
+    /// @return relayed DISCOVER
+    static isc::dhcp::Pkt4Ptr discoverWithMaximumVIVSO();
+
     /// @brief returns captured DISCOVER from Genexis hardware.
     ///
     /// This device in uncommon, because it doesn't send VIVSO in Discover, but

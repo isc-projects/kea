@@ -1479,6 +1479,19 @@ TEST_F(Pkt4Test, truncatedVendorLength) {
     // VIVSO option should not be there
     x = pkt->getOption(DHO_VIVSO_SUBOPTIONS);
     ASSERT_FALSE(x);
+
+    // Build a bad discover packet
+    pkt = dhcp::test::PktCaptures::discoverWithMaximumVIVSO();
+
+    // Unpack should throw Skip exception
+    ASSERT_THROW_MSG(pkt->unpack(), SkipRemainingOptionsError,
+                     "Option parse failed. Tried to parse 272 bytes from 256-byte long buffer.");
+
+    ASSERT_EQ(DHCPDISCOVER, pkt->getType());
+
+    // VIVSO option should not be there
+    x = pkt->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_FALSE(x);
 }
 
 // Verifies that we handle text options that contain trailing
