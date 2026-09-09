@@ -7,13 +7,8 @@
 // Developed by AdaLogics under contract to ISC.
 
 #include <config.h>
-#include <fuzzer/FuzzedDataProvider.h>
-
-#include <log/logger_support.h>
-#include <process/daemon.h>
 
 #include <cc/data.h>
-
 #include <http/basic_auth_config.h>
 #include <http/cfg_http_header.h>
 #include <http/date_time.h>
@@ -23,12 +18,15 @@
 #include <http/response.h>
 #include <http/response_parser.h>
 #include <http/url.h>
+#include <log/logger_support.h>
+#include <process/daemon.h>
 
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <string>
-#include <vector>
-#include <algorithm>
+
+#include <fuzzer/FuzzedDataProvider.h>
 
 using namespace isc;
 using namespace isc::data;

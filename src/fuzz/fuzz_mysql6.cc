@@ -7,30 +7,26 @@
 // Developed by AdaLogics under contract to ISC.
 
 #include <config.h>
-#include <fuzzer/FuzzedDataProvider.h>
 
 #include <asiolink/io_address.h>
 #include <database/database_connection.h>
 #include <database/server_selector.h>
-#include <dhcpsrv/subnet.h>
-#include <dhcpsrv/host.h>
 #include <dhcpsrv/cfg_option.h>
-
+#include <dhcpsrv/host.h>
+#include <dhcpsrv/subnet.h>
+#include <exceptions/exceptions.h>
 #include <log/logger_support.h>
 #include <process/daemon.h>
-#include <exceptions/exceptions.h>
 
-#include <mysql_cb_impl.h>
-#include <mysql_cb_dhcp6.h>
-
-#include <cstdint>
 #include <cstddef>
-#include <string>
-#include <set>
-#include <vector>
+#include <cstdint>
 #include <map>
-#include <utility>
-#include <iostream>
+#include <set>
+#include <string>
+
+#include <fuzzer/FuzzedDataProvider.h>
+#include <mysql_cb_dhcp6.h>
+#include <mysql_cb_impl.h>
 
 using namespace isc::asiolink;
 using namespace isc::db;

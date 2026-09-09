@@ -19,6 +19,7 @@
 
 #include <limits>
 #include <utility>
+#include <vector>
 
 namespace isc {
 

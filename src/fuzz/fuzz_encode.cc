@@ -7,14 +7,15 @@
 // Developed by AdaLogics under contract to ISC.
 
 #include <config.h>
-#include <fuzzer/FuzzedDataProvider.h>
 
 #include <exceptions/exceptions.h>
 #include <util/encode/encode.h>
 
+#include <cstddef>
 #include <string>
 #include <vector>
-#include <cstddef>
+
+#include <fuzzer/FuzzedDataProvider.h>
 
 using namespace isc::util::encode;
 

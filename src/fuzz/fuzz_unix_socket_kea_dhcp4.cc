@@ -6,8 +6,6 @@
 
 #include <config.h>
 
-#include <fuzz.h>
-
 #include <asiolink/io_service.h>
 #include <cc/data.h>
 #include <config/command_mgr.h>
@@ -16,11 +14,12 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <testutils/env_var_wrapper.h>
 #include <testutils/unix_control_client.h>
-
 #include <util/filesystem.h>
 
 #include <cassert>
 #include <cstdlib>
+
+#include <fuzz.h>
 
 using namespace isc::asiolink;
 using namespace isc::config;

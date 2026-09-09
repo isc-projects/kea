@@ -7,16 +7,17 @@
 // Developed by AdaLogics under contract to ISC.
 
 #include <config.h>
-#include <fuzzer/FuzzedDataProvider.h>
 
-#include <exceptions/exceptions.h>
-#include <cryptolink/cryptolink.h>
 #include <cryptolink/crypto_hash.h>
 #include <cryptolink/crypto_hmac.h>
 #include <cryptolink/crypto_rng.h>
+#include <cryptolink/cryptolink.h>
+#include <exceptions/exceptions.h>
 
 #include <cstddef>
 #include <vector>
+
+#include <fuzzer/FuzzedDataProvider.h>
 
 using namespace isc::cryptolink;
 

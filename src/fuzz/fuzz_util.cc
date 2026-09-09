@@ -7,19 +7,20 @@
 // Developed by AdaLogics under contract to ISC.
 
 #include <config.h>
-#include <fuzzer/FuzzedDataProvider.h>
 
 #include <exceptions/exceptions.h>
-#include <util/str.h>
+#include <util/boost_time_utils.h>
 #include <util/csv_file.h>
 #include <util/encode/utf8.h>
-#include <util/boost_time_utils.h>
+#include <util/str.h>
+
+#include <cstddef>
+#include <string>
+#include <vector>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <string>
-#include <vector>
-#include <cstddef>
+#include <fuzzer/FuzzedDataProvider.h>
 
 using namespace boost::posix_time;
 using namespace isc::util;

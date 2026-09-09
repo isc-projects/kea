@@ -7,9 +7,10 @@
 // Developed by AdaLogics under contract to ISC.
 
 #include <config.h>
-#include <fuzzer/FuzzedDataProvider.h>
 
 #include <dns/exceptions.h>
+#include <dns/master_lexer.h>
+#include <dns/master_loader.h>
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
@@ -25,8 +26,6 @@
 #include <dns/tsig.h>
 #include <dns/tsigkey.h>
 #include <dns/tsigrecord.h>
-#include <dns/master_lexer.h>
-#include <dns/master_loader.h>
 #include <util/buffer.h>
 
 #include <cstddef>
@@ -34,6 +33,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
+
+#include <fuzzer/FuzzedDataProvider.h>
 
 using namespace isc::dns;
 using namespace isc::util;

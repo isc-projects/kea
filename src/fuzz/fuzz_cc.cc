@@ -7,15 +7,16 @@
 // Developed by AdaLogics under contract to ISC.
 
 #include <config.h>
-#include <fuzzer/FuzzedDataProvider.h>
 
-#include <exceptions/exceptions.h>
+#include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <cc/json_feed.h>
 #include <cc/simple_parser.h>
-#include <asiolink/io_address.h>
+#include <exceptions/exceptions.h>
 
 #include <string>
+
+#include <fuzzer/FuzzedDataProvider.h>
 
 using namespace isc;
 using namespace isc::data;

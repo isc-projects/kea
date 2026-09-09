@@ -7,34 +7,32 @@
 // Developed by AdaLogics under contract to ISC.
 
 #include <config.h>
-#include <fuzzer/FuzzedDataProvider.h>
-
-#include <string>
 
 #include <cc/data.h>
 #include <cc/simple_parser.h>
-
-#include <dhcpsrv/srv_config.h>
-#include <dhcpsrv/cfg_option_def.h>
-#include <dhcpsrv/cfg_option.h>
-#include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/cfg_duid.h>
 #include <dhcpsrv/cfg_expiration.h>
+#include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/cfg_mac_source.h>
+#include <dhcpsrv/cfg_option.h>
+#include <dhcpsrv/cfg_option_def.h>
 #include <dhcpsrv/client_class_def.h>
-
-#include <dhcpsrv/parsers/dhcp_parsers.h>
-#include <dhcpsrv/parsers/option_data_parser.h>
-#include <dhcpsrv/parsers/ifaces_config_parser.h>
-#include <dhcpsrv/parsers/duid_config_parser.h>
-#include <dhcpsrv/parsers/multi_threading_config_parser.h>
-#include <dhcpsrv/parsers/sanity_checks_parser.h>
-#include <dhcpsrv/parsers/expiration_config_parser.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <dhcpsrv/parsers/duid_config_parser.h>
+#include <dhcpsrv/parsers/expiration_config_parser.h>
 #include <dhcpsrv/parsers/host_reservation_parser.h>
+#include <dhcpsrv/parsers/ifaces_config_parser.h>
+#include <dhcpsrv/parsers/multi_threading_config_parser.h>
+#include <dhcpsrv/parsers/option_data_parser.h>
+#include <dhcpsrv/parsers/sanity_checks_parser.h>
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcpsrv/parsers/simple_parser6.h>
+#include <dhcpsrv/srv_config.h>
 
+#include <string>
+
+#include <fuzzer/FuzzedDataProvider.h>
 #include <helper_func.h>
 
 using namespace isc;

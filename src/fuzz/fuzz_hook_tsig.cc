@@ -7,21 +7,20 @@
 // Developed by AdaLogics under contract to ISC.
 
 #include <config.h>
-#include <fuzzer/FuzzedDataProvider.h>
 
 #include <dns/name.h>
-#include <dns/tsig.h>
 #include <dns/rdata.h>
-
-#include <gss_tsig_context.h>
-#include <gss_tsig_key.h>
-#include <tkey_exchange.h>
+#include <dns/tsig.h>
 
 #include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
-#include <memory>
+
+#include <fuzzer/FuzzedDataProvider.h>
+#include <gss_tsig_context.h>
+#include <gss_tsig_key.h>
+#include <tkey_exchange.h>
 
 using namespace isc;
 using namespace isc::dns;

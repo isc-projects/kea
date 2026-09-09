@@ -6,14 +6,8 @@
 
 #include <config.h>
 
-#include <cassert>
-#include <cstdlib>
-#include <iostream>
-
-#include <fuzz.h>
-
-#include <asiolink/io_service.h>
 #include <asiolink/interval_timer.h>
+#include <asiolink/io_service.h>
 #include <cc/data.h>
 #include <config/cmd_http_listener.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
@@ -27,6 +21,12 @@
 #include <process/d_controller.h>
 #include <util/filesystem.h>
 #include <util/multi_threading_mgr.h>
+
+#include <cassert>
+#include <cstdlib>
+#include <iostream>
+
+#include <fuzz.h>
 
 using namespace isc::asiolink;
 using namespace isc::config;

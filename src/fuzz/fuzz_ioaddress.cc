@@ -8,12 +8,12 @@
 
 #include <config.h>
 
+#include <asiolink/io_address.h>
+#include <asiolink/io_error.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <string>
-
-#include <asiolink/io_address.h>
-#include <asiolink/io_error.h>
 
 using isc::asiolink::IOAddress;
 

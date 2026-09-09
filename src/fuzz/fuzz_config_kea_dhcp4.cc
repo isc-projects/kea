@@ -6,17 +6,17 @@
 
 #include <config.h>
 
-#include <fuzz.h>
-
 #include <cc/command_interpreter.h>
 #include <cc/user_context.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/json_config_parser.h>
 #include <dhcp4/parser_context.h>
+#include <util/filesystem.h>
 
 #include <cassert>
-#include <util/filesystem.h>
 #include <string>
+
+#include <fuzz.h>
 
 using namespace isc;
 using namespace isc::config;

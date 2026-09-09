@@ -7,24 +7,21 @@
 // Developed by AdaLogics under contract to ISC.
 
 #include <config.h>
-#include <fuzzer/FuzzedDataProvider.h>
 
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
-
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/parser_context.h>
 #include <log/logger_support.h>
 #include <process/daemon.h>
 
-#include <helper_func.h>
-
-#include <array>
 #include <cstdlib>
 #include <string>
+
+#include <fuzzer/FuzzedDataProvider.h>
+#include <helper_func.h>
 #include <unistd.h>
-#include <vector>
 
 using namespace isc::config;
 using namespace isc::data;

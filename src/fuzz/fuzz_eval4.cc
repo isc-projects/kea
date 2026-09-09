@@ -7,17 +7,17 @@
 // Developed by AdaLogics under contract to ISC.
 
 #include <config.h>
-#include <fuzzer/FuzzedDataProvider.h>
 
+#include <dhcp/dhcp4.h>
+#include <dhcp/pkt4.h>
+#include <eval/dependency.h>
 #include <eval/eval_context.h>
 #include <eval/evaluate.h>
-#include <eval/dependency.h>
-
-#include <dhcp/pkt4.h>
-#include <dhcp/dhcp4.h>
 
 #include <cstdlib>
 #include <string>
+
+#include <fuzzer/FuzzedDataProvider.h>
 
 using namespace isc;
 using namespace isc::eval;

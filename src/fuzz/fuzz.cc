@@ -22,7 +22,8 @@ using namespace isc::util::encode;
 using namespace isc::util::file;
 using namespace std;
 
-string KEA_FUZZ_DIR() {
+string
+KEA_FUZZ_DIR() {
     static TemporaryDirectory TEMP_DIR = TemporaryDirectory();
     return TEMP_DIR.dirName();
 }
@@ -50,7 +51,8 @@ DoInitialization() {
     return true;
 }
 
-void writeToFile(string const& file, string const& content) {
+void
+writeToFile(string const& file, string const& content) {
     // Create the config file.
     ofstream out(file, ios::out | ios::trunc);
     assert(out.is_open());
@@ -59,7 +61,8 @@ void writeToFile(string const& file, string const& content) {
     assert(!out.is_open());
 }
 
-bool byteStreamToPacketData(uint8_t const* data, size_t size, vector<uint8_t>& byte_stream) {
+bool
+byteStreamToPacketData(uint8_t const* data, size_t size, vector<uint8_t>& byte_stream) {
     string str(data, data + size);
     if (!str.empty() && str.at(str.size() - 1) == '\n') {
         str = str.substr(0, str.size() - 1);

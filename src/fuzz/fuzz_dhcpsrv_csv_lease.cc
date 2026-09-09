@@ -23,7 +23,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
     char filename[256];
     snprintf(filename, sizeof(filename), "/tmp/libfuzzer.%d", getpid());
 
-    FILE *fp = fopen(filename, "wb");
+    FILE* fp = fopen(filename, "wb");
     if (!fp)
         return 0;
     fwrite(Data, Size, 1, fp);

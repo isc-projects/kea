@@ -8,18 +8,18 @@
 
 #include <config.h>
 
-#include <fuzzer/FuzzedDataProvider.h>
-
-#include <mysql.h>
-
 #include <mysql/mysql_constants.h>
-#include <stdint.h>
-#include <string.h>
-#include <stdlib.h>
-#include <vector>
-#include <string>
+
 #include <algorithm>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <string>
 #include <unordered_map>
+#include <vector>
+
+#include <fuzzer/FuzzedDataProvider.h>
+#include <mysql.h>
 
 using namespace isc::db;
 

@@ -7,6 +7,8 @@
 #ifndef MYSQL_CONSTANTS_H
 #define MYSQL_CONSTANTS_H
 
+#include <cstdint>
+
 #include <mysql.h>
 
 namespace isc {

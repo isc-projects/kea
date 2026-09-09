@@ -16,8 +16,7 @@
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <iostream>
-#include <set>
+#include <vector>
 
 #include <time.h>
 

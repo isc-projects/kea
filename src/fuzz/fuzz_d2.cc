@@ -7,8 +7,8 @@
 // Developed by AdaLogics under contract to ISC.
 
 #include <config.h>
-#include <fuzzer/FuzzedDataProvider.h>
 
+#include <cc/data.h>
 #include <d2/parser_context.h>
 #include <d2srv/d2_cfg_mgr.h>
 #include <d2srv/d2_simple_parser.h>
@@ -18,13 +18,13 @@
 #include <dns/name.h>
 #include <dns/tsig.h>
 #include <dns/tsigkey.h>
-
-#include <cc/data.h>
 #include <exceptions/exceptions.h>
 
 #include <cstddef>
 #include <cstdint>
 #include <string>
+
+#include <fuzzer/FuzzedDataProvider.h>
 
 using namespace isc::d2;
 using namespace isc::data;

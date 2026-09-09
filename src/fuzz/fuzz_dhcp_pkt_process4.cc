@@ -7,11 +7,10 @@
 // Developed by AdaLogics under contract to ISC.
 
 #include <config.h>
-#include <fuzzer/FuzzedDataProvider.h>
 
 #include <dhcp/dhcp4.h>
-#include <dhcp/pkt4.h>
 #include <dhcp/libdhcp++.h>
+#include <dhcp/pkt4.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -20,16 +19,14 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <vector>
-#include <list>
-#include <memory>
-#include <iostream>
-#include <filesystem>
-#include <fstream>
-#include <string>
 #include <cstdio>
 #include <cstdlib>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
 
+#include <fuzzer/FuzzedDataProvider.h>
 #include <helper_func.h>
 
 using namespace isc::dhcp;

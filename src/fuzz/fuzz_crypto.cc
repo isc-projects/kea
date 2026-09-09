@@ -7,21 +7,22 @@
 // Developed by AdaLogics under contract to ISC.
 
 #include <config.h>
-#include <fuzzer/FuzzedDataProvider.h>
 
-#include <dns/tsig.h>
-#include <cryptolink/cryptolink.h>
 #include <cryptolink/crypto_hmac.h>
+#include <cryptolink/cryptolink.h>
+#include <dns/tsig.h>
 
 #include <cstddef>
 #include <cstdint>
 #include <string>
 
+#include <fuzzer/FuzzedDataProvider.h>
+
 using namespace isc::dns;
 using namespace isc::cryptolink;
 using namespace isc::util;
 
-extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     FuzzedDataProvider fdp(data, size);
 
     std::string secret = fdp.ConsumeRandomLengthString(64);

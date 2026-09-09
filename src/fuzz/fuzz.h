@@ -9,7 +9,8 @@
 #include <string>
 #include <vector>
 
-std::string KEA_FUZZ_DIR();
+std::string
+KEA_FUZZ_DIR();
 
 extern "C" {
 

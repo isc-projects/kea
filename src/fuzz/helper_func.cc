@@ -8,11 +8,11 @@
 
 #include <config.h>
 
-#include <helper_func.h>
-
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+
+#include <helper_func.h>
 #include <unistd.h>
 
 namespace fs = std::filesystem;
@@ -20,17 +20,19 @@ namespace fs = std::filesystem;
 using namespace isc::data;
 
 namespace fuzz {
-    std::string writeTempConfig(bool isV4) {
-        return writeTempFile(isV4? JSON_CONFIG4 : JSON_CONFIG6);
-    }
+std::string
+writeTempConfig(bool isV4) {
+    return writeTempFile(isV4 ? JSON_CONFIG4 : JSON_CONFIG6);
+}
 
-    std::string writeTempLease(bool isV4) {
-        if (isV4) {
-            return writeTempFile(LEASE4, "", "/tmp/kea-leases4.csv");
-        } else {
-            return writeTempFile(LEASE6, "", "/tmp/kea-leases6.csv");
-        }
+std::string
+writeTempLease(bool isV4) {
+    if (isV4) {
+        return writeTempFile(LEASE4, "", "/tmp/kea-leases4.csv");
+    } else {
+        return writeTempFile(LEASE6, "", "/tmp/kea-leases6.csv");
     }
+}
 
     std::string writeTempUserFile() {
         return writeTempFile(USER, "", "/tmp/users.txt");
@@ -71,4 +73,4 @@ namespace fuzz {
             return Element::createMap();
         }
     }
-}
+    }  // namespace fuzz

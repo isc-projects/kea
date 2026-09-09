@@ -8,29 +8,26 @@
 
 #include <config.h>
 
-#include <fuzzer/FuzzedDataProvider.h>
-
-#include <cstdlib>
-#include <cstring>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
+#include <cstring>
+
+#include <fuzzer/FuzzedDataProvider.h>
 
 struct pg_conn {};
-using  PGconn = pg_conn;
+using PGconn = pg_conn;
 
 struct pg_result {
-    int   status;
-    int   ntuples;
-    int   nfields;
+    int status;
+    int ntuples;
+    int nfields;
     char** field_names;
     char** values;
 };
 using PGresult = pg_result;
 
-enum {
-    PGRES_EMPTY_QUERY = 0, PGRES_COMMAND_OK = 1,
-    PGRES_TUPLES_OK = 2, PGRES_FATAL_ERROR = 7
-};
+enum { PGRES_EMPTY_QUERY = 0, PGRES_COMMAND_OK = 1, PGRES_TUPLES_OK = 2, PGRES_FATAL_ERROR = 7 };
 
 static thread_local FuzzedDataProvider* g_fdp = nullptr;
 

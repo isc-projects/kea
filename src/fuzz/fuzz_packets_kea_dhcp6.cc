@@ -6,8 +6,6 @@
 
 #include <config.h>
 
-#include <fuzz.h>
-
 #include <cc/command_interpreter.h>
 #include <cc/user_context.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
@@ -15,11 +13,13 @@
 #include <dhcp6/parser_context.h>
 #include <dhcpsrv/packet_fuzzer.h>
 #include <util/encode/encode.h>
+#include <util/filesystem.h>
 
 #include <cassert>
 #include <cstdlib>
-#include <util/filesystem.h>
 #include <vector>
+
+#include <fuzz.h>
 
 using namespace isc;
 using namespace isc::config;
