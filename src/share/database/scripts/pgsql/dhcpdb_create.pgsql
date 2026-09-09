@@ -7724,7 +7724,7 @@ BEGIN
             FROM prefixes,
                 LATERAL (SELECT incrementV6Prefix(prefixes.bin_address, p_delegated_len)
                     AS bin_address) AS next_prefix
-            WHERE (next_prefix.bin_address > prefixes.bin_address AND 
+            WHERE (next_prefix.bin_address > prefixes.bin_address AND
                    next_prefix.bin_address < p_end_bin AND
                    prefixes.depth < max_prefixes_per_batch)
         ),
@@ -7785,6 +7785,28 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 34.0.
 
+-- This line starts the schema upgrade to version 35.0.
+
+ALTER TABLE dhcp4_pool DROP CONSTRAINT fk_dhcp4_pool_subnet_id;
+ALTER TABLE dhcp4_pool ADD CONSTRAINT fk_dhcp4_pool_subnet_id
+    FOREIGN KEY (subnet_id) REFERENCES dhcp4_subnet (subnet_id)
+    ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE dhcp6_pool DROP CONSTRAINT fk_dhcp6_pool_subnet_id;
+ALTER TABLE dhcp6_pool ADD CONSTRAINT fk_dhcp6_pool_subnet_id
+    FOREIGN KEY (subnet_id) REFERENCES dhcp6_subnet (subnet_id)
+    ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE dhcp6_pd_pool DROP CONSTRAINT fk_dhcp6_pd_pool_subnet_id;
+ALTER TABLE dhcp6_pd_pool ADD CONSTRAINT fk_dhcp6_pd_pool_subnet_id
+    FOREIGN KEY (subnet_id) REFERENCES dhcp6_subnet (subnet_id)
+    ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '35', minor = '0';
+
+-- This line concludes the schema upgrade to version 35.0.
 
 -- Commit the script transaction.
 COMMIT;

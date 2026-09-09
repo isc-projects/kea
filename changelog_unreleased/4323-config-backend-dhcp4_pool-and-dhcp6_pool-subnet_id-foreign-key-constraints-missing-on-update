@@ -1,0 +1,6 @@
+[bug]		tmark
+	Added missing cascade delete and update actions
+	to the subnet-id foreign key constraints on the
+	dhcp4_pool, dhcp6_pool and dhcp6_pd_pool tables
+	in the postgresql schema.
+	(Gitlab #4323)

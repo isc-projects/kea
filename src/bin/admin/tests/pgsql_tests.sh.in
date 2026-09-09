@@ -166,7 +166,7 @@ pgsql_db_version_test() {
     run_command \
         "${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "34.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "35.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -1247,6 +1247,11 @@ pgsql_upgrade_33_to_34_test() {
     run_statement "Post-test deletes" "${qry}"
 }
 
+pgsql_upgrade_34_to_35_test() {
+    # This is a NOP as the schema change only altered three FK constraints.
+    echo "NOP"
+}
+
 pgsql_upgrade_test() {
     test_start "pgsql.upgrade"
 
@@ -1265,7 +1270,7 @@ pgsql_upgrade_test() {
 
     # Verify upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "34.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
+    assert_str_eq "35.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
 
     # Check 1.0 to 2.0 upgrade
     pgsql_upgrade_1_0_to_2_0_test
@@ -1359,6 +1364,9 @@ pgsql_upgrade_test() {
 
     # Check 33 to 34 upgrade
     pgsql_upgrade_33_to_34_test
+
+    # Check 34 to 35 upgrade
+    pgsql_upgrade_34_to_35_test
 
     # Let's wipe the whole database
     pgsql_wipe
