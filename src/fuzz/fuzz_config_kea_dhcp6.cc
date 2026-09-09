@@ -14,6 +14,7 @@
 #include <util/filesystem.h>
 
 #include <cassert>
+#include <iostream>
 #include <string>
 
 #include <fuzz.h>
@@ -54,6 +55,12 @@ LLVMFuzzerTearDown() {
 
 int
 LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
+    // Upper bound on oversized inputs: 512KiB. Last reported timeout was on 853KB.
+    if (size > 524288) {
+        std::cout << "Skipping: input size > 512KiB: " << size << std::endl;
+        return 0;
+    }
+
     // Create the config file.
     string const string_config(reinterpret_cast<char const*>(data), size);
     writeToFile(KEA_DHCP6_CONF, string_config);

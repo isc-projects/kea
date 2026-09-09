@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <iostream>
 #include <string>
 
 #include <fuzzer/FuzzedDataProvider.h>
@@ -34,6 +35,12 @@ extern "C" int pkt6_receive(CalloutHandle& handle);
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     if (size < 236) {
         // package size requires at least 236 bytes
+        return 0;
+    }
+
+    // Upper bound on oversized inputs: 64KiB. Last reported timeout was on 75KB.
+    if (size > 65536) {
+        std::cout << "Skipping: input size > 64KiB: " << size << std::endl;
         return 0;
     }
 

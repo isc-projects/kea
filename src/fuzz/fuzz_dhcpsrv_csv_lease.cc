@@ -19,14 +19,14 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::dhcp;
 
-extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     char filename[256];
     snprintf(filename, sizeof(filename), "/tmp/libfuzzer.%d", getpid());
 
     FILE* fp = fopen(filename, "wb");
     if (!fp)
         return 0;
-    fwrite(Data, Size, 1, fp);
+    fwrite(data, size, 1, fp);
     fclose(fp);
 
     try {

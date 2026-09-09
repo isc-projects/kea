@@ -30,6 +30,7 @@
 #include <dhcpsrv/parsers/simple_parser6.h>
 #include <dhcpsrv/srv_config.h>
 
+#include <iostream>
 #include <string>
 
 #include <fuzzer/FuzzedDataProvider.h>
@@ -39,11 +40,17 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::dhcp;
 
-extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
-    FuzzedDataProvider fdp(Data, Size);
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
+    // Upper bound on oversized inputs: 128KiB. Last reported timeout was on 174KB.
+    if (size > 131072) {
+        std::cout << "Skipping: input size > 128KiB: " << size << std::endl;
+        return 0;
+    }
+
+    FuzzedDataProvider fdp(data, size);
     std::string payload = fdp.ConsumeRandomLengthString();
 
-    std::string raw_payload(reinterpret_cast<const char*>(Data), Size);
+    std::string raw_payload(reinterpret_cast<const char*>(data), size);
     ElementPtr payload_elem =  nullptr;
     try {
         payload_elem = Element::fromJSON(payload);

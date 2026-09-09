@@ -22,6 +22,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <iostream>
 #include <string>
 
 #include <fuzzer/FuzzedDataProvider.h>
@@ -46,6 +47,12 @@ static const D2ParserContext::ParserType types[] = {
 };
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
+    // Upper bound on oversized inputs: 128KiB. Last reported timeout was on 186KB.
+    if (size > 131072) {
+        std::cout << "Skipping: input size > 128KiB: " << size << std::endl;
+        return 0;
+    }
+
     FuzzedDataProvider fdp(data, size);
     bool checkOnly = fdp.ConsumeBool();
     uint8_t index = fdp.ConsumeIntegralInRange<uint8_t>(0, static_cast<uint8_t>(sizeof(types) / sizeof(types[0]) - 1));

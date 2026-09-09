@@ -16,6 +16,7 @@
 #include <util/filesystem.h>
 
 #include <cassert>
+#include <iostream>
 
 #include <fuzz.h>
 

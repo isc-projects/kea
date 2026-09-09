@@ -90,8 +90,8 @@ inline void requestResponseParsing(ParserT& parser, const std::string& payload) 
     parser.getErrorMessage();
 }
 
-extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
-    FuzzedDataProvider fdp(Data, Size);
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
+    FuzzedDataProvider fdp(data, size);
 
     HttpRequest request;
     HttpResponse response;

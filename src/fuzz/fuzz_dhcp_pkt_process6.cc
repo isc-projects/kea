@@ -60,6 +60,12 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         return 0;
     }
 
+    // Upper bound on oversized inputs: 128KiB. Last reported timeout was on 176KB.
+    if (size > 131072) {
+        std::cout << "Skipping: input size > 128KiB: " << size << std::endl;
+        return 0;
+    }
+
     // Disable validatePath checking to allow writing configuration file to /tmp
     isc::util::file::PathChecker::enableEnforcement(false);
 

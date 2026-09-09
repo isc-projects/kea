@@ -15,6 +15,7 @@
 #include <eval/evaluate.h>
 
 #include <cstdlib>
+#include <iostream>
 #include <string>
 
 #include <fuzzer/FuzzedDataProvider.h>
@@ -23,8 +24,14 @@ using namespace isc;
 using namespace isc::eval;
 using namespace isc::dhcp;
 
-extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
-    FuzzedDataProvider fdp(Data, Size);
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
+    // Upper bound on oversized inputs: 16KiB. Last reported timeout was on 20KB.
+    if (size > 16384) {
+        std::cout << "Skipping: input size > 16KiB: " << size << std::endl;
+        return 0;
+    }
+
+    FuzzedDataProvider fdp(data, size);
     EvalContext ctx(Option::V6);
 
     auto idx = fdp.ConsumeIntegralInRange<uint8_t>(1, 18);

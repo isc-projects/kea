@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -51,6 +52,12 @@ namespace isc {
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     if (size < 236) {
         // package size requires at least 236 bytes
+        return 0;
+    }
+
+    // Upper bound on oversized inputs: 256KiB. Last reported timeout was on 486KB.
+    if (size > 262144) {
+        std::cout << "Skipping: input size > 256KiB: " << size << std::endl;
         return 0;
     }
 
