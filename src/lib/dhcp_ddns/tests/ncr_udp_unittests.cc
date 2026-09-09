@@ -387,8 +387,8 @@ public:
         }
     }
 
-    int pass_count_;
-    int error_count_;
+    size_t pass_count_;
+    size_t error_count_;
 };
 
 /// @brief Defines a smart pointer to an instance of a send handler.
@@ -518,7 +518,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTests) {
 
     // Make sure select_fd does evaluates to not ready via select and
     // that ioReady() method agrees.
-    ASSERT_EQ(0U, selectCheck(select_fd));
+    ASSERT_EQ(0, selectCheck(select_fd));
     ASSERT_FALSE(sender.ioReady());
 
     // Iterate over a series of messages, sending each one. Since we
@@ -564,7 +564,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTests) {
 
     // Make sure select_fd does evaluates to not ready via select and
     // that ioReady() method agrees.
-    ASSERT_EQ(0U, selectCheck(select_fd));
+    ASSERT_EQ(0, selectCheck(select_fd));
     ASSERT_FALSE(sender.ioReady());
 
     // Verify that the queue is empty.
@@ -646,7 +646,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTestsMultiThreading) {
 
     // Make sure select_fd does evaluates to not ready via select and
     // that ioReady() method agrees.
-    ASSERT_EQ(0U, selectCheck(select_fd));
+    ASSERT_EQ(0, selectCheck(select_fd));
     ASSERT_FALSE(sender.ioReady());
 
     // Iterate over a series of messages, sending each one. Since we
@@ -692,7 +692,7 @@ TEST_F(NameChangeUDPSenderBasicTest, basicSendTestsMultiThreading) {
 
     // Make sure select_fd does evaluates to not ready via select and
     // that ioReady() method agrees.
-    ASSERT_EQ(0U, selectCheck(select_fd));
+    ASSERT_EQ(0, selectCheck(select_fd));
     ASSERT_FALSE(sender.ioReady());
 
     // Verify that the queue is empty.
