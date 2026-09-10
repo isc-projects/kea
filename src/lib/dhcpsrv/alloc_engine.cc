@@ -2661,6 +2661,12 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
             continue;
         }
 
+        if (lease->expired()) {
+            // Force refresh of expired leases.
+            lease->valid_lft_ = 0;
+            lease->preferred_lft_ = 0;
+        }
+
         lease->reuseable_valid_lft_ = 0;
         lease->fqdn_fwd_ = ctx.fwd_dns_update_;
         lease->fqdn_rev_ = ctx.rev_dns_update_;
