@@ -1449,7 +1449,8 @@ TEST_F(Pkt4Test, getType) {
 
 // Verifies that when the VIVSO option 125 has length that is too
 // short (i.e. less than sizeof(uint8_t), unpack throws a
-// SkipRemainingOptionsError exception
+// SkipRemainingOptionsError exception, and if it has maximum length
+// it does not.
 TEST_F(Pkt4Test, truncatedVendorLength) {
 
     // Build a good discover packet
@@ -1480,18 +1481,20 @@ TEST_F(Pkt4Test, truncatedVendorLength) {
     x = pkt->getOption(DHO_VIVSO_SUBOPTIONS);
     ASSERT_FALSE(x);
 
-    // Build a bad discover packet
+    // Build a good discover packet with maximum length VIVSO
     pkt = dhcp::test::PktCaptures::discoverWithMaximumVIVSO();
 
-    // Unpack should throw Skip exception
-    ASSERT_THROW_MSG(pkt->unpack(), SkipRemainingOptionsError,
-                     "Option parse failed. Tried to parse 272 bytes from 256-byte long buffer.");
-
+    // Unpacking should not throw
+    ASSERT_NO_THROW(pkt->unpack());
     ASSERT_EQ(DHCPDISCOVER, pkt->getType());
 
-    // VIVSO option should not be there
+    // VIVSO option should be there
     x = pkt->getOption(DHO_VIVSO_SUBOPTIONS);
-    ASSERT_FALSE(x);
+    ASSERT_TRUE(x);
+    ASSERT_EQ(DHO_VIVSO_SUBOPTIONS, x->getType());
+    vivso = boost::dynamic_pointer_cast<OptionVendor>(x);
+    ASSERT_TRUE(vivso);
+    EXPECT_EQ(260 + 2U, vivso->len()); // data + opt code + len
 }
 
 // Verifies that we handle text options that contain trailing
