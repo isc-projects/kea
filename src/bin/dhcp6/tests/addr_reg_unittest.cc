@@ -1429,7 +1429,7 @@ TEST_F(AddrRegTest, renewDdnsHostname) {
 
     // DDNS is not skipped when the hostname changed.
     EXPECT_FALSE(ctx2.getDdnsParams()->getUpdateOnRenew());
-    // One CHG_REMOVE and one CHG_ADD.
+    // One CHG_REMOVE and one CHG_ADD chained together.
     EXPECT_EQ(1U, d2_mgr.getQueueSize());
 
     string expected = "DHCPSRV_MEMFILE_ADD_ADDR6 ";

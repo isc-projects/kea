@@ -2597,14 +2597,16 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
         // holds a fully qualified domain-name already (not partial).
         // Get the IP address from the lease.
         auto cr_mode = StringToConflictResolutionMode(ctx.getDdnsParams()->getConflictResolutionMode());
-        add_ncr.reset(new NameChangeRequest(isc::dhcp_ddns::CHG_ADD, do_fwd, do_rev, opt_fqdn->getDomainName(),
-                                            iaaddr->getAddress().toText(), dhcid,
-                                            calculateDdnsTtl(iaaddr->getValid(),
-                                                             ctx.getDdnsParams()->getTtlPercent(),
-                                                             ctx.getDdnsParams()->getTtl(),
-                                                             ctx.getDdnsParams()->getTtlMin(),
-                                                             ctx.getDdnsParams()->getTtlMax()),
-                                            cr_mode));
+        add_ncr.reset(
+            new NameChangeRequest(isc::dhcp_ddns::CHG_ADD, do_fwd,
+                                  do_rev, opt_fqdn->getDomainName(),
+                                  iaaddr->getAddress().toText(),
+                                  dhcid, calculateDdnsTtl(iaaddr->getValid(),
+                                  ctx.getDdnsParams()->getTtlPercent(),
+                                  ctx.getDdnsParams()->getTtl(),
+                                  ctx.getDdnsParams()->getTtlMin(),
+                                  ctx.getDdnsParams()->getTtlMax()),
+                                  cr_mode));
 
         LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL, DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST)
             .arg(answer->getLabel())
@@ -2620,10 +2622,8 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
         // Chain the remove and add together so they arrive in-order.
         remove_ncr->setNextNcr(add_ncr);
         CfgMgr::instance().getD2ClientMgr().sendRequest(remove_ncr);
-    } else {
-        if (add_ncr) {
-            CfgMgr::instance().getD2ClientMgr().sendRequest(add_ncr);
-        }
+    } else if (add_ncr) {
+        CfgMgr::instance().getD2ClientMgr().sendRequest(add_ncr);
     }
 }
 

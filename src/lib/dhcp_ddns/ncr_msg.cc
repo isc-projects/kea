@@ -369,10 +369,8 @@ NameChangeRequest::fromJSON(const std::string& json) {
                   "Malformed NameChangeRequest JSON: " << ex.what());
     }
 
-    auto ncr = fromJSON(elements);
-
     // Everything is valid, return the new instance.
-    return (ncr);
+    return (fromJSON(elements));
 }
 
 NameChangeRequestPtr

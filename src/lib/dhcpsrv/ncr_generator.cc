@@ -21,55 +21,17 @@ using namespace isc::dhcp_ddns;
 
 namespace {
 
-/// @brief Sends name change request to D2 using lease information.
-///
-/// This method is exception safe.
+/// @brief Construcs a name change request using lease information.
 ///
 /// @param chg_type type of change to create CHG_ADD or CHG_REMOVE
 /// @param lease Pointer to a lease for which NCR should be sent.
 /// @param identifier Identifier to be used to generate DHCID for
 /// the DNS update. For DHCPv4 it will be hardware address or client
 /// identifier. For DHCPv6 it will be a DUID.
-/// @param label Client identification information in the textual format.
-/// This is used for logging purposes.
 /// @param subnet subnet to which the lease belongs.
 ///
 /// @tparam LeasePtrType Pointer to a lease.
 /// @tparam IdentifierType HW Address, Client Identifier or DUID.
-template<typename LeasePtrType, typename IdentifierType>
-void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
-                    const IdentifierType& identifier, const std::string& label,
-                    const ConstSubnetPtr subnet) {
-
-    try {
-        NameChangeRequestPtr ncr = generateNCRCommon(chg_type, lease, identifier, subnet);
-        if (!ncr) {
-            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_QUEUE_NCR_SKIP)
-                .arg(label)
-                .arg(lease->addr_.toText());
-            return;
-        }
-
-        // Send name change request.
-        CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL_DATA, DHCPSRV_QUEUE_NCR)
-            .arg(label)
-            .arg(chg_type == CHG_ADD ? "add" : "remove")
-            .arg(ncr->toText());
-    } catch (const std::exception& ex) {
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_QUEUE_NCR_FAILED)
-            .arg(label)
-            .arg(chg_type == CHG_ADD ? "add" : "remove")
-            .arg(lease->addr_.toText())
-            .arg(ex.what());
-    }
-}
-
-
-} // end of anonymous namespace
-
-namespace isc {
-namespace dhcp {
 
 template<typename LeasePtrType, typename IdentifierType>
 NameChangeRequestPtr
@@ -121,6 +83,55 @@ generateNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
     return (ncr);
 }
 
+/// @brief Sends name change request to D2 using lease information.
+///
+/// This method is exception safe.
+///
+/// @param chg_type type of change to create CHG_ADD or CHG_REMOVE
+/// @param lease Pointer to a lease for which NCR should be sent.
+/// @param identifier Identifier to be used to generate DHCID for
+/// the DNS update. For DHCPv4 it will be hardware address or client
+/// identifier. For DHCPv6 it will be a DUID.
+/// @param label Client identification information in the textual format.
+/// This is used for logging purposes.
+/// @param subnet subnet to which the lease belongs.
+///
+/// @tparam LeasePtrType Pointer to a lease.
+/// @tparam IdentifierType HW Address, Client Identifier or DUID.
+template<typename LeasePtrType, typename IdentifierType>
+void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
+                    const IdentifierType& identifier, const std::string& label,
+                    const ConstSubnetPtr subnet) {
+
+    try {
+        NameChangeRequestPtr ncr = generateNCRCommon(chg_type, lease, identifier, subnet);
+        if (!ncr) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_QUEUE_NCR_SKIP)
+                .arg(label)
+                .arg(lease->addr_.toText());
+            return;
+        }
+
+        // Send name change request.
+        CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL_DATA, DHCPSRV_QUEUE_NCR)
+            .arg(label)
+            .arg(chg_type == CHG_ADD ? "add" : "remove")
+            .arg(ncr->toText());
+    } catch (const std::exception& ex) {
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_QUEUE_NCR_FAILED)
+            .arg(label)
+            .arg(chg_type == CHG_ADD ? "add" : "remove")
+            .arg(lease->addr_.toText())
+            .arg(ex.what());
+    }
+}
+
+} // end of anonymous namespace
+
+namespace isc {
+namespace dhcp {
+
 void queueNCR(const NameChangeType& chg_type, const Lease4Ptr& lease) {
     if (lease) {
         // Figure out from the lease's subnet if we should use conflict resolution.
@@ -150,14 +161,22 @@ generateNCR(const NameChangeType& chg_type, const Lease4Ptr& lease) {
         ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()
                                  ->getCfgSubnets4()->getSubnet(lease->subnet_id_);
 
-        // Client id takes precedence over HW address.
-        if (lease->client_id_) {
-            ncr = generateNCRCommon(chg_type, lease,
-                                    lease->client_id_->getClientId(), subnet);
-        } else {
-            // Client id is not specified for the lease. Use HW address
-            // instead.
-            ncr = generateNCRCommon(chg_type, lease, lease->hwaddr_, subnet);
+        try {
+            // Client id takes precedence over HW address.
+            if (lease->client_id_) {
+                ncr = generateNCRCommon(chg_type, lease,
+                                        lease->client_id_->getClientId(), subnet);
+            } else {
+                // Client id is not specified for the lease. Use HW address
+                // instead.
+                ncr = generateNCRCommon(chg_type, lease, lease->hwaddr_, subnet);
+            }
+        } catch (const std::exception& ex) {
+            LOG_ERROR(dhcpsrv_logger, DHCPSRV_GENERATE_NCR4_FAILED)
+                .arg(Pkt4::makeLabel(lease->hwaddr_, lease->client_id_))
+                .arg(chg_type == CHG_ADD ? "add" : "remove")
+                .arg(lease->addr_.toText())
+                .arg(ex.what());
         }
     }
 
@@ -171,6 +190,7 @@ void queueNCR(const NameChangeType& chg_type, const Lease6Ptr& lease) {
         // If there's no subnet, something hinky is going on so we'll set it true.
         ConstSubnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()
                             ->getCfgSubnets6()->getSubnet(lease->subnet_id_);
+
         queueNCRCommon(chg_type, lease, *(lease->duid_),
                        Pkt6::makeLabel(lease->duid_, lease->hwaddr_), subnet);
     }
@@ -185,7 +205,15 @@ generateNCR(const NameChangeType& chg_type, const Lease6Ptr& lease) {
         // If there's no subnet, something hinky is going on so we'll set it true.
         ConstSubnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()
                             ->getCfgSubnets6()->getSubnet(lease->subnet_id_);
-        ncr = generateNCRCommon(chg_type, lease, *(lease->duid_), subnet);
+        try {
+            ncr = generateNCRCommon(chg_type, lease, *(lease->duid_), subnet);
+        } catch (const std::exception& ex) {
+            LOG_ERROR(dhcpsrv_logger, DHCPSRV_GENERATE_NCR6_FAILED)
+                .arg(Pkt6::makeLabel(lease->duid_, lease->hwaddr_))
+                .arg(chg_type == CHG_ADD ? "add" : "remove")
+                .arg(lease->addr_.toText())
+                .arg(ex.what());
+        }
     }
 
     return (ncr);

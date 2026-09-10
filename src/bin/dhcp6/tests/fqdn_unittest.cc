@@ -682,7 +682,6 @@ public:
     /// these values programmatically and place them here. Should the
     /// underlying implementation of createDigest() change these test values
     /// will likely need to be updated as well.
-    /// @param expires The cltt of the lease associated with the
     /// NameChangeRequest, and used to calculate NCR expires value.
     /// @param valid_lft the valid lifetime of the lease associated with the
     /// NameChangeRequest.
@@ -1205,16 +1204,16 @@ TEST_F(FqdnDhcpv6SrvTest, processTwoRequestsDiffFqdn) {
     // Should have 1 NCR, a remove with a nested add.
     ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNestedNameChangeRequest(0, isc::dhcp_ddns::CHG_REMOVE, true, true,
-                            "2001:db8:1:1::dead:beef",
-                            "000201415AA33D1187D148275136FA30300478"
-                            "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            lease_->valid_lft_);
+                                  "2001:db8:1:1::dead:beef",
+                                  "000201415AA33D1187D148275136FA30300478"
+                                  "FAAAA3EBD29826B5C907B2C9268A6F52",
+                                  lease_->valid_lft_);
 
     verifyNestedNameChangeRequest(1, isc::dhcp_ddns::CHG_ADD, true, true,
-                            "2001:db8:1:1::dead:beef",
-                            "000201D422AA463306223D269B6CB7AFE7AAD265FC"
-                            "EA97F93623019B2E0D14E5323D5A",
-                            lease_->valid_lft_);
+                                  "2001:db8:1:1::dead:beef",
+                                  "000201D422AA463306223D269B6CB7AFE7AAD265FC"
+                                  "EA97F93623019B2E0D14E5323D5A",
+                                  lease_->valid_lft_);
 
     // Process the message off the queue
     ASSERT_NO_THROW(d2_mgr_.runReadyIO());

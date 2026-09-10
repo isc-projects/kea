@@ -938,7 +938,7 @@ public:
     /// @param fqdn  - expected FQDN in the NCR
     /// @param dhcid - expected DHCID in the NCR (comparison is performed only
     /// if the value supplied is not empty):w
-    /// @param lifetime - lease's valid lifetime from which NCR ttl was
+    /// @param valid_lft - lease's valid lifetime from which NCR ttl was
     /// generated
     /// @param exp_cr_mode expected value of conflict resolution mode
     /// @param ddns_ttl_percent expected configured value for ddns-ttl-percent
@@ -1384,7 +1384,7 @@ TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsUpdateOnRenew) {
 
             if ((scenario.remove_ + scenario.add_) == 2) {
                 // Verify queue count is correct.
-                ASSERT_EQ(1, d2_mgr_.getQueueSize());
+                ASSERT_EQ(1U, d2_mgr_.getQueueSize());
 
                 // Verify Remove NCR content
                 verifyNestedNameChangeRequest(0, isc::dhcp_ddns::CHG_REMOVE, true, true,

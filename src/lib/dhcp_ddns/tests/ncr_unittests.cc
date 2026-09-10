@@ -864,14 +864,32 @@ TEST(NameChangeRequestTest, nestedNCRTest) {
     EXPECT_EQ(msg_str, json_str);
 
     std::string exp_to_text =
-        "Type: 1 (CHG_REMOVE)\nForward Change: yes\nReverse Change: no\nFQDN: [one.org.]\n"
-        "IP Address: [192.168.2.1]\nDHCID: [010203040A7F8E3D]\nTTL: 1300\nConflict Resolut"
-        "ion Mode: check-with-dhcid\nNext NCR:\nType: 1 (CHG_REMOVE)\nForward Change: yes\n"
-        "Reverse Change: no\nFQDN: [two.org.]\nIP Address: [192.168.2.1]\nDHCID: [010203040"
-        "A7F8E3D]\nTTL: 1300\nConflict Resolution Mode: check-with-dhcid\nNext NCR:\nType: "
-        "1 (CHG_REMOVE)\nForward Change: yes\nReverse Change: no\nFQDN: [three.org.]\nIP Ad"
-        "dress: [192.168.2.1]\nDHCID: [010203040A7F8E3D]\nTTL: 1300\nConflict Resolution Mo"
-        "de: check-with-dhcid\n";
+        "Type: 1 (CHG_REMOVE)\n"
+        "Forward Change: yes\n"
+        "Reverse Change: no\n"
+        "FQDN: [one.org.]\n"
+        "IP Address: [192.168.2.1]\n"
+        "DHCID: [010203040A7F8E3D]\n"
+        "TTL: 1300\n"
+        "Conflict Resolution Mode: check-with-dhcid\n"
+        "Next NCR:\n"
+        "Type: 1 (CHG_REMOVE)\n"
+        "Forward Change: yes\n"
+        "Reverse Change: no\n"
+        "FQDN: [two.org.]\n"
+        "IP Address: [192.168.2.1]\n"
+        "DHCID: [010203040A7F8E3D]\n"
+        "TTL: 1300\n"
+        "Conflict Resolution Mode: check-with-dhcid\n"
+        "Next NCR:\n"
+        "Type: 1 (CHG_REMOVE)\n"
+        "Forward Change: yes\n"
+        "Reverse Change: no\n"
+        "FQDN: [three.org.]\n"
+        "IP Address: [192.168.2.1]\n"
+        "DHCID: [010203040A7F8E3D]\n"
+        "TTL: 1300\n"
+        "Conflict Resolution Mode: check-with-dhcid\n";
 
     std::string to_text_str = ncr->toText();
     EXPECT_EQ(to_text_str, exp_to_text);
