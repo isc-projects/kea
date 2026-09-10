@@ -809,6 +809,49 @@ TEST_F(AllocEngine6Test, solicitReuseRegisteredLease6) {
     EXPECT_FALSE(lease);
 }
 
+// This test checks the lieftimes of an expired lease are refreshed when reused.
+TEST_F(AllocEngine6Test, solicitRefreshExpiredLease6) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
+    ASSERT_TRUE(engine);
+
+    IOAddress addr("2001:db8:1::ad");
+
+    // Create one subnet with a pool holding one address.
+    initSubnet(IOAddress("2001:db8:1::"), addr, addr);
+    subnet_->setPreferred(Triplet<uint32_t>(1000, 2000, 3000));
+    subnet_->setValid(Triplet<uint32_t>(3000, 4000, 5000));
+
+    // Initialize FQDN data for the lease.
+    initFqdn("myhost.example.com", true, true);
+
+    // Create the expired lease.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid_,
+                               501, 502, subnet_->getID(), HWAddrPtr()));
+    lease->cltt_ = time(0) - 500; // Allocated 500 seconds ago
+    lease->valid_lft_ = 495; // Lease was valid for 495 seconds
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Make sure that we really created expired lease
+    ASSERT_TRUE(lease->expired());
+
+    // Asking specifically for this address with zero lifetimes
+    AllocEngine::ClientContext6 ctx2(subnet_, duid_, false, false, "", true,
+                                     Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234)));
+    ctx2.currentIA().iaid_ = iaid_;
+    ctx2.currentIA().addHint(addr, 128, 100, 200);
+
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx2)));
+
+    // Check that we got that single lease
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(addr, lease->addr_);
+
+    // Check lifetimes: min values are expected.
+    EXPECT_EQ(1000U, lease->preferred_lft_);
+    EXPECT_EQ(3000U, lease->valid_lft_);
+}
+
 // This test checks if an expired lease can be reused in REQUEST (actual allocation)
 TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     boost::scoped_ptr<AllocEngine> engine;
