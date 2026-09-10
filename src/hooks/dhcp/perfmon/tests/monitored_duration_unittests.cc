@@ -650,6 +650,28 @@ TEST(MonitoredDuration, toElement) {
     runToElementTest(oss.str(), *duration);
 }
 
+// Verifies the column labels used by MonitoredDuration value rows.
+TEST(MonitoredDuration, valueRowColumns) {
+    ConstElementPtr expected_columns = Element::fromJSON(R"([
+        "query-type",
+        "response-type",
+        "start-event",
+        "end-event",
+        "subnet-id",
+        "interval-start",
+        "occurrences",
+        "min-duration-usecs",
+        "max-duration-usecs",
+        "total-duration-usecs",
+        "mean-duration-usecs"
+    ])");
+
+    ConstElementPtr columns = MonitoredDuration::valueRowColumns();
+
+    ASSERT_TRUE(columns);
+    EXPECT_EQ(*expected_columns, *columns);
+}
+
 // Verifies the MonitoredDuration::toElement(). We do not bother with
 // a v4 version of this test as family only influences DurationKey content
 // and that is tested elsewhere.

@@ -526,6 +526,7 @@ public:
             for (const auto& ref_duration : *ref_durations) {
                 auto row  = rows->get(i);
                 ASSERT_TRUE(row);
+                EXPECT_EQ(columns->size(), row->size());
                 EXPECT_EQ(*row, *(ref_duration->toValueRow()));
                 ++i;
             }

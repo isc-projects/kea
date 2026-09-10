@@ -358,7 +358,7 @@ MonitoredDuration::valueRowColumns() {
         "occurrences",
         "min-duration-usecs",
         "max-duration-usecs",
-        "total-duration-usecs"
+        "total-duration-usecs",
         "mean-duration-usecs"
     };
 

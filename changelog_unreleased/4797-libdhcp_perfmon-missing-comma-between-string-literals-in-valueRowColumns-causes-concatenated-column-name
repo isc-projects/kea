@@ -1,0 +1,5 @@
+[bug]		erichu
+	Fixed the perfmon-get-all-durations result-set so
+	total-duration-usecs and mean-duration-usecs are
+	reported as separate column names.
+	(Gitlab #4797)
