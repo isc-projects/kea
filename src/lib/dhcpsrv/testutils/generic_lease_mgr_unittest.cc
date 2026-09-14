@@ -30,6 +30,7 @@
 #include <functional>
 #include <limits>
 #include <sstream>
+#include <cstdint>
 
 using namespace std;
 using namespace isc::asiolink;
@@ -5840,7 +5841,7 @@ GenericLeaseMgrTest::testSflqLeaseOps4() {
     ASSERT_TRUE(LeaseMgr::useSharedFlqStatement(preop_lease));
 
     // Defines a list of lease operations.
-    enum LeaseOp {
+    enum LeaseOp : uint16_t {
         ADD,
         UPDATE,
         DELETE
@@ -6024,7 +6025,7 @@ GenericLeaseMgrTest::testSflqLeaseOps6(Lease::Type lease_type) {
     ASSERT_TRUE(LeaseMgr::useSharedFlqStatement(preop_lease));
 
     // Defines a list of lease operations.
-    enum LeaseOp {
+    enum LeaseOp : uint16_t {
         ADD,
         UPDATE,
         DELETE

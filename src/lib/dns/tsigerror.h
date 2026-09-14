@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <string>
 
 #include <dns/rcode.h>
+#include <cstdint>
 
 namespace isc {
 namespace dns {
@@ -29,7 +30,7 @@ public:
     /// \note Unfortunately some systems define "BADSIG" as a macro in a public
     /// header file.  To avoid conflict with it we add an underscore to our
     /// definitions.
-    enum CodeValue {
+    enum CodeValue : uint16_t {
         BAD_SIG_CODE = 16,  ///< 16: TSIG verification failure
         BAD_KEY_CODE = 17,  ///< 17: TSIG key is not recognized
         BAD_TIME_CODE = 18, ///< 18: Current time and time signed are too different

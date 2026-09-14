@@ -36,6 +36,7 @@
 #include <limits>
 #include <string>
 #include <sstream>
+#include <cstdint>
 
 using namespace isc::dhcp;
 using namespace isc::data;
@@ -68,12 +69,12 @@ public:
     public:
 
         /// @brief specifies type of query (by IP addr, by hwaddr, by DUID)
-        typedef enum {
+        enum Type : uint16_t {
             TYPE_ADDR,      ///< query by IP address (either v4 or v6)
             TYPE_HWADDR,    ///< query by hardware address (v4 only)
             TYPE_DUID,      ///< query by DUID (v6 only)
             TYPE_CLIENT_ID  ///< query by client identifier (v4 only).
-        } Type;
+        };
 
         /// @brief Specifies subnet-id (always used)
         SubnetID subnet_id;

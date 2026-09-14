@@ -17,6 +17,7 @@
 #include <boost/make_shared.hpp>
 #include <vector>
 #include <set>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
@@ -45,7 +46,7 @@ typedef std::set<LeaseStatsRow> RowSet;
 class GenericLeaseMgrTest : public ::testing::Test {
 public:
     /// @brief Universe (V4 or V6).
-    enum Universe { V4, V6 };
+    enum Universe : uint16_t { V4, V6 };
 
     /// @brief A structure holding a single callback log entry.
     ///

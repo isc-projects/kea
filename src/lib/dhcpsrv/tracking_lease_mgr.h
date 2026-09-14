@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,6 +20,7 @@
 #include <functional>
 #include <string>
 #include <unordered_set>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
@@ -83,11 +84,11 @@ public:
     friend class LeaseMgrFactory;
 
     /// @brief An enumeration differentiating between lease write operations.
-    typedef enum {
+    enum CallbackType : uint16_t {
         TRACK_ADD_LEASE,
         TRACK_UPDATE_LEASE,
         TRACK_DELETE_LEASE
-    } CallbackType;
+    };
 
     /// @brief Type of a callback function invoked upon a lease insertion,
     /// update or deletion.

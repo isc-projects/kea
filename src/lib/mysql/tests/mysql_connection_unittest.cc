@@ -19,6 +19,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <gtest/gtest.h>
+#include <cstdint>
 
 using namespace isc::data;
 using namespace isc::db;
@@ -47,7 +48,7 @@ class MySqlConnectionTest : public LogContentTest {
 public:
 
     /// @brief Indexes of prepared statements used within the tests.
-    enum StatementIndex {
+    enum StatementIndex : uint16_t {
         GET_BY_INT_VALUE,
         DELETE_BY_INT_VALUE,
         INSERT_VALUE,

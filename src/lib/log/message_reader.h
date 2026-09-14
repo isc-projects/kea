@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,7 @@
 
 #include <log/message_dictionary.h>
 #include <log/message_types.h>
+#include <cstdint>
 
 namespace isc {
 namespace log {
@@ -33,10 +34,10 @@ public:
     ///
     /// If REPLACE, the dictionary is only modified if the message ID already
     /// exists in it.  New message IDs are added to the overflow vector.
-    typedef enum {
+    enum Mode : uint16_t {
         ADD,
         REPLACE
-    } Mode;
+    };
 
     /// \brief Visible collection types
     typedef std::vector<std::string>   MessageIDCollection;

@@ -1,4 +1,4 @@
-// Copyright (C) 2022-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 #include <mutex>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
@@ -58,7 +59,7 @@ class Allocator {
 public:
 
     /// @brief Type of preferred PD-pool prefix length selection criteria
-    enum PrefixLenMatchType {
+    enum PrefixLenMatchType : uint16_t {
         PREFIX_LEN_EQUAL,      // select PD-pools with specific prefix length
         PREFIX_LEN_LOWER,      // select PD-pools with lower prefix length
         PREFIX_LEN_HIGHER      // select PD-pools with higher prefix length

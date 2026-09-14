@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,12 +13,13 @@
 #include <bulk_lease_query.h>
 #include <dhcp/dhcp4.h>
 #include <dhcpsrv/lease.h>
+#include <cstdint>
 
 namespace isc {
 namespace lease_query {
 
 /// @brief Status Codes.
-enum BLQStatusCode {
+enum BLQStatusCode : uint16_t {
     BLQ_STATUS_Success          = 0,
     BLQ_STATUS_UnspecFail       = 1,
     BLQ_STATUS_QueryTerminated  = 2,
@@ -30,7 +31,7 @@ enum BLQStatusCode {
 std::string getStatusCodeName(BLQStatusCode status);
 
 /// @brief States.
-enum BLQStates {
+enum BLQStates : uint16_t {
     BLQ_STATE_AVAILABLE      = 1,
     BLQ_STATE_ACTIVE         = 2,
     BLQ_STATE_EXPIRED        = 3,

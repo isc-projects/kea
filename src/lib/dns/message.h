@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,6 +19,7 @@
 #include <dns/edns.h>
 #include <dns/question.h>
 #include <dns/rrset.h>
+#include <cstdint>
 
 namespace isc {
 namespace dns {
@@ -152,7 +153,7 @@ typedef boost::shared_ptr<MessageImpl> MessageImplPtr;
 class Message {
 public:
     /// Constants to specify the operation mode of the \c Message.
-    enum Mode {
+    enum Mode : uint16_t {
         PARSE = 0,              // Parse mode (handling an incoming message)
         RENDER = 1              // Render mode (building an outgoing message)
     };
@@ -593,7 +594,7 @@ public:
     /// The option values are used as a parameter for \c fromWire().
     /// These are values of a bitmask type.  Bitwise operations can be
     /// performed on these values to express compound options.
-    enum ParseOptions {
+    enum ParseOptions : uint16_t {
         PARSE_DEFAULT = 0,      // The default options
         PRESERVE_ORDER = 1      // Preserve RR order and don't combine them
     };

@@ -16,6 +16,7 @@
 
 #include <mutex>
 #include <vector>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
@@ -184,7 +185,7 @@ public:
     /// @brief Statement Tags
     ///
     /// The contents of the enum are indexes into the list of SQL statements
-    enum StatementIndex {
+    enum StatementIndex : uint16_t {
         INSERT_LOG,             // Add entry to logs table
         NUM_STATEMENTS          // Number of statements
     };

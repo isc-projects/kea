@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,6 +42,7 @@
 #include <sstream>
 #include <utility>
 #include <vector>
+#include <cstdint>
 
 using namespace isc::cb;
 using namespace isc::db;
@@ -63,7 +64,7 @@ public:
     /// It is assumed that the order is such that the indices of statements
     /// reading the database are less than those of statements modifying the
     /// database.
-    enum StatementIndex {
+    enum StatementIndex : uint16_t {
         CREATE_AUDIT_REVISION,
         CHECK_CLIENT_CLASS_KNOWN_DEPENDENCY_CHANGE,
         GET_GLOBAL_PARAMETER6,

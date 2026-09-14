@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@
 #include <dns/tsig.h>
 
 #include <map>
+#include <cstdint>
 
 namespace isc {
 namespace d2 {
@@ -91,13 +92,13 @@ public:
 
     /// @brief Indicates if the @c D2UpdateMessage object encapsulates Inbound
     /// or Outbound message.
-    enum Direction {
+    enum Direction : uint16_t {
         INBOUND,
         OUTBOUND
     };
 
     /// @brief Indicates whether DNS Update message is a REQUEST or RESPONSE.
-    enum QRFlag {
+    enum QRFlag : uint16_t {
         REQUEST,
         RESPONSE
     };
@@ -114,7 +115,7 @@ public:
     /// The enum elements are used by functions such as @c getRRCount (to get
     /// the number of records in a corresponding section) and @c beginSection
     /// and @c endSection (to access data in the corresponding section).
-    enum UpdateMsgSection {
+    enum UpdateMsgSection : uint16_t {
         SECTION_ZONE,
         SECTION_PREREQUISITE,
         SECTION_UPDATE,

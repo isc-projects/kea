@@ -24,6 +24,7 @@
 
 #include <map>
 #include <string>
+#include <cstdint>
 
 namespace isc {
 namespace flex_option {
@@ -43,7 +44,7 @@ public:
     ///  - add (if not already existing)
     ///  - supersede (as add but also when already existing)
     ///  - remove
-    enum Action {
+    enum Action : uint16_t {
         NONE,
         ADD,
         SUPERSEDE,

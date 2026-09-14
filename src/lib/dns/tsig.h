@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,7 @@
 #include <dns/tsigerror.h>
 #include <dns/tsigkey.h>
 #include <dns/tsigrecord.h>
+#include <cstdint>
 
 namespace isc {
 namespace dns {
@@ -178,7 +179,7 @@ public:
     /// mostly private information.  It's publicly visible mainly for testing
     /// purposes; there is no API for the application to change the state
     /// directly.
-    enum State {
+    enum State : uint16_t {
         INIT,                   ///< Initial state
         SENT_REQUEST,           ///< Client sent a signed request, waiting response
         RECEIVED_REQUEST,       ///< Server received a signed request

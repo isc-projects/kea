@@ -19,6 +19,7 @@
 
 #include <cstdlib>
 #include <sstream>
+#include <cstdint>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -63,7 +64,7 @@ const char* RELEASE_CONFIGS[] = {
 class ReleaseTest : public Dhcpv4SrvTest {
 public:
 
-    enum ExpectedResult {
+    enum ExpectedResult : uint16_t {
         SHOULD_PASS_EXPIRED,
         SHOULD_PASS_DELETED,
         SHOULD_FAIL

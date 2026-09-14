@@ -23,6 +23,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
 #include <sstream>
+#include <cstdint>
 
 using namespace std;
 using namespace isc;
@@ -64,7 +65,7 @@ public:
 class DdnsTuningImplTest : public ::testing::Test {
 public:
     /// @brief Enum that describes the expected expression returned by the cache.
-    enum ExpExpressionType {
+    enum ExpExpressionType : uint16_t {
         EXPR_NULL,      // Pointer is null
         EXPR_EMPTY,     // Points to an empty Expression
         EXPR_VALID      // Points to an Expression

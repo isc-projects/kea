@@ -14,6 +14,7 @@
 #include <dhcpsrv/subnet_id.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/dhcp4_client.h>
+#include <cstdint>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -176,7 +177,7 @@ public:
 
     /// @brief Enum for indexing into the array of configurations.
     /// These were created to make the test cases easier to follow.
-    enum CfgIndex {
+    enum CfgIndex : uint16_t {
         REF_CFG = 0,
         DIFF_POOL,
         DIFF_POOL_NO_HR,
@@ -186,14 +187,14 @@ public:
     };
 
     /// @brief Enum for specifying expected response to client renewal attempt.
-    enum RenewOutcome {
+    enum RenewOutcome : uint16_t {
         DOES_RENEW,
         DOES_NOT_RENEW,
         DOES_NOT_NAK
     };
 
     /// @brief Enum for specifying expected response to client release attempt.
-    enum ReleaseOutcome {
+    enum ReleaseOutcome : uint16_t {
         DOES_RELEASE_EXPIRE,
         DOES_RELEASE_DELETE,
         DOES_NOT_RELEASE

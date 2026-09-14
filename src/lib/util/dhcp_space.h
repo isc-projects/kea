@@ -1,4 +1,4 @@
-// Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,11 +10,12 @@
 #include <string>
 
 #include <boost/algorithm/string/replace.hpp>
+#include <cstdint>
 
 namespace isc {
 namespace util {
 
-enum DhcpSpace {
+enum DhcpSpace : uint16_t {
     DHCPv4,
     DHCPv6,
 };

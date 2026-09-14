@@ -16,6 +16,7 @@
 
 #include <gtest/gtest.h>
 #include <vector>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
@@ -120,7 +121,7 @@ class AllocEngine6Test : public ::testing::Test {
 public:
 
     /// @brief Specified expected result of a given operation
-    enum ExpectedResult {
+    enum ExpectedResult : uint16_t {
         SHOULD_PASS,
         SHOULD_FAIL
     };
@@ -552,7 +553,7 @@ class AllocEngine4Test : public ::testing::Test {
 public:
 
     /// @brief Specified expected result of a given operation
-    enum ExpectedResult {
+    enum ExpectedResult : uint16_t {
         SHOULD_PASS,
         SHOULD_FAIL
     };

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,8 @@
 #include <d2/d2_queue_mgr.h>
 #include <d2/d2_update_mgr.h>
 #include <process/d_process.h>
+
+#include <cstdint>
 
 namespace isc {
 namespace d2 {
@@ -33,7 +35,7 @@ public:
     /// requests from the queue until it is empty.
     ///
     /// * SD_NOW - Exits immediately.
-    enum ShutdownType {
+    enum ShutdownType : uint16_t {
       SD_NORMAL,
       SD_DRAIN_FIRST,
       SD_NOW

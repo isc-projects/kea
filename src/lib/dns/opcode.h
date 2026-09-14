@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2010-2026 Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <stdint.h>
 
 #include <ostream>
+#include <cstdint>
 
 #ifndef OPCODE_H
 #define OPCODE_H
@@ -32,7 +33,7 @@ namespace dns {
 class Opcode {
 public:
     /// Constants for standard OPCODE values.
-    enum CodeValue {
+    enum CodeValue : uint16_t {
         QUERY_CODE = 0,         ///< 0: Standard query (RFC1035)
         IQUERY_CODE = 1,        ///< 1: Inverse query (RFC1035)
         STATUS_CODE = 2,        ///< 2: Server status request (RFC1035)

@@ -22,6 +22,7 @@
 #include <boost/pointer_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <functional>
+#include <cstdint>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -1151,11 +1152,11 @@ public:
     /// @brief Specifies authoritative flag value
     ///
     /// Used to generate authoritative configs
-    typedef enum AuthoritativeFlag {
+    enum AuthoritativeFlag : uint16_t {
         AUTH_DEFAULT, // explicit value not specified (use default)
         AUTH_YES,     // defined explicitly as yes
         AUTH_NO       // defined explicitly as no
-    } AuthoritativeFlag;
+    };
 
     /// @brief Returns subnet having specified address in range.
     ///

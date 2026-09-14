@@ -16,6 +16,7 @@
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
+#include <cstdint>
 
 namespace isc {
 namespace dns {
@@ -45,7 +46,7 @@ public:
     /// that would be extracted from \c MasterLexer should be represented
     /// as an unsigned 32-bit integer.  If we see the need for larger integers
     /// or negative numbers, we can then extend the token types.
-    enum Type {
+    enum Type : uint16_t {
         END_OF_LINE, ///< End of line detected
         END_OF_FILE, ///< End of file detected
         INITIAL_WS,  ///< White spaces at the beginning of a line after an
@@ -61,7 +62,7 @@ public:
     };
 
     /// \brief Enumeration for lexer error codes
-    enum ErrorCode {
+    enum ErrorCode : uint16_t {
         NOT_STARTED, ///< The lexer is just initialized and has no token
         UNBALANCED_PAREN,       ///< Unbalanced parentheses detected
         UNEXPECTED_END, ///< The lexer reaches the end of line or file
@@ -342,7 +343,7 @@ public:
     ///
     /// A compound option, indicating multiple options are set, can be
     /// specified using the logical OR operator (operator|()).
-    enum Options {
+    enum Options : uint16_t {
         NONE = 0,               ///< No option
         INITIAL_WS = 1, ///< recognize begin-of-line spaces after an
                         ///< end-of-line

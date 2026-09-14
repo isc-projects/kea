@@ -16,6 +16,7 @@
 #include <map>
 #include <mutex>
 #include <string>
+#include <cstdint>
 
 namespace isc {
 namespace util {
@@ -42,7 +43,7 @@ typedef std::function<void()> StateHandler;
 /// - always pause in the given state,
 /// - never pause in the given state,
 /// - pause upon first transition to the given state.
-enum StatePausing {
+enum StatePausing : uint16_t {
     STATE_PAUSE_ALWAYS,
     STATE_PAUSE_NEVER,
     STATE_PAUSE_ONCE

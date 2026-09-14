@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +14,7 @@
 #include <iterator>
 #include <string>
 #include <vector>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
@@ -53,10 +54,10 @@ public:
     /// field's size may be equal to 1 or 2 bytes. Usually, the tuples carried
     /// in the DHCPv6 options have 2 byte long length fields, the tuples carried
     /// in DHCPv4 options have 1 byte long length fields.
-    enum LengthFieldType {
+    enum LengthFieldType : int16_t {
         LENGTH_EMPTY = -1,
-        LENGTH_1_BYTE,
-        LENGTH_2_BYTES
+        LENGTH_1_BYTE = 0,
+        LENGTH_2_BYTES = 1,
     };
 
     /// @brief Defines a type of the data buffer used to hold the opaque data.

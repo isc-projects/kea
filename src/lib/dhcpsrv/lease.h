@@ -15,6 +15,7 @@
 #include <cc/user_context.h>
 #include <cc/cfg_to_element.h>
 #include <util/dhcp_space.h>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
@@ -570,11 +571,11 @@ struct Lease6 : public Lease {
     uint32_t reuseable_preferred_lft_;
 
     /// @brief Action on extended info tables.
-    typedef enum {
+    enum ExtendedInfoAction : uint16_t {
         ACTION_IGNORE, ///< ignore extended info,
         ACTION_DELETE, ///< delete reference to the lease
         ACTION_UPDATE  ///< update extended info tables.
-    } ExtendedInfoAction;
+    };
 
     /// @brief Record the action on extended info tables in the lease.
     ExtendedInfoAction extended_info_action_;

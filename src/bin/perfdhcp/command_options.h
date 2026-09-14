@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <cstdint>
 
 namespace isc {
 namespace perfdhcp {
@@ -54,7 +55,7 @@ public:
     public:
 
         /// The lease type code.
-        enum Type {
+        enum Type : uint16_t {
             ADDRESS,
             PREFIX,
             ADDRESS_AND_PREFIX
@@ -117,7 +118,7 @@ public:
     };
 
     /// 2-way (cmd line param -i) or 4-way exchanges
-    enum ExchangeMode {
+    enum ExchangeMode : uint16_t {
         DO_SA,
         DORA_SARR
     };

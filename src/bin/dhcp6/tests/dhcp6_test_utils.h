@@ -36,6 +36,7 @@
 #include <testutils/log_utils.h>
 
 #include <list>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
@@ -636,13 +637,13 @@ class Dhcp6Client;
 class Dhcpv6SrvTest : public NakedDhcpv6SrvTest {
 public:
     /// @brief Specifies expected outcome
-    enum ExpectedResult {
+    enum ExpectedResult : uint16_t {
         SHOULD_PASS, // pass = accept decline, move lease to declined state.
         SHOULD_FAIL  // fail = reject the decline
     };
 
     /// @brief Specifies what address should the client include in its Decline
-    enum AddressInclusion {
+    enum AddressInclusion : uint16_t {
         VALID_ADDR, // Client will include its own, valid address
         BOGUS_ADDR, // Client will include an address it doesn't own
         NO_ADDR,    // Client will send empty IA_NA (without address)
@@ -650,7 +651,7 @@ public:
     };
 
     /// @brief Specifies if lease affinity is enabled or disabled
-    enum LeaseAffinity {
+    enum LeaseAffinity : uint16_t {
         LEASE_AFFINITY_ENABLED,
         LEASE_AFFINITY_DISABLED
     };

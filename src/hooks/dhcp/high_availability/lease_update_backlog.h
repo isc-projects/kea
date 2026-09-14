@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <deque>
 #include <mutex>
 #include <utility>
+#include <cstdint>
 
 namespace isc {
 namespace ha {
@@ -46,7 +47,7 @@ class LeaseUpdateBacklog {
 public:
 
     /// @brief Type of the lease update (operation type).
-    enum OpType {
+    enum OpType : uint16_t {
         ADD,
         DELETE
     };

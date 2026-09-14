@@ -31,7 +31,7 @@ static thread_local std::string g_stmt_error;
 static thread_local std::string g_tls_cipher;
 
 struct MockResRow {
-    enum ColKind {
+    enum ColKind : uint16_t {
         CK_UINT64, CK_UINT32, CK_UINT8, CK_STRING, CK_BLOB
     } kind;
     std::string s;

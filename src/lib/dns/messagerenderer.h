@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <boost/noncopyable.hpp>
 
 #include <memory>
+#include <cstdint>
 
 namespace isc {
 namespace dns {
@@ -91,7 +92,7 @@ public:
     /// authoritative DNS server implementation using this API would specify
     /// \c CASE_SENSITIVE before rendering outgoing AXFR messages.
     ///
-    enum CompressMode {
+    enum CompressMode : uint16_t {
         CASE_INSENSITIVE,  //!< Compress names case-insensitive manner (default)
         CASE_SENSITIVE     //!< Compress names case-sensitive manner
     };

@@ -28,6 +28,7 @@
 #include <util/unittests/wiredata.h>
 
 #include <boost/lexical_cast.hpp>
+#include <cstdint>
 
 using namespace std;
 using namespace isc::dns;
@@ -88,7 +89,7 @@ createRdataUsingLexer(const RRType& rrtype, const RRClass& rrclass,
 // the check() method.
 class CreateRdataCallback {
 public:
-    enum CallbackType { NONE, ERROR, WARN };
+    enum CallbackType : uint16_t { NONE, ERROR, WARN };
     CreateRdataCallback() : type_(NONE), line_(0) {}
     void callback(CallbackType type, const string& source, size_t line,
                   const string& reason_txt) {

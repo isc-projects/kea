@@ -31,6 +31,7 @@
 #include <sys/socket.h>
 #include <string>
 #include <vector>
+#include <cstdint>
 
 using namespace isc::asiolink;
 using namespace isc::util;
@@ -55,7 +56,7 @@ const char INBOUND_DATA[] = "Returned data from server to client";
 class TCPCallback {
 public:
     /// @brief Operations the server is doing
-    enum Operation {
+    enum Operation : uint16_t {
         ACCEPT = 0,     ///< accept() was issued
         OPEN = 1,       /// Client connected to server
         READ = 2,       ///< Asynchronous read completed

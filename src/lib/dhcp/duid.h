@@ -155,14 +155,14 @@ public:
     static constexpr size_t MAX_DUID_LEN = IdentifierType::getMaxSize();
 
     /// @brief specifies DUID type
-    typedef enum {
+    enum DUIDType : uint16_t {
         DUID_UNKNOWN = 0, ///< invalid/unknown type
         DUID_LLT = 1,     ///< link-layer + time, see RFC3315, section 11.2
         DUID_EN = 2,      ///< enterprise-id, see RFC3315, section 11.3
         DUID_LL = 3,      ///< link-layer, see RFC3315, section 11.4
         DUID_UUID = 4,    ///< UUID, see RFC3315, section 11.5
         DUID_MAX          ///< not a real type, just maximum defined value + 1
-    } DUIDType;
+    };
 
     /// @brief Constructor from vector
     ///

@@ -70,7 +70,7 @@ class CfgControlSocket : public isc::data::UserContext,
     public isc::data::CfgToElement {
 public:
     /// @brief Defines the list of possible control socket types.
-    enum Type {
+    enum Type : uint16_t {
         UNIX,    //< Unix socket.
         HTTP,    //< HTTP socket.
         STDOUT   //< standard output.

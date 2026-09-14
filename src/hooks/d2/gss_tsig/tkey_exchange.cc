@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,6 +17,7 @@
 #include <tkey_exchange.h>
 #include <limits>
 #include <sstream>
+#include <cstdint>
 
 namespace isc {
 namespace gss_tsig {
@@ -69,7 +70,7 @@ TKeyExchange::statusToText(Status status) {
 class TKeyExchangeImpl : public IOFetch::Callback {
 public:
     /// @brief The TKEY exchange state.
-    enum State {
+    enum State : uint16_t {
         NONE,     ///< Initial state: no action has been initiated.
         STARTED,  ///< The TKEY exchange has been started.
         STOPPED,  ///< The TKEY exchange has been canceled.

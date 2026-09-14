@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define MASTER_LEXER_STATE_H
 
 #include <dns/master_lexer.h>
+#include <cstdint>
 
 namespace isc {
 namespace dns {
@@ -88,7 +89,7 @@ public:
     /// Specific states are basically hidden within the implementation,
     /// but we'd like to allow tests to examine them, so we provide
     /// a way to get an instance of a specific state.
-    enum ID {
+    enum ID : uint16_t {
         CRLF,                  ///< Just seen a carriage-return character
         String,                ///< Handling a string token
         QString,               ///< Handling a quoted string token

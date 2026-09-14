@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2024 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2026 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -27,6 +27,7 @@
 #define DHCP_H
 
 #include <stdint.h>
+#include <cstdint>
 
 /// @note Code points in comments are those assigned by IANA
 /// but not yet implemented in Kea.
@@ -42,7 +43,7 @@ namespace dhcp {
 #define DHCP_IPV4_BROADCAST_ADDRESS "255.255.255.255"
 
 /* BOOTP (rfc951) message types */
-enum BOOTPTypes {
+enum BOOTPTypes : uint16_t {
     BOOTREQUEST = 1,
     BOOTREPLY = 2
 };
@@ -51,7 +52,7 @@ enum BOOTPTypes {
 static const uint16_t BOOTP_BROADCAST = 32768L;
 
 /// @brief Possible values for hardware type (htype) field.
-enum HType {
+enum HType : uint16_t {
     HTYPE_UNDEFINED = 0, ///< not specified or undefined
     HTYPE_ETHER = 1,     ///< Ethernet 10Mbps
     HTYPE_DOCSIS = 1,    ///< The traffic captures we have from cable modems as
@@ -65,7 +66,7 @@ enum HType {
 };
 
 /* DHCP Option codes: */
-enum DHCPOptionType {
+enum DHCPOptionType : uint16_t {
     DHO_PAD                          = 0, /* RFC2132 */
     DHO_SUBNET_MASK                  = 1, /* RFC2132 */
     DHO_TIME_OFFSET                  = 2, /* RFC2132 */
@@ -230,7 +231,7 @@ enum DHCPOptionType {
 };
 
 /* DHCP message types. */
-enum DHCPMessageType {
+enum DHCPMessageType : uint16_t {
     DHCP_NOTYPE         =  0, ///< Message Type option missing
     DHCPDISCOVER        =  1,
     DHCPOFFER           =  2,
@@ -261,7 +262,7 @@ static const uint16_t DHCP4_SERVER_PORT = 67;
 static const uint32_t DHCP_OPTIONS_COOKIE = 0x63825363;
 
 /// Relay Agent Information suboption types.
-enum RAISubOptionType {
+enum RAISubOptionType : uint16_t {
     RAI_OPTION_AGENT_CIRCUIT_ID           = 1,   // RFC3046
     RAI_OPTION_REMOTE_ID                  = 2,   // RFC3046
     /* option 3 is reserved and will never be assigned */
@@ -286,7 +287,7 @@ enum RAISubOptionType {
 };
 
 /// CableLabs client conf suboption types.
-enum CableLabsClientConfType {
+enum CableLabsClientConfType : uint16_t {
     TSP_PRIMARY_SERVER              = 1,  // RFC3495
     TSP_SECONDARY_SERVER            = 2,  // RFC3495
 //  TSP_PROVISIONING_SERVER         = 3,  // RFC3495

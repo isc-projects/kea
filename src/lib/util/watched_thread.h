@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +14,7 @@
 #include <functional>
 #include <mutex>
 #include <thread>
+#include <cstdint>
 
 namespace isc {
 namespace util {
@@ -32,7 +33,7 @@ class WatchedThread {
 public:
     /// @brief Enumerates the list of watch sockets used to mark events
     /// These are used as arguments to watch socket accessor methods.
-    enum WatchType {
+    enum WatchType : uint16_t {
         ERROR = 0,
         READY = 1,
         TERMINATE = 2

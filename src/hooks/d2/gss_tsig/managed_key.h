@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <tkey_exchange.h>
 #include <list>
 #include <mutex>
+#include <cstdint>
 
 namespace isc {
 namespace gss_tsig {
@@ -29,7 +30,7 @@ public:
     /// and at expire finishes as expired. When the setup fails it is
     /// in error, the TKEY exchange status giving more details on the
     /// failure reason.
-    enum Status {
+    enum Status : uint16_t {
         NOT_READY,        ///< Not yet ready (not yet usable).
         USABLE,           ///< Usable.
         EXPIRED,          ///< Expired (no longer usable).

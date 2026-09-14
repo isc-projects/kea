@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define TSIGKEY_H
 
 #include <cryptolink/cryptolink.h>
+#include <cstdint>
 
 namespace isc {
 namespace dns {
@@ -245,7 +246,7 @@ private:
 class TSIGKeyRing {
 public:
     /// Result codes of various public methods of TSIGKeyRing
-    enum Result {
+    enum Result : uint16_t {
         SUCCESS = 0,    // The operation is successful.
         EXIST = 1,      // A key is already stored in TSIGKeyRing.
         NOTFOUND = 2    // The specified key is not found in TSIGKeyRing.

@@ -28,6 +28,7 @@
 #include <functional>
 #include <iostream>
 #include <queue>
+#include <cstdint>
 
 // Undefine the macro OPTIONAL which is defined in some operating
 // systems but conflicts with a member of the RequirementLevel enum in
@@ -273,11 +274,11 @@ private:
 public:
 
     /// @brief defines if certain option may, must or must not appear
-    typedef enum {
+    enum RequirementLevel : uint16_t {
         FORBIDDEN,
         MANDATORY,
         OPTIONAL
-    } RequirementLevel;
+    };
 
     /// @brief Default constructor.
     ///

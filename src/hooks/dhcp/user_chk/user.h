@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <map>
 #include <stdint.h>
 #include <vector>
+#include <cstdint>
 
 namespace user_chk {
 
@@ -29,7 +30,7 @@ public:
     /// @brief Defines the supported types of user ids.
     // Use explicit values to ensure consistent numeric ordering for key
     // comparisons.
-    enum UserIdType {
+    enum UserIdType : uint16_t {
         /// @brief Hardware addresses (MAC) are used for IPv4 clients.
         HW_ADDRESS = 0,
         /// @brief DUIDs are used for IPv6 clients.

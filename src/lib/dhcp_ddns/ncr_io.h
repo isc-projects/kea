@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,6 +48,7 @@
 /// is presumed to use isc::asiolink library for asynchronous event processing.
 
 #include <asiolink/io_address.h>
+#include <cstdint>
 #include <asiolink/io_service.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <exceptions/exceptions.h>
@@ -66,7 +67,7 @@ namespace dhcp_ddns {
 /// @todo TCP is intended to be implemented prior 1.0 release.
 /// @todo Give some thought to an ANY protocol which might try
 /// first as UDP then as TCP, etc.
-enum NameChangeProtocol {
+enum NameChangeProtocol : uint16_t {
   NCR_UDP,
   NCR_TCP
 };
@@ -168,7 +169,7 @@ class NameChangeListener {
 public:
 
     /// @brief Defines the outcome of an asynchronous NCR receive
-    enum Result {
+    enum Result : uint16_t {
         SUCCESS,
         TIME_OUT,
         STOPPED,

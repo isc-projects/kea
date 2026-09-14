@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <eval/parser.h>
 #include <eval/eval_context_decl.h>
 #include <exceptions/exceptions.h>
+#include <cstdint>
 
 // Tell Flex the lexer's prototype ...
 #define YY_DECL \
@@ -36,10 +37,10 @@ class EvalContext {
 public:
 
     /// @brief Specifies what type of expression the parser is expected to see
-    typedef enum {
+    enum ParserType : uint16_t {
         PARSER_BOOL,  ///< expression is expected to evaluate to bool
         PARSER_STRING ///< expression is expected to evaluate to string
-    } ParserType;
+    };
 
     /// @brief Type of the check defined function.
     typedef std::function<bool(const ClientClass&)> CheckDefined;

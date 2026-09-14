@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,7 @@
 
 #include <limits>
 #include <vector>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
@@ -97,7 +98,7 @@ public:
     ///
     /// Those value correspond directly to dhcp_identifier_type in hosts
     /// table in MySQL schema.
-    enum IdType {
+    enum IdType : uint16_t {
         ID_HWADDR = 0, ///< Hardware address
         ID_DUID = 1    ///< DUID/client-id
     };

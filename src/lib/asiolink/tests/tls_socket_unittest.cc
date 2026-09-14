@@ -32,6 +32,7 @@
 #include <sys/socket.h>
 #include <string>
 #include <vector>
+#include <cstdint>
 
 using namespace boost::asio;
 using namespace boost::asio::ip;
@@ -55,7 +56,7 @@ const char INBOUND_DATA[] = "Returned data from server to client";
 class TLSCallback {
 public:
     /// @brief Operations the server is doing
-    enum Operation {
+    enum Operation : uint16_t {
         ACCEPT = 0,     ///< accept() was issued
         OPEN = 1,       ///< Client connected to server
         HANDSHAKE = 2,  ///< TLS handshake completed

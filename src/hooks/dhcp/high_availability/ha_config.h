@@ -52,7 +52,7 @@ public:
     /// - load-balancing
     /// - hot-standby
     /// - passive-backup
-    enum HAMode {
+    enum HAMode : uint16_t {
         LOAD_BALANCING,
         HOT_STANDBY,
         PASSIVE_BACKUP
@@ -80,7 +80,7 @@ public:
         ///   exactly one standby server in the hot standby setup.
         /// - backup server - server receiving updates from other servers, but not
         ///   performing any DHCP function until explicitly enabled to do so.
-        enum Role {
+        enum Role : uint16_t {
             PRIMARY,
             SECONDARY,
             STANDBY,

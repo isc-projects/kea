@@ -25,6 +25,7 @@
 
 #include <gtest/gtest.h>
 #include <sstream>
+#include <cstdint>
 
 using namespace std;
 using namespace isc;
@@ -51,7 +52,7 @@ class BaseLeaseQuery4Test : public ::testing::Test {
 public:
 
     /// @brief Describes expected outcome of call to buffer4_receive().
-    enum Outcome {
+    enum Outcome : uint16_t {
        OC_SKIP,  // query is not a lease query, callout unpacks only
        OC_REPLY, // query is a valid lease query to which callout replies
        OC_ERROR  // query cannot be unpacked, or fails to process

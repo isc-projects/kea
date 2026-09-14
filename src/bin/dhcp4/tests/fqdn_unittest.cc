@@ -23,6 +23,7 @@
 
 #include <gtest/gtest.h>
 #include <boost/scoped_ptr.hpp>
+#include <cstdint>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -359,14 +360,14 @@ public:
 
     // Enum used to specify whether a client (packet) should include
     // the hostname option
-    enum ClientNameFlag {
+    enum ClientNameFlag : uint16_t {
         CLIENT_NAME_PRESENT,
         CLIENT_NAME_NOT_PRESENT
     };
 
     // Enum used to specify whether the server should replace/supply
     // the hostname or not
-    enum ReplacementFlag {
+    enum ReplacementFlag : uint16_t {
         NAME_REPLACED,
         NAME_NOT_REPLACED
     };

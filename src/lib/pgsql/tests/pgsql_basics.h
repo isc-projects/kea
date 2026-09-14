@@ -19,6 +19,7 @@
 
 #include <sstream>
 #include <vector>
+#include <cstdint>
 
 namespace isc {
 namespace db {
@@ -41,7 +42,7 @@ class PgSqlBasicsTest : public virtual ::testing::Test {
 public:
 
     /// @brief Column index for each column
-    enum BasicColIndex {
+    enum BasicColIndex : uint16_t {
         ID_COL,
         BOOL_COL,
         BYTEA_COL,

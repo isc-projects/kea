@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,7 @@
 #include <boost/noncopyable.hpp>
 
 #include <memory>
+#include <cstdint>
 
 namespace isc {
 namespace dns {
@@ -39,7 +40,7 @@ public:
 class MasterLoader : boost::noncopyable {
 public:
     /// \brief Options how the parsing should work.
-    enum Options {
+    enum Options : uint16_t {
         DEFAULT = 0,       ///< Nothing special.
         MANY_ERRORS = 1    ///< Lenient mode (see documentation of MasterLoader
                            ///  constructor).

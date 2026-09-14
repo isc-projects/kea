@@ -18,6 +18,7 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
+#include <cstdint>
 
 using namespace isc::util;
 using namespace isc::dns::name::internal;
@@ -109,14 +110,14 @@ namespace {
 ///
 /// Textual name parser states.
 ///
-typedef enum {
+enum ft_state : uint16_t {
     ft_init = 0,                // begin of the name
     ft_start,                   // begin of a label
     ft_ordinary,                // parsing an ordinary label
     ft_initialescape,           // just found '\'
     ft_escape,                  // begin of handling a '\'-escaped sequence
     ft_escdecimal               // parsing a '\DDD' octet.
-} ft_state;
+};
 
 // The parser of name from a string. It is a template, because
 // some parameters are used with two different types, while others
@@ -374,12 +375,12 @@ namespace {
 ///
 /// Wire-format name parser states.
 ///
-typedef enum {
-    fw_start = 0,               // beginning of a label
-    fw_ordinary,                // inside an ordinary (non compressed) label
-    fw_newcurrent               // beginning of a compression pointer
-} fw_state;
-}
+enum fw_state : uint16_t {
+    fw_start = 0,  // beginning of a label
+    fw_ordinary,   // inside an ordinary (non compressed) label
+    fw_newcurrent  // beginning of a compression pointer
+};
+}  // namespace
 
 Name::Name(InputBuffer& buffer, bool downcase) {
     NameOffsets offsets;

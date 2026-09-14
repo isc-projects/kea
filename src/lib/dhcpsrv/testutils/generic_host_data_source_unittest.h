@@ -21,6 +21,7 @@
 #include <gtest/gtest.h>
 #include <sstream>
 #include <vector>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
@@ -34,7 +35,7 @@ class GenericHostDataSourceTest : public GenericBackendTest {
 public:
 
     /// @brief Universe (V4 or V6).
-    enum Universe {
+    enum Universe : uint16_t {
         V4,
         V6
     };
@@ -43,7 +44,7 @@ public:
     ///
     /// Parameter of this type is passed to the @ref addTestOptions to
     /// control which option types should be inserted into a host.
-    enum AddedOptions {
+    enum AddedOptions : uint16_t {
         DHCP4_ONLY,
         DHCP6_ONLY,
         DHCP4_AND_DHCP6

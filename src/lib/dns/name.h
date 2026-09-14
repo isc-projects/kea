@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@
 #include <vector>
 
 #include <dns/exceptions.h>
+#include <cstdint>
 
 namespace isc {
 namespace dns {
@@ -135,7 +136,7 @@ public:
     /// When two \c LabelSequence objects are compared, it's generally expected
     /// they are either both absolute or both non absolute; if one is absolute
     /// and the other is not, the resulting relationship will be NONE.
-    enum NameRelation {
+    enum NameRelation : uint16_t {
         SUPERDOMAIN = 0,
         SUBDOMAIN = 1,
         EQUAL = 2,

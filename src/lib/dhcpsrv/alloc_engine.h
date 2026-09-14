@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,6 +35,7 @@
 #include <mutex>
 #include <set>
 #include <utility>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
@@ -1115,7 +1116,7 @@ private:
     /// - remove lease upon reclamation,
     /// - update lease's state upon reclamation to 'expired-reclaimed',
     /// - leave the lease in the database unchanged.
-    enum DbReclaimMode {
+    enum DbReclaimMode : uint16_t {
         DB_RECLAIM_REMOVE,
         DB_RECLAIM_UPDATE,
         DB_RECLAIM_LEAVE_UNCHANGED

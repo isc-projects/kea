@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
@@ -73,7 +74,7 @@ public:
     static const char* DFT_HOSTNAME_CHAR_REPLACEMENT;
 
     /// @brief Defines the client name replacement modes.
-    enum ReplaceClientNameMode  {
+    enum ReplaceClientNameMode : uint16_t {
         RCM_NEVER,
         RCM_ALWAYS,
         RCM_WHEN_PRESENT,

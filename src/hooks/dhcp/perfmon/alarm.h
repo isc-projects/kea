@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2024-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <monitored_duration.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <cstdint>
 
 namespace isc {
 namespace perfmon {
@@ -20,7 +21,7 @@ namespace perfmon {
 class Alarm : public DurationKey {
 public:
     /// @brief Defines Alarm states
-    enum State {
+    enum State : uint16_t {
         CLEAR,      // Enabled and not currently triggered
         TRIGGERED,  // High water has been exceeded
         DISABLED    // Disabled

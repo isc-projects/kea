@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <set>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
@@ -47,7 +48,7 @@ class Dhcp4Client : public boost::noncopyable {
 public:
 
     /// @brief States of the DHCP client.
-    enum State {
+    enum State : uint16_t {
         SELECTING,
         INIT_REBOOT,
         RENEWING,

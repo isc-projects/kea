@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@
 #include <dhcp/pkt6.h>
 #include <boost/noncopyable.hpp>
 #include <stdint.h>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
@@ -62,7 +63,7 @@ class Dhcp4o6IpcBase : public boost::noncopyable {
 public:
 
     /// @brief Endpoint type: DHCPv4 or DHCPv6 server.
-    enum EndpointType {
+    enum EndpointType : uint16_t {
         ENDPOINT_TYPE_V4 = 4,
         ENDPOINT_TYPE_V6 = 6
     };

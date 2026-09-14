@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,6 +17,7 @@
 #include <list>
 
 #include <stdint.h>
+#include <cstdint>
 
 namespace isc {
 namespace stats {
@@ -99,7 +100,7 @@ public:
     /// one type of floating points. Initially, these are represented by
     /// int64_t and double. If convincing use cases appear to change them
     /// to something else, we may change the underlying type.
-    enum Type {
+    enum Type : uint16_t {
         STAT_INTEGER,       ///< this statistic is signed 64-bit integer value
         STAT_BIG_INTEGER,   ///< this statistic is signed 128-bit integer value
         STAT_FLOAT,         ///< this statistic is a floating point value

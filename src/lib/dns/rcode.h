@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2010-2026 Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <stdint.h>
 
 #include <ostream>
+#include <cstdint>
 
 #ifndef RCODE_H
 #define RCODE_H
@@ -40,7 +41,7 @@ namespace dns {
 class Rcode {
 public:
     /// Constants for pre-defined RCODE values.
-    enum CodeValue {
+    enum CodeValue : uint16_t {
         NOERROR_CODE = 0,       ///< 0: No error (RFC1035)
         FORMERR_CODE = 1,       ///< 1: Format error (RFC1035)
         SERVFAIL_CODE = 2,      ///< 2: Server failure (RFC1035)

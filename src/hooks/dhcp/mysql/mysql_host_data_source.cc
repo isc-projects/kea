@@ -38,6 +38,7 @@
 
 #include <mutex>
 #include <string>
+#include <cstdint>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -1309,7 +1310,7 @@ public:
     /// - Only DHCPv4 options,
     /// - Only DHCPv6 options,
     /// - Both DHCPv4 and DHCPv6 options.
-    enum FetchedOptions {
+    enum FetchedOptions : uint16_t {
         DHCP4_ONLY,
         DHCP6_ONLY,
         DHCP4_AND_DHCP6
@@ -2227,7 +2228,7 @@ public:
     /// database.
     /// @note: please add new statements doing read only operations before
     /// the WRITE_STMTS_BEGIN position.
-    enum StatementIndex {
+    enum StatementIndex : uint16_t {
         GET_HOST_DHCPID,           // Gets hosts by host identifier
         GET_HOST_ADDR,             // Gets hosts by IPv4 address
         GET_HOST_SUBID4_DHCPID,    // Gets host by IPv4 SubnetID, HW address/DUID

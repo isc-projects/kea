@@ -11,17 +11,20 @@
 #include <d2/parser_context.h>
 #include <d2/tests/parser_unittest.h>
 #include <d2/tests/test_callout_libraries.h>
+#include <d2/tests/test_data_files_config.h>
 #include <d2srv/d2_cfg_mgr.h>
 #include <d2srv/d2_config.h>
 #include <d2srv/d2_simple_parser.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <hooks/hooks_parser.h>
 #include <process/testutils/d_test_stubs.h>
-#include <test_data_files_config.h>
 #include <util/encode/encode.h>
 #include <util/filesystem.h>
 
+#include <cstdint>
+
 #include <boost/scoped_ptr.hpp>
+
 #include <gtest/gtest.h>
 
 using namespace std;
@@ -131,7 +134,7 @@ public:
     }
 
     /// @brief Enumeration to select between expected configuration outcomes
-    enum RunConfigMode {
+    enum RunConfigMode : uint16_t {
         NO_ERROR,
         SYNTAX_ERROR,
         LOGIC_ERROR

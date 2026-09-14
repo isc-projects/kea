@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,12 +23,13 @@
 
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <cstdint>
 
 namespace isc {
 namespace asiolink {
 
 /// @brief Client and server roles.
-enum TlsRole { CLIENT, SERVER };
+enum TlsRole : uint16_t { CLIENT, SERVER };
 
 /// @brief Forward declaration of backend TLS context.
 class TlsContext;

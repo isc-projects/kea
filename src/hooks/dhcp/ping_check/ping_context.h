@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <hooks/parking_lots.h>
 
 #include <chrono>
+#include <cstdint>
 
 namespace isc {
 namespace ping_check {
@@ -32,7 +33,7 @@ class PingContext {
 public:
 
     /// @brief Defines PingContext life cycle states
-    enum State {
+    enum State : uint16_t {
         NEW,                  // Newly created
         WAITING_TO_SEND,      // Waiting to send next ECHO REQUEST
         SENDING,              // Next ECHO REQUEST is being sent

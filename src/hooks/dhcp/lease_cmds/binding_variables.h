@@ -1,4 +1,4 @@
-// Copyright (C) 2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2025-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,6 +22,7 @@
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
+#include <cstdint>
 
 namespace isc {
 namespace lease_cmds {
@@ -38,7 +39,7 @@ class BindingVariable : public isc::data::CfgToElement {
 public:
     /// @brief Specifies the packet that the expression should be
     /// evaluated against.
-    enum Source {
+    enum Source : uint16_t {
         QUERY,
         RESPONSE
     };

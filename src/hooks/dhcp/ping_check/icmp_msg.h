@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <netinet/ip_icmp.h>
 #include <boost/shared_ptr.hpp>
+#include <cstdint>
 
 namespace isc {
 namespace ping_check {
@@ -36,7 +37,7 @@ class ICMPMsg {
 public:
     /// @brief ICMP message types. We only define the ones
     /// we care about.
-    enum ICMPMsgType {
+    enum ICMPMsgType : uint16_t {
         ECHO_REPLY = 0,
         TARGET_UNREACHABLE = 3,
         ECHO_REQUEST = 8

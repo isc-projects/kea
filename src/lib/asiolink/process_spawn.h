@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <unordered_set>
+#include <cstdint>
 
 namespace isc {
 namespace asiolink {
@@ -64,7 +65,7 @@ class ProcessSpawn : boost::noncopyable {
 public:
 
     /// @brief The spawn type.
-    enum SpawnMode {
+    enum SpawnMode : uint16_t {
        ASYNC, // thread continues without waiting for the child to finish.
        SYNC   // thread waits for the child to finish.
     };

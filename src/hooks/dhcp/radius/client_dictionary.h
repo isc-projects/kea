@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,6 +19,7 @@
 #include <list>
 #include <unordered_map>
 #include <string>
+#include <cstdint>
 
 namespace isc {
 namespace radius {
@@ -26,7 +27,7 @@ namespace radius {
 /// @brief Attribute value types.
 ///
 /// Removed PW_TYPE_DATE as it is not used.
-enum AttrValueType {
+enum AttrValueType : uint16_t {
     PW_TYPE_STRING,
     PW_TYPE_INTEGER,
     PW_TYPE_IPADDR,

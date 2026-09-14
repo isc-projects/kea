@@ -21,6 +21,7 @@
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/system/error_code.hpp>
+#include <cstdint>
 
 namespace isc {
 namespace asiodns {
@@ -34,7 +35,7 @@ struct IOFetchData;
 class IOFetch : public boost::asio::coroutine {
 public:
     /// @brief Protocol to use on the fetch
-    enum Protocol {
+    enum Protocol : uint16_t {
         UDP = 0,
         TCP = 1
     };
@@ -43,7 +44,7 @@ public:
     ///
     /// Indicates what initiated an asynchronous I/O call and used in deciding what
     /// error message to output if the I/O fails.
-    enum Origin {
+    enum Origin : uint16_t {
         NONE = 0,          // No asynchronous call outstanding
         OPEN = 1,
         SEND = 2,

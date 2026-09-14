@@ -30,6 +30,7 @@
 
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
+#include <cstdint>
 
 using namespace std;
 using namespace isc;
@@ -45,7 +46,7 @@ namespace {
 /// - copy construction,
 /// - cloning with Option::clone,
 /// - assignment.
-enum OpType {
+enum OpType : uint16_t {
     COPY,
     CLONE,
     ASSIGN

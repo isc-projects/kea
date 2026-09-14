@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,7 @@ namespace isc {
 namespace dhcp {
 
 // Enum flags to define a target of the host manager functions.
-enum HostMgrOperationTarget {
+enum HostMgrOperationTarget : uint16_t {
     // The operation target not specified. Consider nothing.
     UNSPECIFIED_SOURCE = 0,
     // Consider only the CfgHosts instance.

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define LOGGER_LEVEL_H
 
 #include <string>
+#include <cstdint>
 
 namespace isc {
 namespace log {
@@ -20,7 +21,7 @@ namespace log {
 /// N.B. The order of the levels - DEBUG less than INFO less that WARN etc. is
 /// implicitly assumed in several implementations.  They must not be changed.
 
-typedef enum {
+enum Severity : uint16_t {
     DEFAULT = 0,    // Default to logging level of the parent
     DEBUG = 1,
     INFO = 2,
@@ -28,7 +29,7 @@ typedef enum {
     ERROR = 4,
     FATAL = 5,
     NONE = 6    // Disable logging
-} Severity;
+};
 
 /// Minimum/maximum debug levels.
 

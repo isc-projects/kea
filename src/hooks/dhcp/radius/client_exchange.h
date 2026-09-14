@@ -27,6 +27,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <cstdint>
 
 namespace isc {
 namespace radius {
@@ -34,7 +35,7 @@ namespace radius {
 /// @brief Exchange error codes.
 ///
 /// @todo Move to Exchange class.
-enum ExchangeRC {
+enum ExchangeRC : int16_t {
     BADRESP_RC = -2,        // Got a bad response.
     ERROR_RC = -1,          // General error.
     OK_RC = 0,              // OK: no error.

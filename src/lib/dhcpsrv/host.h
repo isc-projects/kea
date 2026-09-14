@@ -22,6 +22,7 @@
 #include <map>
 #include <string>
 #include <utility>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
@@ -166,7 +167,7 @@ public:
     /// @brief Type of the reservation.
     ///
     /// Currently supported types are NA and PD.
-    enum Type {
+    enum Type : uint16_t {
         TYPE_NA,
         TYPE_PD
     };

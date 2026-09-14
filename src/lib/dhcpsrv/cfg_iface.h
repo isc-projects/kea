@@ -16,6 +16,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
@@ -132,7 +133,7 @@ class CfgIface : public isc::data::UserContext, public isc::data::CfgToElement {
 public:
 
     /// @brief Socket type used by the DHCPv4 server.
-    enum SocketType  {
+    enum SocketType : uint16_t {
         /// Raw socket, used for direct DHCPv4 traffic.
         SOCKET_RAW,
         /// Datagram socket, i.e. IP/UDP socket.
@@ -140,7 +141,7 @@ public:
     };
 
     /// @brief Indicates how outbound interface is selected for relayed traffic.
-    enum OutboundIface {
+    enum OutboundIface : uint16_t {
         /// Server sends responses over the same interface on which queries are
         /// received.
         SAME_AS_INBOUND,

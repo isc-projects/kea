@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <cstdint>
 
 namespace isc {
 namespace hooks {
@@ -83,7 +84,7 @@ public:
     /// Those values are used to designate the next step in packet processing.
     /// They are set by hook callouts and read by the Kea server. See
     /// @ref setStatus for detailed description of each value.
-    enum CalloutNextStep {
+    enum CalloutNextStep : uint16_t {
         NEXT_STEP_CONTINUE = 0, ///< continue normally
         NEXT_STEP_SKIP = 1,     ///< skip the next processing step
         NEXT_STEP_DROP = 2,     ///< drop the packet

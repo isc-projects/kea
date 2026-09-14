@@ -23,6 +23,7 @@
 #include <boost/algorithm/string/case_conv.hpp>
 #include <time.h>
 #include <string>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp_ddns {
@@ -43,13 +44,13 @@ public:
 };
 
 /// @brief Defines the types of DNS updates that can be requested.
-enum NameChangeType {
+enum NameChangeType : uint16_t {
   CHG_ADD,
   CHG_REMOVE
 };
 
 /// @brief Defines the runtime processing status values for requests.
-enum NameChangeStatus  {
+enum NameChangeStatus : uint16_t {
   ST_NEW,
   ST_PENDING,
   ST_COMPLETED,
@@ -57,12 +58,12 @@ enum NameChangeStatus  {
 };
 
 /// @brief Defines the list of data wire formats supported.
-enum NameChangeFormat {
+enum NameChangeFormat : uint16_t {
   FMT_JSON
 };
 
 // DDNS Conflict resolution modes
-enum ConflictResolutionMode {
+enum ConflictResolutionMode : uint16_t {
    CHECK_WITH_DHCID,
    NO_CHECK_WITH_DHCID,
    CHECK_EXISTS_WITH_DHCID,

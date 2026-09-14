@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <cc/cfg_to_element.h>
 #include <cc/user_context.h>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
@@ -21,7 +22,7 @@ class CfgConsistency : public isc::data::UserContext, public isc::data::CfgToEle
     public:
 
     /// @brief Values for subnet-id sanity checks done for leases.
-    enum LeaseSanity {
+    enum LeaseSanity : uint16_t {
         LEASE_CHECK_NONE, // Skip sanity checks
         LEASE_CHECK_WARN, // Print a warning if subnet-id is incorrect.
         LEASE_CHECK_FIX, // If subnet-id is incorrect, try to fix it (try to pick
@@ -33,7 +34,7 @@ class CfgConsistency : public isc::data::UserContext, public isc::data::CfgToEle
     };
 
     /// @brief Values for extended info sanity checks done for leases.
-    enum ExtendedInfoSanity {
+    enum ExtendedInfoSanity : uint16_t {
         EXTENDED_INFO_CHECK_NONE, // Skip sanity checks.
         EXTENDED_INFO_CHECK_FIX, // Fix extended info common inconsistencies.
         EXTENDED_INFO_CHECK_STRICT, // Fix extended info inconsistencies which

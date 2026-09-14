@@ -19,6 +19,7 @@
 #include <vector>
 
 #include <time.h>
+#include <cstdint>
 
 namespace isc {
 
@@ -49,7 +50,7 @@ public:
     const static size_t DHCPV6_RELAY_HDR_LEN = 34;
 
     /// DHCPv6 transport protocol
-    enum DHCPv6Proto {
+    enum DHCPv6Proto : uint16_t {
         UDP = 0, // most packets are UDP
         TCP = 1  // there are TCP DHCPv6 packets (bulk leasequery, failover)
     };
@@ -70,7 +71,7 @@ public:
     /// server's response). RELAY_GET_FIRST will try to get option from
     /// the first relay only (closest to the client), RELAY_GET_LAST will
     /// try to get option form the last relay (closest to the server).
-    enum RelaySearchOrder {
+    enum RelaySearchOrder : uint16_t {
         RELAY_SEARCH_FROM_CLIENT = 1,
         RELAY_SEARCH_FROM_SERVER = 2,
         RELAY_GET_FIRST = 3,

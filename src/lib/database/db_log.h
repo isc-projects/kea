@@ -12,6 +12,7 @@
 #include <map>
 #include <mutex>
 #include <list>
+#include <cstdint>
 
 /// @file db_log.h
 ///
@@ -48,7 +49,7 @@ extern isc::log::Logger database_logger;
 ///@{
 /// @brief Database messages
 ///
-enum DbMessageID {
+enum DbMessageID : uint16_t {
     DB_INVALID_ACCESS,
 
     PGSQL_INITIAL_CONNECTION_FAIL,

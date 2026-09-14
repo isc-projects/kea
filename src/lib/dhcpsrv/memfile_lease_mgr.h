@@ -22,6 +22,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <mutex>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
@@ -121,7 +122,7 @@ public:
     /// to identify the lease type referred to. In particular, it is used by
     /// functions operating on the lease files to distinguish between lease
     /// files for DHCPv4 and DHCPv6.
-    enum Universe {
+    enum Universe : uint16_t {
         V4,
         V6
     };
@@ -1029,7 +1030,7 @@ public:
     ///
     /// This enumeration is used by a method which appends the appropriate
     /// suffix to the lease file name.
-    enum LFCFileType {
+    enum LFCFileType : uint16_t {
         FILE_CURRENT,  ///< %Lease File
         FILE_INPUT,    ///< %Lease File Copy
         FILE_PREVIOUS, ///< Previous %Lease File

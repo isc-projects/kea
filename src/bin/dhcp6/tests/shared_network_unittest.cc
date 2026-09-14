@@ -22,6 +22,7 @@
 #include <boost/pointer_cast.hpp>
 #include <functional>
 #include <vector>
+#include <cstdint>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -1187,7 +1188,7 @@ public:
 
     /// @brief Indicates how test functions should check presence of a lease on
     /// the server.
-    enum class LeaseOnServer{
+    enum class LeaseOnServer {
         MUST_EXIST,
         MUST_NOT_EXIST,
     };

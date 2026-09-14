@@ -12,6 +12,7 @@
 #include <gtest/gtest.h>
 #include <sstream>
 #include <unordered_set>
+#include <cstdint>
 
 using namespace isc;
 using namespace isc::dhcp;
@@ -217,7 +218,7 @@ TEST(Alarm, checkSample) {
     bool should_report = true;
 
     // Enumerates possible outcomes for last_high_water_report.
-    enum TimeChange {
+    enum TimeChange : uint16_t {
         none,       // no change
         set,        // from empty time to time
         updated,    // updated to a more recent time

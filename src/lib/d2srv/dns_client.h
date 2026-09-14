@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <d2srv/d2_tsig_key.h>
 #include <d2srv/d2_update_message.h>
 #include <util/buffer.h>
+#include <cstdint>
 
 namespace isc {
 namespace d2 {
@@ -49,7 +50,7 @@ public:
 
     /// @brief Transport layer protocol used by a DNS Client to communicate
     /// with a server.
-    enum Protocol {
+    enum Protocol : uint16_t {
         UDP,
         TCP
     };

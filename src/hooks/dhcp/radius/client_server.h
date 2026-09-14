@@ -27,6 +27,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <cstdint>
 
 namespace isc {
 namespace radius {
@@ -41,7 +42,7 @@ static constexpr uint16_t PW_ACCT_PORT = 1813;
 static constexpr uint16_t PW_TLS_PORT = 2083;
 
 /// @brief Transport protocols.
-enum RadiusProtocol {
+enum RadiusProtocol : uint16_t {
     PW_PROTO_UDP,
     PW_PROTO_TCP,
     PW_PROTO_TLS

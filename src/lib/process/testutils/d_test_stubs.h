@@ -26,6 +26,7 @@ using namespace boost::posix_time;
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <cstdint>
 
 namespace isc {
 namespace process {
@@ -38,7 +39,7 @@ namespace process {
 /// for getting, setting, and testing the current value.
 class SimFailure {
 public:
-    enum FailureType {
+    enum FailureType : int16_t {
         ftUnknown = -1,
         ftNoFailure = 0,
         ftCreateProcessException,

@@ -8,6 +8,7 @@
 #define VERSIONED_CSV_FILE_H
 
 #include <util/csv_file.h>
+#include <cstdint>
 
 namespace isc {
 namespace util {
@@ -123,7 +124,7 @@ public:
     /// @brief Possible input file schema states.
     /// Used to categorize the input file's schema, relative to the defined
     /// schema.
-    enum InputSchemaState {
+    enum InputSchemaState : uint16_t {
         CURRENT,
         NEEDS_UPGRADE,
         NEEDS_DOWNGRADE

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string>
+#include <cstdint>
 
 /// \brief Logger Output Option
 ///
@@ -45,17 +46,17 @@ struct OutputOption {
 
     /// Destinations.  Prefixed "DEST_" to avoid problems with the C stdio.h
     /// FILE type.
-    typedef enum {
+    enum Destination : uint16_t {
         DEST_CONSOLE = 0,
         DEST_FILE = 1,
         DEST_SYSLOG = 2
-    } Destination;
+    };
 
     /// If console, stream on which messages are output
-    typedef enum {
+    enum Stream : uint16_t {
         STR_STDOUT = 1,
         STR_STDERR = 2
-    } Stream;
+    };
 
     /// \brief Constructor
     OutputOption() : destination(DEST_CONSOLE), stream(STR_STDERR),

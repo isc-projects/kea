@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,7 +32,7 @@ namespace isc {
 namespace subnet_cmds {
 
 /// @brief Type of subnet update.
-enum UpdateType {
+enum UpdateType : uint16_t {
     /// @brief completely replace old subnet with the new entry.
     UPDATE_REPLACE,
     /// @brief update the old subnet by adding the parameters form the new

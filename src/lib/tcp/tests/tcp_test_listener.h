@@ -1,4 +1,4 @@
-// Copyright (C) 2022-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 
 #include <sstream>
+#include <cstdint>
 
 using namespace boost::asio::ip;
 using namespace isc::asiolink;
@@ -24,7 +25,7 @@ using namespace isc::tcp;
 /// @brief Describes stream message sent over a connection.
 class AuditEntry {
 public:
-    enum Direction {
+    enum Direction : uint16_t {
         INBOUND,  // data received
         OUTBOUND  // data sent
     };

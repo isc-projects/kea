@@ -28,6 +28,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <cstdint>
 
 /// @file lease_mgr.h
 /// @brief An abstract API for lease database
@@ -149,12 +150,12 @@ struct LeaseStatsRow {
 class LeaseStatsQuery {
 public:
     /// @brief Defines the types of selection criteria supported
-    typedef enum {
+    enum SelectMode : uint16_t {
         ALL_SUBNETS,
         SINGLE_SUBNET,
         SUBNET_RANGE,
         ALL_SUBNET_POOLS
-    } SelectMode;
+    };
 
     /// @brief Constructor to query statistics for all subnets
     ///

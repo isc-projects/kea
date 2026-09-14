@@ -14,6 +14,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
@@ -87,7 +88,7 @@ public:
     const static size_t OPTION6_HDR_LEN = 4;
 
     /// defines option universe DHCPv4 or DHCPv6
-    enum Universe { V4, V6 };
+    enum Universe : uint16_t { V4, V6 };
 
 
     /// @brief a factory function prototype

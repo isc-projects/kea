@@ -21,6 +21,7 @@
 
 #include <vector>
 #include <mutex>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
@@ -750,7 +751,7 @@ public:
     ///
     /// The contents of the enum are indexes into the list of compiled SQL
     /// statements
-    enum StatementIndex {
+    enum StatementIndex : uint16_t {
         DELETE_LEASE4,               // Delete from lease4 by address
         DELETE_LEASE4_SUBID,         // Delete from lease4 by subnet ID
         DELETE_LEASE4_STATE_EXPIRED, // Delete expired lease4 in a given state

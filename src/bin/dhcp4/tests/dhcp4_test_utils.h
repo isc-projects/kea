@@ -34,6 +34,7 @@
 #include <list>
 
 #include <boost/shared_ptr.hpp>
+#include <cstdint>
 
 namespace isc {
 namespace dhcp {
@@ -305,13 +306,13 @@ private:
 class Dhcpv4SrvTest : public BaseServerTest {
 public:
     /// @brief Specifies expected outcome
-    enum ExpectedResult {
+    enum ExpectedResult : uint16_t {
         SHOULD_PASS, // pass = accept decline, move lease to declined state.
         SHOULD_FAIL  // fail = reject the decline
     };
 
     /// @brief Specifies if lease affinity is enabled or disabled
-    enum LeaseAffinity {
+    enum LeaseAffinity : uint16_t {
         LEASE_AFFINITY_ENABLED,
         LEASE_AFFINITY_DISABLED
     };

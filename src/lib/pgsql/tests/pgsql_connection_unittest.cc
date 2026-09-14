@@ -20,6 +20,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include <gtest/gtest.h>
+#include <cstdint>
 
 using namespace isc;
 using namespace isc::data;
@@ -87,7 +88,7 @@ class PgSqlConnectionTest : public PgSqlBasicsTest, public LogContentTest {
 public:
 
     /// @brief Indexes of prepared statements used within the tests.
-    enum StatementIndex {
+    enum StatementIndex : uint16_t {
         GET_BY_INT_VALUE,
         GET_BY_INT_RANGE,
         DELETE_BY_INT_RANGE,
