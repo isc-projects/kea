@@ -32,7 +32,6 @@ namespace {
 ///
 /// @tparam LeasePtrType Pointer to a lease.
 /// @tparam IdentifierType HW Address, Client Identifier or DUID.
-
 template<typename LeasePtrType, typename IdentifierType>
 NameChangeRequestPtr
 generateNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,

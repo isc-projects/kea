@@ -71,18 +71,18 @@ D2QueueMgr::operator()(const dhcp_ddns::NameChangeListener::Result result,
                 // Add the NCR to the queue.
                 enqueue(ncr);
 
-               // Log that we got the request
-               LOG_DEBUG(dhcp_to_d2_logger,
-                         isc::log::DBGLVL_TRACE_DETAIL_DATA,
-                         DHCP_DDNS_QUEUE_MGR_QUEUE_RECEIVE)
-                         .arg(ncr->getRequestId());
+                // Log that we got the request
+                LOG_DEBUG(dhcp_to_d2_logger,
+                          isc::log::DBGLVL_TRACE_DETAIL_DATA,
+                          DHCP_DDNS_QUEUE_MGR_QUEUE_RECEIVE)
+                          .arg(ncr->getRequestId());
 
                 if (nested) {
                     StatsMgr::instance().addValue("ncr-received", static_cast<int64_t>(1));
                 }
 
                 ncr = ncr->getNextNcr();
-                nested = (ncr ? 1 : 0);
+                nested = !!ncr;
             } while (ncr);
 
             break;
