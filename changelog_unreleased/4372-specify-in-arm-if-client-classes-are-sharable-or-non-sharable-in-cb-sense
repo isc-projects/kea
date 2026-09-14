@@ -1,0 +1,5 @@
+[doc]		tmark
+	Updated kea-dhcp4 and kea-dhcp6 ARM sections
+	to state that client-class definitions are
+	shareable among servers in config back end.
+	(Gitlab #4372)
