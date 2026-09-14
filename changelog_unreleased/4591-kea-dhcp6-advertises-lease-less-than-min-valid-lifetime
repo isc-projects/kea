@@ -1,0 +1,6 @@
+[bug]		fdupont
+	When reusing an expired lease, kea-dhcp6
+	now correctly recalculates the lease life
+	times. Prior to this it was using the values
+	from the expired lease.
+	(Gitlab #4591)
