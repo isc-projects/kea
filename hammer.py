@@ -24,14 +24,12 @@ import json
 import logging
 import datetime
 import platform
-import binascii
 import argparse
 import textwrap
 import functools
 import grp
 import pwd
 import getpass
-import urllib.request
 from urllib.parse import urljoin
 
 # [B404:blacklist] Consider possible security implications associated with subprocess module.
@@ -103,7 +101,7 @@ SYSTEMS = {
         '8': False,
         '9': False,
         '10': False,
-        '11': True,
+        '11': False,
         '12': True,
         '13': True,
     },
@@ -134,131 +132,6 @@ SYSTEMS = {
     'arch': {},
 }
 
-IMAGE_TEMPLATES = {
-    # fedora
-    'fedora-27-lxc':           {'bare': 'lxc-fedora-27',               'kea': 'godfryd/kea-fedora-27'},
-    'fedora-27-virtualbox':    {'bare': 'generic/fedora27',            'kea': 'godfryd/kea-fedora-27'},
-    'fedora-28-lxc':           {'bare': 'godfryd/lxc-fedora-28',       'kea': 'godfryd/kea-fedora-28'},
-    'fedora-28-virtualbox':    {'bare': 'generic/fedora28',            'kea': 'godfryd/kea-fedora-28'},
-    'fedora-29-lxc':           {'bare': 'godfryd/lxc-fedora-29',       'kea': 'godfryd/kea-fedora-29'},
-    'fedora-29-virtualbox':    {'bare': 'generic/fedora29',            'kea': 'godfryd/kea-fedora-29'},
-    'fedora-30-lxc':           {'bare': 'godfryd/lxc-fedora-30',       'kea': 'godfryd/kea-fedora-30'},
-    'fedora-30-virtualbox':    {'bare': 'generic/fedora30',            'kea': 'godfryd/kea-fedora-30'},
-    'fedora-31-lxc':           {'bare': 'isc/lxc-fedora-31',           'kea': 'isc/kea-fedora-31'},
-    'fedora-31-virtualbox':    {'bare': 'isc/vbox-fedora-31',          'kea': 'isc/kea-fedora-31'},
-    'fedora-32-lxc':           {'bare': 'isc/lxc-fedora-32',           'kea': 'isc/kea-fedora-32'},
-    'fedora-33-lxc':           {'bare': 'isc/lxc-fedora-33',           'kea': 'isc/kea-fedora-33'},
-    'fedora-34-lxc':           {'bare': 'isc/lxc-fedora-34',           'kea': 'isc/kea-fedora-34'},
-    'fedora-35-lxc':           {'bare': 'isc/lxc-fedora-35',           'kea': 'isc/kea-fedora-35'},
-    'fedora-36-lxc':           {'bare': 'isc/lxc-fedora-36',           'kea': 'isc/kea-fedora-36'},
-    'fedora-37-lxc':           {'bare': 'isc/lxc-fedora-37',           'kea': 'isc/kea-fedora-37'},
-
-    # centos
-    'centos-7-lxc':            {'bare': 'isc/lxc-centos-7',            'kea': 'isc/kea-centos-7'},
-    'centos-7-virtualbox':     {'bare': 'generic/centos7',             'kea': 'godfryd/kea-centos-7'},
-    'centos-8-lxc':            {'bare': 'isc/lxc-centos-8',            'kea': 'isc/kea-centos-8'},
-    'centos-8-virtualbox':     {'bare': 'generic/centos8',             'kea': 'isc/kea-centos-8'},
-
-    # rhel
-    'rhel-8-virtualbox':       {'bare': 'generic/rhel8',               'kea': 'generic/rhel8'},
-
-    # ubuntu
-    'ubuntu-16.04-lxc':        {'bare': 'godfryd/lxc-ubuntu-16.04',    'kea': 'godfryd/kea-ubuntu-16.04'},
-    'ubuntu-16.04-virtualbox': {'bare': 'ubuntu/xenial64',             'kea': 'godfryd/kea-ubuntu-16.04'},
-    'ubuntu-18.04-lxc':        {'bare': 'isc/lxc-ubuntu-18.04',        'kea': 'isc/kea-ubuntu-18.04'},
-    'ubuntu-18.04-virtualbox': {'bare': 'ubuntu/bionic64',             'kea': 'godfryd/kea-ubuntu-18.04'},
-    'ubuntu-18.10-lxc':        {'bare': 'godfryd/lxc-ubuntu-18.10',    'kea': 'godfryd/kea-ubuntu-18.10'},
-    'ubuntu-18.10-virtualbox': {'bare': 'ubuntu/cosmic64',             'kea': 'godfryd/kea-ubuntu-18.10'},
-    'ubuntu-19.04-lxc':        {'bare': 'godfryd/lxc-ubuntu-19.04',    'kea': 'godfryd/kea-ubuntu-19.04'},
-    'ubuntu-19.04-virtualbox': {'bare': 'ubuntu/disco64',              'kea': 'godfryd/kea-ubuntu-19.04'},
-    'ubuntu-19.10-lxc':        {'bare': 'isc/lxc-ubuntu-19.10',        'kea': 'isc/kea-ubuntu-19.10'},
-    'ubuntu-19.10-virtualbox': {'bare': 'generic/ubuntu1910',          'kea': 'isc/kea-ubuntu-19.10'},
-    'ubuntu-20.04-lxc':        {'bare': 'isc/lxc-ubuntu-20.04',        'kea': 'isc/kea-ubuntu-20.04'},
-    'ubuntu-20.10-lxc':        {'bare': 'isc/lxc-ubuntu-20.10',        'kea': 'isc/kea-ubuntu-20.10'},
-    'ubuntu-21.04-lxc':        {'bare': 'isc/lxc-ubuntu-21.04',        'kea': 'isc/kea-ubuntu-21.04'},
-    'ubuntu-22.04-lxc':        {'bare': 'isc/lxc-ubuntu-22.04',        'kea': 'isc/lxc-ubuntu-22.04'},
-
-    # debian
-    'debian-8-lxc':            {'bare': 'godfryd/lxc-debian-8',        'kea': 'godfryd/kea-debian-8'},
-    'debian-8-virtualbox':     {'bare': 'debian/jessie64',             'kea': 'godfryd/kea-debian-8'},
-    'debian-9-lxc':            {'bare': 'isc/lxc-debian-9',            'kea': 'isc/kea-debian-9'},
-    'debian-9-virtualbox':     {'bare': 'debian/stretch64',            'kea': 'godfryd/kea-debian-9'},
-    'debian-10-lxc':           {'bare': 'isc/lxc-debian-10',           'kea': 'isc/kea-debian-10'},
-    'debian-10-virtualbox':    {'bare': 'debian/buster64',             'kea': 'godfryd/kea-debian-10'},
-    'debian-11-lxc':           {'bare': 'isc/lxc-debian-11',           'kea': 'isc/kea-debian-11'},
-    'debian-12-lxc':           {'bare': 'isc/lxc-debian-12',           'kea': 'isc/kea-debian-12'},
-
-    # freebsd
-    'freebsd-11.2-virtualbox': {'bare': 'generic/freebsd11',           'kea': 'godfryd/kea-freebsd-11.2'},
-    'freebsd-12.0-virtualbox': {'bare': 'generic/freebsd12',           'kea': 'godfryd/kea-freebsd-12.0'},
-    'freebsd-13.0-virtualbox': {'bare': 'isc/vbox-freebsd-13.0',       'kea': 'isc/kea-freebsd-13.0'},
-
-    # alpine
-    'alpine-3.10-lxc':         {'bare': 'godfryd/lxc-alpine-3.10',     'kea': 'godfryd/kea-alpine-3.10'},
-    'alpine-3.11-lxc':         {'bare': 'isc/lxc-alpine-3.11',         'kea': 'isc/kea-alpine-3.11'},
-    'alpine-3.12-lxc':         {'bare': 'isc/lxc-alpine-3.12',         'kea': 'isc/kea-alpine-3.12'},
-    'alpine-3.13-lxc':         {'bare': 'isc/lxc-alpine-3.13',         'kea': 'isc/kea-alpine-3.13'},
-    'alpine-3.14-lxc':         {'bare': 'isc/lxc-alpine-3.14',         'kea': 'isc/kea-alpine-3.14'},
-    'alpine-3.15-lxc':         {'bare': 'isc/lxc-alpine-3.15',         'kea': 'isc/kea-alpine-3.15'},
-    'alpine-3.16-lxc':         {'bare': 'isc/lxc-alpine-3.16',         'kea': 'isc/kea-alpine-3.16'},
-    'alpine-3.17-lxc':         {'bare': 'isc/lxc-alpine-3.17',         'kea': 'isc/kea-alpine-3.17'},
-}
-
-# NOTES
-# ** Alpine **
-# 1. Extracting rootfs is failing:
-#    It requires commenting out checking if rootfs has been extracted as it checks for file /bin/true which is a link.
-#    Comment out in ~/.vagrant.d/gems/2.X.Y/gems/vagrant-lxc-1.4.3/scripts/lxc-template near 'Failed to extract rootfs'
-
-
-LXC_VAGRANTFILE_TPL = """# -*- mode: ruby -*-
-# vi: set ft=ruby :
-ENV["LC_ALL"] = "C"
-
-Vagrant.configure("2") do |config|
-  {hostname}
-
-  config.vm.box = "{image_tpl}"
-  {box_version}
-
-  config.vm.provider "lxc" do |lxc|
-    lxc.container_name = "{name}"
-    lxc.customize 'rootfs.path', "/var/lib/lxc/{name}/rootfs"
-  end
-
-  config.vm.synced_folder '.', '/vagrant', disabled: true
-  config.vm.synced_folder '{ccache_dir}', '/ccache'
-end
-"""
-
-VBOX_VAGRANTFILE_TPL = """# -*- mode: ruby -*-
-# vi: set ft=ruby :
-ENV["LC_ALL"] = "C"
-
-Vagrant.configure("2") do |config|
-  config.vm.hostname = "{name}"
-
-  config.vm.box = "{image_tpl}"
-  {box_version}
-
-  config.vm.provider "virtualbox" do |v|
-    v.name = "{name}"
-    v.memory = 8192
-
-    nproc = Etc.nprocessors
-    if nproc > 8
-      nproc -= 2
-    elsif nproc > 1
-      nproc -= 1
-    end
-    v.cpus = nproc
-  end
-
-  config.vm.synced_folder '.', '/vagrant', disabled: true
-end
-"""
-
-RECOMMENDED_VAGRANT_VERSION = '2.2.16'
 
 log = logging.getLogger()
 
@@ -713,16 +586,6 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None, 
             )
 
 
-def get_image_template(key, variant):
-    if key not in IMAGE_TEMPLATES:
-        print('ERROR: Image {} is not available.'.format(key), file=sys.stderr)
-        sys.exit(1)
-    if variant not in IMAGE_TEMPLATES[key]:
-        print('ERROR: Variant {} is not available for image {}.'.format(variant, key), file=sys.stderr)
-        sys.exit(1)
-    return IMAGE_TEMPLATES[key][variant]
-
-
 def _get_full_repo_url(repository_url, system, revision):
     if not repository_url:
         return None
@@ -730,534 +593,6 @@ def _get_full_repo_url(repository_url, system, revision):
     repo_url = urljoin(repository_url, 'repository')
     repo_url += '/%s/' % repo_name
     return repo_url
-
-
-class VagrantEnv():
-    """Helper class that makes interacting with Vagrant easier.
-
-    It creates Vagrantfile according to specified system. It exposes basic Vagrant functions
-    like up, upload, destroy, ssh. It also provides more complex function for preparing system
-    for Kea build and building Kea.
-    """
-
-    def __init__(self, provider, system, revision, features, image_template_variant,
-                 dry_run, quiet=False, check_times=False, ccache_dir=None):
-        """VagrantEnv initializer.
-
-        :param str provider: indicate backend type: virtualbox or lxc
-        :param str system: name of the system eg. ubuntu
-        :param str revision: revision of the system e.g. 18.04
-        :param list features: list of requested features
-        :param str image_template_variant: variant of images' templates: bare or kea
-        :param bool dry_run: if False then system commands are not really executed
-        :param bool quiet: if True then commands will not trace to stdout
-        :param bool check_times: if True then commands will be terminated after given timeout
-        """
-        self.provider = provider
-        self.system = system
-        self.revision = revision
-        self.features = features
-        self.dry_run = dry_run
-        self.quiet = quiet
-        self.check_times = check_times
-
-        # set properly later
-        self.features_arg = None
-        self.nofeatures_arg = None
-        self.python = None
-
-        self.key = key = "%s-%s-%s" % (system, revision, provider)
-        self.image_tpl = get_image_template(key, image_template_variant)
-        self.repo_dir = os.getcwd()
-
-        sys_dir = "%s-%s" % (system, revision)
-        if provider == "virtualbox":
-            self.vagrant_dir = os.path.join(self.repo_dir, 'hammer', sys_dir, 'vbox')
-        elif provider == "lxc":
-            self.vagrant_dir = os.path.join(self.repo_dir, 'hammer', sys_dir, 'lxc')
-
-        if ccache_dir is None:
-            self.ccache_dir = '/'
-            self.ccache_enabled = False
-        else:
-            self.ccache_dir = ccache_dir
-            self.ccache_enabled = True
-
-        self.init_files()
-
-    def init_files(self):
-        if not os.path.exists(self.vagrant_dir):
-            os.makedirs(self.vagrant_dir)
-
-        vagrantfile_path = os.path.join(self.vagrant_dir, "Vagrantfile")
-
-        crc = binascii.crc32(self.vagrant_dir.encode())
-        self.name = "hmr-%s-%s-kea-srv-%08d" % (self.system, self.revision.replace('.', '-'), crc)
-
-        if '/' in self.image_tpl:
-            self.latest_version = self._get_latest_cloud_version()
-            box_version = 'config.vm.box_version = "%s"' % self.latest_version
-        else:
-            self.latest_version = None
-            box_version = ""
-
-        # alpine has a problem with setting hostname so skip it
-        if self.system == 'alpine':
-            hostname = ''
-        else:
-            hostname = 'config.vm.hostname = "%s"' % self.name
-
-        if self.provider == "virtualbox":
-            vagrantfile_tpl = VBOX_VAGRANTFILE_TPL
-        elif self.provider == "lxc":
-            vagrantfile_tpl = LXC_VAGRANTFILE_TPL
-        else:
-            raise UnexpectedError('Unknown vagrantfile_tpl')
-
-        vagrantfile = vagrantfile_tpl.format(image_tpl=self.image_tpl,
-                                             name=self.name,
-                                             ccache_dir=self.ccache_dir,
-                                             box_version=box_version,
-                                             hostname=hostname)
-
-        with open(vagrantfile_path, "w", encoding='utf-8') as f:
-            f.write(vagrantfile)
-
-        log.info('Prepared vagrant system %s in %s', self.name, self.vagrant_dir)
-
-    def up(self):
-        """Do Vagrant up."""
-        exitcode, out = execute("vagrant up --no-provision --provider %s" % self.provider,
-                                cwd=self.vagrant_dir, timeout=15 * 60, dry_run=self.dry_run,
-                                capture=True, raise_error=False)
-        if exitcode != 0:
-            if 'There is container on your system' in out and 'lxc-destroy' in out:
-                m = re.search(r'`lxc-destroy.*?`', out)
-                if m:
-                    # destroy some old container
-                    cmd = m.group(0)[1:-1]
-                    cmd = 'sudo ' + cmd + ' -f'
-                    execute(cmd, timeout=60)
-
-                    # try again spinning up new
-                    execute("vagrant up --no-provision --provider %s" % self.provider,
-                            cwd=self.vagrant_dir, timeout=15 * 60, dry_run=self.dry_run)
-                    return
-            raise ExecutionError('There is a problem with putting up a system')
-
-    def _get_cloud_meta(self, image_tpl=None):
-        if '/' not in self.image_tpl:
-            return {}
-        url = 'https://app.vagrantup.com/api/v1/box/' + (image_tpl if image_tpl else self.image_tpl)
-        try:
-            # Issue: [B310:blacklist] Audit url open for permitted schemes.
-            #        Allowing use of file:/ or custom schemes is often unexpected.
-            # Reason for nosec: it is clearly a https link.
-            with urllib.request.urlopen(url) as response:  # nosec B310
-                data = response.read()
-        except Exception as e:
-            log.exception('ignored exception: %s', e)
-            return {}
-        data = json.loads(data)
-        return data
-
-    def _get_local_meta(self):
-        meta_file = os.path.join(self.vagrant_dir, '.vagrant/machines/default', self.provider, 'box_meta')
-        if not os.path.exists(meta_file):
-            return {}
-        with open(meta_file, encoding='utf-8') as f:
-            data = f.read()
-        data = json.loads(data)
-        return data
-
-    def _get_latest_cloud_version(self, image_tpl=None):
-        cloud_meta = self._get_cloud_meta(image_tpl)
-        if not cloud_meta and 'versions' not in cloud_meta:
-            return 0
-        latest_version = 0
-        for ver in cloud_meta['versions']:
-            provider_found = False
-            for p in ver['providers']:
-                if p['name'] == self.provider:
-                    provider_found = True
-                    break
-            if provider_found:
-                try:
-                    v = int(ver['number'])
-                except ValueError:
-                    return ver['number']
-                if v > latest_version:
-                    latest_version = v
-        return latest_version
-
-    def get_status(self):
-        """Return system status.
-
-        Status can be: 'not created', 'running', 'stopped', etc.
-        """
-        if not os.path.exists(self.vagrant_dir):
-            return "not created"
-
-        _, out = execute("vagrant status", cwd=self.vagrant_dir, timeout=15, capture=True, quiet=True)
-        m = re.search(r'default\s+(.+)\(', out)
-        if not m:
-            raise UnexpectedError('cannot get status in:\n%s' % out)
-        return m.group(1).strip()
-
-    def bring_up_latest_box(self):
-        if self.get_status() == 'running':
-            self.reload()
-        else:
-            self.up()
-
-    def reload(self):
-        """Do Vagrant reload."""
-        execute("vagrant reload --no-provision --force",
-                cwd=self.vagrant_dir, timeout=15 * 60, dry_run=self.dry_run)
-
-    def package(self):
-        """Package Vagrant system into Vagrant box."""
-        execute('vagrant halt', cwd=self.vagrant_dir, dry_run=self.dry_run, raise_error=False, attempts=3)
-
-        box_path = os.path.join(self.vagrant_dir, 'kea-%s-%s.box' % (self.system, self.revision))
-        if os.path.exists(box_path):
-            os.unlink(box_path)
-
-        if self.provider == 'virtualbox':
-            cmd = "vagrant package --output %s" % box_path
-            execute(cmd, cwd=self.vagrant_dir, timeout=4 * 60, dry_run=self.dry_run)
-
-        elif self.provider == 'lxc':
-            lxc_box_dir = os.path.join(self.vagrant_dir, 'lxc-box')
-            if os.path.exists(lxc_box_dir):
-                execute('sudo rm -rf %s' % lxc_box_dir)
-            os.mkdir(lxc_box_dir)
-            lxc_container_path = os.path.join('/var/lib/lxc', self.name)
-
-            # add vagrant universal key to accepted keys
-            execute('sudo sh -c \'echo "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8ia'
-                    'llvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ'
-                    '6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTB'
-                    'ckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6k'
-                    'ivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmB'
-                    'YSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYC'
-                    'zRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key"'
-                    '> %s/rootfs/home/vagrant/.ssh/authorized_keys\'' % lxc_container_path)
-
-            # reset machine-id
-            execute('sudo rm -f %s/rootfs/var/lib/dbus/machine-id' % lxc_container_path)
-            # execute('sudo truncate -s 0 %s/rootfs/etc/machine-id' % lxc_container_path)
-            execute('sudo rm -f %s/rootfs/etc/machine-id' % lxc_container_path)
-
-            # pack rootfs
-            cmd = 'sudo sh -c "'
-            cmd += 'cd %s '
-            cmd += '&& tar --numeric-owner --anchored --exclude=./rootfs/dev/log -czf %s/rootfs.tar.gz ./rootfs/*'
-            cmd += '"'
-            execute(cmd % (lxc_container_path, lxc_box_dir))
-
-            # copy lxc config from runtime container
-            execute('sudo cp %s/config %s/lxc-config' % (lxc_container_path, lxc_box_dir))
-            # remove mac address from eth0 - it should be dynamically assigned
-            execute("sudo sed -i'' '/lxc.net.0.hwaddr/d' %s/lxc-config" % lxc_box_dir)
-            # correct files ownership
-            execute('sudo chown `id -un`:`id -gn` *', cwd=lxc_box_dir)
-            # and other metadata
-            with open(os.path.join(lxc_box_dir, 'metadata.json'), 'w', encoding='utf-8') as f:
-                now = datetime.datetime.now()
-                f.write('{\n')
-                f.write('  "provider": "lxc",\n')
-                f.write('  "version":  "1.0.0",\n')
-                f.write('  "built-on": "%s"\n' % now.strftime('%c'))
-                f.write('}\n')
-
-            # pack vagrant box with metadata and config
-            execute('tar -czf %s ./*' % box_path, cwd=lxc_box_dir)
-            execute('sudo rm -rf %s' % lxc_box_dir)
-
-        return box_path
-
-    def upload_to_cloud(self, box_path):
-        image_tpl = get_image_template(self.key, 'kea')
-        if '/' not in image_tpl:
-            return
-
-        latest_version = self._get_latest_cloud_version(image_tpl)
-        new_version = latest_version + 1
-
-        cmd = "vagrant cloud publish --no-private -f -r %s %s %s %s"
-        cmd = cmd % (image_tpl, new_version, self.provider, box_path)
-
-        execute(cmd, cwd=self.vagrant_dir, timeout=60 * 60)
-
-    def upload(self, src):
-        """Upload src to Vagrant system, home folder."""
-        attempt = 4
-        exitcode = 1
-        while attempt > 0:
-            exitcode = execute('vagrant upload %s' % src, cwd=self.vagrant_dir, dry_run=self.dry_run, raise_error=False)
-            if exitcode == 0:
-                break
-            attempt -= 1
-        if exitcode != 0:
-            msg = 'cannot upload %s' % src
-            log.error(msg)
-            raise ExecutionError(msg)
-
-    def run_build_and_test(self, tarball_paths, jobs, pkg_version, pkg_isc_version, upload, repository_url):
-        """Run build and unit tests inside Vagrant system."""
-        if self.dry_run:
-            return 0, 0
-
-        # prepare tarball if needed and upload it to vagrant system
-        name_ver = None
-        if tarball_paths is None:
-            execute('mkdir -p ~/.hammer-tmp')
-            name_ver = 'kea-%s' % pkg_version
-            cmd = 'tar --transform "flags=r;s|^|%s/|" --exclude hammer ' % name_ver
-            cmd += ' --exclude "*~" --exclude .git --exclude .libs '
-            cmd += ' --exclude .deps --exclude \'*.o\'  --exclude \'*.lo\' '
-            cmd += ' -Jcvf ~/.hammer-tmp/%s.tar.xz .' % name_ver
-            execute(cmd)
-            tarball_paths = [f'~/.hammer-tmp/{name_ver}.tar.xz']
-        self.upload(tarball_paths)
-        execute('rm -rf ~/.hammer-tmp')
-
-        log_file_path = os.path.join(self.vagrant_dir, 'build.log')
-        log.info('Build log file stored to %s', log_file_path)
-
-        t0 = time.time()
-
-        # run build command
-        bld_cmd = "{python} hammer.py build -p local {features} {nofeatures} {check_times} {ccache}"
-        bld_cmd += " {tarball} {jobs} {pkg_version} {pkg_isc_version} {repository_url}"
-        bld_cmd = bld_cmd.format(python=self.python,
-                                 features=self.features_arg,
-                                 nofeatures=self.nofeatures_arg,
-                                 check_times='-i' if self.check_times else '',
-                                 ccache='--ccache-dir /ccache' if self.ccache_enabled else '',
-                                 tarball='-t ~/%s.tar.xz' % name_ver,
-                                 jobs='-j %d' % jobs,
-                                 pkg_version='--pkg-version %s' % pkg_version,
-                                 pkg_isc_version='--pkg-isc-version %s' % pkg_isc_version,
-                                 repository_url=('--repository-url %s' % repository_url) if repository_url else '')
-
-        timeout = _calculate_build_timeout(self.features) + 5 * 60
-        # executes hammer.py inside LXC container
-        self.execute(bld_cmd, timeout=timeout, log_file_path=log_file_path, quiet=self.quiet)  # timeout: 40 minutes
-
-        ssh_cfg_path = self.dump_ssh_config()
-
-        if 'native-pkg' in self.features:
-            pkgs_dir = os.path.join(self.vagrant_dir, 'pkgs')
-            if os.path.exists(pkgs_dir):
-                execute('rm -rf %s' % pkgs_dir)
-            os.makedirs(pkgs_dir)
-
-            # copy results of _build_native_pkg
-            execute('scp -F %s -r default:~/kea-pkg/* .' % ssh_cfg_path, cwd=pkgs_dir)
-
-            file_ext = None
-            if upload:
-                repo_url = _get_full_repo_url(repository_url, self.system, self.revision)
-                if repo_url is None:
-                    raise ValueError('repo_url is None')
-                upload_cmd = 'curl -v --netrc -f'
-
-                if self.system in ['ubuntu', 'debian']:
-                    upload_cmd += ' -X POST -H "Content-Type: multipart/form-data" --data-binary "@%s" '
-                    file_ext = 'deb'  # include both '.deb' and '.ddeb' files
-
-                elif self.system in ['fedora', 'centos', 'rhel', 'rocky']:
-                    upload_cmd += ' --upload-file %s '
-                    file_ext = '.rpm'
-
-                elif self.system == 'alpine':
-                    upload_cmd += ' --upload-file %s '
-                    file_ext = ''
-                    _, arch = self.execute('arch', raise_error=False, capture=True)
-                    arch = arch.strip()
-                    repo_url = urljoin(repo_url, f'{pkg_isc_version}/v{self.revision}/{arch}/')
-
-                upload_cmd += ' ' + repo_url
-
-                for fn in os.listdir(pkgs_dir):
-                    if file_ext and not fn.endswith(file_ext):
-                        continue
-                    fp = os.path.join(pkgs_dir, fn)
-                    cmd = upload_cmd % fp
-                    exit_code, txt = execute(cmd, raise_error=False, capture=True, attempts=3)
-                    log.info('code: %s, txt: %s', exit_code, txt)
-                    # debian doc packages is arch "all" in both x86 and aarch so we want to ignore error
-                    # while second is uploaded
-                    if exit_code != 0 and "Repository does not allow updating assets" in txt:
-                        continue
-
-        t1 = time.time()
-        dt = int(t1 - t0)
-
-        log.info('Build log file stored to %s', log_file_path)
-        log.info("")
-        log.info(">>>>>> Build time %s:%s", dt // 60, dt % 60)
-        log.info("")
-
-        # run unit tests if requested
-        total = 0
-        passed = 0
-        try:
-            if 'unittest' in self.features:
-                cmd = 'scp -F %s -r default:/home/vagrant/unit-test-results.json .' % ssh_cfg_path
-                execute(cmd, cwd=self.vagrant_dir)
-                results_file = os.path.join(self.vagrant_dir, 'unit-test-results.json')
-                if os.path.exists(results_file):
-                    with open(results_file, encoding='utf-8') as f:
-                        txt = f.read()
-                        results = json.loads(txt)
-                        total = results['grand_total']
-                        passed = results['grand_passed']
-
-                cmd = 'scp -F %s -r default:/home/vagrant/aggregated_tests.xml .' % ssh_cfg_path
-                execute(cmd, cwd=self.vagrant_dir)
-        except Exception as e:
-            log.exception('ignored issue with parsing unit test results: %s', e)
-
-        return total, passed
-
-    def destroy(self):
-        """Remove the VM completely."""
-        if os.path.exists(self.vagrant_dir):
-            cmd = 'vagrant destroy --force'
-            execute(cmd, cwd=self.vagrant_dir, timeout=3 * 60, dry_run=self.dry_run)  # timeout: 3 minutes
-            execute('rm -rf %s' % self.vagrant_dir)
-
-    def ssh(self):
-        """Open interactive session to the VM."""
-        execute('vagrant ssh', cwd=self.vagrant_dir, dry_run=self.dry_run, interactive=True)
-
-    def dump_ssh_config(self):
-        """Dump ssh config that allows getting into Vagrant system via SSH."""
-        ssh_cfg_path = os.path.join(self.vagrant_dir, 'ssh.cfg')
-        execute('vagrant ssh-config > %s' % ssh_cfg_path, cwd=self.vagrant_dir)
-        return ssh_cfg_path
-
-    def execute(self, cmd, timeout=60, raise_error=True, log_file_path=None, quiet=False, env=None, capture=False,
-                attempts=1, sleep_time_after_attempt=None):
-        """Execute provided command inside Vagrant system."""
-        if not env:
-            env = os.environ.copy()
-        env['LANGUAGE'] = env['LANG'] = env['LC_ALL'] = 'C'
-
-        return execute('vagrant ssh -c "%s"' % cmd, env=env, cwd=self.vagrant_dir, timeout=timeout,
-                       raise_error=raise_error, dry_run=self.dry_run, log_file_path=log_file_path,
-                       quiet=quiet, check_times=self.check_times, capture=capture,
-                       attempts=attempts, sleep_time_after_attempt=sleep_time_after_attempt)
-
-    def prepare_system(self):
-        """Prepare Vagrant system for building Kea."""
-        if self.features:
-            self.features_arg = '--with ' + ' '.join(self.features)
-        else:
-            self.features_arg = ''
-
-        nofeatures = set(DEFAULT_FEATURES) - self.features
-        if nofeatures:
-            self.nofeatures_arg = '--without ' + ' '.join(nofeatures)
-        else:
-            self.nofeatures_arg = ''
-
-        # install python3 on some systems
-        if self.system == 'centos':
-            if self.revision == '7':
-                self.execute("sudo yum install -y python36 rpm-build python3-virtualenv", attempts=3)
-            else:
-                self.execute("sudo dnf install -y python36 rpm-build python3-virtualenv", attempts=3)
-        elif self.system == 'freebsd':
-            if self.revision.startswith('13'):
-                self.execute("sudo pkg install --no-repo-update --yes python3", attempts=3)
-
-        # select proper python version for running Hammer inside Vagrant system
-        if self.system == 'freebsd':
-            if self.revision.startswith(('11', '12')):
-                self.python = 'python3.6'
-            else:
-                self.python = 'python3'
-        else:
-            self.python = 'python3'
-
-        # to get python in RHEL 8 beta it is required first register machine in RHEL account
-        if self.system == 'rhel' and self.revision == '8':
-            cmd = "sudo subscription-manager repos --list-enabled | grep rhel-8-for-x86_64-baseos-beta-rpms"
-            exitcode = self.execute(cmd, raise_error=False)
-            if exitcode != 0:
-                env = os.environ.copy()
-                with open(os.path.expanduser('~/rhel-creds.txt'), encoding='utf-8') as f:
-                    env['RHEL_USER'] = f.readline().strip()
-                    env['RHEL_PASSWD'] = f.readline().strip()
-                self.execute('sudo subscription-manager register --user $RHEL_USER --password "$RHEL_PASSWD"', env=env)
-                self.execute("sudo subscription-manager refresh")
-                self.execute("sudo subscription-manager attach --pool 8a85f99a67cdc3e70167e45c85f47429")
-                self.execute("sudo subscription-manager repos --enable rhel-8-for-x86_64-baseos-beta-rpms")
-                self.execute("sudo dnf install -y python36")
-
-        # RPM-based distributions install libraries in /usr/local/lib64, but they
-        # tend to not look there at runtime without explicit mention in ld.so.conf.d.
-        if self.system in ['centos', 'fedora', 'rhel', 'rocky']:
-            self.execute('sudo echo /usr/local/lib64 > /etc/ld.so.conf.d/kea.conf')
-            # ldconfig only in case the change above was not there before system startup
-            self.execute('sudo ldconfig')
-
-        # upload Hammer to Vagrant system
-        hmr_py_path = os.path.join(self.repo_dir, 'hammer.py')
-        self.upload(hmr_py_path)
-
-        log_file_path = os.path.join(self.vagrant_dir, 'prepare.log')
-        log.info('Prepare log file stored to %s', log_file_path)
-
-        t0 = time.time()
-
-        # run prepare-system inside Vagrant system
-        cmd = "{python} hammer.py prepare-system -p local {features} {nofeatures} {check_times} {ccache}"
-        cmd = cmd.format(python=self.python,
-                         features=self.features_arg,
-                         nofeatures=self.nofeatures_arg,
-                         check_times='-i' if self.check_times else '',
-                         ccache='--ccache-dir /ccache' if self.ccache_enabled else '')
-        self.execute(cmd, timeout=40 * 60, log_file_path=log_file_path, quiet=self.quiet)
-
-        t1 = time.time()
-        dt = int(t1 - t0)
-
-        log.info('')
-        log.info(">>> Preparing %s, %s, %s completed in %s:%s", self.provider, self.system, self.revision,
-                 dt // 60, dt % 60)
-        log.info('')
-
-    def prepare_for_boxing(self):
-        if self.system in ['debian', 'ubuntu', 'fedora', 'centos', 'rhel', 'rocky']:
-            # setup a script that on first boot will set machine-id
-            cmd = 'sh -c \'cat <<EOF | sudo tee /usr/lib/systemd/system/systemd-firstboot.service\n'
-            cmd += '[Unit]\n'
-            cmd += 'Description=Generate New Machine ID\n'
-            cmd += 'Documentation=man:systemd-firstboot(1)\n'
-            cmd += 'DefaultDependencies=no\n'
-            cmd += 'Conflicts=shutdown.target\n'
-            cmd += 'After=systemd-remount-fs.service\n'
-            cmd += 'Before=systemd-sysusers.service sysinit.target shutdown.target\n'
-            cmd += 'ConditionPathIsReadWrite=/etc\n'
-            cmd += 'ConditionFirstBoot=yes\n'
-            cmd += '[Service]\n'
-            cmd += 'Type=oneshot\n'
-            cmd += 'RemainAfterExit=yes\n'
-            cmd += 'ExecStart=/usr/bin/systemd-firstboot --setup-machine-id\n'
-            cmd += '[Install]\n'
-            cmd += 'WantedBy=sysinit.target\n'
-            cmd += "EOF\n\'"
-            self.execute(cmd)
-            self.execute('sudo systemctl enable systemd-firstboot.service')
-
-        elif self.system == 'freebsd':
-            self.execute('sudo pkg clean -a -y')
-            self.execute('sudo rm -rf /usr/lib/debug')
 
 
 def _install_gtest_sources():
@@ -2365,15 +1700,6 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
         install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
 
-        # check for existence of 'vagrant' user and 'abuild' group before adding him to the group
-        try:
-            pwd.getpwnam('vagrant')
-            grp.getgrnam('abuild')
-        except KeyError:
-            log.info("Can't add 'vagrant' user to 'abuild' group. Vagrant or abuild does not exist.")
-        else:
-            execute('sudo adduser vagrant abuild')
-
         current_user = getpass.getuser()
         try:
             pwd.getpwnam(current_user)
@@ -2392,18 +1718,6 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     # Packages required by these functions have been installed. Now call them.
     for f in deferred_functions:
         f()
-
-
-def prepare_system_in_vagrant(provider, system, revision, features, dry_run, check_times,
-                              clean_start, ccache_dir=None):
-    """Prepare specified system in Vagrant according to specified features."""
-    ve = VagrantEnv(provider, system, revision, features, 'kea', dry_run, check_times=check_times,
-                    ccache_dir=ccache_dir)
-    if clean_start:
-        ve.destroy()
-        ve.init_files()
-    ve.bring_up_latest_box()
-    ve.prepare_system()
 
 
 def _calculate_build_timeout(features):
@@ -2858,138 +2172,6 @@ def build_local(features, tarball_paths, kea_packaging_path, check_times, dry_ru
     execute('sudo df -h', dry_run=dry_run)
 
 
-def build_in_vagrant(provider, system, revision, features, leave_system, tarball_paths,
-                     dry_run, quiet, clean_start, check_times, jobs, ccache_dir,
-                     pkg_version, pkg_isc_version, upload, repository_url):
-    """Build Kea via Vagrant in specified system with specified features."""
-    log.info('')
-    log.info(">>> Building %s, %s, %s", provider, system, revision)
-    log.info('')
-
-    t0 = time.time()
-
-    ve = None
-    error = None
-    total = 0
-    passed = 0
-    try:
-        ve = VagrantEnv(provider, system, revision, features, 'kea', dry_run, quiet, check_times,
-                        ccache_dir)
-        if clean_start:
-            ve.destroy()
-            ve.init_files()
-        ve.bring_up_latest_box()
-        ve.prepare_system()
-        total, passed = ve.run_build_and_test(tarball_paths, jobs, pkg_version, pkg_isc_version, upload, repository_url)
-        msg = ' - ' + green('all ok')
-    except KeyboardInterrupt as e:
-        error = e
-        msg = ' - keyboard interrupt'
-    except ExecutionError as e:
-        error = e
-        msg = ' - ' + red(str(e))
-    except Exception as e:
-        log.exception('Building erred')
-        error = e
-        msg = ' - ' + red(str(e))
-    finally:
-        if not leave_system and ve:
-            ve.destroy()
-
-    t1 = time.time()
-    dt = int(t1 - t0)
-
-    log.info('')
-    log.info(">>> Building %s, %s, %s completed in %s:%s%s", provider, system, revision, dt // 60, dt % 60, msg)
-    log.info('')
-
-    return dt, error, total, passed
-
-
-def package_box(provider, system, revision, features, dry_run, check_times, reuse, skip_upload):
-    """Prepare Vagrant box of specified system."""
-    ve = VagrantEnv(provider, system, revision, features, 'bare', dry_run, check_times=check_times)
-    if not reuse:
-        ve.destroy()
-        ve.init_files()
-    ve.bring_up_latest_box()
-    ve.prepare_system()
-    ve.prepare_for_boxing()
-    box_path = ve.package()
-    if not skip_upload:
-        ve.upload_to_cloud(box_path)
-
-
-def ssh(provider, system, revision):
-    """Invoke Vagrant ssh for given system."""
-    ve = VagrantEnv(provider, system, revision, [], 'kea', False)
-    ve.up()
-    ve.ssh()
-
-
-def _install_vagrant(ver=RECOMMENDED_VAGRANT_VERSION, upgrade=False):
-    system, _ = get_system_revision()
-    if system in ['fedora', 'centos', 'rhel', 'rocky']:
-        if upgrade:
-            execute('sudo yum remove -y vagrant')
-        execute('mkdir -p ~/.hammer-tmp')
-        rpm = 'vagrant_%s_x86_64.rpm' % ver
-        cmd = 'wget --no-verbose -O ~/.hammer-tmp/%s ' % rpm
-        cmd += 'https://releases.hashicorp.com/vagrant/%s/%s' % (ver, rpm)
-        execute(cmd)
-        execute('sudo rpm -i ~/.hammer-tmp/%s' % rpm)
-        execute('rm -rf ~/.hammer-tmp')
-    elif system in ['debian', 'ubuntu']:
-        if upgrade:
-            execute('sudo apt-get purge -y vagrant')
-        execute('mkdir -p ~/.hammer-tmp')
-        deb = 'vagrant_%s_x86_64.deb' % ver
-        cmd = 'wget --no-verbose -O ~/.hammer-tmp/%s ' % deb
-        cmd += 'https://releases.hashicorp.com/vagrant/%s/%s' % (ver, deb)
-        execute(cmd)
-        execute('sudo dpkg -i ~/.hammer-tmp/%s' % deb)
-        execute('rm -rf ~/.hammer-tmp')
-    elif system in ['arch']:
-        pass
-    else:
-        # TODO: check for packages here: https://www.vagrantup.com/downloads.html
-        raise NotImplementedError('no implementation for %s' % system)
-
-
-def ensure_hammer_deps():
-    """Install Hammer dependencies onto current, host system."""
-    exitcode, out = execute('vagrant version', raise_error=False, capture=True)
-    if exitcode != 0:
-        _install_vagrant()
-    else:
-        m = re.search(r'Installed Version: ([\d\.]+)', out, re.I)
-        if m is None:
-            raise UnexpectedError(r'No match for "Installed Version: ([\d\.\+)"')
-        ver = m.group(1)
-        vagrant = [int(v) for v in ver.split('.')]
-        recommended_vagrant = [int(v) for v in RECOMMENDED_VAGRANT_VERSION.split('.')]
-        if vagrant < recommended_vagrant:
-            m = re.search(r'Latest Version: ([\d\.]+)', out, re.I)
-            if m is None:
-                # Vagrant was unable to check for the latest version of Vagrant.
-                # Attempt to upgrade to the recommended version to fix it.
-                _install_vagrant(upgrade=True)
-                return
-            ver = m.group(1)
-            _install_vagrant(ver, upgrade=True)
-
-    exitcode = execute('vagrant plugin list | grep vagrant-lxc', raise_error=False)
-    if exitcode != 0:
-        execute('vagrant plugin install vagrant-lxc')
-
-    # Install lxc-create.
-    system, _ = get_system_revision()
-    if system == 'debian':
-        execute('sudo apt-get -y install lxc')
-    if system in ['ubuntu']:
-        execute('sudo apt-get -y install lxc-utils')
-
-
 class CollectCommaSeparatedArgsAction(argparse.Action):
     """Helper argparse action class that can split multi-argument options by space and by comma."""
 
@@ -3020,30 +2202,16 @@ def parse_args():
     fl = functools.partial(lambda w, t: textwrap.fill(t, w), 80)
     description = [
         "Hammer - Kea development environment management tool.\n",
-        fl("At first it is required to install Hammer dependencies which is Vagrant and either "
-           "VirtualBox or LXC. To make life easier Hammer can install Vagrant and required "
-           "Vagrant plugins using the command:"),
-        "\n  ./hammer.py ensure-hammer-deps\n",
-        "Still VirtualBox and LXC need to be installed manually.",
         fl("Basic functionality provided by Hammer is preparing building environment and "
            "performing actual build and running unit tests locally, in current system. "
            "This can be achieved by running the command:"),
-        "\n  ./hammer.py build -p local\n",
+        "\n  ./hammer.py build\n",
         fl("The scope of the process can be defined using --with (-w) and --without (-x) options. "
            "By default the build command will build Kea with documentation, install it locally "
            "and run unit tests."),
         "To exclude installation and generating docs do:",
-        "\n  ./hammer.py build -p local -x install docs\n",
+        "\n  ./hammer.py build -x install docs\n",
         fl("The whole list of available features is: %s." % ", ".join(ALL_FEATURES)),
-        fl("Hammer can be told to set up a new virtual machine with specified operating system "
-           "and not running the build:"),
-        "\n  ./hammer.py prepare-system -p virtualbox -s freebsd -r 12.0\n",
-        fl("This way we can prepare a system for our own use. To get to such system using SSH invoke:"),
-        "\n  ./hammer.py ssh -p virtualbox -s freebsd -r 12.0\n",
-        "To list all created system on a host invoke:",
-        "\n  ./hammer.py created-systems\n",
-        "And then to destroy a given system run:",
-        "\n  ./hammer.py destroy -d /path/to/dir/with/Vagrantfile\n",
     ]
     description = "\n".join(description)
     main_parser = argparse.ArgumentParser(description=description,
@@ -3058,49 +2226,27 @@ def parse_args():
                                                            "To get more information about particular command invoke: "
                                                            "./hammer.py <command> -h."))
 
-    parent_parser1 = argparse.ArgumentParser(add_help=False)
-    parent_parser1.add_argument('-p', '--provider', default='virtualbox',
-                                choices=['lxc', 'virtualbox', 'local', 'all'],
-                                help="Backend build executor. If 'all' then build is executed several times "
-                                "on all providers. If 'local' then build is executed on current system. "
-                                "Default is 'virtualbox'.")
-    parent_parser1.add_argument('-s', '--system', default='all', choices=list(SYSTEMS.keys()) + ['all'],
-                                help="Build is executed on selected system. If 'all' then build is executed "
-                                "several times on all systems. If provider is 'local' then this option is ignored. "
-                                "Default is 'all'.")
-    parent_parser1.add_argument('-r', '--revision', default='all',
-                                help="Revision of selected system. If 'all' then build is executed several times "
-                                "on all revisions of selected system. To list supported systems and their revisions "
-                                "invoke 'supported-systems'. Default is 'all'.")
-
-    parent_parser2 = argparse.ArgumentParser(add_help=False)
+    parent_parser = argparse.ArgumentParser(add_help=False)
     hlp = "Enable features. Separate them by space or comma. List of available features: %s. Default is '%s'."
     hlp = hlp % (", ".join(ALL_FEATURES), ' '.join(DEFAULT_FEATURES))
-    parent_parser2.add_argument('-w', '--with', metavar='FEATURE', nargs='+', default=set(),
-                                action=CollectCommaSeparatedArgsAction, help=hlp)
+    parent_parser.add_argument('-w', '--with', metavar='FEATURE', nargs='+', default=set(),
+                               action=CollectCommaSeparatedArgsAction, help=hlp)
     hlp = "Disable features. Separate them by space or comma. List of available features: %s. Default is ''."
     hlp = hlp % ", ".join(ALL_FEATURES)
-    parent_parser2.add_argument('-x', '--without', metavar='FEATURE', nargs='+', default=set(),
-                                action=CollectCommaSeparatedArgsAction, help=hlp)
-    parent_parser2.add_argument('--with-randomly', metavar='FEATURE', nargs='+', default=set(),
-                                action=CollectCommaSeparatedArgsAction, help=hlp)
-    parent_parser2.add_argument('--ignore-errors-for', metavar='FEATURE', nargs='+', default=set(),
-                                action=CollectCommaSeparatedArgsAction, help=hlp)
-    parent_parser2.add_argument('-l', '--leave-system', action='store_true',
-                                help='At the end of the command do not destroy vagrant system. Default behavior is '
-                                'destroying the system.')
-    parent_parser2.add_argument('-c', '--clean-start', action='store_true',
-                                help='If there is pre-existing system then it is destroyed first.')
-    parent_parser2.add_argument('-i', '--check-times', action='store_true',
-                                help='Do not allow executing commands infinitely.')
-    parent_parser2.add_argument('-n', '--dry-run', action='store_true', help='Print only what would be done.')
+    parent_parser.add_argument('-x', '--without', metavar='FEATURE', nargs='+', default=set(),
+                               action=CollectCommaSeparatedArgsAction, help=hlp)
+    parent_parser.add_argument('--with-randomly', metavar='FEATURE', nargs='+', default=set(),
+                               action=CollectCommaSeparatedArgsAction, help=hlp)
+    parent_parser.add_argument('--ignore-errors-for', metavar='FEATURE', nargs='+', default=set(),
+                               action=CollectCommaSeparatedArgsAction, help=hlp)
+    parent_parser.add_argument('-i', '--check-times', action='store_true',
+                               help='Do not allow executing commands infinitely.')
+    parent_parser.add_argument('-n', '--dry-run', action='store_true', help='Print only what would be done.')
 
-    parser = subparsers.add_parser('ensure-hammer-deps',
-                                   help="Install Hammer dependencies on current, host system.")
     parser = subparsers.add_parser('supported-systems',
                                    help="List system supported by Hammer for doing Kea development.")
     parser = subparsers.add_parser('build', help="Prepare system and run Kea build in indicated system.",
-                                   parents=[parent_parser1, parent_parser2])
+                                   parents=[parent_parser])
     parser.add_argument('-j', '--jobs', default=os.cpu_count(), type=int,
                         help='Number of processes used in compilation. Override make -j default value. Obsolete.')
     parser.add_argument('--kea-packaging-path', metavar='KEA_PACKAGING_PATH',
@@ -3121,41 +2267,15 @@ def parse_args():
                                    help="Prepare system for doing Kea development i.e. install all required "
                                    "dependencies and pre-configure the system. build command always first calls "
                                    "prepare-system internally.",
-                                   parents=[parent_parser1, parent_parser2])
+                                   parents=[parent_parser])
     parser.add_argument('--just-configure', action='store_true',
-                        help='Whether to prevent installation of packages and only proceed to set them up. '
-                             'Only has an effect when preparing system locally, as opposed to inside vagrant.')
+                        help='Whether to prevent installation of packages and only proceed to set them up.')
     parser.add_argument('--one-package-at-a-time', action='store_true',
                         help='Whether to install packages one at a time instead of all at once.')
     parser.add_argument('--ccache-dir', default=None,
                         help='Path to CCache directory on host system.')
     parser.add_argument('--repository-url', default=None,
                         help='Repository for 3rd party dependencies and for uploading built packages.')
-    parser = subparsers.add_parser('ssh', help="SSH to indicated system.",
-                                   formatter_class=argparse.RawDescriptionHelpFormatter,
-                                   description="Allows getting into the system using SSH. If the system is "
-                                   "not present then it will be created first but not prepared. The command "
-                                   "can be run in 2 way: \n"
-                                   "1) ./hammer.py ssh -p <provider> -s <system> -r <revision>\n"
-                                   "2) ./hammer.py ssh -d <path-to-vagrant-dir>",
-                                   parents=[parent_parser1])
-    parser.add_argument('-d', '--directory', help='Path to directory with Vagrantfile.')
-    parser = subparsers.add_parser('created-systems', help="List ALL systems created by Hammer.")
-    parser = subparsers.add_parser('destroy', help="Destroy indicated system.",
-                                   description="Destroys system indicated by a path to directory with Vagrantfile. "
-                                   "To get the list of created systems run: ./hammer.py created-systems.")
-    parser.add_argument('-d', '--directory', help='Path to directory with Vagrantfile.')
-    parser = subparsers.add_parser('package-box',
-                                   help="Prepare system from scratch and package it into Vagrant Box. "
-                                   "Prepared box can be later deployed to Vagrant Cloud.",
-                                   parents=[parent_parser1, parent_parser2])
-    parser.add_argument('--repository-url', default=None,
-                        help='Repository for 3rd party dependencies and for uploading built packages.')
-    parser.add_argument('-u', '--reuse', action='store_true',
-                        help='Reuse existing system image, otherwise (default case) if there is any existing then '
-                        'destroy it first.')
-    parser.add_argument('-k', '--skip-upload', action='store_true',
-                        help='Skip uploading prepared box to cloud, otherwise (default case) upload it.')
 
     args = main_parser.parse_args()
 
@@ -3163,50 +2283,12 @@ def parse_args():
 
 
 def list_supported_systems():
-    """List systems hammer can support (with supported providers)."""
-    for system, revision in SYSTEMS.items():
-        print(f'{system}:')
-        for release, supported in revision.items():
-            if not supported:
-                continue
-            providers = []
-            for p in ['lxc', 'virtualbox']:
-                k = '%s-%s-%s' % (system, release, p)
-                if k in IMAGE_TEMPLATES:
-                    providers.append(p)
-            providers = ', '.join(providers)
-            print(f'  - {release}: {providers}')
-
-
-def list_created_systems():
-    """List VMs that are created on this host by Hammer."""
-    _, output = execute('vagrant global-status --prune', quiet=True, capture=True)
-    systems = []
-    for line in output.splitlines():
-        if 'hammer' not in line:
-            continue
-        elems = line.split()
-        state = elems[3]
-        path = elems[4]
-        systems.append([path, state])
-
-    print('')
-    print('%-10s %s' % ('State', 'Path'))
-    print('-' * 80)
-    for path, state, in sorted(systems):
-        print('%-10s %s' % (state, path))
-    print('-' * 80)
-    print('To destroy a system run: ./hammer.py destroy -d <path>')
-    print('')
-
-
-def destroy_system(path):
-    """Destroy Vagrant system under given path."""
-    vf = os.path.join(path, 'Vagrantfile')
-    if not os.path.exists(vf):
-        print('Wrong directory. It does not have Vagrantfile.')
-        sys.exit(1)
-    execute('vagrant destroy', cwd=path, interactive=True)
+    """List systems hammer can support."""
+    for system, revisions in sorted(SYSTEMS.items()):
+        if any(r for r in revisions.values()):
+            print(f'{system}:')
+        for r in (revision for revision, supported in revisions.items() if supported):
+            print(f'  - {r}')
 
 
 def _coin_toss():
@@ -3261,112 +2343,27 @@ def _get_features(args):
     return features
 
 
-def _print_summary(results, features):
-    """Print summary of build times and unit-test results."""
-    print("")
-    print("+===== Hammer Summary ====================================================+")
-    print("|   provider |     system | revision |  duration |  status |   unit tests |")
-    print("+------------+------------+----------+-----------+---------+--------------+")
-    total_dt = 0
-    for key, result in results.items():
-        provider, system, revision = key
-        dt, error, ut_total, ut_passed = result
-
-        total_dt += dt
-        if error is None:
-            status = '     %s' % green('ok')
-        elif error == 'not run':
-            status = blue('not run')
-        else:
-            status = '  %s' % red('error')
-
-        if 'unittest' in features:
-            ut_results = '%s/%s' % (ut_passed, ut_total)
-            padding = ' ' * (12 - len(ut_results))
-            if ut_passed < ut_total or ut_total == 0:
-                ut_results = padding + red(ut_results)
-            else:
-                ut_results = padding + green(ut_results)
-        else:
-            ut_results = ' not planned'
-        txt = '| %10s | %10s | %8s | %6d:%02d | %s | %s |' % (provider, system, revision,
-                                                              dt // 60, dt % 60, status, ut_results)
-        print(txt)
-    print("+------------+------------+----------+-----------+---------+--------------+")
-    txt = "|                               Total: %6d:%02d |                        |" % (total_dt // 60,
-                                                                                          total_dt % 60)
-    print(txt)
-    print("+=========================================================================+")
-
-
-def _check_system_revision(system, revision):
-    if revision == 'all':
-        return
-    if system not in SYSTEMS:
-        msg = "hammer.py error: argument -s/--system: invalid choice: '%s' (choose from '%s')"
-        msg = msg % (revision, "', '".join(SYSTEMS.keys()))
-        log.error(msg)
-        sys.exit(1)
-    if revision not in SYSTEMS[system]:
-        msg = "hammer.py error: argument -r/--revision: invalid choice: '%s' (choose from '%s')"
-        msg = msg % (revision, "', '".join(SYSTEMS[system].keys()))
-        log.error(msg)
-        sys.exit(1)
-    if not SYSTEMS[system][revision]:
-        log.warning('%s %s is no longer officially supported. '
-                    'The script will continue in a best-effort manner.', system, revision)
-
-
-def _prepare_ccache_dir(ccache_dir, system, revision):
-    if not ccache_dir:
-        return None
-
-    ccache_dir = os.path.join(ccache_dir, "%s-%s" % (system, revision))
-    ccache_dir = os.path.abspath(ccache_dir)
-    if not os.path.exists(ccache_dir):
-        os.makedirs(ccache_dir)
-    return ccache_dir
-
-
 def prepare_system_cmd(args):
     """Check command args and run the prepare-system command."""
-    if args.provider != 'local' and (args.system == 'all' or args.revision == 'all'):
-        print('Please provide required system and its version.')
-        print('Example: ./hammer.py prepare-system -s fedora -r 28.')
-        print('To get list of supported systems run: ./hammer.py supported-systems.')
-        sys.exit(1)
-
-    _check_system_revision(args.system, args.revision)
-
     features = _get_features(args)
     log.info('Enabled features: %s', ' '.join(features))
 
-    if args.provider == 'local':
-        prepare_system_local(
-            features,
-            args.check_times,
-            args.ignore_errors_for,
-            args.just_configure,
-            args.one_package_at_a_time,
-        )
-        return
-
-    ccache_dir = _prepare_ccache_dir(args.ccache_dir, args.system, args.revision)
-
-    _check_deps_presence()
-    prepare_system_in_vagrant(args.provider, args.system, args.revision, features,
-                              args.dry_run, args.check_times, args.clean_start,
-                              ccache_dir)
+    prepare_system_local(
+        features,
+        args.check_times,
+        args.ignore_errors_for,
+        args.just_configure,
+        args.one_package_at_a_time,
+    )
 
 
 def upload_to_repo(args, pkgs_dir):
-    # NOTE: note the differences (if any) in system/revision vs args.system/revision
     system, revision = get_system_revision()
     repo_url = _get_full_repo_url(args.repository_url, system, revision)
     if repo_url is None:
         raise ValueError('repo_url is None')
     upload_cmd = 'curl -v --netrc -f'
-    log.info('args.system %s, system = %s', args.system, system)
+    log.info('system = %s', system)
 
     file_ext = ''
     if system in ['ubuntu', 'debian']:
@@ -3416,85 +2413,16 @@ def build_cmd(args):
     """Check command args and run the build command."""
     features = _get_features(args)
     log.info('Enabled features: %s', ' '.join(features))
-    if args.provider == 'local':
-        pkgs_dir = "kea-pkg"
-        if os.path.exists(pkgs_dir):
-            execute('rm -rf %s' % pkgs_dir)
-        os.makedirs(pkgs_dir)
+    pkgs_dir = "kea-pkg"
+    if os.path.exists(pkgs_dir):
+        execute('rm -rf %s' % pkgs_dir)
+    os.makedirs(pkgs_dir)
 
-        tarball_paths = None if args.from_tarballs is None else list(map(pathlib.Path.resolve, args.from_tarballs))
-        build_local(features, tarball_paths, args.kea_packaging_path, args.check_times, args.dry_run,
-                    args.ccache_dir, args.pkg_version, args.pkg_isc_version, args.repository_url, pkgs_dir, args.jobs)
-        # NOTE: upload the locally build packages and leave; the rest of the code is vagrant specific
-        if args.upload:
-            upload_to_repo(args, pkgs_dir)
-
-        return
-
-    _check_system_revision(args.system, args.revision)
-
-    if 'native-pkg' in features and not args.repository_url:
-        msg = "Enabling 'native-pkg' requires passing --repository-url."
-        print(msg)
-        sys.exit(1)
-
-    _check_deps_presence()
-
-    if args.provider == 'all':
-        providers = ['lxc', 'virtualbox']
-    else:
-        providers = [args.provider]
-
-    if args.system == 'all':
-        systems = SYSTEMS.keys()
-    else:
-        systems = [args.system]
-
-    plan = []
-    results = {}
-    log.info('Build plan:')
-    for provider in providers:
-        for system in systems:
-            if args.revision == 'all':
-                revisions = SYSTEMS[system].keys()
-            else:
-                revisions = [args.revision]
-
-            for revision in revisions:
-                if args.revision == 'all':
-                    key = '%s-%s-%s' % (system, revision, provider)
-                    if key not in IMAGE_TEMPLATES:
-                        continue
-                plan.append((provider, system, revision))
-                log.info(' - %s, %s, %s', provider, system, revision)
-                results[(provider, system, revision)] = (0, 'not run')
-
-    fail = False
-    for provider, system, revision in plan:
-        ccache_dir = _prepare_ccache_dir(args.ccache_dir, args.system, args.revision)
-        tarball_paths = list(map(pathlib.Path.resolve, args.from_tarballs))
-        result = build_in_vagrant(provider, system, revision, features, args.leave_system, tarball_paths,
-                                  args.dry_run, args.quiet, args.clean_start, args.check_times, args.jobs,
-                                  ccache_dir, args.pkg_version, args.pkg_isc_version, args.upload, args.repository_url)
-        results[(provider, system, revision)] = result
-
-        error = result[1]
-        if error:
-            fail = True
-            if isinstance(error, KeyboardInterrupt):
-                break
-
-    _print_summary(results, features)
-
-    if fail:
-        sys.exit(1)
-
-
-def _check_deps_presence():
-    ret = execute('vagrant -v', super_quiet=True, raise_error=False)
-    if ret != 0:
-        print('Missing vagrant. Please install it from https://www.vagrantup.com/')
-        sys.exit(1)
+    tarball_paths = None if args.from_tarballs is None else list(map(pathlib.Path.resolve, args.from_tarballs))
+    build_local(features, tarball_paths, args.kea_packaging_path, args.check_times, args.dry_run,
+                args.ccache_dir, args.pkg_version, args.pkg_isc_version, args.repository_url, pkgs_dir, args.jobs)
+    if args.upload:
+        upload_to_repo(args, pkgs_dir)
 
 
 def main():
@@ -3514,42 +2442,11 @@ def main():
     if args.command == 'supported-systems':
         list_supported_systems()
 
-    elif args.command == 'created-systems':
-        _check_deps_presence()
-        list_created_systems()
-
-    elif args.command == "package-box":
-        _check_deps_presence()
-        _check_system_revision(args.system, args.revision)
-        features = set(['docs', 'perfdhcp', 'shell', 'mysql', 'pgsql', 'gssapi', 'native-pkg'])
-
-        log.info('Enabled features: %s', ' '.join(features))
-        package_box(args.provider, args.system, args.revision, features, args.dry_run, args.check_times, args.reuse,
-                    args.skip_upload)
-
     elif args.command == "prepare-system":
         prepare_system_cmd(args)
 
     elif args.command == "build":
         build_cmd(args)
-
-    elif args.command == "ssh":
-        _check_system_revision(args.system, args.revision)
-        if not args.system or not args.revision or args.system == 'all' or args.revision == 'all':
-            print('System (-s) and revision (-r) parameters are required')
-            sys.exit(1)
-        _check_deps_presence()
-        ssh(args.provider, args.system, args.revision)
-
-    elif args.command == "ensure-hammer-deps":
-        ensure_hammer_deps()
-
-    elif args.command == "destroy":
-        if not args.directory:
-            print('Missing directory (-d) parameter')
-            sys.exit(1)
-        _check_deps_presence()
-        destroy_system(args.directory)
 
     else:
         parser.print_help()
