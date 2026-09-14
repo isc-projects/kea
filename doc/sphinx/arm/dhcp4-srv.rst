@@ -8649,13 +8649,14 @@ option definitions and DHCPv4 options, are configured using the
 The :ref:`cb-sharing` section explains the concept of shareable
 and non-shareable configuration elements and the limitations for
 sharing them between multiple servers. In the DHCP configuration (both DHCPv4
-and DHCPv6), the shareable configuration elements are subnets and shared
-networks. Thus, they can be explicitly associated with multiple server tags.
-The global parameters, option definitions, and global options are non-shareable
-and can be associated with only one server tag. This rule does not apply
-to the configuration elements associated with ``all`` servers. Any configuration
-element associated with ``all`` servers (using the ``all`` keyword as a server tag) is
-used by all servers connecting to the configuration database.
+and DHCPv6), the shareable configuration elements are subnets, shared
+networks, and client classes. Thus, they can be explicitly associated with
+multiple server tags.  The global parameters, option definitions, and global
+options are non-shareable and can be associated with only one server tag. This
+rule does not apply to the configuration elements associated with ``all``
+servers. Any configuration element associated with ``all`` servers (using the
+``all`` keyword as a server tag) is used by all servers connecting to the
+configuration database.
 
 The following table lists DHCPv4-specific parameters supported by the
 configuration backend, with an indication of the level of the hierarchy
