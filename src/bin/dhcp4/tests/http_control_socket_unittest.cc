@@ -5271,6 +5271,7 @@ TEST_F(HttpCtrlChannelDhcpv4Test, handleHttpToHttpsSwitchFatal) {
 
     EXPECT_EQ(EXIT_SUCCESS, server_->getExitValue());
     EXPECT_FALSE(server_->getShutdown());
+    handle_stop_ = true;
 
     // Send the config-set command.
     sendHttpCommand(second_config_os.str(), response);
@@ -5593,6 +5594,7 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, handleHttpsToHttpSwitchFatal) {
 
     EXPECT_EQ(EXIT_SUCCESS, server_->getExitValue());
     EXPECT_FALSE(server_->getShutdown());
+    handle_stop_ = true;
 
     // Send the config-set command.
     sendHttpCommand(second_config_os.str(), response);
