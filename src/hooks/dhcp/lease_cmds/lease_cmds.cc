@@ -23,6 +23,10 @@
 #include <dhcpsrv/subnet_id.h>
 #include <exceptions/exceptions.h>
 #include <hooks/hooks.h>
+#include <lease_cmds.h>
+#include <lease_cmds_exceptions.h>
+#include <lease_cmds_log.h>
+#include <lease_parser.h>
 #include <stats/stats_mgr.h>
 #include <util/encode/encode.h>
 #include <util/filesystem.h>
@@ -35,11 +39,6 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/scoped_ptr.hpp>
-
-#include <lease_cmds.h>
-#include <lease_cmds_exceptions.h>
-#include <lease_cmds_log.h>
-#include <lease_parser.h>
 
 using namespace isc::dhcp;
 using namespace isc::data;

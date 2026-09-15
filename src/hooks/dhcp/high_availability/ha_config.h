@@ -10,6 +10,7 @@
 #include <asiolink/crypto_tls.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
+#include <ha_relationship_mapper.h>
 #include <http/basic_auth_config.h>
 #include <http/post_request_json.h>
 #include <http/url.h>
@@ -21,8 +22,6 @@
 #include <string>
 
 #include <boost/shared_ptr.hpp>
-
-#include <ha_relationship_mapper.h>
 
 namespace isc {
 namespace ha {

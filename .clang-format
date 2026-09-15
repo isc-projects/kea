@@ -55,8 +55,8 @@ IncludeCategories:
     # C++ standard library headers
   - Regex:           '^<[_[:alnum:]]+>$'
     Priority:        2
-    # boost headers
-  - Regex:           '^<boost/'
+    # boost and gtest headers
+  - Regex:           '^<boost/|^<gtest/gtest.h>$'
     Priority:        3
     # C headers
   - Regex:           '^<[/_[:alnum:]]+\.h>$'

@@ -15,8 +15,6 @@
 
 #include <boost/noncopyable.hpp>
 
-#include <stdint.h>
-
 namespace isc {
 namespace perfdhcp {
 

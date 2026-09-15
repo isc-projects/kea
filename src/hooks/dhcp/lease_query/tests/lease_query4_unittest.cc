@@ -21,9 +21,9 @@
 #include <testutils/gtest_utils.h>
 
 #include <cstdint>
-#include <sstream>
 
 #include <gtest/gtest.h>
+
 #include <lease_query_impl_factory.h>
 #include <lease_query_log.h>
 #include <test_lease_mgr.h>

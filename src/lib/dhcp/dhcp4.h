@@ -28,8 +28,6 @@
 
 #include <cstdint>
 
-#include <stdint.h>
-
 /// @note Code points in comments are those assigned by IANA
 /// but not yet implemented in Kea.
 /// To implement a standard option, remove the comment characters,

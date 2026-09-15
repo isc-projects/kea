@@ -14,6 +14,9 @@
 #include <asiolink/udp_socket.h>
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
+#include <client_attribute.h>
+#include <client_message.h>
+#include <client_server.h>
 #include <exceptions/exceptions.h>
 
 #include <chrono>
@@ -27,10 +30,6 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
-
-#include <client_attribute.h>
-#include <client_message.h>
-#include <client_server.h>
 
 namespace isc {
 namespace radius {

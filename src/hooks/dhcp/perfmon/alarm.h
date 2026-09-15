@@ -9,12 +9,11 @@
 
 #include <dhcp/pkt.h>
 #include <dhcpsrv/subnet_id.h>
+#include <monitored_duration.h>
 
 #include <cstdint>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
-
-#include <monitored_duration.h>
 
 namespace isc {
 namespace perfmon {

@@ -9,8 +9,6 @@
 #include <cstdint>
 #include <ostream>
 
-#include <stdint.h>
-
 #ifndef OPCODE_H
 #define OPCODE_H
 

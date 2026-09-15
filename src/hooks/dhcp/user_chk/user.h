@@ -13,8 +13,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <stdint.h>
-
 namespace user_chk {
 
 /// @file user.h This file defines classes: UserId and User.

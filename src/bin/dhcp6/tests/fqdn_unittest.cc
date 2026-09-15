@@ -26,7 +26,6 @@
 #include <cstdint>
 
 #include <boost/pointer_cast.hpp>
-
 #include <gtest/gtest.h>
 
 using namespace isc;

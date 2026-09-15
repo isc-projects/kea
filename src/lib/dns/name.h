@@ -15,8 +15,6 @@
 #include <string>
 #include <vector>
 
-#include <stdint.h>
-
 namespace isc {
 namespace dns {
 ///

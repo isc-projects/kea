@@ -6,14 +6,12 @@
 
 #include <config.h>
 
+#include <alarm.h>
 #include <dhcp/dhcp6.h>
 #include <testutils/gtest_utils.h>
 
 #include <cstdint>
-#include <sstream>
-#include <unordered_set>
 
-#include <alarm.h>
 #include <gtest/gtest.h>
 
 using namespace isc;

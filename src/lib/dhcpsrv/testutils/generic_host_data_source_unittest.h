@@ -23,7 +23,6 @@
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/shared_ptr.hpp>
-
 #include <gtest/gtest.h>
 
 namespace isc {

@@ -18,7 +18,6 @@
 
 #include <boost/asio/ip/udp.hpp>
 #include <boost/asio/socket_base.hpp>
-
 #include <gtest/gtest.h>
 
 namespace isc {

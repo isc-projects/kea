@@ -8,12 +8,12 @@
 #define RADIUS_CLIENT_DICTIONARY_H
 
 #include <exceptions/exceptions.h>
+#include <client.h>
 
 #include <cstdint>
 #include <istream>
 #include <list>
 #include <string>
-#include <unordered_map>
 
 #include <boost/multi_index/composite_key.hpp>
 #include <boost/multi_index/hashed_index.hpp>
@@ -21,8 +21,6 @@
 #include <boost/multi_index_container.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
-
-#include <client.h>
 
 namespace isc {
 namespace radius {

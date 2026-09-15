@@ -10,9 +10,6 @@
 #include <cstdint>
 #include <string>
 
-#include <stdint.h>
-#include <stdlib.h>
-
 /// \brief Logger Output Option
 ///
 /// The logging configuration options are a list of logger specifications, each

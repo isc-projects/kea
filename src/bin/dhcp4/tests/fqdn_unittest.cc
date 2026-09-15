@@ -25,7 +25,6 @@
 #include <cstdint>
 
 #include <boost/scoped_ptr.hpp>
-
 #include <gtest/gtest.h>
 
 using namespace isc;

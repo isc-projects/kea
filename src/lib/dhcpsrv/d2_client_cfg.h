@@ -22,11 +22,8 @@
 
 #include <cstdint>
 #include <string>
-#include <vector>
 
 #include <boost/shared_ptr.hpp>
-
-#include <stdint.h>
 
 namespace isc {
 namespace dhcp {

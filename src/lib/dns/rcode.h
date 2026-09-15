@@ -9,8 +9,6 @@
 #include <cstdint>
 #include <ostream>
 
-#include <stdint.h>
-
 #ifndef RCODE_H
 #define RCODE_H
 

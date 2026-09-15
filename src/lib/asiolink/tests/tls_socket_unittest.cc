@@ -28,10 +28,10 @@
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
+#include <gtest/gtest.h>
 
 #include <arpa/inet.h>
 #include <errno.h>
-#include <gtest/gtest.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>

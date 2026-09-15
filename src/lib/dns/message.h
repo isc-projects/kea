@@ -18,8 +18,6 @@
 #include <ostream>
 #include <string>
 
-#include <stdint.h>
-
 namespace isc {
 namespace dns {
 class TSIGContext;

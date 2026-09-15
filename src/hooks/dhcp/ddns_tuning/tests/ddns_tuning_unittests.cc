@@ -13,6 +13,8 @@
 #include <dhcp/option_string.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet.h>
+#include <ddns_tuning.h>
+#include <ddns_tuning_log.h>
 #include <eval/eval_context.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>
@@ -20,12 +22,8 @@
 #include <testutils/multi_threading_utils.h>
 
 #include <cstdint>
-#include <sstream>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
-
-#include <ddns_tuning.h>
-#include <ddns_tuning_log.h>
 #include <gtest/gtest.h>
 
 using namespace std;

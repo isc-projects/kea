@@ -24,6 +24,9 @@
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <mysql/mysql_connection.h>
+#include <mysql_cb_dhcp6.h>
+#include <mysql_cb_impl.h>
+#include <mysql_query_macros_dhcp.h>
 #include <util/boost_time_utils.h>
 #include <util/buffer.h>
 #include <util/dhcp_space.h>
@@ -32,7 +35,6 @@
 
 #include <array>
 #include <cstdint>
-#include <sstream>
 #include <utility>
 #include <vector>
 
@@ -42,9 +44,6 @@
 #include <boost/scoped_ptr.hpp>
 
 #include <mysql.h>
-#include <mysql_cb_dhcp6.h>
-#include <mysql_cb_impl.h>
-#include <mysql_query_macros_dhcp.h>
 #include <mysqld_error.h>
 
 using namespace isc::cb;

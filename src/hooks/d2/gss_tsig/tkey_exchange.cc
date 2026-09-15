@@ -10,16 +10,16 @@
 #include <dns/messagerenderer.h>
 #include <dns/opcode.h>
 #include <dns/rdataclass.h>
+#include <gss_tsig_context.h>
+#include <gss_tsig_key.h>
+#include <gss_tsig_log.h>
+#include <tkey_exchange.h>
+
 #include <stats/stats_mgr.h>
 
 #include <cstdint>
 #include <limits>
 #include <sstream>
-
-#include <gss_tsig_context.h>
-#include <gss_tsig_key.h>
-#include <gss_tsig_log.h>
-#include <tkey_exchange.h>
 
 namespace isc {
 namespace gss_tsig {
