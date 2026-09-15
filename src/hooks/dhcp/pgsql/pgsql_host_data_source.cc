@@ -19,23 +19,23 @@
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
-#include <pgsql_hb_log.h>
-#include <pgsql_host_data_source.h>
 #include <util/buffer.h>
 #include <util/multi_threading_mgr.h>
 #include <util/optional.h>
 
-#include <boost/algorithm/string/split.hpp>
+#include <cstdint>
+#include <mutex>
+#include <string>
+
 #include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/array.hpp>
 #include <boost/foreach.hpp>
 #include <boost/pointer_cast.hpp>
 
+#include <pgsql_hb_log.h>
+#include <pgsql_host_data_source.h>
 #include <stdint.h>
-
-#include <mutex>
-#include <string>
-#include <cstdint>
 
 using namespace isc;
 using namespace isc::asiolink;

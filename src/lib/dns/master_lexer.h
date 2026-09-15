@@ -9,14 +9,14 @@
 
 #include <dns/exceptions.h>
 
+#include <cstdint>
 #include <istream>
 #include <string>
 
-#include <stdint.h>
-
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
-#include <cstdint>
+
+#include <stdint.h>
 
 namespace isc {
 namespace dns {

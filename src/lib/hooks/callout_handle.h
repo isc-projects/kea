@@ -12,13 +12,13 @@
 #include <hooks/parking_lots.h>
 #include <util/dhcp_space.h>
 
-#include <boost/any.hpp>
-#include <boost/shared_ptr.hpp>
-
+#include <cstdint>
 #include <map>
 #include <string>
 #include <vector>
-#include <cstdint>
+
+#include <boost/any.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace hooks {

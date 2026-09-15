@@ -8,8 +8,9 @@
 #define KEA_URL_H
 
 #include <asiolink/io_address.h>
-#include <string>
+
 #include <cstdint>
+#include <string>
 
 namespace isc {
 namespace http {

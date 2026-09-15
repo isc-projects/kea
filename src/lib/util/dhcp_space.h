@@ -7,10 +7,10 @@
 #ifndef ISC_UTIL_DHCP_SPACE_H
 #define ISC_UTIL_DHCP_SPACE_H 1
 
+#include <cstdint>
 #include <string>
 
 #include <boost/algorithm/string/replace.hpp>
-#include <cstdint>
 
 namespace isc {
 namespace util {

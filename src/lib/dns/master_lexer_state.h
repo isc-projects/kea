@@ -8,6 +8,7 @@
 #define MASTER_LEXER_STATE_H
 
 #include <dns/master_lexer.h>
+
 #include <cstdint>
 
 namespace isc {

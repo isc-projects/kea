@@ -12,11 +12,14 @@
 /// DHCPv4-over-DHCPv6 communication between servers.
 ///
 
-#include <exceptions/exceptions.h>
 #include <dhcp/pkt6.h>
-#include <boost/noncopyable.hpp>
-#include <stdint.h>
+#include <exceptions/exceptions.h>
+
 #include <cstdint>
+
+#include <boost/noncopyable.hpp>
+
+#include <stdint.h>
 
 namespace isc {
 namespace dhcp {

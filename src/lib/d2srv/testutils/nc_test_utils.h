@@ -9,15 +9,17 @@
 
 /// @file nc_test_utils.h prototypes for functions related transaction testing.
 
-#include <asiolink/io_service.h>
 #include <asiolink/interval_timer.h>
+#include <asiolink/io_service.h>
 #include <d2srv/d2_update_message.h>
 #include <d2srv/nc_trans.h>
 
+#include <cstdint>
+
 #include <boost/asio/ip/udp.hpp>
 #include <boost/asio/socket_base.hpp>
+
 #include <gtest/gtest.h>
-#include <cstdint>
 
 namespace isc {
 namespace d2 {

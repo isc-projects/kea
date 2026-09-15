@@ -11,30 +11,31 @@
 #ifndef DHCP4_TEST_UTILS_H
 #define DHCP4_TEST_UTILS_H
 
-#include <gtest/gtest.h>
-
+#include <asiolink/io_address.h>
 #include <asiolink/process_spawn.h>
+#include <cc/command_interpreter.h>
+#include <config/command_mgr.h>
+#include <config/unix_command_mgr.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter_inet.h>
-#include <dhcpsrv/alloc_engine.h>
-#include <dhcpsrv/subnet.h>
-#include <dhcpsrv/lease.h>
-#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/parser_context.h>
-#include <asiolink/io_address.h>
-#include <cc/command_interpreter.h>
-#include <config/command_mgr.h>
-#include <config/unix_command_mgr.h>
-#include <util/multi_threading_mgr.h>
+#include <dhcpsrv/alloc_engine.h>
+#include <dhcpsrv/lease.h>
+#include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/subnet.h>
 #include <testutils/log_utils.h>
+#include <util/multi_threading_mgr.h>
+
+#include <cstdint>
 #include <list>
 
 #include <boost/shared_ptr.hpp>
-#include <cstdint>
+
+#include <gtest/gtest.h>
 
 namespace isc {
 namespace dhcp {

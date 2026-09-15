@@ -7,16 +7,17 @@
 #define TCP_TEST_LISTENER_H
 
 #include <config.h>
+
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 #include <tcp/tcp_listener.h>
-#include <tcp_test_client.h>
+
+#include <cstdint>
+#include <sstream>
 
 #include <gtest/gtest.h>
-
-#include <sstream>
-#include <cstdint>
+#include <tcp_test_client.h>
 
 using namespace boost::asio::ip;
 using namespace isc::asiolink;

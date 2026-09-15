@@ -12,11 +12,11 @@
 #include <pgsql/pgsql_exchange.h>
 #include <util/reconnect_ctl.h>
 
-#include <boost/scoped_ptr.hpp>
-
+#include <cstdint>
 #include <mutex>
 #include <vector>
-#include <cstdint>
+
+#include <boost/scoped_ptr.hpp>
 
 namespace isc {
 namespace dhcp {

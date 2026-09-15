@@ -8,20 +8,23 @@
 #define GENERIC_HOST_DATA_SOURCE_UNITTEST_H
 
 #include <asiolink/io_address.h>
-#include <util/reconnect_ctl.h>
+#include <dhcp/classify.h>
+#include <dhcp/option.h>
 #include <dhcpsrv/base_host_data_source.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/testutils/generic_backend_unittest.h>
-#include <dhcp/classify.h>
-#include <dhcp/option.h>
-#include <boost/algorithm/string/join.hpp>
-#include <boost/shared_ptr.hpp>
-#include <gtest/gtest.h>
+#include <util/reconnect_ctl.h>
+
+#include <cstdint>
 #include <sstream>
 #include <vector>
-#include <cstdint>
+
+#include <boost/algorithm/string/join.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <gtest/gtest.h>
 
 namespace isc {
 namespace dhcp {

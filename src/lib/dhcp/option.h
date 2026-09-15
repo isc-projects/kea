@@ -9,12 +9,12 @@
 
 #include <util/buffer.h>
 
-#include <boost/shared_ptr.hpp>
-
+#include <cstdint>
 #include <map>
 #include <string>
 #include <vector>
-#include <cstdint>
+
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dhcp {

@@ -9,23 +9,24 @@
 #include <config.h>
 
 #include <cc/data.h>
-#include <lease_query_log.h>
-#include <lease_query_impl_factory.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt4o6.h>
-#include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>
 #include <process/daemon.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
-#include <dhcp/testutils/iface_mgr_test_config.h>
-#include <test_lease_mgr.h>
+
+#include <cstdint>
+#include <sstream>
 
 #include <gtest/gtest.h>
-#include <sstream>
-#include <cstdint>
+#include <lease_query_impl_factory.h>
+#include <lease_query_log.h>
+#include <test_lease_mgr.h>
 
 using namespace std;
 using namespace isc;

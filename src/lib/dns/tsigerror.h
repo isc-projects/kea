@@ -7,11 +7,11 @@
 #ifndef TSIGERROR_H
 #define TSIGERROR_H
 
+#include <dns/rcode.h>
+
+#include <cstdint>
 #include <ostream>
 #include <string>
-
-#include <dns/rcode.h>
-#include <cstdint>
 
 namespace isc {
 namespace dns {

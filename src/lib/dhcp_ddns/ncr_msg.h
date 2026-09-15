@@ -20,10 +20,12 @@
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 
-#include <boost/algorithm/string/case_conv.hpp>
-#include <time.h>
-#include <string>
 #include <cstdint>
+#include <string>
+
+#include <boost/algorithm/string/case_conv.hpp>
+
+#include <time.h>
 
 namespace isc {
 namespace dhcp_ddns {

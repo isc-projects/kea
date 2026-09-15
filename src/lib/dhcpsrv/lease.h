@@ -8,13 +8,14 @@
 #define LEASE_H
 
 #include <asiolink/io_address.h>
-#include <dhcp/duid.h>
-#include <dhcp/option.h>
-#include <dhcp/hwaddr.h>
-#include <dhcpsrv/subnet_id.h>
-#include <cc/user_context.h>
 #include <cc/cfg_to_element.h>
+#include <cc/user_context.h>
+#include <dhcp/duid.h>
+#include <dhcp/hwaddr.h>
+#include <dhcp/option.h>
+#include <dhcpsrv/subnet_id.h>
 #include <util/dhcp_space.h>
+
 #include <cstdint>
 
 namespace isc {

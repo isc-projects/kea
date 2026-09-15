@@ -8,6 +8,7 @@
 #define VERSIONED_CSV_FILE_H
 
 #include <util/csv_file.h>
+
 #include <cstdint>
 
 namespace isc {

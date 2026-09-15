@@ -11,12 +11,14 @@
 
 #include <exceptions/exceptions.h>
 #include <util/labeled_value.h>
-#include <boost/shared_ptr.hpp>
+
+#include <cstdint>
 #include <functional>
 #include <map>
 #include <mutex>
 #include <string>
-#include <cstdint>
+
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace util {

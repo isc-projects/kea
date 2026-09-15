@@ -10,15 +10,17 @@
 #include <asiolink/io_address.h>
 #include <dhcp/classify.h>
 #include <dhcp/duid.h>
-#include <exceptions/exceptions.h>
 #include <dhcpsrv/lease.h>
-#include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/pool.h>
+#include <dhcpsrv/subnet_id.h>
+#include <exceptions/exceptions.h>
 #include <util/multi_threading_mgr.h>
+
+#include <cstdint>
+#include <mutex>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
-#include <mutex>
-#include <cstdint>
 
 namespace isc {
 namespace dhcp {

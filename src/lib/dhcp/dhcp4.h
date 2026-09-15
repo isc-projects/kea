@@ -26,8 +26,9 @@
 #ifndef DHCP_H
 #define DHCP_H
 
-#include <stdint.h>
 #include <cstdint>
+
+#include <stdint.h>
 
 /// @note Code points in comments are those assigned by IANA
 /// but not yet implemented in Kea.

@@ -6,19 +6,19 @@
 
 #include <config.h>
 
-#include <exceptions/isc_assert.h>
+#include <dns/labelsequence.h>
+#include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/name_internal.h>
-#include <dns/messagerenderer.h>
-#include <dns/labelsequence.h>
+#include <exceptions/isc_assert.h>
 
-#include <cctype>
-#include <iterator>
-#include <functional>
-#include <vector>
-#include <iostream>
 #include <algorithm>
+#include <cctype>
 #include <cstdint>
+#include <functional>
+#include <iostream>
+#include <iterator>
+#include <vector>
 
 using namespace isc::util;
 using namespace isc::dns::name::internal;

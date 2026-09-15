@@ -8,25 +8,22 @@
 #define D_TEST_STUBS_H
 
 #include <asiolink/interval_timer.h>
-
-#include <cc/data.h>
 #include <cc/command_interpreter.h>
-
+#include <cc/data.h>
 #include <log/logger_support.h>
-
-#include <process/d_controller.h>
 #include <process/d_cfg_mgr.h>
+#include <process/d_controller.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 using namespace boost::posix_time;
 
-#include <gtest/gtest.h>
-
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <cstdint>
+
+#include <gtest/gtest.h>
 
 namespace isc {
 namespace process {

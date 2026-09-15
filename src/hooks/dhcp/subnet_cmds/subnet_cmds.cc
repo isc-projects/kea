@@ -6,21 +6,23 @@
 
 #include <config.h>
 
-#include <subnet_cmds.h>
-#include <subnet_cmds_log.h>
 #include <cc/command_interpreter.h>
-#include <exceptions/exceptions.h>
-#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/cfg_subnets6.h>
-#include <dhcpsrv/shared_network.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <dhcpsrv/parsers/shared_network_parser.h>
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcpsrv/parsers/simple_parser6.h>
-#include <dhcpsrv/parsers/shared_network_parser.h>
+#include <dhcpsrv/shared_network.h>
+#include <exceptions/exceptions.h>
 #include <util/multi_threading_mgr.h>
-#include <sstream>
+
 #include <cstdint>
+#include <sstream>
+
+#include <subnet_cmds.h>
+#include <subnet_cmds_log.h>
 
 using namespace isc::config;
 using namespace isc::data;

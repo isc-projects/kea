@@ -15,14 +15,15 @@
 #include <dhcpsrv/tracking_lease_mgr.h>
 #include <mysql/mysql_connection.h>
 
+#include <cstdint>
+#include <mutex>
+#include <vector>
+
 #include <boost/scoped_ptr.hpp>
 #include <boost/utility.hpp>
-#include <mysql.h>
 
+#include <mysql.h>
 #include <time.h>
-#include <vector>
-#include <mutex>
-#include <cstdint>
 
 namespace isc {
 namespace dhcp {

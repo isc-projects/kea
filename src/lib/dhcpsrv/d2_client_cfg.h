@@ -20,12 +20,13 @@
 #include <exceptions/exceptions.h>
 #include <util/optional.h>
 
+#include <cstdint>
+#include <string>
+#include <vector>
+
 #include <boost/shared_ptr.hpp>
 
 #include <stdint.h>
-#include <string>
-#include <vector>
-#include <cstdint>
 
 namespace isc {
 namespace dhcp {

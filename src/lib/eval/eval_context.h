@@ -6,13 +6,14 @@
 
 #ifndef EVAL_CONTEXT_H
 #define EVAL_CONTEXT_H
-#include <string>
-#include <map>
-#include <vector>
-#include <eval/parser.h>
 #include <eval/eval_context_decl.h>
+#include <eval/parser.h>
 #include <exceptions/exceptions.h>
+
 #include <cstdint>
+#include <map>
+#include <string>
+#include <vector>
 
 // Tell Flex the lexer's prototype ...
 #define YY_DECL \

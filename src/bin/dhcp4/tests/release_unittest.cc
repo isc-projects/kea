@@ -10,16 +10,17 @@
 #include <cc/data.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
+#include <dhcp4/tests/dhcp4_client.h>
+#include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet_id.h>
-#include <dhcp4/tests/dhcp4_test_utils.h>
-#include <dhcp4/tests/dhcp4_client.h>
 #include <stats/stats_mgr.h>
-#include <boost/shared_ptr.hpp>
 
+#include <cstdint>
 #include <cstdlib>
 #include <sstream>
-#include <cstdint>
+
+#include <boost/shared_ptr.hpp>
 
 using namespace isc;
 using namespace isc::asiolink;

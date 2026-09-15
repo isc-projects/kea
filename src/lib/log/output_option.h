@@ -7,10 +7,11 @@
 #ifndef OUTPUT_OPTION_H
 #define OUTPUT_OPTION_H
 
+#include <cstdint>
+#include <string>
+
 #include <stdint.h>
 #include <stdlib.h>
-#include <string>
-#include <cstdint>
 
 /// \brief Logger Output Option
 ///

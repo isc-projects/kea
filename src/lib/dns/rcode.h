@@ -6,10 +6,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-#include <stdint.h>
-
-#include <ostream>
 #include <cstdint>
+#include <ostream>
+
+#include <stdint.h>
 
 #ifndef RCODE_H
 #define RCODE_H

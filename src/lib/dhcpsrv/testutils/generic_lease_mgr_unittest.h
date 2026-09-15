@@ -9,15 +9,16 @@
 
 #include <asiolink/io_service.h>
 #include <database/database_connection.h>
-#include <dhcpsrv/tracking_lease_mgr.h>
 #include <dhcpsrv/timer_mgr.h>
+#include <dhcpsrv/tracking_lease_mgr.h>
 
-#include <gtest/gtest.h>
+#include <cstdint>
+#include <set>
+#include <vector>
 
 #include <boost/make_shared.hpp>
-#include <vector>
-#include <set>
-#include <cstdint>
+
+#include <gtest/gtest.h>
 
 namespace isc {
 namespace dhcp {

@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <asiolink/io_address.h>
 #include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option_int.h>
@@ -21,9 +22,11 @@
 #include <testutils/gtest_utils.h>
 #include <util/optional.h>
 
-#include <gtest/gtest.h>
-#include <boost/scoped_ptr.hpp>
 #include <cstdint>
+
+#include <boost/scoped_ptr.hpp>
+
+#include <gtest/gtest.h>
 
 using namespace isc;
 using namespace isc::asiolink;

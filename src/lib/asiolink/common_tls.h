@@ -18,12 +18,13 @@
 
 #include <cryptolink/cryptolink.h>
 
+#include <cstdint>
+
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include <cstdint>
 
 namespace isc {
 namespace asiolink {

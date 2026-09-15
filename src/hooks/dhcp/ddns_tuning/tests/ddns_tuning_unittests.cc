@@ -7,9 +7,8 @@
 /// @file This file contains tests which ddns tuning library components.
 
 #include <config.h>
+
 #include <asiolink/io_address.h>
-#include <ddns_tuning.h>
-#include <ddns_tuning_log.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_string.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -20,10 +19,14 @@
 #include <testutils/gtest_utils.h>
 #include <testutils/multi_threading_utils.h>
 
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <gtest/gtest.h>
-#include <sstream>
 #include <cstdint>
+#include <sstream>
+
+#include <boost/date_time/posix_time/posix_time.hpp>
+
+#include <ddns_tuning.h>
+#include <ddns_tuning_log.h>
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

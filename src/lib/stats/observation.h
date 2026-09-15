@@ -11,13 +11,13 @@
 #include <exceptions/exceptions.h>
 #include <util/bigints.h>
 
-#include <boost/shared_ptr.hpp>
-
 #include <chrono>
+#include <cstdint>
 #include <list>
 
+#include <boost/shared_ptr.hpp>
+
 #include <stdint.h>
-#include <cstdint>
 
 namespace isc {
 namespace stats {

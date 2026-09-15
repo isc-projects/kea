@@ -7,19 +7,18 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
-#include <stdint.h>
-
-#include <iterator>
-#include <string>
-#include <ostream>
-
-#include <dns/exceptions.h>
-#include <util/buffer.h>
-
 #include <dns/edns.h>
+#include <dns/exceptions.h>
 #include <dns/question.h>
 #include <dns/rrset.h>
+#include <util/buffer.h>
+
 #include <cstdint>
+#include <iterator>
+#include <ostream>
+#include <string>
+
+#include <stdint.h>
 
 namespace isc {
 namespace dns {

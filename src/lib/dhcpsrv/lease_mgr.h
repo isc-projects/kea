@@ -13,22 +13,22 @@
 #include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <dhcp/duid.h>
-#include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
+#include <dhcp/option.h>
 #include <dhcpsrv/cfg_consistency.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
 
-#include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
-
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <map>
 #include <string>
 #include <utility>
 #include <vector>
-#include <cstdint>
+
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 
 /// @file lease_mgr.h
 /// @brief An abstract API for lease database

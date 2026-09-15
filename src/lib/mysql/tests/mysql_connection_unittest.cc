@@ -15,11 +15,11 @@
 #include <testutils/log_utils.h>
 
 #include <array>
+#include <cstdint>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <gtest/gtest.h>
-#include <cstdint>
 
 using namespace isc::data;
 using namespace isc::db;

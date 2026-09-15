@@ -9,12 +9,12 @@
 
 #include <util/watch_socket.h>
 
-#include <boost/shared_ptr.hpp>
-
+#include <cstdint>
 #include <functional>
 #include <mutex>
 #include <thread>
-#include <cstdint>
+
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace util {

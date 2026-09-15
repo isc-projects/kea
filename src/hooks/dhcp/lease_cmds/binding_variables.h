@@ -16,13 +16,14 @@
 #include <eval/evaluate.h>
 #include <eval/token.h>
 
-#include <boost/scoped_ptr.hpp>
-#include <boost/multi_index_container.hpp>
-#include <boost/multi_index/mem_fun.hpp>
+#include <cstdint>
+
 #include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
-#include <cstdint>
+#include <boost/multi_index_container.hpp>
+#include <boost/scoped_ptr.hpp>
 
 namespace isc {
 namespace lease_cmds {

@@ -7,13 +7,13 @@
 #ifndef MESSAGE_READER_H
 #define MESSAGE_READER_H
 
+#include <log/message_dictionary.h>
+#include <log/message_types.h>
+
+#include <cstdint>
 #include <map>
 #include <string>
 #include <vector>
-
-#include <log/message_dictionary.h>
-#include <log/message_types.h>
-#include <cstdint>
 
 namespace isc {
 namespace log {

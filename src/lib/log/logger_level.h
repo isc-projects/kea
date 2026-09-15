@@ -7,8 +7,8 @@
 #ifndef LOGGER_LEVEL_H
 #define LOGGER_LEVEL_H
 
-#include <string>
 #include <cstdint>
+#include <string>
 
 namespace isc {
 namespace log {

@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/io_service.h>
+#include <config_backend/constants.h>
 #include <database/db_exceptions.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
@@ -19,26 +20,25 @@
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
-#include <mysql_hb_log.h>
-#include <mysql_host_data_source.h>
 #include <util/buffer.h>
 #include <util/multi_threading_mgr.h>
 #include <util/optional.h>
-#include <config_backend/constants.h>
 
-#include <boost/algorithm/string/split.hpp>
+#include <cstdint>
+#include <mutex>
+#include <string>
+
 #include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/array.hpp>
 #include <boost/foreach.hpp>
 #include <boost/pointer_cast.hpp>
 
 #include <mysql.h>
+#include <mysql_hb_log.h>
+#include <mysql_host_data_source.h>
 #include <mysqld_error.h>
 #include <stdint.h>
-
-#include <mutex>
-#include <string>
-#include <cstdint>
 
 using namespace isc;
 using namespace isc::asiolink;

@@ -9,13 +9,15 @@
 
 #include <asiolink/io_address.h>
 
+#include <cstdint>
+
+#include <boost/shared_ptr.hpp>
+
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#include <unistd.h>
 #include <netinet/ip_icmp.h>
-#include <boost/shared_ptr.hpp>
-#include <cstdint>
+#include <unistd.h>
 
 namespace isc {
 namespace ping_check {

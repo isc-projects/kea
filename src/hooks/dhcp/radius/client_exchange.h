@@ -7,9 +7,6 @@
 #ifndef RADIUS_CLIENT_EXCHANGE_H
 #define RADIUS_CLIENT_EXCHANGE_H
 
-#include <client_attribute.h>
-#include <client_message.h>
-#include <client_server.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_address.h>
@@ -18,16 +15,22 @@
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
-#include <boost/enable_shared_from_this.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
+
 #include <chrono>
+#include <cstdint>
 #include <functional>
 #include <list>
 #include <mutex>
 #include <string>
 #include <vector>
-#include <cstdint>
+
+#include <boost/enable_shared_from_this.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <client_attribute.h>
+#include <client_message.h>
+#include <client_server.h>
 
 namespace isc {
 namespace radius {

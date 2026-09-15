@@ -15,13 +15,14 @@
 #include <dns/question.h>
 #include <util/buffer.h>
 
+#include <cstdint>
+
 #include <boost/asio/coroutine.hpp>
 #include <boost/asio/system_timer.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/system/error_code.hpp>
-#include <cstdint>
 
 namespace isc {
 namespace asiodns {

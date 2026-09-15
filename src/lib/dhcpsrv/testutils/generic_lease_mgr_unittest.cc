@@ -19,18 +19,18 @@
 #include <stats/stats_mgr.h>
 #include <stats/testutils/stats_test_utils.h>
 #include <testutils/gtest_utils.h>
-#include <util/bigints.h>
 #include <testutils/multi_threading_utils.h>
+#include <util/bigints.h>
+
+#include <cstdint>
+#include <functional>
+#include <limits>
+#include <sstream>
 
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include <gtest/gtest.h>
-
-#include <functional>
-#include <limits>
-#include <sstream>
-#include <cstdint>
 
 using namespace std;
 using namespace isc::asiolink;

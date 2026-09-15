@@ -13,13 +13,13 @@
 #include <pgsql/testutils/pgsql_schema.h>
 #include <testutils/gtest_utils.h>
 
+#include <cstdint>
+#include <sstream>
+#include <vector>
+
 #include <boost/lexical_cast.hpp>
 
 #include <gtest/gtest.h>
-
-#include <sstream>
-#include <vector>
-#include <cstdint>
 
 namespace isc {
 namespace db {

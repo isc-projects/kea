@@ -7,12 +7,13 @@
 #ifndef USER_H
 #define USER_H
 
+#include <cstdint>
+#include <map>
+#include <vector>
+
 #include <boost/shared_ptr.hpp>
 
-#include <map>
 #include <stdint.h>
-#include <vector>
-#include <cstdint>
 
 namespace user_chk {
 

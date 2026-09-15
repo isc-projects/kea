@@ -7,11 +7,12 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 
-#include <exceptions/exceptions.h>
 #include <dhcp/pkt.h>
+#include <exceptions/exceptions.h>
+
+#include <cstdint>
 #include <regex>
 #include <stack>
-#include <cstdint>
 
 namespace isc {
 namespace dhcp {

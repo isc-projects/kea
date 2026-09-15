@@ -19,12 +19,12 @@
 #include <eval/token.h>
 #include <util/str.h>
 
-#include <boost/algorithm/string/split.hpp>
-#include <boost/algorithm/string/classification.hpp>
-
+#include <cstdint>
 #include <map>
 #include <string>
-#include <cstdint>
+
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 
 namespace isc {
 namespace flex_option {

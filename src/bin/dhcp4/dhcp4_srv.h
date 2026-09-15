@@ -10,9 +10,9 @@
 #include <asiolink/io_service.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/option.h>
-#include <dhcp/option_string.h>
 #include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option_custom.h>
+#include <dhcp/option_string.h>
 #include <dhcp/pkt4.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/alloc_engine.h>
@@ -25,10 +25,10 @@
 #include <hooks/callout_handle.h>
 #include <process/daemon.h>
 
+#include <cstdint>
 #include <functional>
 #include <iostream>
 #include <queue>
-#include <cstdint>
 
 // Undefine the macro OPTIONAL which is defined in some operating
 // systems but conflicts with a member of the RequirementLevel enum in

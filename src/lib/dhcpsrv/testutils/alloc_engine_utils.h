@@ -14,9 +14,10 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 
-#include <gtest/gtest.h>
-#include <vector>
 #include <cstdint>
+#include <vector>
+
+#include <gtest/gtest.h>
 
 namespace isc {
 namespace dhcp {

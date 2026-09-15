@@ -11,6 +11,7 @@
 /// work.
 
 #include <config.h>
+
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_service.h>
 #include <asiolink/tcp_endpoint.h>
@@ -18,20 +19,21 @@
 #include <util/buffer.h>
 #include <util/io.h>
 
-#include <boost/shared_ptr.hpp>
-#include <gtest/gtest.h>
-
 #include <algorithm>
-#include <arpa/inet.h>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
-#include <errno.h>
-#include <netinet/in.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <string>
 #include <vector>
-#include <cstdint>
+
+#include <boost/shared_ptr.hpp>
+
+#include <arpa/inet.h>
+#include <errno.h>
+#include <gtest/gtest.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 
 using namespace isc::asiolink;
 using namespace isc::util;

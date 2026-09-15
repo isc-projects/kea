@@ -16,13 +16,15 @@
 #include <dhcp/option6_pdexclude.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/subnet_id.h>
-#include <boost/shared_ptr.hpp>
-#include <boost/algorithm/string.hpp>
+
+#include <cstdint>
 #include <list>
 #include <map>
 #include <string>
 #include <utility>
-#include <cstdint>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dhcp {

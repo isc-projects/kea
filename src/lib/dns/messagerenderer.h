@@ -9,10 +9,10 @@
 
 #include <util/buffer.h>
 
-#include <boost/noncopyable.hpp>
-
-#include <memory>
 #include <cstdint>
+#include <memory>
+
+#include <boost/noncopyable.hpp>
 
 namespace isc {
 namespace dns {

@@ -5,38 +5,41 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <config/command_mgr.h>
-#include <config/cmds_impl.h>
+
+#include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
-#include <asiolink/io_address.h>
+#include <config/cmds_impl.h>
+#include <config/command_mgr.h>
 #include <database/db_exceptions.h>
+#include <dhcp/duid.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
 #include <dhcpsrv/resource_handler.h>
-#include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/sanity_checker.h>
-#include <dhcp/duid.h>
-#include <hooks/hooks.h>
+#include <dhcpsrv/subnet_id.h>
 #include <exceptions/exceptions.h>
-#include <lease_cmds.h>
-#include <lease_cmds_exceptions.h>
-#include <lease_parser.h>
-#include <lease_cmds_log.h>
+#include <hooks/hooks.h>
 #include <stats/stats_mgr.h>
 #include <util/encode/encode.h>
 #include <util/filesystem.h>
 #include <util/multi_threading_mgr.h>
 
-#include <boost/scoped_ptr.hpp>
-#include <boost/algorithm/string.hpp>
-#include <limits>
-#include <string>
-#include <sstream>
 #include <cstdint>
+#include <limits>
+#include <sstream>
+#include <string>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/scoped_ptr.hpp>
+
+#include <lease_cmds.h>
+#include <lease_cmds_exceptions.h>
+#include <lease_cmds_log.h>
+#include <lease_parser.h>
 
 using namespace isc::dhcp;
 using namespace isc::data;

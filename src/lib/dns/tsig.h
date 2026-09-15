@@ -10,15 +10,15 @@
 #ifndef TSIG_H
 #define TSIG_H
 
-#include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
-
-#include <exceptions/exceptions.h>
-
 #include <dns/tsigerror.h>
 #include <dns/tsigkey.h>
 #include <dns/tsigrecord.h>
+#include <exceptions/exceptions.h>
+
 #include <cstdint>
+
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dns {

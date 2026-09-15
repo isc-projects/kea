@@ -15,12 +15,12 @@
 #include <testutils/gtest_utils.h>
 #include <testutils/log_utils.h>
 
+#include <cstdint>
 #include <vector>
 
 #include <boost/lexical_cast.hpp>
 
 #include <gtest/gtest.h>
-#include <cstdint>
 
 using namespace isc;
 using namespace isc::data;

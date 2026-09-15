@@ -7,16 +7,15 @@
 #ifndef NAME_H
 #define NAME_H
 
-#include <util/buffer.h>
+#include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
+#include <util/buffer.h>
 
-#include <stdint.h>
-
+#include <cstdint>
 #include <string>
 #include <vector>
 
-#include <dns/exceptions.h>
-#include <cstdint>
+#include <stdint.h>
 
 namespace isc {
 namespace dns {

@@ -13,10 +13,12 @@
 #include <dhcpsrv/cache_host_data_source.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet_id.h>
+
+#include <cstdint>
+#include <string>
+
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <string>
-#include <cstdint>
 
 namespace isc {
 namespace dhcp {

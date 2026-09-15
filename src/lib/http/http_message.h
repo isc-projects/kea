@@ -10,9 +10,10 @@
 #include <exceptions/exceptions.h>
 #include <http/http_header.h>
 #include <http/http_types.h>
+
+#include <cstdint>
 #include <map>
 #include <set>
-#include <cstdint>
 #include <string>
 
 namespace isc {

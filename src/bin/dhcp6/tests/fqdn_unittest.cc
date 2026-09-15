@@ -7,25 +7,27 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
-#include <dhcp_ddns/ncr_msg.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
-#include <dhcp/option_custom.h>
 #include <dhcp/option6_client_fqdn.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_status_code.h>
+#include <dhcp/option_custom.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
+#include <dhcp6/tests/dhcp6_client.h>
+#include <dhcp6/tests/dhcp6_test_utils.h>
+#include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
-#include <dhcp6/tests/dhcp6_client.h>
-#include <dhcp6/tests/dhcp6_test_utils.h>
+
+#include <cstdint>
 
 #include <boost/pointer_cast.hpp>
+
 #include <gtest/gtest.h>
-#include <cstdint>
 
 using namespace isc;
 using namespace isc::dhcp::test;

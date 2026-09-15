@@ -10,14 +10,6 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option.h>
-#include <dhcp/option_custom.h>
-#include <dhcp/option_definition.h>
-#include <dhcp/option_int.h>
-#include <dhcp/option_int_array.h>
-#include <dhcp/option_opaque_data_tuples.h>
-#include <dhcp/option_string.h>
-#include <dhcp/option_vendor.h>
-#include <dhcp/option_vendor_class.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option6_addrlst.h>
@@ -26,11 +18,21 @@
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
 #include <dhcp/option6_status_code.h>
+#include <dhcp/option_custom.h>
+#include <dhcp/option_definition.h>
+#include <dhcp/option_int.h>
+#include <dhcp/option_int_array.h>
+#include <dhcp/option_opaque_data_tuples.h>
+#include <dhcp/option_string.h>
+#include <dhcp/option_vendor.h>
+#include <dhcp/option_vendor_class.h>
 #include <util/buffer.h>
 
-#include <boost/pointer_cast.hpp>
-#include <gtest/gtest.h>
 #include <cstdint>
+
+#include <boost/pointer_cast.hpp>
+
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

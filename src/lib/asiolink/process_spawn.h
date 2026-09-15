@@ -9,14 +9,16 @@
 
 #include <asiolink/io_service.h>
 #include <exceptions/exceptions.h>
-#include <boost/noncopyable.hpp>
+
+#include <cstdint>
 #include <string>
-#include <sys/types.h>
+#include <unordered_set>
 #include <vector>
+
+#include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <unordered_set>
-#include <cstdint>
+#include <sys/types.h>
 
 namespace isc {
 namespace asiolink {

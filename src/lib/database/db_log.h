@@ -9,10 +9,10 @@
 
 #include <log/macros.h>
 
+#include <cstdint>
+#include <list>
 #include <map>
 #include <mutex>
-#include <list>
-#include <cstdint>
 
 /// @file db_log.h
 ///

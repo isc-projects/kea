@@ -6,29 +6,27 @@
 
 #include <config.h>
 
-#include <functional>
-#include <iomanip>
-#include <vector>
-#include <string>
-#include <sstream>
-
-#include <util/buffer.h>
-#include <util/str.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
-
-#include <gtest/gtest.h>
-
-#include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
-
+#include <dns/tests/unittest_util.h>
+#include <util/buffer.h>
+#include <util/str.h>
 #include <util/unittests/wiredata.h>
 
-#include <boost/lexical_cast.hpp>
 #include <cstdint>
+#include <functional>
+#include <iomanip>
+#include <sstream>
+#include <string>
+#include <vector>
+
+#include <boost/lexical_cast.hpp>
+
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc::dns;

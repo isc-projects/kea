@@ -8,11 +8,13 @@
 #define MANAGED_KEY_H
 
 #include <cc/cfg_to_element.h>
-#include <gss_tsig_key.h>
-#include <tkey_exchange.h>
+
+#include <cstdint>
 #include <list>
 #include <mutex>
-#include <cstdint>
+
+#include <gss_tsig_key.h>
+#include <tkey_exchange.h>
 
 namespace isc {
 namespace gss_tsig {

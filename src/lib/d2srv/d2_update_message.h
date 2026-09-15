@@ -15,8 +15,8 @@
 #include <dns/rrset.h>
 #include <dns/tsig.h>
 
-#include <map>
 #include <cstdint>
+#include <map>
 
 namespace isc {
 namespace d2 {

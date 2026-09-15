@@ -5,14 +5,16 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <alarm.h>
+
 #include <dhcp/dhcp6.h>
 #include <testutils/gtest_utils.h>
 
-#include <gtest/gtest.h>
+#include <cstdint>
 #include <sstream>
 #include <unordered_set>
-#include <cstdint>
+
+#include <alarm.h>
+#include <gtest/gtest.h>
 
 using namespace isc;
 using namespace isc::dhcp;

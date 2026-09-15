@@ -48,11 +48,11 @@
 /// is presumed to use isc::asiolink library for asynchronous event processing.
 
 #include <asiolink/io_address.h>
-#include <cstdint>
 #include <asiolink/io_service.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <exceptions/exceptions.h>
 
+#include <cstdint>
 #include <deque>
 #include <mutex>
 

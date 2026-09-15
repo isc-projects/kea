@@ -7,7 +7,6 @@
 #ifndef HA_CONFIG_H
 #define HA_CONFIG_H
 
-#include <ha_relationship_mapper.h>
 #include <asiolink/crypto_tls.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
@@ -16,10 +15,14 @@
 #include <http/url.h>
 #include <util/optional.h>
 #include <util/state_model.h>
-#include <boost/shared_ptr.hpp>
+
 #include <cstdint>
 #include <map>
 #include <string>
+
+#include <boost/shared_ptr.hpp>
+
+#include <ha_relationship_mapper.h>
 
 namespace isc {
 namespace ha {

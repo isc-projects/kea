@@ -8,15 +8,17 @@
 #define CFG_IFACE_H
 
 #include <asiolink/io_address.h>
-#include <dhcp/iface_mgr.h>
-#include <util/reconnect_ctl.h>
 #include <cc/cfg_to_element.h>
 #include <cc/user_context.h>
-#include <boost/shared_ptr.hpp>
+#include <dhcp/iface_mgr.h>
+#include <util/reconnect_ctl.h>
+
+#include <cstdint>
 #include <map>
 #include <set>
 #include <string>
-#include <cstdint>
+
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dhcp {

@@ -7,9 +7,6 @@
 #include <config.h>
 
 #include <asiolink/addr_utilities.h>
-#include <pgsql_cb_dhcp6.h>
-#include <pgsql_cb_impl.h>
-#include <pgsql_query_macros_dhcp.h>
 #include <cc/data.h>
 #include <config_backend/constants.h>
 #include <database/database_connection.h>
@@ -21,22 +18,28 @@
 #include <dhcp/option_space.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/config_backend_dhcp6_mgr.h>
-#include <dhcpsrv/network.h>
-#include <dhcpsrv/pool.h>
 #include <dhcpsrv/lease.h>
-#include <dhcpsrv/timer_mgr.h>
+#include <dhcpsrv/network.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
-#include <util/buffer.h>
+#include <dhcpsrv/pool.h>
+#include <dhcpsrv/timer_mgr.h>
+#include <pgsql/pgsql_connection.h>
 #include <util/boost_time_utils.h>
+#include <util/buffer.h>
 #include <util/dhcp_space.h>
 #include <util/multi_threading_mgr.h>
 #include <util/triplet.h>
-#include <pgsql/pgsql_connection.h>
+
+#include <cstdint>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/pointer_cast.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <cstdint>
+
+#include <pgsql_cb_dhcp6.h>
+#include <pgsql_cb_impl.h>
+#include <pgsql_query_macros_dhcp.h>
 
 using namespace isc::cb;
 using namespace isc::db;

@@ -11,32 +11,32 @@
 #ifndef DHCP6_TEST_UTILS_H
 #define DHCP6_TEST_UTILS_H
 
-#include <gtest/gtest.h>
-
 #include <asiolink/process_spawn.h>
-#include <dhcp6/ctrl_dhcp6_srv.h>
-#include <dhcp6/parser_context.h>
-#include <dhcp/pkt6.h>
+#include <config/command_mgr.h>
+#include <config/unix_command_mgr.h>
+#include <dhcp/iface_mgr.h>
+#include <dhcp/option.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
 #include <dhcp/option6_status_code.h>
-#include <dhcp/option_int_array.h>
 #include <dhcp/option_custom.h>
-#include <dhcp/option.h>
-#include <dhcp/iface_mgr.h>
+#include <dhcp/option_int_array.h>
+#include <dhcp/pkt6.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
+#include <dhcp6/ctrl_dhcp6_srv.h>
+#include <dhcp6/parser_context.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <hooks/hooks_manager.h>
-#include <config/command_mgr.h>
-#include <config/unix_command_mgr.h>
-#include <util/multi_threading_mgr.h>
 #include <testutils/log_utils.h>
+#include <util/multi_threading_mgr.h>
 
-#include <list>
 #include <cstdint>
+#include <list>
+
+#include <gtest/gtest.h>
 
 namespace isc {
 namespace dhcp {

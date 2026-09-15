@@ -9,11 +9,13 @@
 
 #include <dhcp/option.h>
 
-#include <boost/noncopyable.hpp>
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 #include <vector>
-#include <cstdint>
+
+#include <boost/noncopyable.hpp>
+
+#include <stdint.h>
 
 namespace isc {
 namespace perfdhcp {

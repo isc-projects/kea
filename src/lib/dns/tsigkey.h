@@ -8,6 +8,7 @@
 #define TSIGKEY_H
 
 #include <cryptolink/cryptolink.h>
+
 #include <cstdint>
 
 namespace isc {

@@ -16,12 +16,12 @@
 #include <pgsql/pgsql_connection.h>
 #include <pgsql/pgsql_exchange.h>
 
+#include <cstdint>
+#include <mutex>
+#include <vector>
+
 #include <boost/scoped_ptr.hpp>
 #include <boost/utility.hpp>
-
-#include <vector>
-#include <mutex>
-#include <cstdint>
 
 namespace isc {
 namespace dhcp {

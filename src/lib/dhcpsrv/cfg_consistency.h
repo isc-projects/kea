@@ -9,6 +9,7 @@
 
 #include <cc/cfg_to_element.h>
 #include <cc/user_context.h>
+
 #include <cstdint>
 
 namespace isc {

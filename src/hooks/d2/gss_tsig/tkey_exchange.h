@@ -9,11 +9,13 @@
 
 #include <asiodns/io_fetch.h>
 #include <asiolink/io_service.h>
+#include <util/buffer.h>
+
+#include <cstdint>
+#include <memory>
+
 #include <gss_tsig_cfg.h>
 #include <gss_tsig_key.h>
-#include <util/buffer.h>
-#include <memory>
-#include <cstdint>
 
 namespace isc {
 namespace gss_tsig {

@@ -11,12 +11,13 @@
 #include <mysql/mysql_connection.h>
 #include <util/reconnect_ctl.h>
 
-#include <boost/scoped_ptr.hpp>
-#include <mysql.h>
-
+#include <cstdint>
 #include <mutex>
 #include <vector>
-#include <cstdint>
+
+#include <boost/scoped_ptr.hpp>
+
+#include <mysql.h>
 
 namespace isc {
 namespace dhcp {

@@ -8,10 +8,11 @@
 #define HA_LEASE_BACKLOG_H
 
 #include <dhcpsrv/lease.h>
+
+#include <cstdint>
 #include <deque>
 #include <mutex>
 #include <utility>
-#include <cstdint>
 
 namespace isc {
 namespace ha {

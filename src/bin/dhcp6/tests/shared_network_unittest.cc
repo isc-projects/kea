@@ -5,24 +5,27 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <asiolink/io_address.h>
+#include <cc/command_interpreter.h>
 #include <dhcp/option.h>
-#include <dhcp/option_int.h>
-#include <dhcp/option6_client_fqdn.h>
 #include <dhcp/option6_addrlst.h>
+#include <dhcp/option6_client_fqdn.h>
+#include <dhcp/option_int.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
-#include <dhcpsrv/cfg_subnets6.h>
-#include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
-#include <cc/command_interpreter.h>
+#include <dhcpsrv/cfg_subnets6.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <stats/stats_mgr.h>
-#include <boost/pointer_cast.hpp>
+
+#include <cstdint>
 #include <functional>
 #include <vector>
-#include <cstdint>
+
+#include <boost/pointer_cast.hpp>
 
 using namespace isc;
 using namespace isc::asiolink;

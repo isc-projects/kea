@@ -11,31 +11,31 @@
 #include <dhcp/classify.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
-#include <dhcp/pkt4.h>
-#include <dhcp/pkt6.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
+#include <dhcp/pkt4.h>
+#include <dhcp/pkt6.h>
 #include <dhcpsrv/allocator.h>
 #include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/host.h>
-#include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/srv_config.h>
+#include <dhcpsrv/subnet.h>
 #include <hooks/callout_handle.h>
 #include <util/multi_threading_mgr.h>
 #include <util/readwrite_mutex.h>
 
-#include <boost/shared_ptr.hpp>
-#include <boost/noncopyable.hpp>
-
+#include <cstdint>
 #include <functional>
 #include <list>
 #include <map>
 #include <mutex>
 #include <set>
 #include <utility>
-#include <cstdint>
+
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dhcp {

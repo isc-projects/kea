@@ -10,10 +10,10 @@
 #include <dns/exceptions.h>
 #include <dns/master_loader_callbacks.h>
 
-#include <boost/noncopyable.hpp>
-
-#include <memory>
 #include <cstdint>
+#include <memory>
+
+#include <boost/noncopyable.hpp>
 
 namespace isc {
 namespace dns {

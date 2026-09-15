@@ -18,11 +18,11 @@
 #include <dhcpsrv/memfile_lease_storage.h>
 #include <dhcpsrv/tracking_lease_mgr.h>
 
+#include <cstdint>
+#include <mutex>
+
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
-
-#include <mutex>
-#include <cstdint>
 
 namespace isc {
 namespace dhcp {

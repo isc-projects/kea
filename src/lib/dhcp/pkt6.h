@@ -12,14 +12,14 @@
 #include <dhcp/option.h>
 #include <dhcp/pkt.h>
 
+#include <cstdint>
+#include <vector>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <vector>
-
 #include <time.h>
-#include <cstdint>
 
 namespace isc {
 

@@ -7,11 +7,12 @@
 #ifndef DNS_CLIENT_H
 #define DNS_CLIENT_H
 
-#include <asiolink/io_service.h>
 #include <asiodns/io_fetch.h>
+#include <asiolink/io_service.h>
 #include <d2srv/d2_tsig_key.h>
 #include <d2srv/d2_update_message.h>
 #include <util/buffer.h>
+
 #include <cstdint>
 
 namespace isc {
