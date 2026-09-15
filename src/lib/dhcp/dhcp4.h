@@ -60,8 +60,8 @@ enum HType {
                          ///  arp-parameters/arp-parameters.xhtml suggest that
                          ///  Ethernet (1) should be used in DOCSIS environment.
     HTYPE_IEEE802 = 6,   ///< IEEE 802.2 Token Ring
-    HTYPE_FDDI = 8       ///< FDDI
-    /// TODO Add infiniband here
+    HTYPE_FDDI = 8,      ///< FDDI
+    HTYPE_INFINIBAND = 32 ///< InfiniBand
 };
 
 /* DHCP Option codes: */
