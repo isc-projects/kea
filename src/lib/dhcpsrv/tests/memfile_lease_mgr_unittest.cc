@@ -729,7 +729,9 @@ TEST_F(MemfileLeaseMgrTest, lfcEnv) {
     pmap["type"] = "memfile";
     pmap["universe"] = "4";
     pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
-    pmap["lfc-interval"] = "1";
+    // Use 10s so that the lfc started explicitly in lfcCallback is not affected
+    // by the one started by the timer.
+    pmap["lfc-interval"] = "10";
 
     std::ostringstream s;
     s << TEST_DATA_BUILDDIR << "/test_kea_lfc_env.sh";
@@ -798,7 +800,9 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
     pmap["type"] = "memfile";
     pmap["universe"] = "4";
     pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
-    pmap["lfc-interval"] = "1";
+    // Use 10s so that the lfc started explicitly in lfcCallback is not affected
+    // by the one started by the timer.
+    pmap["lfc-interval"] = "10";
     boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr(new NakedMemfileLeaseMgr(pmap));
 
     // Try to run the lease file cleanup.
@@ -880,7 +884,9 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
     pmap["type"] = "memfile";
     pmap["universe"] = "6";
     pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
-    pmap["lfc-interval"] = "1";
+    // Use 10s so that the lfc started explicitly in lfcCallback is not affected
+    // by the one started by the timer.
+    pmap["lfc-interval"] = "10";
     boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr(new NakedMemfileLeaseMgr(pmap));
 
     // Try to run the lease file cleanup.
@@ -994,7 +1000,9 @@ TEST_F(MemfileLeaseMgrTest, leaseFileFinish) {
     pmap["type"] = "memfile";
     pmap["universe"] = "6";
     pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
-    pmap["lfc-interval"] = "1";
+    // Use 10s so that the lfc started explicitly in lfcCallback is not affected
+    // by the one started by the timer.
+    pmap["lfc-interval"] = "10";
     boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr(new NakedMemfileLeaseMgr(pmap));
 
     // Try to run the lease file cleanup.
@@ -1060,7 +1068,9 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
     pmap["type"] = "memfile";
     pmap["universe"] = "6";
     pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
-    pmap["lfc-interval"] = "1";
+    // Use 10s so that the lfc started explicitly in lfcCallback is not affected
+    // by the one started by the timer.
+    pmap["lfc-interval"] = "10";
     boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr(new NakedMemfileLeaseMgr(pmap));
 
     // Try to run the lease file cleanup.
