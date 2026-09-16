@@ -1288,7 +1288,7 @@ TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsUpdateOnRenew) {
         },
         {
         "#5 update-on-renew is true, no change in fqdn",
-        send_updates, update_on_renew, lease1, lease1, remove, add
+        send_updates, update_on_renew, lease1, lease1, !remove, add
         },
         {
         "#6 update-on-renew is true, change in fqdn",

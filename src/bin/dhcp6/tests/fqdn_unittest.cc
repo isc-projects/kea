@@ -2135,7 +2135,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
         },
         {
         "#3 update-on-renew is true, no change in fqdn",
-        send_updates, update_on_renew, fqdn1, fqdn1, remove, add
+        send_updates, update_on_renew, fqdn1, fqdn1, !remove, add
         },
         {
         "#4 update-on-renew is true, change in fqdn",
