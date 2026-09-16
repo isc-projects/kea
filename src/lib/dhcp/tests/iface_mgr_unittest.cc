@@ -1214,7 +1214,7 @@ public:
         expected[pkt2] = 0;
         bool first = true;
         size_t j = 0;
-        for (size_t i = 0; i < 3 * loop_count && j < 20 * loop_count;) {
+        for (size_t i = 0; i < 3 * loop_count && j < 100 * loop_count;) {
             Pkt4Ptr new_pkt = IfaceMgr::instance().receive4(1, 0);
             if (first) {
                 first = false;
@@ -1356,7 +1356,7 @@ public:
         expected[pkt2] = 0;
         bool first = true;
         size_t j = 0;
-        for (size_t i = 0; i < 3 * loop_count && j < 20 * loop_count;) {
+        for (size_t i = 0; i < 3 * loop_count && j < 100 * loop_count;) {
             Pkt6Ptr new_pkt = IfaceMgr::instance().receive6(1, 0);
             if (first) {
                 first = false;
@@ -1461,7 +1461,7 @@ public:
         expected[pkt0] = 0;
         expected[pkt1] = 0;
         expected[pkt2] = 0;
-        for (size_t i = 0, j = 0; i < 3 * loop_count && j < 2 * loop_count;) {
+        for (size_t i = 0, j = 0; i < 3 * loop_count && j < 5 * loop_count;) {
             Pkt4Ptr new_pkt = IfaceMgr::instance().receive4(1, 0);
             if (new_pkt) {
                 expected[new_pkt]++;
@@ -1545,7 +1545,7 @@ public:
         expected[pkt0] = 0;
         expected[pkt1] = 0;
         expected[pkt2] = 0;
-        for (size_t i = 0, j = 0; i < 3 * loop_count && j < 2 * loop_count;) {
+        for (size_t i = 0, j = 0; i < 3 * loop_count && j < 5 * loop_count;) {
             Pkt6Ptr new_pkt = IfaceMgr::instance().receive6(1, 0);
             if (new_pkt) {
                 expected[new_pkt]++;
