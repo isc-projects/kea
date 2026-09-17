@@ -11,7 +11,7 @@ dhcp_ha_libload_tests = executable(
         f'-DLIBDHCP_HA_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/high_availability/libdhcp_ha.so"',
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )
 test(

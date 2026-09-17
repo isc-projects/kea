@@ -20,7 +20,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
-#include <lease_query_impl6.h>
+#include <lease_query/lease_query_impl6.h>
 #include <test_lease_mgr.h>
 
 #include <gtest/gtest.h>

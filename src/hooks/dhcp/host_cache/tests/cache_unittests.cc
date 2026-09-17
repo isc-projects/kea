@@ -8,7 +8,7 @@
 
 #include <config.h>
 
-#include <host_cache.h>
+#include <host_cache/host_cache.h>
 #include <cryptolink/cryptolink.h>
 #include <cryptolink/crypto_rng.h>
 #include <database/db_exceptions.h>

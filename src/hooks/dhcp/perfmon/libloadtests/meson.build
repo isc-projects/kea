@@ -10,7 +10,7 @@ dhcp_perfmon_libload_tests = executable(
         f'-DLIBDHCP_PERFMON_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/perfmon/libdhcp_perfmon.so"',
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )
 test(

@@ -7,8 +7,8 @@
 /// @file This file contains tests which verify flexible sub-option.
 
 #include <config.h>
-#include <flex_option.h>
-#include <flex_option_log.h>
+#include <flex_option/flex_option.h>
+#include <flex_option/flex_option_log.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option4_addrlst.h>
@@ -21,7 +21,7 @@
 #include <hooks/hooks.h>
 #include <testutils/log_utils.h>
 
-#include <tests/test_flex_option.h>
+#include <flex_option/tests/test_flex_option.h>
 #include <gtest/gtest.h>
 #include <sstream>
 

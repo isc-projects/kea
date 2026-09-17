@@ -7,12 +7,12 @@
 #ifndef HA_SERVICE_H
 #define HA_SERVICE_H
 
-#include <communication_state.h>
-#include <ha_config.h>
-#include <ha_server_type.h>
-#include <lease_sync_filter.h>
-#include <lease_update_backlog.h>
-#include <query_filter.h>
+#include <high_availability/communication_state.h>
+#include <high_availability/ha_config.h>
+#include <high_availability/ha_server_type.h>
+#include <high_availability/lease_sync_filter.h>
+#include <high_availability/lease_update_backlog.h>
+#include <high_availability/query_filter.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_service.h>
 #include <asiolink/tls_socket.h>

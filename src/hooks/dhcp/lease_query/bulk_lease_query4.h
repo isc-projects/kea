@@ -14,8 +14,8 @@
 
 #include <cstdint>
 
-#include <bulk_lease_query.h>
-#include <lease_query_impl.h>
+#include <lease_query/bulk_lease_query.h>
+#include <lease_query/lease_query_impl.h>
 
 namespace isc {
 namespace lease_query {

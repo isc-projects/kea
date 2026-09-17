@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,8 +7,8 @@
 #include <config.h>
 
 #include <dhcpsrv/cfgmgr.h>
-#include <ha_config.h>
-#include <lease_sync_filter.h>
+#include <high_availability/ha_config.h>
+#include <high_availability/lease_sync_filter.h>
 
 using namespace isc::data;
 using namespace isc::dhcp;

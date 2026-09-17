@@ -11,10 +11,10 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/pkt4.h>
-#include <dhcp/user_chk/user.h>
-#include <dhcp/user_chk/user_data_source.h>
-#include <dhcp/user_chk/user_file.h>
-#include <dhcp/user_chk/user_registry.h>
+#include <user_chk/user.h>
+#include <user_chk/user_data_source.h>
+#include <user_chk/user_file.h>
+#include <user_chk/user_registry.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -32,7 +32,7 @@
 #include <vector>
 
 #include <fuzzer/FuzzedDataProvider.h>
-#include <helper_func.h>
+#include <fuzz/helper_func.h>
 
 using namespace isc::dhcp;
 using namespace isc::hooks;

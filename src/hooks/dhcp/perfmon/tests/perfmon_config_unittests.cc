@@ -7,7 +7,7 @@
 /// @file This file contains tests which exercise the PerfMonConfig class.
 
 #include <config.h>
-#include <perfmon_config.h>
+#include <perfmon/perfmon_config.h>
 #include <dhcp/dhcp6.h>
 #include <testutils/gtest_utils.h>
 

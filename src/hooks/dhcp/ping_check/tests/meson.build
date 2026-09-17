@@ -15,7 +15,7 @@ dhcp_ping_check_tests = executable(
     'ping_context_unittests.cc',
     'run_unittests.cc',
     dependencies: [CRYPTO_DEP, GTEST_DEP],
-    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: [dhcp_ping_check_archive] + LIBS_BUILT_SO_FAR,
 )
 

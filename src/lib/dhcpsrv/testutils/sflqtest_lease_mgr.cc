@@ -8,7 +8,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/iterative_allocator.h>
-#include <sflqtest_lease_mgr.h>
+#include <dhcpsrv/testutils/sflqtest_lease_mgr.h>
 
 using namespace isc::asiolink;
 using namespace isc::db;

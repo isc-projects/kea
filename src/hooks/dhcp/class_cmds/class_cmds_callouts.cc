@@ -11,7 +11,7 @@
 
 #include <config.h>
 
-#include <class_cmds.h>
+#include <class_cmds/class_cmds.h>
 #include <class_cmds_log.h>
 #include <cc/command_interpreter.h>
 #include <hooks/hooks.h>

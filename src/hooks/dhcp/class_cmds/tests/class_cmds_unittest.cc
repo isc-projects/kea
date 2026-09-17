@@ -12,7 +12,7 @@
 
 #include <config.h>
 
-#include <class_cmds.h>
+#include <class_cmds/class_cmds.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <hooks/hooks_manager.h>

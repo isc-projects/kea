@@ -22,8 +22,8 @@
 #include <dhcpsrv/host.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>
-#include <flex_id.h>
-#include <flex_id_log.h>
+#include <flex_id/flex_id.h>
+#include <flex_id/flex_id_log.h>
 
 #include <gtest/gtest.h>
 

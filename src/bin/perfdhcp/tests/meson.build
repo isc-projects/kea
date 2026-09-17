@@ -21,7 +21,7 @@ perfdhcp_tests = executable(
     'test_control_unittest.cc',
     cpp_args: [f'-DTEST_DATA_DIR="@current_source_dir@/testdata"'],
     dependencies: [GTEST_DEP],
-    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: [perfdhcp_lib, kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
 test(

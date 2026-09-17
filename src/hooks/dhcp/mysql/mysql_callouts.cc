@@ -16,15 +16,15 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <hooks/hooks.h>
 #include <process/daemon.h>
-#include <mysql_cb_impl.h>
-#include <mysql_cb_dhcp4.h>
-#include <mysql_cb_dhcp6.h>
-#include <mysql_cb_log.h>
+#include <mysql/mysql_cb_impl.h>
+#include <mysql/mysql_cb_dhcp4.h>
+#include <mysql/mysql_cb_dhcp6.h>
+#include <mysql/mysql_cb_log.h>
 #include <mysql_hb_log.h>
-#include <mysql_host_data_source.h>
-#include <mysql_legal_log.h>
+#include <mysql/mysql_host_data_source.h>
+#include <mysql/mysql_legal_log.h>
 #include <mysql_lb_log.h>
-#include <mysql_lease_mgr.h>
+#include <mysql/mysql_lease_mgr.h>
 
 #include <sstream>
 #include <string>

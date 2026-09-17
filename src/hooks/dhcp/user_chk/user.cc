@@ -11,7 +11,7 @@
 #include <exceptions/exceptions.h>
 #include <util/encode/encode.h>
 
-#include <user.h>
+#include <user_chk/user.h>
 
 #include <iomanip>
 #include <sstream>

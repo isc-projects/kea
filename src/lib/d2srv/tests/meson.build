@@ -12,7 +12,7 @@ kea_d2srv_tests = executable(
     'dns_client_unittests.cc',
     'nc_trans_unittests.cc',
     dependencies: [CRYPTO_DEP, GTEST_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,
 )
 test('kea-d2srv-tests', kea_d2srv_tests, protocol: 'gtest')

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,10 +12,10 @@
 #include <asiolink/io_service.h>
 #include <d2srv/d2_config.h>
 #include <gss_tsig_api_utils.h>
-#include <gss_tsig_impl.h>
+#include <gss_tsig/gss_tsig_impl.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>
-#include <testutils/gss_tsig_dns_server.h>
+#include <gss_tsig/testutils/gss_tsig_dns_server.h>
 #include <testutils/gtest_utils.h>
 
 #include <gtest/gtest.h>

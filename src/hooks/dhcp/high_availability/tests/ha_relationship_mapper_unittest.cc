@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include <ha_config.h>
-#include <ha_relationship_mapper.h>
+#include <high_availability/ha_config.h>
+#include <high_availability/ha_relationship_mapper.h>
 #include <exceptions/exceptions.h>
 #include <gtest/gtest.h>
 

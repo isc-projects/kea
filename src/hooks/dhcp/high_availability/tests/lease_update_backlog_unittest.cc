@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <lease_update_backlog.h>
+#include <high_availability/lease_update_backlog.h>
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>

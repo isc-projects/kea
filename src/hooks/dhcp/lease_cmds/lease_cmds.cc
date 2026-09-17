@@ -23,7 +23,7 @@
 #include <dhcpsrv/subnet_id.h>
 #include <exceptions/exceptions.h>
 #include <hooks/hooks.h>
-#include <lease_cmds.h>
+#include <lease_cmds/lease_cmds.h>
 #include <lease_cmds_exceptions.h>
 #include <lease_cmds_log.h>
 #include <lease_parser.h>

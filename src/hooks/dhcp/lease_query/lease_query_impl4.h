@@ -13,7 +13,7 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
-#include <lease_query_impl.h>
+#include <lease_query/lease_query_impl.h>
 
 namespace isc {
 namespace lease_query {

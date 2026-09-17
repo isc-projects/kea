@@ -10,7 +10,7 @@
 #include <asiolink/crypto_tls.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
-#include <ha_relationship_mapper.h>
+#include <high_availability/ha_relationship_mapper.h>
 #include <http/basic_auth_config.h>
 #include <http/post_request_json.h>
 #include <http/url.h>

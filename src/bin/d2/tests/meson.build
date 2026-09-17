@@ -39,7 +39,7 @@ configure_file(
 callout = shared_library(
     'callout',
     'callout_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
     name_suffix: 'so',
@@ -47,7 +47,7 @@ callout = shared_library(
 configured = shared_library(
     'configured',
     'configured_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
     name_suffix: 'so',
@@ -88,7 +88,7 @@ kea_d2_tests = executable(
         f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: [d2_lib] + kea_d2_tests_libs + LIBS_BUILT_SO_FAR,
 )
 test(
@@ -99,4 +99,3 @@ test(
     is_parallel: false,
     priority: -1,
 )
-

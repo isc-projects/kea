@@ -1,4 +1,4 @@
-// Copyright (C) 2022-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <expression_cache.h>
+#include <ddns_tuning/expression_cache.h>
 #include <eval/token.h>
 #include <eval/eval_context.h>
 #include <util/multi_threading_mgr.h>

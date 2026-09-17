@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <run_script.h>
+#include <run_script/run_script.h>
 
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>

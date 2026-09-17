@@ -11,10 +11,10 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/subnet.h>
-#include <radius_accounting.h>
+#include <radius/radius_accounting.h>
 #include <radius_log.h>
-#include <radius_status.h>
-#include <radius_utils.h>
+#include <radius/radius_status.h>
+#include <radius/radius_utils.h>
 #include <util/multi_threading_mgr.h>
 #include <stdio.h>
 

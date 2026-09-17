@@ -10,7 +10,7 @@ dhcp_limits_libloadtests = executable(
         f'-DLIBDHCP_LIMITS_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/limits/libdhcp_limits.so"',
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )
 test(

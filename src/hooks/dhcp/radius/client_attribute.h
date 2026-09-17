@@ -12,7 +12,7 @@
 #include <cc/data.h>
 #include <cc/simple_parser.h>
 #include <asiolink/io_address.h>
-#include <client_dictionary.h>
+#include <radius/client_dictionary.h>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/member.hpp>

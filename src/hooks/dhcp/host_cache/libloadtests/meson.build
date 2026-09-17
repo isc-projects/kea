@@ -12,7 +12,7 @@ dhcp_host_cache_libloadtests = executable(
         f'-DLIB_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/host_cache/libdhcp_host_cache.so"',
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )
 test(

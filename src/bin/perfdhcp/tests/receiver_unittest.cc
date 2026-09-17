@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,13 +6,13 @@
 
 #include <config.h>
 
-#include "command_options_helper.h"
+#include <perfdhcp/tests/command_options_helper.h>
 
 #include <dhcp/iface_mgr.h>
 
 
 #include <exceptions/exceptions.h>
-#include "receiver.h"
+#include <perfdhcp/receiver.h>
 #include <gtest/gtest.h>
 
 

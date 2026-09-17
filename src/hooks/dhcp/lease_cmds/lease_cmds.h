@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,7 @@
 #define LEASE_CMDS_H
 
 #include <cc/data.h>
-#include <binding_variables.h>
+#include <lease_cmds/binding_variables.h>
 #include <hooks/hooks.h>
 
 #include <boost/shared_ptr.hpp>

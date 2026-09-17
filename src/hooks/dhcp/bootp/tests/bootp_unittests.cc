@@ -7,7 +7,7 @@
 /// @file This file contains tests which verify flexible option.
 
 #include <config.h>
-#include <bootp_log.h>
+#include <bootp/bootp_log.h>
 #include <dhcp/pkt4.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>

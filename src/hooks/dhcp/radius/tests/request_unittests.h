@@ -17,7 +17,7 @@
 #include <database/database_connection.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
-#include <radius_request.h>
+#include <radius/radius_request.h>
 #include <attribute_test.h>
 #include <gtest/gtest.h>
 #include <boost/date_time/posix_time/posix_time.hpp>

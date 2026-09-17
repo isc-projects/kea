@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,7 @@
 #ifndef HA_CONFIG_PARSER_H
 #define HA_CONFIG_PARSER_H
 
-#include <ha_config.h>
+#include <high_availability/ha_config.h>
 #include <cc/data.h>
 #include <cc/simple_parser.h>
 #include <string>

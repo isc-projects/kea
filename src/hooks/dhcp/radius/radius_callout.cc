@@ -18,15 +18,15 @@
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
-#include <radius.h>
+#include <radius/radius.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host_mgr.h>
 #include <process/daemon.h>
 #include <stats/stats_mgr.h>
 #include <radius_log.h>
-#include <radius_parsers.h>
-#include <radius_access.h>
-#include <radius_accounting.h>
+#include <radius/radius_parsers.h>
+#include <radius/radius_access.h>
+#include <radius/radius_accounting.h>
 #include <util/multi_threading_mgr.h>
 
 #include <string>

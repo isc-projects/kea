@@ -7,8 +7,8 @@
 #ifndef RADIUS_SERVICE_H
 #define RADIUS_SERVICE_H
 
-#include <client_server.h>
-#include <cfg_attribute.h>
+#include <radius/client_server.h>
+#include <radius/cfg_attribute.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <cc/cfg_to_element.h>

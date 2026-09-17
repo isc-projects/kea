@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,10 +12,10 @@
 #include <dhcp/duid.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet_id.h>
-#include <ha_config.h>
-#include <ha_server_type.h>
+#include <high_availability/ha_config.h>
+#include <high_availability/ha_server_type.h>
 #include <ha_test.h>
-#include <lease_sync_filter.h>
+#include <high_availability/lease_sync_filter.h>
 #include <boost/make_shared.hpp>
 #include <gtest/gtest.h>
 #include <sstream>

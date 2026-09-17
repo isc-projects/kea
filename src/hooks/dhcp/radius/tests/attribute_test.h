@@ -7,7 +7,7 @@
 #ifndef ATTRIBUTE_TEST_H
 #define ATTRIBUTE_TEST_H
 
-#include <client_attribute.h>
+#include <radius/client_attribute.h>
 #include <dhcpsrv/host_mgr.h>
 #include <gtest/gtest.h>
 

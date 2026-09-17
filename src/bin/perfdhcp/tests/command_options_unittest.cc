@@ -16,7 +16,7 @@
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
 
-#include "command_options_helper.h"
+#include <perfdhcp/tests/command_options_helper.h>
 
 using namespace std;
 using namespace isc;

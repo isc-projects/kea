@@ -25,8 +25,8 @@
 #include <string>
 
 #include <fuzzer/FuzzedDataProvider.h>
-#include <mysql_cb_dhcp6.h>
-#include <mysql_cb_impl.h>
+#include <mysql/mysql_cb_dhcp6.h>
+#include <mysql/mysql_cb_impl.h>
 
 using namespace isc::asiolink;
 using namespace isc::db;

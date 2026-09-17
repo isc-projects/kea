@@ -17,7 +17,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
-#include <lease_query_impl4.h>
+#include <lease_query/lease_query_impl4.h>
 
 #include <gtest/gtest.h>
 #include <sstream>

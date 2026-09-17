@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <client_attribute.h>
+#include <radius/client_attribute.h>
 #include <radius_log.h>
 #include <util/encode/encode.h>
 #include <util/str.h>

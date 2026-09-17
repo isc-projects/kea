@@ -19,7 +19,7 @@
 #include <eval/evaluate.h>
 #include <hooks/hooks.h>
 #include <util/str.h>
-#include <legal_log_log.h>
+#include <forensic_log/legal_log_log.h>
 #include <dhcpsrv/legal_log_mgr_factory.h>
 #include <subnets_user_context.h>
 

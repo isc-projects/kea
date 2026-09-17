@@ -10,8 +10,8 @@
 #include <config.h>
 
 #include <asiolink/addr_utilities.h>
-#include <host_cache.h>
-#include <host_cache_impl.h>
+#include <host_cache/host_cache.h>
+#include <host_cache/host_cache_impl.h>
 #include <database/db_exceptions.h>
 #include <dhcpsrv/testutils/host_data_source_utils.h>
 #include <dhcpsrv/testutils/generic_host_data_source_unittest.h>

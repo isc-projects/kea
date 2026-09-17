@@ -7,7 +7,7 @@
 /// @file This file contains tests which exercise the PingContext class.
 
 #include <config.h>
-#include <ping_context.h>
+#include <ping_check/ping_context.h>
 #include <asiolink/io_address.h>
 #include <testutils/gtest_utils.h>
 

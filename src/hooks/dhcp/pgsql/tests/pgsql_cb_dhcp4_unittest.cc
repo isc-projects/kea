@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,7 +13,7 @@
 #include <dhcpsrv/testutils/generic_cb_recovery_unittest.h>
 #include <dhcpsrv/testutils/pgsql_generic_backend_unittest.h>
 #include <dhcpsrv/testutils/test_utils.h>
-#include <pgsql_cb_dhcp4.h>
+#include <pgsql/pgsql_cb_dhcp4.h>
 #include <pgsql/testutils/pgsql_schema.h>
 #include <testutils/multi_threading_utils.h>
 #include <testutils/gtest_utils.h>

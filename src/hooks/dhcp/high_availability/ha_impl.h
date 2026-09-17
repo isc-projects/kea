@@ -7,8 +7,8 @@
 #ifndef HA_IMPL_H
 #define HA_IMPL_H
 
-#include <ha_config.h>
-#include <ha_service.h>
+#include <high_availability/ha_config.h>
+#include <high_availability/ha_service.h>
 #include <asiolink/io_service.h>
 #include <cc/data.h>
 #include <dhcpsrv/network_state.h>

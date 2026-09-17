@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2024-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,7 @@
 #include <dhcp/pkt6.h>
 #include <dhcp/dhcp6.h>
 #include <exceptions/exceptions.h>
-#include <alarm.h>
+#include <perfmon/alarm.h>
 
 using namespace isc::dhcp;
 using namespace boost::posix_time;

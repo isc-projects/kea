@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,11 +7,11 @@
 #ifndef MYSQL_CONFIG_BACKEND_DHCP6_H
 #define MYSQL_CONFIG_BACKEND_DHCP6_H
 
-#include <mysql_cb_impl.h>
+#include <mysql/mysql_cb_impl.h>
 #include <database/database_connection.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/config_backend_dhcp6.h>
-#include <mysql_cb_log.h>
+#include <mysql/mysql_cb_log.h>
 #include <boost/shared_ptr.hpp>
 
 namespace isc {

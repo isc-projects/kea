@@ -16,11 +16,8 @@ cpp_flags = [
 # "src/hooks" or to have quotes instead of angled brackets and that is more work.
 includes = [
     include_directories('.'),
-    include_directories('../hooks'),
-    include_directories('../hooks/d2/gss_tsig'),
-    include_directories('../hooks/dhcp/mysql'),
-    include_directories('../hooks/dhcp/pgsql'),
-    include_directories('../hooks/dhcp/user_chk'),
+    include_directories('../hooks/d2'),
+    include_directories('../hooks/dhcp'),
 ] + INCLUDES
 
 fuzz_lib = static_library(

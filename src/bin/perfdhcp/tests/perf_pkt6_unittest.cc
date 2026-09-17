@@ -6,7 +6,6 @@
 
 #include <config.h>
 #include <iostream>
-#include <sstream>
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
 
@@ -16,8 +15,8 @@
 
 #include <boost/scoped_ptr.hpp>
 
-#include "../localized_option.h"
-#include "../perf_pkt6.h"
+#include <perfdhcp/localized_option.h>
+#include <perfdhcp/perf_pkt6.h>
 
 using namespace std;
 using namespace isc;

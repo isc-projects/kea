@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2024-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,10 +11,10 @@
 #ifndef PERFMON_MGR_H
 #define PERFMON_MGR_H
 
-#include <perfmon_config.h>
+#include <perfmon/perfmon_config.h>
 #include <config/command_mgr.h>
 #include <config/cmds_impl.h>
-#include <monitored_duration_store.h>
+#include <perfmon/monitored_duration_store.h>
 #include <asiolink/io_service.h>
 #include <asiolink/interval_timer.h>
 #include <dhcpsrv/subnet.h>

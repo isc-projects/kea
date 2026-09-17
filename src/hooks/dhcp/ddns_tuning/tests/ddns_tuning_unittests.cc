@@ -13,8 +13,8 @@
 #include <dhcp/option_string.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet.h>
-#include <ddns_tuning.h>
-#include <ddns_tuning_log.h>
+#include <ddns_tuning/ddns_tuning.h>
+#include <ddns_tuning/ddns_tuning_log.h>
 #include <eval/eval_context.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>

@@ -20,7 +20,7 @@ libs_testutils = [kea_testutils_lib]
 nvl = shared_library(
     'nvl',
     'no_version_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
     name_suffix: 'so',
@@ -28,7 +28,7 @@ nvl = shared_library(
 ivl = shared_library(
     'ivl',
     'incorrect_version_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
     name_suffix: 'so',
@@ -36,7 +36,7 @@ ivl = shared_library(
 fxl = shared_library(
     'fxl',
     'framework_exception_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
     name_suffix: 'so',
@@ -44,7 +44,7 @@ fxl = shared_library(
 bcl = shared_library(
     'bcl',
     'basic_callout_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
     name_suffix: 'so',
@@ -52,7 +52,7 @@ bcl = shared_library(
 lcl = shared_library(
     'lcl',
     'load_callout_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
     name_suffix: 'so',
@@ -60,7 +60,7 @@ lcl = shared_library(
 lecl = shared_library(
     'lecl',
     'load_error_callout_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
     name_suffix: 'so',
@@ -68,7 +68,7 @@ lecl = shared_library(
 ucl = shared_library(
     'ucl',
     'unload_callout_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
     name_suffix: 'so',
@@ -76,7 +76,7 @@ ucl = shared_library(
 fcl = shared_library(
     'fcl',
     'full_callout_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
     name_suffix: 'so',
@@ -84,7 +84,7 @@ fcl = shared_library(
 pcl = shared_library(
     'pcl',
     'callout_params_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
     name_suffix: 'so',
@@ -92,7 +92,7 @@ pcl = shared_library(
 acl = shared_library(
     'acl',
     'async_callout_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
     name_suffix: 'so',
@@ -113,7 +113,7 @@ kea_hooks_tests = executable(
     'server_hooks_unittest.cc',
     dependencies: [GTEST_DEP],
     cpp_args: [f'-DDEFAULT_HOOKS_PATH="@DEFAULT_HOOKS_PATH@"'],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,
 )
 test(
@@ -124,4 +124,3 @@ test(
     is_parallel: false,
     priority: -1,
 )
-

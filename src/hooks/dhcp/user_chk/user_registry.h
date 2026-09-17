@@ -1,4 +1,4 @@
-// Copyright (C) 2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,8 +11,8 @@
 #include <dhcp/hwaddr.h>
 #include <dhcp/duid.h>
 #include <exceptions/exceptions.h>
-#include <user.h>
-#include <user_data_source.h>
+#include <user_chk/user.h>
+#include <user_chk/user_data_source.h>
 
 #include <string>
 

@@ -8,7 +8,7 @@ kea_cfgrpt_lib = shared_library(
     'kea-cfgrpt',
     'cfgrpt.cc',
     config_report_cc,
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     install: true,
     install_dir: LIBDIR,
     install_rpath: INSTALL_RPATH,

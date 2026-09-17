@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,8 +15,8 @@
 #include <pgsql/pgsql_exchange.h>
 #include <util/buffer.h>
 
-#include <pgsql_cb_impl.h>
-#include <pgsql_cb_log.h>
+#include <pgsql/pgsql_cb_impl.h>
+#include <pgsql/pgsql_cb_log.h>
 #include <cstdint>
 #include <utility>
 

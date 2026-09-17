@@ -12,7 +12,7 @@
 
 #include <boost/scoped_ptr.hpp>
 
-#include "../localized_option.h"
+#include <perfdhcp/localized_option.h>
 
 using namespace std;
 using namespace isc;

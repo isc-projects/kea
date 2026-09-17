@@ -6,9 +6,9 @@
 
 #include <config.h>
 
-#include <gss_tsig_cfg.h>
+#include <gss_tsig/gss_tsig_cfg.h>
 #include <cc/command_interpreter.h>
-#include <managed_key.h>
+#include <gss_tsig/managed_key.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
 #include <stats/stats_mgr.h>

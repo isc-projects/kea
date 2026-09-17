@@ -9,7 +9,7 @@ kea_database_lib = shared_library(
     'server.cc',
     'server_collection.cc',
     'server_selector.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     install: true,
     install_dir: LIBDIR,
     install_rpath: INSTALL_RPATH,

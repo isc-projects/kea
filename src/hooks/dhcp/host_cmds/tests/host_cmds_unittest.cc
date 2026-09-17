@@ -12,7 +12,7 @@
 
 #include <config.h>
 
-#include <host_cmds.h>
+#include <host_cmds/host_cmds.h>
 #include <asiolink/io_address.h>
 #include <exceptions/exceptions.h>
 #include <hooks/hooks_manager.h>

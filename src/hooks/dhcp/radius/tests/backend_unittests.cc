@@ -13,8 +13,8 @@
 #include <config.h>
 
 #include <dhcpsrv/testutils/host_data_source_utils.h>
-#include <radius.h>
-#include <radius_backend.h>
+#include <radius/radius.h>
+#include <radius/radius_backend.h>
 #include <attribute_test.h>
 #include <gtest/gtest.h>
 

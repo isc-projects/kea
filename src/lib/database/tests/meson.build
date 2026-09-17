@@ -13,7 +13,7 @@ kea_database_tests = executable(
     'server_selector_unittest.cc',
     'server_unittest.cc',
     dependencies: [GTEST_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: [kea_testutils_lib, kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
 test('kea-database-tests', kea_database_tests, protocol: 'gtest')

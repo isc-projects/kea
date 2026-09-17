@@ -7,8 +7,8 @@
 #ifndef RADIUS_STATUS_H
 #define RADIUS_STATUS_H
 
-#include <client_exchange.h>
-#include <radius.h>
+#include <radius/client_exchange.h>
+#include <radius/radius.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/timer_mgr.h>

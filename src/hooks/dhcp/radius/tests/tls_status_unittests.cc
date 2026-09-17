@@ -14,9 +14,9 @@
 #include <database/database_connection.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
-#include <radius.h>
-#include <radius_status.h>
-#include <radius_tls.h>
+#include <radius/radius.h>
+#include <radius/radius_status.h>
+#include <radius/radius_tls.h>
 #include <attribute_test.h>
 
 #include <gtest/gtest.h>

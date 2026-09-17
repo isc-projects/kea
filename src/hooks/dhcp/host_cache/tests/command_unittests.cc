@@ -8,8 +8,8 @@
 
 #include <config.h>
 
-#include <host_cache.h>
-#include <host_cache_parsers.h>
+#include <host_cache/host_cache.h>
+#include <host_cache/host_cache_parsers.h>
 #include <hooks/hooks_manager.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <testutils/env_var_wrapper.h>

@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,8 +11,8 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <cc/simple_parser.h>
-#include <lease_query_impl4.h>
-#include <lease_query_impl6.h>
+#include <lease_query/lease_query_impl4.h>
+#include <lease_query/lease_query_impl6.h>
 
 namespace isc {
 namespace lease_query {

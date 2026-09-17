@@ -53,10 +53,10 @@
 #include <gtest/gtest.h>
 #include <unistd.h>
 
-#include "dhcp6_test_utils.h"
-#include "get_config_unittest.h"
-#include "marker_file.h"
-#include "test_libraries.h"
+#include <dhcp6/tests/dhcp6_test_utils.h>
+#include <dhcp6/tests/get_config_unittest.h>
+#include <dhcp6/tests/marker_file.h>
+#include <dhcp6/tests/test_libraries.h>
 
 using namespace isc;
 using namespace isc::asiolink;

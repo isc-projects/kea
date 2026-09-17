@@ -6,10 +6,10 @@
 
 #include <config.h>
 
-#include <client_exchange.h>
+#include <radius/client_exchange.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
-#include <radius.h>
+#include <radius/radius.h>
 #include <attribute_test.h>
 #include <gtest/gtest.h>
 #include <iostream>

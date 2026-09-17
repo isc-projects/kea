@@ -14,7 +14,7 @@ dhcp_lease_query_lib = shared_library(
     'mt_lease_query_mgr.cc',
     'version.cc',
     dependencies: [CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     install: true,
     install_dir: HOOKS_PATH,
     install_rpath: INSTALL_RPATH,

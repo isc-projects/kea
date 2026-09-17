@@ -11,7 +11,7 @@
 
 #include <config.h>
 
-#include <host_cmds.h>
+#include <host_cmds/host_cmds.h>
 #include <host_cmds_log.h>
 #include <cc/command_interpreter.h>
 #include <hooks/hooks.h>

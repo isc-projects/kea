@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include <radius_status.h>
-#include <radius_tls.h>
+#include <radius/radius_status.h>
+#include <radius/radius_tls.h>
 #include <util/multi_threading_mgr.h>
 
 using namespace std;

@@ -8,8 +8,8 @@
 #define MANAGED_KEY_H
 
 #include <cc/cfg_to_element.h>
-#include <gss_tsig_key.h>
-#include <tkey_exchange.h>
+#include <gss_tsig/gss_tsig_key.h>
+#include <gss_tsig/tkey_exchange.h>
 
 #include <cstdint>
 #include <mutex>

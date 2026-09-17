@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include "command_options_helper.h"
-#include "../basic_scen.h"
+#include <perfdhcp/tests/command_options_helper.h>
+#include <perfdhcp/basic_scen.h>
 
 #include <asiolink/io_address.h>
 #include <exceptions/exceptions.h>
@@ -18,11 +18,8 @@
 #include <dhcp/option6_iaprefix.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <algorithm>
-#include <cstddef>
 #include <stdint.h>
 #include <string>
-#include <fstream>
 #include <mutex>
 #include <gtest/gtest.h>
 

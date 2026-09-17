@@ -8,7 +8,7 @@ kea_eval_lib = shared_library(
     'lexer.cc',
     'parser.cc',
     'token.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     install: true,
     install_dir: LIBDIR,
     install_rpath: INSTALL_RPATH,

@@ -52,10 +52,10 @@
 #include <gtest/gtest.h>
 #include <unistd.h>
 
-#include "dhcp4_test_utils.h"
-#include "get_config_unittest.h"
-#include "marker_file.h"
-#include "test_libraries.h"
+#include <dhcp4/tests/dhcp4_test_utils.h>
+#include <dhcp4/tests/get_config_unittest.h>
+#include <dhcp4/tests/marker_file.h>
+#include <dhcp4/tests/test_libraries.h>
 
 using namespace isc;
 using namespace isc::asiolink;

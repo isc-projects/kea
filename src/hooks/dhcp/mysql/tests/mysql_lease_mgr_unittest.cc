@@ -9,7 +9,7 @@
 #include <asiolink/io_address.h>
 #include <cc/default_credentials.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <mysql_lease_mgr.h>
+#include <mysql/mysql_lease_mgr.h>
 #include <dhcpsrv/testutils/test_utils.h>
 #include <dhcpsrv/testutils/generic_lease_mgr_unittest.h>
 #include <dhcpsrv/testutils/mysql_generic_backend_unittest.h>

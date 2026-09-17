@@ -17,9 +17,9 @@
 #include <dhcp/option6_iaprefix.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <lease_query_impl6.h>
-#include <lease_query_log.h>
-#include <blq_service.h>
+#include <lease_query/lease_query_impl6.h>
+#include <lease_query/lease_query_log.h>
+#include <lease_query/blq_service.h>
 #include <stats/stats_mgr.h>
 #include <util/encode/encode.h>
 #include <util/io.h>

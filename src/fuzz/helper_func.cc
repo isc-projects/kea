@@ -12,7 +12,7 @@
 #include <filesystem>
 #include <fstream>
 
-#include <helper_func.h>
+#include <fuzz/helper_func.h>
 #include <unistd.h>
 
 namespace fs = std::filesystem;

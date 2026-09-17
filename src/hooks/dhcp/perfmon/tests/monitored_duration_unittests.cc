@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <monitored_duration.h>
+#include <perfmon/monitored_duration.h>
 #include <cc/data.h>
 #include <dhcp/dhcp6.h>
 #include <util/boost_time_utils.h>

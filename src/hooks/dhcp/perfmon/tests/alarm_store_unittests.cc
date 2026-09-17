@@ -6,7 +6,7 @@
 
 /// @file This file contains tests which exercise the AlarmStore class.
 #include <config.h>
-#include <alarm_store.h>
+#include <perfmon/alarm_store.h>
 #include <dhcp/dhcp6.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/multi_threading_utils.h>

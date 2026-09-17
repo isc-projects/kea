@@ -1,4 +1,4 @@
-// Copyright (C) 2024-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2024-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,7 @@
 #include <dhcp/pkt6.h>
 #include <dhcp/dhcp6.h>
 #include <exceptions/exceptions.h>
-#include <monitored_duration.h>
+#include <perfmon/monitored_duration.h>
 #include <util/boost_time_utils.h>
 
 using namespace isc::dhcp;

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,7 @@
 /// Defines the logger used by the flex-id log hooks library.
 #include <config.h>
 
-#include <flex_id_log.h>
+#include <flex_id/flex_id_log.h>
 
 namespace isc {
 namespace flex_id {

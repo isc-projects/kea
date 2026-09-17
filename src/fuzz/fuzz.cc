@@ -15,7 +15,7 @@
 #include <cstdlib>
 #include <string>
 
-#include <fuzz.h>
+#include <fuzz/fuzz.h>
 
 using namespace isc::process;
 using namespace isc::util::encode;

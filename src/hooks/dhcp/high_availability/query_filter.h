@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,7 @@
 #ifndef QUERY_FILTER_H
 #define QUERY_FILTER_H
 
-#include <ha_config.h>
+#include <high_availability/ha_config.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 

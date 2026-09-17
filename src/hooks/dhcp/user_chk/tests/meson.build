@@ -20,7 +20,7 @@ dhcp_user_chk_lib_tests = executable(
     'userid_unittests.cc',
     cpp_args: [f'-DTEST_DATA_BUILDDIR="@current_build_dir@"'],
     dependencies: [GTEST_DEP],
-    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: [dhcp_user_chk_archive] + LIBS_BUILT_SO_FAR,
 )
 test('dhcp-user-chk-lib-tests', dhcp_user_chk_lib_tests, protocol: 'gtest')

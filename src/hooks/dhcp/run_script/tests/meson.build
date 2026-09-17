@@ -22,7 +22,7 @@ dhcp_run_script_lib_tests = executable(
         f'-DRUN_SCRIPT_TEST_SH="@current_build_dir@/run_script_test.sh"',
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: [dhcp_run_script_archive] + LIBS_BUILT_SO_FAR,
 )
 test('dhcp-run-script-lib-tests', dhcp_run_script_lib_tests, protocol: 'gtest')

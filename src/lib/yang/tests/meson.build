@@ -32,7 +32,7 @@ kea_yang_tests = executable(
     'translator_utils_unittests.cc',
     cpp_args: [f'-DCFG_EXAMPLES="@TOP_SOURCE_DIR@/doc/examples"'],
     dependencies: [NETCONF_DEP, GTEST_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: [kea_yang_tests_libs] + LIBS_BUILT_SO_FAR,
 )
 test(

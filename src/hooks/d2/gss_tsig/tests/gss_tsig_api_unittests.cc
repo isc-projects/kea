@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <dns/time_utils.h>
-#include <gss_tsig_api.h>
+#include <gss_tsig/gss_tsig_api.h>
 #include <gss_tsig_api_utils.h>
 #include <testutils/gtest_utils.h>
 #include <gtest/gtest.h>

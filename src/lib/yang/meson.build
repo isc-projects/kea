@@ -24,7 +24,7 @@ kea_yang_lib = shared_library(
     'translator_shared_network.cc',
     'translator_subnet.cc',
     dependencies: NETCONF_DEP,
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     install: true,
     install_dir: LIBDIR,
     install_rpath: INSTALL_RPATH,

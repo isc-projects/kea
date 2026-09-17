@@ -13,7 +13,7 @@
 #define GSS_TSIG_CONTEXT_H
 
 #include <dns/tsig.h>
-#include <gss_tsig_key.h>
+#include <gss_tsig/gss_tsig_key.h>
 #include <boost/shared_ptr.hpp>
 
 namespace isc {

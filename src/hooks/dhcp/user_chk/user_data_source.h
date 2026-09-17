@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,7 @@
 
 /// @file user_data_source.h Defines the base class, UserDataSource.
 #include <exceptions/exceptions.h>
-#include <user.h>
+#include <user_chk/user.h>
 
 namespace user_chk {
 

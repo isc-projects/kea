@@ -1,4 +1,4 @@
-// Copyright (C) 2022-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,7 @@
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
 #include <asiolink/io_service.h>
-#include <mt_lease_query_mgr.h>
+#include <lease_query/mt_lease_query_mgr.h>
 #include <util/multi_threading_mgr.h>
 
 #include <boost/pointer_cast.hpp>

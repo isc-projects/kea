@@ -17,7 +17,7 @@
 #include <iostream>
 #include <string>
 
-#include <fuzz.h>
+#include <fuzz/fuzz.h>
 
 using namespace isc;
 using namespace isc::config;

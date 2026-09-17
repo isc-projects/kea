@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2024-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
-#include <alarm_store.h>
+#include <perfmon/alarm_store.h>
 #include <util/multi_threading_mgr.h>
 
 using namespace isc;

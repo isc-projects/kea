@@ -9,7 +9,7 @@
 
 #include <config.h>
 
-#include <client_server.h>
+#include <radius/client_server.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
 #include <attribute_test.h>

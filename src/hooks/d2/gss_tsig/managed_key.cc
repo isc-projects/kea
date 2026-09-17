@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,9 +7,9 @@
 #include <config.h>
 
 #include <cryptolink/crypto_rng.h>
-#include <gss_tsig_context.h>
-#include <gss_tsig_log.h>
-#include <managed_key.h>
+#include <gss_tsig/gss_tsig_context.h>
+#include <gss_tsig/gss_tsig_log.h>
+#include <gss_tsig/managed_key.h>
 #include <util/chrono_time_utils.h>
 #include <cstring>
 #include <iostream>

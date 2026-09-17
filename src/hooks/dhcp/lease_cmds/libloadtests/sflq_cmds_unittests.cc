@@ -16,7 +16,7 @@
 #include <dhcpsrv/resource_handler.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
-#include <lease_cmds.h>
+#include <lease_cmds/lease_cmds.h>
 #include <lease_cmds_unittest.h>
 #include <stats/stats_mgr.h>
 #include <util/filesystem.h>

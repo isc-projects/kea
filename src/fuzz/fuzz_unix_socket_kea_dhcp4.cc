@@ -20,7 +20,7 @@
 #include <iostream>
 #include <cstdlib>
 
-#include <fuzz.h>
+#include <fuzz/fuzz.h>
 
 using namespace isc::asiolink;
 using namespace isc::config;

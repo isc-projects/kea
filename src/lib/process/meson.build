@@ -16,7 +16,7 @@ kea_process_lib = shared_library(
         f'-DPIDFILE_DIR="@RUNSTATEDIR_INSTALLED@"',
         f'-DLOGFILE_DIR="@LOGDIR_INSTALLED@"',
     ],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     install: true,
     install_dir: LIBDIR,
     install_rpath: INSTALL_RPATH,

@@ -10,9 +10,9 @@
 
 #include <config.h>
 
-#include <lease_cmds.h>
+#include <lease_cmds/lease_cmds.h>
 #include <lease_cmds_log.h>
-#include <binding_variables.h>
+#include <lease_cmds/binding_variables.h>
 #include <cc/command_interpreter.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/hooks.h>

@@ -13,5 +13,5 @@ kea_util_unittests_lib = static_library(
     'testdata.cc',
     'wiredata.cc',
     dependencies: [GTEST_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
 )

@@ -12,12 +12,12 @@
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <blq_service.h>
-#include <bulk_lease_query.h>
-#include <bulk_lease_query4.h>
+#include <lease_query/blq_service.h>
+#include <lease_query/bulk_lease_query.h>
+#include <lease_query/bulk_lease_query4.h>
 #include <lease_query_test_client.h>
 #include <util/multi_threading_mgr.h>
-#include <lease_query_listener.h>
+#include <lease_query/lease_query_listener.h>
 #include <blq4_utils.h>
 
 #include <gtest/gtest.h>

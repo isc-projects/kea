@@ -11,7 +11,7 @@ dhcp_user_chk_lib = shared_library(
     'user_file.cc',
     'user_registry.cc',
     'version.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     install: false,
     install_dir: HOOKS_PATH,
     install_rpath: INSTALL_RPATH,

@@ -24,8 +24,8 @@
 
 #include <gtest/gtest.h>
 
-#include <lease_query_impl_factory.h>
-#include <lease_query_log.h>
+#include <lease_query/lease_query_impl_factory.h>
+#include <lease_query/lease_query_log.h>
 #include <test_lease_mgr.h>
 
 using namespace std;

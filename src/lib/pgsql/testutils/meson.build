@@ -10,5 +10,5 @@ kea_pgsql_testutils_lib = static_library(
         f'-DDATABASE_WIPE_DIR="@DATABASE_SCRIPTS_DIR@"',
     ],
     dependencies: [GTEST_DEP, POSTGRESQL_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
 )

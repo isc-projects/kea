@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,7 @@
 
 #include <cc/data.h>
 #include <cc/simple_parser.h>
-#include <cfg_multi_threading.h>
+#include <dhcpsrv/cfg_multi_threading.h>
 #include <util/multi_threading_mgr.h>
 
 using namespace isc::data;

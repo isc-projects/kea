@@ -16,8 +16,8 @@
 #include <util/multi_threading_mgr.h>
 #include <util/str.h>
 #include <ha_log.h>
-#include <ha_config.h>
-#include <ha_service_states.h>
+#include <high_availability/ha_config.h>
+#include <high_availability/ha_service_states.h>
 #include <sstream>
 
 using namespace isc::asiolink;

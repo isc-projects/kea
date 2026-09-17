@@ -38,7 +38,7 @@ dhcp_lease_query_tests = executable(
     'run_unittests.cc',
     cpp_args: [f'-DTEST_DATA_BUILDDIR="@current_build_dir@"'],
     dependencies: dhcp_lease_query_tests_dependencies,
-    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: [dhcp_lease_query_tests_libs] + LIBS_BUILT_SO_FAR,
 )
 test(

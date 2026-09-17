@@ -7,7 +7,7 @@ dhcp_ddns_tuning_lib = shared_library(
     'expression_cache.cc',
     'version.cc',
     dependencies: [CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     install: true,
     install_dir: HOOKS_PATH,
     install_rpath: INSTALL_RPATH,

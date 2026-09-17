@@ -24,7 +24,7 @@ ddns_gss_tsig_tests = executable(
     'tkey_unittests.cc',
     cpp_args: [f'-DTEST_DATA_DIR="@current_source_dir@"'],
     dependencies: [KRB5_DEP, GTEST_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: [ddns_gss_tsig_tests_libs] + LIBS_BUILT_SO_FAR,
 )
 test('ddns-gss-tsig-tests', ddns_gss_tsig_tests, protocol: 'gtest')
@@ -34,7 +34,7 @@ executable(
     'nsupdate.cc',
     cpp_args: [f'-DTEST_DATA_DIR="@current_source_dir@"'],
     dependencies: [KRB5_DEP],
-    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: [ddns_gss_tsig_archive] + LIBS_BUILT_SO_FAR,
 )
 

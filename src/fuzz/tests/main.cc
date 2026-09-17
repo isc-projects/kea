@@ -23,7 +23,7 @@
 #include <vector>
 
 #include <dirent.h>
-#include <fuzz.h>
+#include <fuzz/fuzz.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>

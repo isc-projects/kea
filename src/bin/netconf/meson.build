@@ -20,7 +20,7 @@ netconf_lib = static_library(
     'stdout_control_socket.cc',
     'unix_control_socket.cc',
     dependencies: [NETCONF_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )
 
@@ -28,7 +28,7 @@ executable(
     'kea-netconf',
     'main.cc',
     dependencies: [NETCONF_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     install: true,
     install_dir: SBINDIR,
     install_rpath: INSTALL_RPATH,

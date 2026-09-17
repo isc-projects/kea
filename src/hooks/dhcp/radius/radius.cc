@@ -12,12 +12,12 @@
 #include <dhcpsrv/cfg_multi_threading.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <util/multi_threading_mgr.h>
-#include <radius.h>
-#include <radius_access.h>
-#include <radius_accounting.h>
+#include <radius/radius.h>
+#include <radius/radius_access.h>
+#include <radius/radius_accounting.h>
 #include <radius_log.h>
-#include <radius_parsers.h>
-#include <radius_tls.h>
+#include <radius/radius_parsers.h>
+#include <radius/radius_tls.h>
 #include <exception>
 #include <sys/resource.h>
 

@@ -1,7 +1,7 @@
 kea_exceptions_lib = shared_library(
     'kea-exceptions',
     'exceptions.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     install: true,
     install_dir: LIBDIR,
     install_rpath: INSTALL_RPATH,

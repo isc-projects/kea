@@ -15,8 +15,8 @@
 #include <dhcpsrv/legal_log_mgr_factory.h>
 #include <dhcpsrv/legal_log_db_log.h>
 #include <hooks/hooks_parser.h>
-#include <legal_log_log.h>
-#include <rotating_file.h>
+#include <forensic_log/legal_log_log.h>
+#include <forensic_log/rotating_file.h>
 #include <util/filesystem.h>
 #include <testutils/env_var_wrapper.h>
 #include <testutils/log_utils.h>

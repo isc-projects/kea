@@ -6,9 +6,9 @@
 
 #include <config.h>
 
-#include <radius_request.h>
-#include <radius_access.h>
-#include <radius_accounting.h>
+#include <radius/radius_request.h>
+#include <radius/radius_access.h>
+#include <radius/radius_accounting.h>
 #include <radius_log.h>
 #include <sstream>
 

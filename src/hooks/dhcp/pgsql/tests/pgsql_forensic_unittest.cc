@@ -14,7 +14,7 @@
 #include <dhcpsrv/testutils/forensic_test_utils.h>
 #include <dhcpsrv/testutils/test_utils.h>
 #include <pgsql/testutils/pgsql_schema.h>
-#include <pgsql_legal_log.h>
+#include <pgsql/pgsql_legal_log.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/log_utils.h>
 #include <testutils/multi_threading_utils.h>

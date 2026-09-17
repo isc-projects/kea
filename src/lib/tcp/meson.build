@@ -9,7 +9,7 @@ kea_tcp_lib = shared_library(
     'tcp_messages.cc',
     'tcp_stream_msg.cc',
     dependencies: [CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     install: true,
     install_dir: LIBDIR,
     install_rpath: INSTALL_RPATH,

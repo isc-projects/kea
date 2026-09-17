@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include "command_options_helper.h"
+#include <perfdhcp/tests/command_options_helper.h>
 
 #include <perfdhcp/stats_mgr.h>
 

@@ -6,9 +6,9 @@
 
 #include <config.h>
 
-#include <gss_tsig_api.h>
-#include <gss_tsig_log.h>
-#include <gss_tsig_messages.h>
+#include <gss_tsig/gss_tsig_api.h>
+#include <gss_tsig/gss_tsig_log.h>
+#include <gss_tsig/gss_tsig_messages.h>
 #include <cstring>
 #include <limits>
 #include <sstream>

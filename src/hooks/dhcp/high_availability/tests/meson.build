@@ -22,7 +22,7 @@ dhcp_ha_lib_tests = executable(
         f'-DTEST_HTTP_DIR="@TOP_SOURCE_DIR@/src/lib/http/tests/testdata"',
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: [dhcp_ha_archive, [kea_testutils_lib]] + LIBS_BUILT_SO_FAR,
 )
 test(

@@ -1,4 +1,4 @@
-// Copyright (C) 2022-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,7 @@
 
 #include <config.h>
 
-#include <blq_msg.h>
+#include <lease_query/blq_msg.h>
 #include <boost/enable_shared_from_this.hpp>
 #include <functional>
 

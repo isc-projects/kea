@@ -6,8 +6,8 @@
 
 #include <config.h>
 #include <database/audit_entry.h>
-#include <ddns_tuning.h>
-#include <ddns_tuning_log.h>
+#include <ddns_tuning/ddns_tuning.h>
+#include <ddns_tuning/ddns_tuning_log.h>
 #include <cc/command_interpreter.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option4_client_fqdn.h>

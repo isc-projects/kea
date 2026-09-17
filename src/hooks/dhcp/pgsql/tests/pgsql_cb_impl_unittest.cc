@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +11,7 @@
 #include <testutils/gtest_utils.h>
 
 #include <gtest/gtest.h>
-#include <pgsql_cb_impl.h>
+#include <pgsql/pgsql_cb_impl.h>
 #include <vector>
 
 using namespace isc::db;

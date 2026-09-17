@@ -10,7 +10,7 @@
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <dns/opcode.h>
-#include <gss_tsig_context.h>
+#include <gss_tsig/gss_tsig_context.h>
 #include <gss_tsig_api_utils.h>
 #include <testutils/gtest_utils.h>
 #include <gtest/gtest.h>

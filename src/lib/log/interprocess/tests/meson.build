@@ -9,7 +9,7 @@ kea_log_interprocess_tests = executable(
     'run_unittests.cc',
     cpp_args: [f'-DTEST_DATA_TOPBUILDDIR="@TOP_BUILD_DIR@"'],
     dependencies: [GTEST_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
 test('kea-log-interprocess-tests', kea_log_interprocess_tests, protocol: 'gtest')

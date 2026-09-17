@@ -14,7 +14,7 @@ kea_config_lib = shared_library(
     'unix_command_config.cc',
     'unix_command_mgr.cc',
     dependencies: [CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     install: true,
     install_dir: LIBDIR,
     install_rpath: INSTALL_RPATH,

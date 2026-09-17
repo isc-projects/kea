@@ -17,9 +17,9 @@
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <bulk_lease_query4.h>
-#include <blq_service.h>
-#include <lease_query_impl4.h>
+#include <lease_query/bulk_lease_query4.h>
+#include <lease_query/blq_service.h>
+#include <lease_query/lease_query_impl4.h>
 #include <testutils/gtest_utils.h>
 #include <test_lease_mgr.h>
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,7 @@
 /// @file This file contains tests which exercise the ICMPMsg class.
 
 #include <config.h>
-#include <icmp_msg.h>
+#include <ping_check/icmp_msg.h>
 #include <asiolink/io_address.h>
 #include <testutils/gtest_utils.h>
 #include <util/str.h>

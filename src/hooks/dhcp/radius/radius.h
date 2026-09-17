@@ -7,9 +7,9 @@
 #ifndef RADIUS_H
 #define RADIUS_H
 
-#include <cfg_attribute.h>
-#include <client_exchange.h>
-#include <radius_backend.h>
+#include <radius/cfg_attribute.h>
+#include <radius/client_exchange.h>
+#include <radius/radius_backend.h>
 #include <exceptions/exceptions.h>
 #include <cc/data.h>
 #include <asiolink/asio_wrapper.h>

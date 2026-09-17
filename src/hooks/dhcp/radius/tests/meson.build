@@ -37,7 +37,7 @@ dhcp_radius_tests = executable(
         f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: [dhcp_radius_tests_libs] + LIBS_BUILT_SO_FAR,
 )
 test('dhcp-radius-tests', dhcp_radius_tests, protocol: 'gtest', timeout: 60)

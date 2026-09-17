@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include "command_options_helper.h"
-#include "../avalanche_scen.h"
+#include <perfdhcp/tests/command_options_helper.h>
+#include <perfdhcp/avalanche_scen.h>
 
 #include <asiolink/io_address.h>
 #include <exceptions/exceptions.h>
@@ -19,11 +19,8 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <algorithm>
-#include <cstddef>
 #include <stdint.h>
 #include <string>
-#include <fstream>
 #include <gtest/gtest.h>
 
 using namespace std;

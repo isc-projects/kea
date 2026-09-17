@@ -1,4 +1,4 @@
-// Copyright (C) 2022-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,14 +9,14 @@
 
 #include <cc/base_stamped_element.h>
 #include <cc/data.h>
-#include <ddns_tuning_log.h>
+#include <ddns_tuning/ddns_tuning_log.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <eval/evaluate.h>
 #include <eval/token.h>
 #include <dhcpsrv/subnet.h>
-#include <expression_cache.h>
+#include <ddns_tuning/expression_cache.h>
 
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>

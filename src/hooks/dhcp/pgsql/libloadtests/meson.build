@@ -10,7 +10,7 @@ dhcp_pgsql_libload_tests = executable(
         f'-DLIBDHCP_PGSQL_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/pgsql/libdhcp_pgsql.so"',
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )
 test(

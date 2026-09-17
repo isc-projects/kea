@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,9 +9,9 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_multi_threading.h>
 #include <util/multi_threading_mgr.h>
-#include <blq_service.h>
+#include <lease_query/blq_service.h>
 #include <tcp/tcp_listener.h>
-#include <lease_query_log.h>
+#include <lease_query/lease_query_log.h>
 
 using namespace isc;
 using namespace isc::asiolink;

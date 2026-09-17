@@ -6,10 +6,10 @@
 
 #include <config.h>
 
-#include <command_creator.h>
+#include <high_availability/command_creator.h>
 #include <ha_log.h>
-#include <ha_service.h>
-#include <ha_service_states.h>
+#include <high_availability/ha_service.h>
+#include <high_availability/ha_service_states.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <config/cmd_response_creator.h>

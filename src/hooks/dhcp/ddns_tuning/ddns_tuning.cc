@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include <ddns_tuning.h>
-#include <ddns_tuning_log.h>
+#include <ddns_tuning/ddns_tuning.h>
+#include <ddns_tuning/ddns_tuning_log.h>
 #include <eval/token.h>
 #include <eval/eval_context.h>
 #include <cc/simple_parser.h>

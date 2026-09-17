@@ -7,10 +7,10 @@
 #ifndef RADIUS_PARSER_H
 #define RADIUS_PARSER_H
 
-#include <radius.h>
-#include <radius_access.h>
-#include <radius_accounting.h>
-#include <radius_tls.h>
+#include <radius/radius.h>
+#include <radius/radius_access.h>
+#include <radius/radius_accounting.h>
+#include <radius/radius_tls.h>
 #include <cc/data.h>
 #include <cc/simple_parser.h>
 #include <set>

@@ -14,10 +14,10 @@
 #include <database/database_connection.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
-#include <radius_access.h>
-#include <radius_accounting.h>
-#include <radius_status.h>
-#include <radius.h>
+#include <radius/radius_access.h>
+#include <radius/radius_accounting.h>
+#include <radius/radius_status.h>
+#include <radius/radius.h>
 #include <gtest/gtest.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <atomic>

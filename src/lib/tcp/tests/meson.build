@@ -14,7 +14,7 @@ kea_tcp_tests = executable(
     'tls_listener_unittests.cc',
     cpp_args: [f'-DTEST_CA_DIR="@TEST_CA_DIR@"'],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: [kea_util_unittests_lib, kea_asiolink_testutils_lib] + LIBS_BUILT_SO_FAR,
 )
 test(

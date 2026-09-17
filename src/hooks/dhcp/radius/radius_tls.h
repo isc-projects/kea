@@ -7,7 +7,7 @@
 #ifndef RADIUS_TLS_H
 #define RADIUS_TLS_H
 
-#include <radius_service.h>
+#include <radius/radius_service.h>
 
 namespace isc {
 namespace radius {

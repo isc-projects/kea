@@ -10,7 +10,7 @@
 #include <asiolink/io_service_mgr.h>
 #include <cc/command_interpreter.h>
 #include <hooks/hooks.h>
-#include <run_script.h>
+#include <run_script/run_script.h>
 #include <run_script_log.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/pkt4.h>

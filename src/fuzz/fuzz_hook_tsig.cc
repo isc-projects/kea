@@ -18,9 +18,9 @@
 #include <vector>
 
 #include <fuzzer/FuzzedDataProvider.h>
-#include <gss_tsig_context.h>
-#include <gss_tsig_key.h>
-#include <tkey_exchange.h>
+#include <gss_tsig/gss_tsig_context.h>
+#include <gss_tsig/gss_tsig_key.h>
+#include <gss_tsig/tkey_exchange.h>
 
 using namespace isc;
 using namespace isc::dns;

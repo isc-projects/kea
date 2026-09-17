@@ -31,7 +31,7 @@
 #include <dhcpsrv/cfg_subnets6.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>
-#include <test_utils.h>
+#include <forensic_log/tests/test_utils.h>
 
 #include <gtest/gtest.h>
 

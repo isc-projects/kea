@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,7 @@
 #include <exceptions/exceptions.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>
-#include <test_utils.h>
+#include <forensic_log/tests/test_utils.h>
 
 #include <gtest/gtest.h>
 

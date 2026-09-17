@@ -17,7 +17,7 @@ kea_lfc_tests = executable(
         f'-DTEST_SCRIPT_SH="@current_build_dir@/process_test.sh"',
     ],
     dependencies: [GTEST_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: [lfc_lib] + LIBS_BUILT_SO_FAR,
 )
 test(

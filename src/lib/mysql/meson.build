@@ -8,7 +8,7 @@ kea_mysql_lib = shared_library(
     'mysql_connection.cc',
     cpp_args: [f'-DKEA_ADMIN="@KEA_ADMIN_INSTALLED@"'],
     dependencies: [MYSQL_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     install: true,
     install_dir: LIBDIR,
     install_rpath: INSTALL_RPATH,

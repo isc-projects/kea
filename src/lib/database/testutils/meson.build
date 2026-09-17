@@ -12,5 +12,5 @@ kea_database_testutils_lib = static_library(
         f'-DFILE_DIR="@current_source_dir@"',
     ],
     dependencies: [GTEST_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
 )

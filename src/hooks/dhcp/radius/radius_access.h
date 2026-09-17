@@ -10,8 +10,8 @@
 #include <hooks/hooks.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
-#include <radius_service.h>
-#include <radius_request.h>
+#include <radius/radius_service.h>
+#include <radius/radius_request.h>
 #include <map>
 #include <mutex>
 

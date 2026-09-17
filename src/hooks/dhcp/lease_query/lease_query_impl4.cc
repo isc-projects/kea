@@ -13,8 +13,8 @@
 #include <dhcp/option_custom.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <lease_query_log.h>
-#include <lease_query_impl4.h>
+#include <lease_query/lease_query_log.h>
+#include <lease_query/lease_query_impl4.h>
 #include <stats/stats_mgr.h>
 #include <util/str.h>
 

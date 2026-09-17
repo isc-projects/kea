@@ -9,7 +9,7 @@
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/tcp_acceptor.h>
 #include <asiolink/testutils/test_tls.h>
-#include <radius.h>
+#include <radius/radius.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
 #include <attribute_test.h>

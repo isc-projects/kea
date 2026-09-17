@@ -6,7 +6,7 @@ dhcp_flex_id_lib = shared_library(
     'load_unload.cc',
     'version.cc',
     dependencies: [CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     install: true,
     install_dir: HOOKS_PATH,
     install_rpath: INSTALL_RPATH,

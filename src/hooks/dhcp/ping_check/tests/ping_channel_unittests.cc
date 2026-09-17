@@ -8,7 +8,7 @@
 
 #include <config.h>
 
-#include <ping_channel.h>
+#include <ping_check/ping_channel.h>
 #include <ping_test_utils.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service_thread_pool.h>

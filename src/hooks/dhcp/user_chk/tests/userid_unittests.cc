@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
-#include <user.h>
+#include <user_chk/user.h>
 
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>

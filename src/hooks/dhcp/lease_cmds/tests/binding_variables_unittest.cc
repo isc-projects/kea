@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <lease_cmds.h>
+#include <lease_cmds/lease_cmds.h>
 #include <hooks/hooks_manager.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>

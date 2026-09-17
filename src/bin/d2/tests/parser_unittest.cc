@@ -20,7 +20,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include "test_data_files_config.h"
+#include <d2/tests/test_data_files_config.h>
 
 using namespace isc::data;
 using namespace isc::test;

@@ -9,8 +9,8 @@
 #include <asiolink/asio_wrapper.h>
 #include <config/cmd_response_creator.h>
 #include <ha_test.h>
-#include <ha_config.h>
-#include <ha_service.h>
+#include <high_availability/ha_config.h>
+#include <high_availability/ha_service.h>
 
 #include <util/multi_threading_mgr.h>
 #include <testutils/gtest_utils.h>

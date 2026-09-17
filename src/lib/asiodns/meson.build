@@ -3,7 +3,7 @@ kea_asiodns_lib = shared_library(
     'asiodns_messages.cc',
     'io_fetch.cc',
     'logger.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     install: true,
     install_dir: LIBDIR,
     install_rpath: INSTALL_RPATH,

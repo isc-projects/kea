@@ -8,7 +8,7 @@
 /// configuration cache.
 
 #include <config.h>
-#include <config_cache.h>
+#include <ping_check/config_cache.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>

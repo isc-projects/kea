@@ -29,8 +29,8 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <client_attribute.h>
-#include <client_message.h>
+#include <radius/client_attribute.h>
+#include <radius/client_message.h>
 
 namespace isc {
 namespace radius {

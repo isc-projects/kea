@@ -9,7 +9,7 @@
 
 #include <config.h>
 
-#include <fuzz.h>
+#include <fuzz/fuzz.h>
 
 int
 LLVMFuzzerInitialize() {

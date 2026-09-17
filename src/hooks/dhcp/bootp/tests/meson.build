@@ -10,7 +10,7 @@ dhcp_bootp_lib_tests = executable(
         f'-DBOOTP_LIB_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/bootp/libdhcp_bootp.so"',
     ],
     dependencies: [GTEST_DEP],
-    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: [dhcp_bootp_archive] + LIBS_BUILT_SO_FAR,
 )
 test('dhcp-bootp-lib-tests', dhcp_bootp_lib_tests, protocol: 'gtest')

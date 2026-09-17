@@ -35,5 +35,5 @@ kea_dhcpsrv_testutils_lib = static_library(
     sources,
     cpp_args: [f'-DDATABASE_SCRIPTS_DIR="@DATABASE_SCRIPTS_DIR@"'],
     dependencies: dependencies,
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
 )

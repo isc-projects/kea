@@ -15,8 +15,8 @@
 #include <eval/eval_context.h>
 #include <hooks/hooks.h>
 #include <process/daemon.h>
-#include <flex_id.h>
-#include <flex_id_log.h>
+#include <flex_id/flex_id.h>
+#include <flex_id/flex_id_log.h>
 
 using namespace isc;
 using namespace hooks;

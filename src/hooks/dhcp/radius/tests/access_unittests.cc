@@ -12,9 +12,9 @@
 
 #include <config.h>
 
-#include <radius.h>
-#include <radius_access.h>
-#include <radius_utils.h>
+#include <radius/radius.h>
+#include <radius/radius_access.h>
+#include <radius/radius_utils.h>
 #include <attribute_test.h>
 
 #include <asiolink/asio_wrapper.h>

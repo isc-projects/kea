@@ -16,7 +16,7 @@ dhcp_lease_cmds_libload_tests = executable(
         f'-DLIBDHCP_LEASE_CMDS_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/lease_cmds/libdhcp_lease_cmds.so"',
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: [libs_testutils] + LIBS_BUILT_SO_FAR,
 )
 test(

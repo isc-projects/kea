@@ -20,7 +20,7 @@
 #include <string>
 
 #include <fuzzer/FuzzedDataProvider.h>
-#include <helper_func.h>
+#include <fuzz/helper_func.h>
 #include <unistd.h>
 
 using namespace isc::config;

@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
-#include "rate_control.h"
+#include <perfdhcp/rate_control.h>
 #include <gtest/gtest.h>
 
 

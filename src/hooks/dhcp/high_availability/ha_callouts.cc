@@ -10,7 +10,7 @@
 
 #include <config.h>
 
-#include <ha_impl.h>
+#include <high_availability/ha_impl.h>
 #include <ha_log.h>
 #include <asiolink/io_service.h>
 #include <asiolink/io_service_mgr.h>

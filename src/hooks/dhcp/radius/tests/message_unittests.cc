@@ -9,8 +9,8 @@
 
 #include <config.h>
 
-#include <client_attribute.h>
-#include <client_message.h>
+#include <radius/client_attribute.h>
+#include <radius/client_message.h>
 #include <cryptolink/crypto_hash.h>
 #include <testutils/gtest_utils.h>
 #include <util/str.h>

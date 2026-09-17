@@ -15,7 +15,7 @@ kea_asiolink_lib = shared_library(
     'process_spawn.cc',
     'unix_domain_socket.cc',
     dependencies: [CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     install: true,
     install_dir: LIBDIR,
     install_rpath: INSTALL_RPATH,

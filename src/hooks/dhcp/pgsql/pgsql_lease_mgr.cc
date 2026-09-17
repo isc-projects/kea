@@ -17,7 +17,7 @@
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/sflq_allocator.h>
 #include <pgsql_lb_log.h>
-#include <pgsql_lease_mgr.h>
+#include <pgsql/pgsql_lease_mgr.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <util/str.h>

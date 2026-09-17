@@ -10,7 +10,7 @@ dhcp_class_cmds_libloadtests = executable(
         f'-DLIBDHCP_CLASS_CMDS_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/class_cmds/libdhcp_class_cmds.so"',
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )
 test(

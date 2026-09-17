@@ -9,7 +9,7 @@
 
 #include <dhcp/pkt.h>
 #include <dhcpsrv/subnet_id.h>
-#include <monitored_duration.h>
+#include <perfmon/monitored_duration.h>
 
 #include <cstdint>
 

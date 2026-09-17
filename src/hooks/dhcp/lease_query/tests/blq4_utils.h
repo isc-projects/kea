@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,8 +11,8 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/pkt4.h>
-#include <bulk_lease_query4.h>
-#include <lease_query_impl4.h>
+#include <lease_query/bulk_lease_query4.h>
+#include <lease_query/lease_query_impl4.h>
 
 #include <gtest/gtest.h>
 #include <sstream>

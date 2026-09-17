@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <ping_check_mgr.h>
+#include <ping_check/ping_check_mgr.h>
 #include <ping_check_log.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/hooks_manager.h>

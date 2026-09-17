@@ -12,7 +12,7 @@
 #include <hooks/callout_manager.h>
 #include <hooks/hooks_parser.h>
 #include <dhcpsrv/legal_log_mgr.h>
-#include <rotating_file.h>
+#include <forensic_log/rotating_file.h>
 #include <util/reconnect_ctl.h>
 #include <testutils/log_utils.h>
 

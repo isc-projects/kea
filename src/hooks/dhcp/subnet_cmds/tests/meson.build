@@ -14,7 +14,7 @@ dhcp_subnet_cmds_tests = executable(
         f'-DLIB_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/subnet_cmds/libdhcp_subnet_cmds.so"',
     ],
     dependencies: [CRYPTO_DEP, GTEST_DEP],
-    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: [dhcp_subnet_cmds_tests_libs] + LIBS_BUILT_SO_FAR,
 )
 test('dhcp-subnet-cmds-tests', dhcp_subnet_cmds_tests, protocol: 'gtest')

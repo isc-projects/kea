@@ -7,10 +7,10 @@
 #include <config.h>
 
 #include <cc/command_interpreter.h>
-#include <gss_tsig_impl.h>
+#include <gss_tsig/gss_tsig_impl.h>
 #include <hooks/hooks_manager.h>
 #include <gss_tsig_api_utils.h>
-#include <testutils/gss_tsig_dns_server.h>
+#include <gss_tsig/testutils/gss_tsig_dns_server.h>
 #include <testutils/gtest_utils.h>
 
 #include <cstdlib>

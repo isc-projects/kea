@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <util/str.h>
-#include <client_dictionary.h>
+#include <radius/client_dictionary.h>
 #include <radius_log.h>
 #include <boost/lexical_cast.hpp>
 #include <fstream>

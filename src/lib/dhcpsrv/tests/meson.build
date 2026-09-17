@@ -24,7 +24,7 @@ configure_file(
 co1 = shared_library(
     'co1',
     'callout_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
     name_suffix: 'so',
@@ -32,7 +32,7 @@ co1 = shared_library(
 co2 = shared_library(
     'co2',
     'callout_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
     name_suffix: 'so',
@@ -40,7 +40,7 @@ co2 = shared_library(
 co3 = shared_library(
     'co3',
     'callout_params_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
     name_suffix: 'so',
@@ -135,7 +135,7 @@ kea_dhcpsrv_tests = executable(
         f'-DDEFAULT_HOOKS_PATH="@DEFAULT_HOOKS_PATH@"',
     ],
     dependencies: [CRYPTO_DEP, GTEST_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,
 )
 test(
@@ -147,4 +147,3 @@ test(
     priority: -1,
     timeout: 240,
 )
-

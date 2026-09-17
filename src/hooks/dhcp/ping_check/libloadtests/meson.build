@@ -11,7 +11,7 @@ dhcp_ping_check_libloadtests = executable(
         f'-DPING_CHECK_LIB_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/ping_check/libdhcp_ping_check.so"',
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: [kea_testutils_lib] + LIBS_BUILT_SO_FAR,
 )
 test(

@@ -54,7 +54,7 @@ kea_dhcp_lib = shared_library(
     'pkt_filter_inet6.cc',
     pkt_filter_cc,
     'protocol_util.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     install: true,
     install_dir: LIBDIR,
     install_rpath: INSTALL_RPATH,

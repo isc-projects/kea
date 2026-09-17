@@ -29,7 +29,7 @@ dhcp_radius_lib = shared_library(
     'version.cc',
     cpp_args: [f'-DDICTIONARY="@SYSCONFDIR_INSTALLED@/kea/radius/dictionary"'],
     dependencies: [CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     install: true,
     install_dir: HOOKS_PATH,
     install_rpath: INSTALL_RPATH,

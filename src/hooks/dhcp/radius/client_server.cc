@@ -9,7 +9,7 @@
 #include <asiolink/io_address.h>
 #include <cryptolink/crypto_rng.h>
 #include <util/multi_threading_mgr.h>
-#include <client_server.h>
+#include <radius/client_server.h>
 #include <radius_log.h>
 
 #include <sys/types.h>

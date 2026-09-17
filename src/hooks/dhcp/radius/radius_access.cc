@@ -11,10 +11,10 @@
 #include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host_mgr.h>
-#include <radius_access.h>
+#include <radius/radius_access.h>
 #include <radius_log.h>
-#include <radius_status.h>
-#include <radius_utils.h>
+#include <radius/radius_status.h>
+#include <radius/radius_utils.h>
 #include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <util/str.h>

@@ -44,7 +44,7 @@ dhcp_forensic_log_tests = executable(
         f'-DINVALID_FORENSIC_POSTROTATE_TEST_SH="@TOP_SOURCE_DIR@/README"',
     ],
     dependencies: dependencies,
-    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: [dhcp_forensic_log_tests_libs] + LIBS_BUILT_SO_FAR,
 )
 test(

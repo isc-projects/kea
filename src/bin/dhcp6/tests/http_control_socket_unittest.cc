@@ -34,7 +34,7 @@
 #include <stats/stats_mgr.h>
 #include <util/chrono_time_utils.h>
 
-#include "marker_file.h"
+#include <dhcp6/tests/marker_file.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>

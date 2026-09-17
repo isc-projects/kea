@@ -11,7 +11,7 @@ dhcp_flex_option_libload_tests = executable(
         f'-DFLEX_OPTION_LIB_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/flex_option/libdhcp_flex_option.so"',
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )
 test(

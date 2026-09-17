@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include <ha_impl.h>
-#include <ha_service_states.h>
+#include <high_availability/ha_impl.h>
+#include <high_availability/ha_service_states.h>
 #include <ha_test.h>
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>

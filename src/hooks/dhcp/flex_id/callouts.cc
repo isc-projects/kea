@@ -22,7 +22,7 @@
 #include <eval/evaluate.h>
 #include <eval/token.h>
 #include <eval/eval_context.h>
-#include <flex_id_log.h>
+#include <flex_id/flex_id_log.h>
 #include <algorithm>
 #include <sstream>
 

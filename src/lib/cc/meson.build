@@ -15,7 +15,7 @@ kea_cc_lib = shared_library(
     'stamped_value.cc',
     'user_context.cc',
     cpp_args: kea_cc_lib_cpp_args,
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     install: true,
     install_dir: LIBDIR,
     install_rpath: INSTALL_RPATH,

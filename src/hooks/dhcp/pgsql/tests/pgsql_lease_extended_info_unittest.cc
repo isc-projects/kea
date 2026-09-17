@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,7 @@
 #include <cc/data.h>
 #include <dhcpsrv/testutils/generic_lease_extended_info_unittest.h>
 #include <pgsql/testutils/pgsql_schema.h>
-#include <pgsql_lease_mgr.h>
+#include <pgsql/pgsql_lease_mgr.h>
 
 using namespace isc;
 using namespace isc::asiolink;

@@ -1,7 +1,7 @@
 kea_util_io_lib = shared_library(
     'kea-util-io',
     'fd.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     install: true,
     install_dir: LIBDIR,
     install_rpath: INSTALL_RPATH,

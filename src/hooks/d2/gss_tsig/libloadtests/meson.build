@@ -12,7 +12,7 @@ ddns_gss_tsig_libloadtests = executable(
         f'-DLIBDHCP_GSS_TSIG_SO="@TOP_BUILD_DIR@/src/hooks/d2/gss_tsig/libddns_gss_tsig.so"',
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
 )
 test(

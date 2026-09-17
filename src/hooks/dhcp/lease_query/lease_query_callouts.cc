@@ -11,9 +11,9 @@
 #include <database/audit_entry.h>
 #include <hooks/hooks.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <lease_query_log.h>
-#include <lease_query_impl_factory.h>
-#include <blq_service.h>
+#include <lease_query/lease_query_log.h>
+#include <lease_query/lease_query_impl_factory.h>
+#include <lease_query/blq_service.h>
 #include <process/daemon.h>
 #include <stats/stats_mgr.h>
 

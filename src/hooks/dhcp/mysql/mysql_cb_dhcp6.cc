@@ -24,8 +24,8 @@
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <mysql/mysql_connection.h>
-#include <mysql_cb_dhcp6.h>
-#include <mysql_cb_impl.h>
+#include <mysql/mysql_cb_dhcp6.h>
+#include <mysql/mysql_cb_impl.h>
 #include <mysql_query_macros_dhcp.h>
 #include <util/boost_time_utils.h>
 #include <util/buffer.h>

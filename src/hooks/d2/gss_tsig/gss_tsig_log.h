@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,7 @@
 
 #include <log/logger_support.h>
 #include <log/macros.h>
-#include <gss_tsig_messages.h>
+#include <gss_tsig/gss_tsig_messages.h>
 
 namespace isc {
 namespace gss_tsig {

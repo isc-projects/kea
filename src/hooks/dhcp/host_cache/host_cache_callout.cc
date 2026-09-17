@@ -10,7 +10,7 @@
 
 #include <config.h>
 
-#include <host_cache.h>
+#include <host_cache/host_cache.h>
 #include <host_cache_log.h>
 #include <cc/command_interpreter.h>
 #include <hooks/hooks.h>

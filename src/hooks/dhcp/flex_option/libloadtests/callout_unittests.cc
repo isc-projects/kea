@@ -12,7 +12,7 @@
 
 #include <config.h>
 
-#include <flex_option.h>
+#include <flex_option/flex_option.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/callout_manager.h>

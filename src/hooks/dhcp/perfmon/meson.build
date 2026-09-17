@@ -11,7 +11,7 @@ dhcp_perfmon_lib = shared_library(
     'perfmon_mgr.cc',
     'version.cc',
     dependencies: [CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     install: true,
     install_dir: HOOKS_PATH,
     install_rpath: INSTALL_RPATH,

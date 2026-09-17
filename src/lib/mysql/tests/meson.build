@@ -17,7 +17,7 @@ kea_mysql_tests = executable(
         f'-DKEA_ADMIN="@KEA_ADMIN_BUILT@"',
     ],
     dependencies: [GTEST_DEP, MYSQL_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,
 )
 test(

@@ -20,7 +20,7 @@
 #include <iostream>
 #include <vector>
 
-#include <fuzz.h>
+#include <fuzz/fuzz.h>
 
 using namespace isc;
 using namespace isc::config;

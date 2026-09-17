@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <pgsql_fb_log.h>
-#include <pgsql_legal_log.h>
+#include <pgsql/pgsql_legal_log.h>
 #include <dhcpsrv/legal_log_mgr_factory.h>
 #include <dhcpsrv/legal_log_db_log.h>
 #include <dhcpsrv/network_state.h>

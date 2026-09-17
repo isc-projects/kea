@@ -21,7 +21,7 @@
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <mysql_hb_log.h>
-#include <mysql_host_data_source.h>
+#include <mysql/mysql_host_data_source.h>
 #include <util/buffer.h>
 #include <util/multi_threading_mgr.h>
 #include <util/optional.h>

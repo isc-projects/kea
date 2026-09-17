@@ -8,7 +8,7 @@
 #define RADIUS_CLIENT_DICTIONARY_H
 
 #include <exceptions/exceptions.h>
-#include <client.h>
+#include <radius/client.h>
 
 #include <cstdint>
 #include <istream>

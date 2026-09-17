@@ -20,7 +20,7 @@
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <pgsql_hb_log.h>
-#include <pgsql_host_data_source.h>
+#include <pgsql/pgsql_host_data_source.h>
 #include <util/buffer.h>
 #include <util/multi_threading_mgr.h>
 #include <util/optional.h>

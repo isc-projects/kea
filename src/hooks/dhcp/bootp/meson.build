@@ -4,7 +4,7 @@ dhcp_bootp_lib = shared_library(
     'bootp_log.cc',
     'bootp_messages.cc',
     'version.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     install: true,
     install_dir: HOOKS_PATH,
     install_rpath: INSTALL_RPATH,

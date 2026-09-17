@@ -12,7 +12,7 @@
 
 #include <config.h>
 
-#include <radius_parsers.h>
+#include <radius/radius_parsers.h>
 #include <cc/default_credentials.h>
 #include <dhcp/pkt4.h>
 #include <dhcpsrv/cfgmgr.h>

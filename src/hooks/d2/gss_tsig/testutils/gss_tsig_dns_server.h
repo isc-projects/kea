@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,10 +9,10 @@
 
 #include <asiolink/io_service.h>
 #include <dns/message.h>
-#include <gss_tsig_api.h>
-#include <gss_tsig_context.h>
-#include <managed_key.h>
-#include <tkey_exchange.h>
+#include <gss_tsig/gss_tsig_api.h>
+#include <gss_tsig/gss_tsig_context.h>
+#include <gss_tsig/managed_key.h>
+#include <gss_tsig/tkey_exchange.h>
 #include <util/buffer.h>
 #include <boost/asio/ip/udp.hpp>
 #include <boost/asio/socket_base.hpp>

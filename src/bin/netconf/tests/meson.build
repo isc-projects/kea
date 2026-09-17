@@ -8,7 +8,7 @@ current_source_dir = meson.current_source_dir()
 basic = shared_library(
     'basic',
     'basic_library.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
     build_rpath: '/nowhere',
     name_suffix: 'so',
@@ -35,7 +35,7 @@ kea_netconf_tests = executable(
         f'-DNETCONF_HOOKS_TEST_PATH="@current_build_dir@"',
     ],
     dependencies: [NETCONF_DEP, GTEST_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: [
         netconf_lib,
         kea_yang_testutils_lib,

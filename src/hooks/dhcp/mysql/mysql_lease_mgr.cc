@@ -17,7 +17,7 @@
 #include <dhcpsrv/sflq_allocator.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <mysql_lb_log.h>
-#include <mysql_lease_mgr.h>
+#include <mysql/mysql_lease_mgr.h>
 #include <mysql/mysql_connection.h>
 #include <util/multi_threading_mgr.h>
 #include <util/str.h>

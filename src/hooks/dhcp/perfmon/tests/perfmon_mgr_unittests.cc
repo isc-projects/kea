@@ -6,7 +6,7 @@
 
 /// @file This file contains tests which exercise the PerfmonMgr class.
 #include <config.h>
-#include <perfmon_mgr.h>
+#include <perfmon/perfmon_mgr.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>

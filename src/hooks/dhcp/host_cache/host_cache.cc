@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,9 +6,9 @@
 
 #include <config.h>
 
-#include <host_cache.h>
-#include <host_cache_impl.h>
-#include <host_cache_parsers.h>
+#include <host_cache/host_cache.h>
+#include <host_cache/host_cache_impl.h>
+#include <host_cache/host_cache_parsers.h>
 #include <host_cache_log.h>
 #include <database/db_exceptions.h>
 #include <dhcpsrv/cfgmgr.h>

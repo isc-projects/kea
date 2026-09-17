@@ -27,7 +27,7 @@ kea_process_tests = executable(
         f'-DTEST_SCRIPT_SH="@current_build_dir@/process_test.sh"',
         f'-DPIDFILE_DIR="@RUNSTATEDIR_INSTALLED@"',
     ],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,
 )
 test(

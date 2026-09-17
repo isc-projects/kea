@@ -16,15 +16,15 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <hooks/hooks.h>
 #include <process/daemon.h>
-#include <pgsql_cb_impl.h>
-#include <pgsql_cb_dhcp4.h>
-#include <pgsql_cb_dhcp6.h>
-#include <pgsql_cb_log.h>
+#include <pgsql/pgsql_cb_impl.h>
+#include <pgsql/pgsql_cb_dhcp4.h>
+#include <pgsql/pgsql_cb_dhcp6.h>
+#include <pgsql/pgsql_cb_log.h>
 #include <pgsql_hb_log.h>
-#include <pgsql_host_data_source.h>
-#include <pgsql_legal_log.h>
+#include <pgsql/pgsql_host_data_source.h>
+#include <pgsql/pgsql_legal_log.h>
 #include <pgsql_lb_log.h>
-#include <pgsql_lease_mgr.h>
+#include <pgsql/pgsql_lease_mgr.h>
 
 #include <sstream>
 #include <string>

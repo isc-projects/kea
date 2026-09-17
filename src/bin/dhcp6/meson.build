@@ -12,13 +12,13 @@ dhcp6_lib = static_library(
     'main.cc',
     'parser_context.cc',
     dependencies: [CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
 )
 kea_dhcp6 = executable(
     'kea-dhcp6',
     'main.cc',
     dependencies: [CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     install: true,
     install_dir: SBINDIR,
     install_rpath: INSTALL_RPATH,

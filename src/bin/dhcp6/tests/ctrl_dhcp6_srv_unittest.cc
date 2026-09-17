@@ -34,7 +34,7 @@
 #include <testutils/multi_threading_utils.h>
 #include <testutils/unix_control_client.h>
 
-#include "marker_file.h"
+#include <dhcp6/tests/marker_file.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>

@@ -8,8 +8,8 @@
 
 #include <asiolink/process_spawn.h>
 #include <hooks/hooks_parser.h>
-#include <legal_log_log.h>
-#include <rotating_file.h>
+#include <forensic_log/legal_log_log.h>
+#include <forensic_log/rotating_file.h>
 #include <util/multi_threading_mgr.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>

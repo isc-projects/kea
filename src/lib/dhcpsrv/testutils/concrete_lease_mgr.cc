@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
-#include <concrete_lease_mgr.h>
+#include <dhcpsrv/testutils/concrete_lease_mgr.h>
 
 using namespace isc::asiolink;
 using namespace isc::db;

@@ -9,7 +9,7 @@ dhcp_lease_cmds_lib_tests = executable(
     'lease_cmds_func6_unittest.cc',
     'run_unittests.cc',
     dependencies: [GTEST_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: [dhcp_lease_cmds_archive] + LIBS_BUILT_SO_FAR,
 )
 test(

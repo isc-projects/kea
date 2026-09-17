@@ -13,8 +13,8 @@
 #include <cryptolink/crypto_rng.h>
 #include <util/multi_threading_mgr.h>
 #include <util/unlock_guard.h>
-#include <client_exchange.h>
-#include <radius.h>
+#include <radius/client_exchange.h>
+#include <radius/radius.h>
 #include <radius_log.h>
 
 #include <cerrno>

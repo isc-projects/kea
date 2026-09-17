@@ -7,8 +7,8 @@
 /// @file This file contains tests which verify flexible option.
 
 #include <config.h>
-#include <ddns_tuning.h>
-#include <ddns_tuning_log.h>
+#include <ddns_tuning/ddns_tuning.h>
+#include <ddns_tuning/ddns_tuning_log.h>
 #include <asiolink/io_address.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_string.h>

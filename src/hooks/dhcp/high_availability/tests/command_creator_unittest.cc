@@ -6,10 +6,10 @@
 
 #include <config.h>
 
-#include <ha_server_type.h>
-#include <ha_service_states.h>
-#include <lease_update_backlog.h>
-#include <command_creator.h>
+#include <high_availability/ha_server_type.h>
+#include <high_availability/ha_service_states.h>
+#include <high_availability/lease_update_backlog.h>
+#include <high_availability/command_creator.h>
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>

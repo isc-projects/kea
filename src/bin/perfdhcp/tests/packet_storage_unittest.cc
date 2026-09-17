@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include "../packet_storage.h"
+#include <perfdhcp/packet_storage.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt6.h>
 

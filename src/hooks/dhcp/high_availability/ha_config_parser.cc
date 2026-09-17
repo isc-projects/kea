@@ -6,9 +6,9 @@
 
 #include <config.h>
 
-#include <ha_config_parser.h>
+#include <high_availability/ha_config_parser.h>
 #include <ha_log.h>
-#include <ha_service_states.h>
+#include <high_availability/ha_service_states.h>
 #include <cc/dhcp_config_error.h>
 #include <util/filesystem.h>
 #include <boost/make_shared.hpp>

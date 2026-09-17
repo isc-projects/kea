@@ -32,7 +32,7 @@ kea_http_tests = executable(
         f'-DDATA_DIR="@current_source_dir@/testdata"',
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,
 )
 test(

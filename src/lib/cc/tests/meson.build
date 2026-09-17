@@ -16,7 +16,7 @@ kea_cc_tests = executable(
     'stamped_value_unittest.cc',
     'user_context_unittests.cc',
     dependencies: [GTEST_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
 test('kea-cc-tests', kea_cc_tests, protocol: 'gtest')

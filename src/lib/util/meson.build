@@ -24,7 +24,7 @@ kea_util_lib = shared_library(
     'versioned_csv_file.cc',
     'watched_thread.cc',
     'watch_socket.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     install: true,
     install_dir: LIBDIR,
     install_rpath: INSTALL_RPATH,

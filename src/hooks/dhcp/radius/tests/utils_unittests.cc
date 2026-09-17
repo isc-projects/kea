@@ -12,8 +12,8 @@
 
 #include <config.h>
 
-#include <radius_utils.h>
-#include <radius.h>
+#include <radius/radius_utils.h>
+#include <radius/radius.h>
 #include <attribute_test.h>
 #include <gtest/gtest.h>
 

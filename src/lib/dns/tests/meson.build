@@ -51,7 +51,7 @@ kea_dns_tests = executable(
         f'-DTEST_DATA_SRCDIR="@TOP_SOURCE_DIR@/src/lib/dns/tests/testdata"',
     ],
     dependencies: [GTEST_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
 test('kea-dns-tests', kea_dns_tests, protocol: 'gtest')

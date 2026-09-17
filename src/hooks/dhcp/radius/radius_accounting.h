@@ -9,8 +9,8 @@
 
 #include <util/csv_file.h>
 #include <dhcpsrv/lease.h>
-#include <radius_service.h>
-#include <radius_request.h>
+#include <radius/radius_service.h>
+#include <radius/radius_request.h>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/ordered_index.hpp>

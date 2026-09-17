@@ -21,7 +21,7 @@ dhcp_mysql_lib = shared_library(
     'mysql_legal_log.cc',
     'version.cc',
     dependencies: [CRYPTO_DEP, MYSQL_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     install: true,
     install_dir: HOOKS_PATH,
     install_rpath: INSTALL_RPATH,

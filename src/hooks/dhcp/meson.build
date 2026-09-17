@@ -1,4 +1,4 @@
-INCLUDES += [include_directories('.')]
+HINCLUDES = [include_directories('.')]
 subdir('bootp')
 subdir('class_cmds')
 subdir('ddns_tuning')

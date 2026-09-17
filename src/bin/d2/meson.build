@@ -16,13 +16,13 @@ d2_lib = static_library(
     'simple_remove.cc',
     'simple_remove_without_dhcid.cc',
     dependencies: [CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
 )
 executable(
     'kea-dhcp-ddns',
     'main.cc',
     dependencies: [CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     install: true,
     install_dir: SBINDIR,
     install_rpath: INSTALL_RPATH,

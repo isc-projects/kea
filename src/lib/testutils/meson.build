@@ -12,7 +12,7 @@ kea_testutils_lib = static_library(
     'unix_control_client.cc',
     'user_context_utils.cc',
     dependencies: [GTEST_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
 )
 
 dhcp_test_lib_conf_data = configuration_data()

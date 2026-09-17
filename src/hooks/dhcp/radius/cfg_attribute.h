@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,7 @@
 #ifndef CFG_ATTRIBUTE_H
 #define CFG_ATTRIBUTE_H
 
-#include <client_attribute.h>
+#include <radius/client_attribute.h>
 #include <exceptions/exceptions.h>
 #include <cc/data.h>
 #include <cc/cfg_to_element.h>

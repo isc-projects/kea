@@ -30,7 +30,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_space.h>
-#include <test_utils.h>
+#include <forensic_log/tests/test_utils.h>
 
 #include <gtest/gtest.h>
 

@@ -9,7 +9,7 @@ kea_asiolink_testutils_lib = static_library(
     'timed_signal.cc',
     cpp_args: [f'-DTEST_CA_DIR="@TEST_CA_DIR@"'],
     dependencies: [CRYPTO_DEP, GTEST_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
 )
 
 if CRYPTO_DEP.name() == openssl.name()
@@ -18,7 +18,7 @@ if CRYPTO_DEP.name() == openssl.name()
         'openssl_sample_client.cc',
         cpp_args: [f'-DTEST_CA_DIR="@TEST_CA_DIR@"'],
         dependencies: [GTEST_DEP, openssl],
-        include_directories: [include_directories('.')] + INCLUDES,
+        include_directories: INCLUDES,
         link_with: LIBS_BUILT_SO_FAR,
     )
     executable(
@@ -26,7 +26,7 @@ if CRYPTO_DEP.name() == openssl.name()
         'openssl_sample_server.cc',
         cpp_args: [f'-DTEST_CA_DIR="@TEST_CA_DIR@"'],
         dependencies: [GTEST_DEP, openssl],
-        include_directories: [include_directories('.')] + INCLUDES,
+        include_directories: INCLUDES,
         link_with: LIBS_BUILT_SO_FAR,
     )
 elif CRYPTO_DEP.name() == botan.name()
@@ -35,7 +35,7 @@ elif CRYPTO_DEP.name() == botan.name()
         'botan_sample_client.cc',
         cpp_args: [f'-DTEST_CA_DIR="@TEST_CA_DIR@"'],
         dependencies: [GTEST_DEP, botan],
-        include_directories: [include_directories('.')] + INCLUDES,
+        include_directories: INCLUDES,
         link_with: LIBS_BUILT_SO_FAR,
     )
     executable(
@@ -43,7 +43,7 @@ elif CRYPTO_DEP.name() == botan.name()
         'botan_sample_server.cc',
         cpp_args: [f'-DTEST_CA_DIR="@TEST_CA_DIR@"'],
         dependencies: [GTEST_DEP, botan],
-        include_directories: [include_directories('.')] + INCLUDES,
+        include_directories: INCLUDES,
         link_with: LIBS_BUILT_SO_FAR,
     )
 endif

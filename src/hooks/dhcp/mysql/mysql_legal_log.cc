@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <mysql_fb_log.h>
-#include <mysql_legal_log.h>
+#include <mysql/mysql_legal_log.h>
 #include <dhcpsrv/legal_log_mgr_factory.h>
 #include <dhcpsrv/legal_log_db_log.h>
 #include <dhcpsrv/network_state.h>

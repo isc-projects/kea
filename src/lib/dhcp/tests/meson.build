@@ -64,7 +64,7 @@ kea_dhcp_tests = executable(
     pkt_filter_xpf_unittest_cc,
     dependencies: [GTEST_DEP, CRYPTO_DEP],
     cpp_args: [f'-DTEST_DATA_BUILDDIR="@current_build_dir@"'],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,
 )
 

@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include <legal_log_mgr.h>
-#include <legal_log_mgr_factory.h>
+#include <dhcpsrv/legal_log_mgr.h>
+#include <dhcpsrv/legal_log_mgr_factory.h>
 
 #include <database/database_connection.h>
 #include <dhcpsrv/cfgmgr.h>

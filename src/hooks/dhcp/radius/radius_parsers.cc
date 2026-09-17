@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <radius_parsers.h>
+#include <radius/radius_parsers.h>
 #include <radius_log.h>
 #include <cc/data.h>
 #include <cc/default_credentials.h>

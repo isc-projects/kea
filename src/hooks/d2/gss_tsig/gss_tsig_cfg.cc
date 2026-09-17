@@ -7,8 +7,8 @@
 #include <config.h>
 
 #include <dns/name.h>
-#include <gss_tsig_cfg.h>
-#include <gss_tsig_context.h>
+#include <gss_tsig/gss_tsig_cfg.h>
+#include <gss_tsig/gss_tsig_context.h>
 #include <stats/stats_mgr.h>
 
 #include <limits>

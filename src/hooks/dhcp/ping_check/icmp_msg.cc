@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <icmp_msg.h>
+#include <ping_check/icmp_msg.h>
 #include <util/io.h>
 #include <exceptions/exceptions.h>
 

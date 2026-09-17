@@ -18,7 +18,7 @@
 #include <cassert>
 #include <iostream>
 
-#include <fuzz.h>
+#include <fuzz/fuzz.h>
 
 using namespace isc::asiolink;
 using namespace isc::config;

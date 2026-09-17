@@ -5,7 +5,7 @@ kea_dhcp_ddns_lib = shared_library(
     'ncr_io.cc',
     'ncr_msg.cc',
     'ncr_udp.cc',
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     install: true,
     install_dir: LIBDIR,
     install_rpath: INSTALL_RPATH,

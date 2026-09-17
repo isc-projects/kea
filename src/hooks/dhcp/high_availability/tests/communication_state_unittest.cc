@@ -8,7 +8,7 @@
 
 #include <ha_test.h>
 #include <asiolink/asio_wrapper.h>
-#include <communication_state.h>
+#include <high_availability/communication_state.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 #include <dhcp/dhcp4.h>

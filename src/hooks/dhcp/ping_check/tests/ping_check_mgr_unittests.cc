@@ -7,7 +7,7 @@
 /// @file This file contains tests which exercise the PingCheckMgr class.
 #include <config.h>
 
-#include <ping_check_mgr.h>
+#include <ping_check/ping_check_mgr.h>
 #include <ping_test_utils.h>
 #include <cc/data.h>
 #include <dhcp/pkt4.h>

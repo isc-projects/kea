@@ -8,9 +8,9 @@
 
 #include <asiolink/asio_wrapper.h>
 #include <ha_test.h>
-#include <ha_config.h>
-#include <ha_service.h>
-#include <ha_service_states.h>
+#include <high_availability/ha_config.h>
+#include <high_availability/ha_service.h>
+#include <high_availability/ha_service_states.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>

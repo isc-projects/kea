@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,9 +19,9 @@
 #include <dhcp/pkt4.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/network_state.h>
-#include <ping_context_store.h>
-#include <ping_channel.h>
-#include <config_cache.h>
+#include <ping_check/ping_context_store.h>
+#include <ping_check/ping_channel.h>
+#include <ping_check/config_cache.h>
 
 #include <boost/enable_shared_from_this.hpp>
 

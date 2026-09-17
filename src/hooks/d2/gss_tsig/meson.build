@@ -16,7 +16,7 @@ ddns_gss_tsig_lib = shared_library(
     'tkey_exchange.cc',
     'version.cc',
     dependencies: [KRB5_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     install: true,
     install_dir: HOOKS_PATH,
     install_rpath: INSTALL_RPATH,

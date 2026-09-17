@@ -21,7 +21,7 @@ kea_log_lib = shared_library(
     'output_option.cc',
     cpp_args: [f'-DTOP_BUILDDIR="@TOP_BUILD_DIR@"'],
     dependencies: [LOG4CPLUS_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     install: true,
     install_dir: LIBDIR,
     install_rpath: INSTALL_RPATH,

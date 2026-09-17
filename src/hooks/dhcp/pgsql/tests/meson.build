@@ -22,7 +22,7 @@ dhcp_pgsql_lib_tests = executable(
     'run_unittests.cc',
     cpp_args: [f'-DTEST_CA_DIR="@TEST_CA_DIR@"'],
     dependencies: [GTEST_DEP, CRYPTO_DEP, POSTGRESQL_DEP],
-    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: [dhcp_pgsql_archive, libs_testutils, kea_testutils_lib] + LIBS_BUILT_SO_FAR,
 )
 test(

@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include <command_options_helper.h>
-#include <test_control.h>
+#include <perfdhcp/tests/command_options_helper.h>
+#include <perfdhcp/test_control.h>
 
 #include <asiolink/io_address.h>
 #include <exceptions/exceptions.h>

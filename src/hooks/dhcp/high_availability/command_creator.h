@@ -7,8 +7,8 @@
 #ifndef HA_COMMAND_CREATOR_H
 #define HA_COMMAND_CREATOR_H
 
-#include <lease_update_backlog.h>
-#include <ha_server_type.h>
+#include <high_availability/lease_update_backlog.h>
+#include <high_availability/ha_server_type.h>
 #include <cc/data.h>
 #include <dhcpsrv/lease.h>
 #include <unordered_set>

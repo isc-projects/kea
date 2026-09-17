@@ -9,7 +9,7 @@ dhcp_host_cache_lib = shared_library(
     'host_cache_parsers.cc',
     'version.cc',
     dependencies: [CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     install: true,
     install_dir: HOOKS_PATH,
     install_rpath: INSTALL_RPATH,

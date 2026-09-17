@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#include <radius_service.h>
+#include <radius/radius_service.h>
 #include <util/multi_threading_mgr.h>
 
 using namespace std;

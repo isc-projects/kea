@@ -9,7 +9,7 @@
 
 #include <log/message_initializer.h>
 #include <log/macros.h>
-#include <flex_id_messages.h>
+#include <flex_id/flex_id_messages.h>
 
 namespace isc {
 namespace flex_id {

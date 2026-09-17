@@ -17,7 +17,7 @@ dhcp_host_cache_tests = executable(
     'run_unittests.cc',
     cpp_args: [f'-DTEST_DATA_BUILDDIR="@current_build_dir@"'],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
+    include_directories: HINCLUDES + INCLUDES,
     link_with: [dhcp_host_cache_tests_libs] + LIBS_BUILT_SO_FAR,
 )
 test(

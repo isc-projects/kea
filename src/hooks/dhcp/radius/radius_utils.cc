@@ -8,7 +8,7 @@
 
 #include <util/str.h>
 #include <dhcp/dhcp4.h>
-#include <radius_utils.h>
+#include <radius/radius_utils.h>
 #include <cctype>
 #include <iomanip>
 #include <sstream>

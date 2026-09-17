@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <database/database_connection.h>
-#include <test_config_backend_dhcp6.h>
+#include <dhcpsrv/testutils/test_config_backend_dhcp6.h>
 #include <boost/foreach.hpp>
 
 using namespace isc::data;

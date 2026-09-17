@@ -38,7 +38,7 @@ kea_asiolink_tests = executable(
         f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
-    include_directories: [include_directories('.')] + INCLUDES,
+    include_directories: INCLUDES,
     link_with: [kea_asiolink_testutils_lib, kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
 test(

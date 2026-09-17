@@ -34,7 +34,7 @@
 #include <string>
 
 #include <fuzzer/FuzzedDataProvider.h>
-#include <helper_func.h>
+#include <fuzz/helper_func.h>
 
 using namespace isc;
 using namespace isc::data;
