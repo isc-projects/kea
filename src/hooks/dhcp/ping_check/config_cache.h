@@ -7,10 +7,10 @@
 #ifndef CONFIG_CACHE_H
 #define CONFIG_CACHE_H
 
-#include <ping_check/ping_check_config.h>
 #include <cc/base_stamped_element.h>
 #include <cc/data.h>
 #include <dhcpsrv/subnet.h>
+#include <ping_check/ping_check_config.h>
 
 #include <map>
 #include <mutex>

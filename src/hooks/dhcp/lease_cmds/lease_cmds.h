@@ -8,8 +8,8 @@
 #define LEASE_CMDS_H
 
 #include <cc/data.h>
-#include <lease_cmds/binding_variables.h>
 #include <hooks/hooks.h>
+#include <lease_cmds/binding_variables.h>
 
 #include <boost/shared_ptr.hpp>
 

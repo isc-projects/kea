@@ -6,9 +6,6 @@
 
 #include <config.h>
 
-#include <flex_option/flex_option.h>
-#include <flex_option/flex_option_log.h>
-#include <util/str.h>
 #include <cc/simple_parser.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
@@ -17,6 +14,9 @@
 #include <dhcp/option_vendor.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <eval/eval_context.h>
+#include <flex_option/flex_option.h>
+#include <flex_option/flex_option_log.h>
+#include <util/str.h>
 
 using namespace isc;
 using namespace isc::data;

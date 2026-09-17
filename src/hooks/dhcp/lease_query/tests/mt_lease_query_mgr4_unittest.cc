@@ -9,23 +9,24 @@
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/testutils/test_tls.h>
-#include <cc/data.h>
 #include <cc/command_interpreter.h>
+#include <cc/data.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <lease_query/blq_service.h>
 #include <lease_query/mt_lease_query_mgr.h>
-#include <lease_query_test_client.h>
-#include <util/multi_threading_mgr.h>
-#include <blq4_utils.h>
 #include <testutils/gtest_utils.h>
+#include <util/multi_threading_mgr.h>
+
+#include <list>
+#include <sstream>
+#include <thread>
 
 #include <gtest/gtest.h>
 
-#include <thread>
-#include <list>
-#include <sstream>
+#include <blq4_utils.h>
+#include <lease_query_test_client.h>
 
 using namespace isc;
 using namespace isc::asiolink;

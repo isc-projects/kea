@@ -9,21 +9,21 @@
 #include <config.h>
 
 #include <asiolink/asio_wrapper.h>
-#include <exceptions/exceptions.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
-#include <dhcp/pkt4.h>
-#include <dhcp/pkt6.h>
-#include <dhcp/option_string.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
+#include <dhcp/option_string.h>
+#include <dhcp/pkt4.h>
+#include <dhcp/pkt6.h>
 #include <dhcpsrv/host.h>
-#include <hooks/callout_manager.h>
-#include <hooks/hooks.h>
+#include <exceptions/exceptions.h>
 #include <flex_id/flex_id.h>
 #include <flex_id/flex_id_log.h>
+#include <hooks/callout_manager.h>
+#include <hooks/hooks.h>
 
 #include <gtest/gtest.h>
 

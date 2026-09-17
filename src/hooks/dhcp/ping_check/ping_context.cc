@@ -6,11 +6,13 @@
 
 #include <config.h>
 
-#include <ping_check/ping_context.h>
-#include <ping_check_log.h>
 #include <exceptions/exceptions.h>
+#include <ping_check/ping_context.h>
 #include <util/chrono_time_utils.h>
+
 #include <iostream>
+
+#include <ping_check_log.h>
 
 using namespace std;
 using namespace isc;

@@ -9,8 +9,10 @@
 
 #include <d2srv/d2_tsig_key.h>
 #include <gss_tsig/gss_tsig_api.h>
-#include <boost/shared_ptr.hpp>
+
 #include <chrono>
+
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace gss_tsig {

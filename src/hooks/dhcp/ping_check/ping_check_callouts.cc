@@ -9,11 +9,13 @@
 #include <asiolink/io_service_mgr.h>
 #include <database/audit_entry.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <ping_check_log.h>
-#include <ping_check/ping_check_mgr.h>
 #include <hooks/hooks.h>
+#include <ping_check/ping_check_mgr.h>
 #include <process/daemon.h>
+
 #include <string>
+
+#include <ping_check_log.h>
 
 namespace isc {
 namespace ping_check {

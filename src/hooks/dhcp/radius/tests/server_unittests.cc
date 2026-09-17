@@ -12,11 +12,14 @@
 #include <radius/client_server.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
-#include <attribute_test.h>
-#include <gtest/gtest.h>
-#include <boost/scoped_ptr.hpp>
+
 #include <limits>
 #include <sstream>
+
+#include <boost/scoped_ptr.hpp>
+#include <gtest/gtest.h>
+
+#include <attribute_test.h>
 
 using namespace isc;
 using namespace isc::asiolink;

@@ -14,6 +14,7 @@
 
 #include <dns/tsig.h>
 #include <gss_tsig/gss_tsig_key.h>
+
 #include <boost/shared_ptr.hpp>
 
 namespace isc {

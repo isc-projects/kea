@@ -12,19 +12,22 @@
 
 #include <config.h>
 
-#include <radius/radius_parsers.h>
 #include <cc/default_credentials.h>
+#include <database/database_connection.h>
 #include <dhcp/pkt4.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <database/database_connection.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
+#include <radius/radius_parsers.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
-#include <attribute_test.h>
-#include <gtest/gtest.h>
+
 #include <limits>
 #include <sstream>
+
+#include <gtest/gtest.h>
+
+#include <attribute_test.h>
 
 using namespace std;
 using namespace isc;

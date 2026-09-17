@@ -5,19 +5,21 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
+#include <cc/command_interpreter.h>
 #include <database/audit_entry.h>
 #include <ddns_tuning/ddns_tuning.h>
 #include <ddns_tuning/ddns_tuning_log.h>
-#include <cc/command_interpreter.h>
-#include <dhcp/option_string.h>
 #include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option6_client_fqdn.h>
-#include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/subnet.h>
+#include <dhcp/option_string.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/subnet.h>
 #include <hooks/hooks.h>
 #include <process/daemon.h>
+
 #include <string>
 
 namespace isc {

@@ -6,14 +6,16 @@
 #ifndef _USER_FILE_H
 #define _USER_FILE_H
 
-/// @file user_file.h Defines the class, UserFile, which implements the UserDataSource interface for text files.
+/// @file user_file.h Defines the class, UserFile, which implements the UserDataSource interface for
+/// text files.
 
-#include <user_chk/user_data_source.h>
 #include <user_chk/user.h>
+#include <user_chk/user_data_source.h>
 
-#include <boost/shared_ptr.hpp>
 #include <fstream>
 #include <string>
+
+#include <boost/shared_ptr.hpp>
 
 namespace user_chk {
 

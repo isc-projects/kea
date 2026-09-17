@@ -16,6 +16,8 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>
+#include <lease_query/lease_query_impl_factory.h>
+#include <lease_query/lease_query_log.h>
 #include <process/daemon.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
@@ -24,8 +26,6 @@
 
 #include <gtest/gtest.h>
 
-#include <lease_query/lease_query_impl_factory.h>
-#include <lease_query/lease_query_log.h>
 #include <test_lease_mgr.h>
 
 using namespace std;

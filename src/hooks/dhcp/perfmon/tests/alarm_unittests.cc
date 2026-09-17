@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include <perfmon/alarm.h>
 #include <dhcp/dhcp6.h>
+#include <perfmon/alarm.h>
 #include <testutils/gtest_utils.h>
 
 #include <cstdint>

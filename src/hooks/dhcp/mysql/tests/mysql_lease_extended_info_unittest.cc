@@ -9,8 +9,8 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <dhcpsrv/testutils/generic_lease_extended_info_unittest.h>
-#include <mysql/testutils/mysql_schema.h>
 #include <mysql/mysql_lease_mgr.h>
+#include <mysql/testutils/mysql_schema.h>
 
 using namespace isc;
 using namespace isc::asiolink;

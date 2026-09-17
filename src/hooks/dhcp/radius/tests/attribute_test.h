@@ -7,8 +7,9 @@
 #ifndef ATTRIBUTE_TEST_H
 #define ATTRIBUTE_TEST_H
 
-#include <radius/client_attribute.h>
 #include <dhcpsrv/host_mgr.h>
+#include <radius/client_attribute.h>
+
 #include <gtest/gtest.h>
 
 namespace isc {

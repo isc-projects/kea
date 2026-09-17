@@ -11,10 +11,11 @@
 #include <dns/messagerenderer.h>
 #include <dns/opcode.h>
 #include <dns/rdataclass.h>
-#include <gss_tsig_api_utils.h>
 #include <gss_tsig/testutils/gss_tsig_dns_server.h>
 
 #include <gtest/gtest.h>
+
+#include <gss_tsig_api_utils.h>
 
 using namespace isc;
 using namespace isc::asiodns;

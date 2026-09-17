@@ -8,11 +8,12 @@
 
 #include <dhcpsrv/cfgmgr.h>
 #include <forensic_log/legal_log_log.h>
-#include <legal_syslog.h>
 #include <log/logger_manager.h>
-#include <log/message_initializer.h>
 #include <log/macros.h>
+#include <log/message_initializer.h>
 #include <process/logging_info.h>
+
+#include <legal_syslog.h>
 
 using namespace isc;
 using namespace isc::db;

@@ -16,6 +16,8 @@
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
+#include <mysql/mysql_cb_dhcp6.h>
+#include <mysql/mysql_cb_impl.h>
 #include <process/daemon.h>
 
 #include <cstddef>
@@ -25,8 +27,6 @@
 #include <string>
 
 #include <fuzzer/FuzzedDataProvider.h>
-#include <mysql/mysql_cb_dhcp6.h>
-#include <mysql/mysql_cb_impl.h>
 
 using namespace isc::asiolink;
 using namespace isc::db;

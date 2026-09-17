@@ -6,17 +6,18 @@
 
 #include <config.h>
 
-#include <ha_log.h>
-#include <high_availability/query_filter.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
 #include <exceptions/exceptions.h>
+#include <high_availability/query_filter.h>
 #include <util/multi_threading_mgr.h>
 
 #include <array>
 #include <iostream>
 #include <sstream>
+
+#include <ha_log.h>
 
 using namespace isc::dhcp;
 using namespace isc::log;

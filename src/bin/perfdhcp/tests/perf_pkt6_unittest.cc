@@ -5,18 +5,19 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <iostream>
-#include <arpa/inet.h>
-#include <gtest/gtest.h>
 
 #include <asiolink/io_address.h>
-#include <dhcp/option.h>
 #include <dhcp/dhcp6.h>
-
-#include <boost/scoped_ptr.hpp>
-
+#include <dhcp/option.h>
 #include <perfdhcp/localized_option.h>
 #include <perfdhcp/perf_pkt6.h>
+
+#include <iostream>
+
+#include <boost/scoped_ptr.hpp>
+#include <gtest/gtest.h>
+
+#include <arpa/inet.h>
 
 using namespace std;
 using namespace isc;

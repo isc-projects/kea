@@ -9,13 +9,14 @@
 
 #include <asiolink/interval_timer.h>
 #include <gss_tsig/gss_tsig_cfg.h>
-#include <hooks/hooks.h>
 #include <gss_tsig/managed_key.h>
+#include <hooks/hooks.h>
+
+#include <chrono>
+#include <memory>
 
 #include <boost/multi_index/composite_key.hpp>
 #include <boost/multi_index/ordered_index.hpp>
-#include <chrono>
-#include <memory>
 
 namespace isc {
 namespace gss_tsig {

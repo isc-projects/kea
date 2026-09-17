@@ -12,16 +12,17 @@
 
 #include <config.h>
 
-#include <flex_option/flex_option.h>
-#include <hooks/hooks.h>
-#include <hooks/hooks_manager.h>
-#include <hooks/callout_manager.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <flex_option/flex_option.h>
+#include <hooks/callout_manager.h>
+#include <hooks/hooks.h>
+#include <hooks/hooks_manager.h>
 #include <process/daemon.h>
 
 #include <gtest/gtest.h>
+
 #include <errno.h>
 
 using namespace std;

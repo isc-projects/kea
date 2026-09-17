@@ -13,11 +13,10 @@
 #include <forensic_log/tests/test_utils.h>
 #include <testutils/gtest_utils.h>
 
-#include <gtest/gtest.h>
+#include <sstream>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
-
-#include <sstream>
+#include <gtest/gtest.h>
 
 using namespace isc;
 using namespace isc::asiolink;

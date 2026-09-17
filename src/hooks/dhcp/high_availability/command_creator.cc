@@ -6,10 +6,11 @@
 
 #include <config.h>
 
-#include <high_availability/command_creator.h>
-#include <high_availability/ha_service_states.h>
 #include <cc/command_interpreter.h>
 #include <exceptions/exceptions.h>
+#include <high_availability/command_creator.h>
+#include <high_availability/ha_service_states.h>
+
 #include <boost/pointer_cast.hpp>
 
 using namespace isc::data;

@@ -7,11 +7,11 @@
 #ifndef HOST_CACHE_PARSER_H
 #define HOST_CACHE_PARSER_H
 
-#include <host_cache/host_cache.h>
 #include <cc/data.h>
 #include <cc/simple_parser.h>
 #include <dhcpsrv/host.h>
 #include <host_cache/container.h>
+#include <host_cache/host_cache.h>
 
 namespace isc {
 namespace host_cache {

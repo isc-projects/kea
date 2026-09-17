@@ -10,8 +10,9 @@
 #include <user_chk/user.h>
 #include <user_chk/user_file.h>
 
-#include <errno.h>
 #include <iostream>
+
+#include <errno.h>
 
 namespace user_chk {
 

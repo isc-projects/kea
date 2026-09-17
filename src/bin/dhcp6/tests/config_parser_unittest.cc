@@ -22,6 +22,10 @@
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <dhcp6/json_config_parser.h>
+#include <dhcp6/tests/dhcp6_test_utils.h>
+#include <dhcp6/tests/get_config_unittest.h>
+#include <dhcp6/tests/marker_file.h>
+#include <dhcp6/tests/test_libraries.h>
 #include <dhcpsrv/cfg_expiration.h>
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_subnets6.h>
@@ -39,24 +43,19 @@
 #include <testutils/log_utils.h>
 #include <testutils/test_to_element.h>
 #include <util/chrono_time_utils.h>
-#include <util/filesystem.h>
 #include <util/doubles.h>
-
-#include <boost/foreach.hpp>
+#include <util/filesystem.h>
 
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
 
-#include <arpa/inet.h>
+#include <boost/foreach.hpp>
 #include <gtest/gtest.h>
-#include <unistd.h>
 
-#include <dhcp6/tests/dhcp6_test_utils.h>
-#include <dhcp6/tests/get_config_unittest.h>
-#include <dhcp6/tests/marker_file.h>
-#include <dhcp6/tests/test_libraries.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
 using namespace isc;
 using namespace isc::asiolink;

@@ -26,8 +26,9 @@
 /// missing constant LIBRARY_NUMBER before the inclusion.
 
 #include <config.h>
-#include <hooks/hooks.h>
+
 #include <dhcp4/tests/marker_file.h>
+#include <hooks/hooks.h>
 
 #include <fstream>
 

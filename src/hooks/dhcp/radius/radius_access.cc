@@ -12,14 +12,16 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host_mgr.h>
 #include <radius/radius_access.h>
-#include <radius_log.h>
 #include <radius/radius_status.h>
 #include <radius/radius_utils.h>
 #include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <util/str.h>
-#include <stdio.h>
+
 #include <sstream>
+
+#include <radius_log.h>
+#include <stdio.h>
 
 using namespace std;
 using namespace isc;

@@ -6,19 +6,21 @@
 
 #include <config.h>
 
+#include <database/db_exceptions.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <host_cache/host_cache.h>
 #include <host_cache/host_cache_impl.h>
 #include <host_cache/host_cache_parsers.h>
-#include <host_cache_log.h>
-#include <database/db_exceptions.h>
-#include <dhcpsrv/cfgmgr.h>
 #include <util/encode/encode.h>
 #include <util/filesystem.h>
 #include <util/multi_threading_mgr.h>
 #include <util/str.h>
-#include <string>
-#include <sstream>
+
 #include <fstream>
+#include <sstream>
+#include <string>
+
+#include <host_cache_log.h>
 
 using namespace std;
 using namespace isc::asiolink;

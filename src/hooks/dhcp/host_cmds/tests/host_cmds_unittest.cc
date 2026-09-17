@@ -12,20 +12,22 @@
 
 #include <config.h>
 
-#include <host_cmds/host_cmds.h>
 #include <asiolink/io_address.h>
-#include <exceptions/exceptions.h>
-#include <hooks/hooks_manager.h>
-#include <dhcpsrv/host_mgr.h>
-#include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/cfg_subnets4.h>
-#include <dhcpsrv/cfg_subnets6.h>
-#include <dhcpsrv/subnet.h>
-#include <dhcpsrv/testutils/memory_host_data_source.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
+#include <dhcpsrv/cfg_subnets4.h>
+#include <dhcpsrv/cfg_subnets6.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/host_mgr.h>
+#include <dhcpsrv/subnet.h>
+#include <dhcpsrv/testutils/memory_host_data_source.h>
+#include <exceptions/exceptions.h>
+#include <hooks/hooks_manager.h>
+#include <host_cmds/host_cmds.h>
+
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
+
 #include <errno.h>
 
 using namespace std;

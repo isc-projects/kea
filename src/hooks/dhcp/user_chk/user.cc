@@ -6,12 +6,11 @@
 
 #include <config.h>
 
-#include <dhcp/hwaddr.h>
 #include <dhcp/duid.h>
+#include <dhcp/hwaddr.h>
 #include <exceptions/exceptions.h>
-#include <util/encode/encode.h>
-
 #include <user_chk/user.h>
+#include <util/encode/encode.h>
 
 #include <iomanip>
 #include <sstream>

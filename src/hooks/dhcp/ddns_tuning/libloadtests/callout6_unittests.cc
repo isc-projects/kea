@@ -13,12 +13,11 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
-#include <callout_unittests.h>
 #include <database/audit_entry.h>
 #include <ddns_tuning/ddns_tuning.h>
+#include <dhcp/option_string.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
-#include <dhcp/option_string.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>
@@ -28,6 +27,8 @@
 #include <testutils/multi_threading_utils.h>
 
 #include <gtest/gtest.h>
+
+#include <callout_unittests.h>
 #include <errno.h>
 
 using namespace std;

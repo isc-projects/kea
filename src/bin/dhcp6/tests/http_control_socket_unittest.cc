@@ -17,13 +17,14 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp/testutils/pkt_filter6_test_stub.h>
+#include <dhcp6/ctrl_dhcp6_srv.h>
+#include <dhcp6/tests/dhcp6_test_utils.h>
+#include <dhcp6/tests/marker_file.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
-#include <dhcp6/ctrl_dhcp6_srv.h>
-#include <dhcp6/tests/dhcp6_test_utils.h>
 #include <hooks/hooks_manager.h>
 #include <http/response.h>
 #include <http/response_parser.h>
@@ -34,19 +35,17 @@
 #include <stats/stats_mgr.h>
 #include <util/chrono_time_utils.h>
 
-#include <dhcp6/tests/marker_file.h>
-
-#include <boost/scoped_ptr.hpp>
-#include <gtest/gtest.h>
-
 #include <atomic>
+#include <cstdlib>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
 #include <thread>
 
+#include <boost/scoped_ptr.hpp>
+#include <gtest/gtest.h>
+
 #include <sys/stat.h>
-#include <cstdlib>
 #include <unistd.h>
 
 using namespace std;

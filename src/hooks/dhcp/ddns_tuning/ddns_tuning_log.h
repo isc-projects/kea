@@ -7,10 +7,10 @@
 #ifndef DDNS_TUNING_LOG_H
 #define DDNS_TUNING_LOG_H
 
+#include <ddns_tuning/ddns_tuning_messages.h>
+#include <log/log_dbglevels.h>
 #include <log/logger_support.h>
 #include <log/macros.h>
-#include <log/log_dbglevels.h>
-#include <ddns_tuning/ddns_tuning_messages.h>
 
 namespace isc {
 namespace ddns_tuning {

@@ -5,12 +5,14 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
+#include <exceptions/exceptions.h>
 #include <ping_check/icmp_msg.h>
 #include <util/io.h>
-#include <exceptions/exceptions.h>
+
+#include <iostream>
 
 #include <netinet/ip_icmp.h>
-#include <iostream>
 
 using namespace isc;
 using namespace isc::asiolink;

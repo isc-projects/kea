@@ -6,14 +6,16 @@
 
 /// @file This file contains tests which exercise the MonitoredDurationStore class.
 #include <config.h>
-#include <perfmon/monitored_duration_store.h>
+
 #include <dhcp/dhcp6.h>
+#include <perfmon/monitored_duration_store.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/multi_threading_utils.h>
 
+#include <sstream>
+
 #include <boost/range/adaptor/reversed.hpp>
 #include <gtest/gtest.h>
-#include <sstream>
 
 using namespace std;
 using namespace isc;

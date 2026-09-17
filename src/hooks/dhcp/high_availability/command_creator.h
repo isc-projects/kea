@@ -7,12 +7,13 @@
 #ifndef HA_COMMAND_CREATOR_H
 #define HA_COMMAND_CREATOR_H
 
-#include <high_availability/lease_update_backlog.h>
-#include <high_availability/ha_server_type.h>
 #include <cc/data.h>
 #include <dhcpsrv/lease.h>
-#include <unordered_set>
+#include <high_availability/ha_server_type.h>
+#include <high_availability/lease_update_backlog.h>
+
 #include <string>
+#include <unordered_set>
 
 namespace isc {
 namespace ha {

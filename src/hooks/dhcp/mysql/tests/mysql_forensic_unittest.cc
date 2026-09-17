@@ -9,21 +9,20 @@
 
 #include <config.h>
 
-#include <exceptions/exceptions.h>
 #include <database/testutils/password_file.h>
 #include <dhcpsrv/testutils/forensic_test_utils.h>
 #include <dhcpsrv/testutils/test_utils.h>
-#include <mysql/testutils/mysql_schema.h>
+#include <exceptions/exceptions.h>
 #include <mysql/mysql_legal_log.h>
+#include <mysql/testutils/mysql_schema.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/log_utils.h>
 #include <testutils/multi_threading_utils.h>
 
-#include <gtest/gtest.h>
+#include <cmath>
 
 #include <boost/lexical_cast.hpp>
-
-#include <cmath>
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

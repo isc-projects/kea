@@ -7,15 +7,17 @@
 #ifndef HOST_CACHE_IMPL_H
 #define HOST_CACHE_IMPL_H
 
-#include <exceptions/exceptions.h>
-#include <cc/data.h>
 #include <asiolink/io_address.h>
+#include <cc/data.h>
 #include <dhcpsrv/base_host_data_source.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet_id.h>
+#include <exceptions/exceptions.h>
 #include <host_cache/container.h>
-#include <boost/shared_ptr.hpp>
+
 #include <vector>
+
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace host_cache {

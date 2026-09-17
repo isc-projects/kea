@@ -7,9 +7,10 @@
 #ifndef HA_CONFIG_PARSER_H
 #define HA_CONFIG_PARSER_H
 
-#include <high_availability/ha_config.h>
 #include <cc/data.h>
 #include <cc/simple_parser.h>
+#include <high_availability/ha_config.h>
+
 #include <string>
 
 namespace isc {

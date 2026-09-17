@@ -7,15 +7,15 @@
 #ifndef HA_IMPL_H
 #define HA_IMPL_H
 
-#include <high_availability/ha_config.h>
-#include <high_availability/ha_service.h>
 #include <asiolink/io_service.h>
 #include <cc/data.h>
 #include <dhcpsrv/network_state.h>
+#include <high_availability/ha_config.h>
+#include <high_availability/ha_service.h>
 #include <hooks/hooks.h>
+
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
-
 
 namespace isc {
 namespace ha {

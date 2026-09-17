@@ -10,16 +10,16 @@
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
-#include <util/watch_socket.h>
 #include <ping_check/icmp_msg.h>
 #include <ping_check/icmp_socket.h>
 #include <ping_check/ping_context.h>
-
-#include <boost/scoped_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
+#include <util/watch_socket.h>
 
 #include <iostream>
 #include <mutex>
+
+#include <boost/enable_shared_from_this.hpp>
+#include <boost/scoped_ptr.hpp>
 
 namespace isc {
 namespace ping_check {

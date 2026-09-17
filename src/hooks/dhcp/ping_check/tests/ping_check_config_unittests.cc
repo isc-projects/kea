@@ -7,11 +7,13 @@
 /// @file This file contains tests which exercise the PingCheckConfig class.
 
 #include <config.h>
+
 #include <ping_check/ping_check_config.h>
 #include <testutils/gtest_utils.h>
 
-#include <gtest/gtest.h>
 #include <list>
+
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

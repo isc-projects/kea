@@ -17,24 +17,23 @@
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_address.h>
 #include <cc/data.h>
-#include <exceptions/exceptions.h>
-#include <dhcp/pkt4.h>
-#include <dhcpsrv/callout_handle_store.h>
-#include <dhcpsrv/cfg_subnets4.h>
-#include <dhcpsrv/lease.h>
-#include <dhcpsrv/subnet.h>
-#include <hooks/callout_manager.h>
-#include <hooks/hooks.h>
 #include <dhcp/option.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_space.h>
+#include <dhcp/pkt4.h>
+#include <dhcpsrv/callout_handle_store.h>
+#include <dhcpsrv/cfg_subnets4.h>
+#include <dhcpsrv/lease.h>
+#include <dhcpsrv/subnet.h>
+#include <exceptions/exceptions.h>
 #include <forensic_log/tests/test_utils.h>
-
-#include <gtest/gtest.h>
+#include <hooks/callout_manager.h>
+#include <hooks/hooks.h>
 
 #include <boost/pointer_cast.hpp>
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

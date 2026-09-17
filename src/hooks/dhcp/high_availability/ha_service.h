@@ -7,31 +7,32 @@
 #ifndef HA_SERVICE_H
 #define HA_SERVICE_H
 
-#include <high_availability/communication_state.h>
-#include <high_availability/ha_config.h>
-#include <high_availability/ha_server_type.h>
-#include <high_availability/lease_sync_filter.h>
-#include <high_availability/lease_update_backlog.h>
-#include <high_availability/query_filter.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_service.h>
 #include <asiolink/tls_socket.h>
 #include <cc/data.h>
 #include <config/cmd_http_listener.h>
 #include <dhcp/pkt4.h>
-#include <http/response.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/network_state.h>
+#include <high_availability/communication_state.h>
+#include <high_availability/ha_config.h>
+#include <high_availability/ha_server_type.h>
+#include <high_availability/lease_sync_filter.h>
+#include <high_availability/lease_update_backlog.h>
+#include <high_availability/query_filter.h>
 #include <hooks/parking_lots.h>
 #include <http/client.h>
+#include <http/response.h>
 #include <util/state_model.h>
 
-#include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
 #include <functional>
 #include <map>
 #include <mutex>
 #include <vector>
+
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace ha {

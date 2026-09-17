@@ -7,20 +7,22 @@
 #ifndef CFG_ATTRIBUTE_H
 #define CFG_ATTRIBUTE_H
 
-#include <radius/client_attribute.h>
-#include <exceptions/exceptions.h>
-#include <cc/data.h>
 #include <cc/cfg_to_element.h>
+#include <cc/data.h>
 #include <dhcp/pkt.h>
 #include <eval/token.h>
+#include <exceptions/exceptions.h>
+#include <radius/client_attribute.h>
 #include <util/buffer.h>
-#include <boost/multi_index_container.hpp>
+
+#include <map>
+#include <vector>
+
+#include <boost/multi_index/composite_key.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
-#include <boost/multi_index/composite_key.hpp>
+#include <boost/multi_index_container.hpp>
 #include <boost/shared_ptr.hpp>
-#include <vector>
-#include <map>
 
 namespace isc {
 namespace radius {

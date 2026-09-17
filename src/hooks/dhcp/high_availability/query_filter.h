@@ -7,11 +7,9 @@
 #ifndef QUERY_FILTER_H
 #define QUERY_FILTER_H
 
-#include <high_availability/ha_config.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
-
-#include <boost/scoped_ptr.hpp>
+#include <high_availability/ha_config.h>
 
 #include <cstdint>
 #include <map>
@@ -19,6 +17,8 @@
 #include <set>
 #include <string>
 #include <vector>
+
+#include <boost/scoped_ptr.hpp>
 
 namespace isc {
 namespace ha {

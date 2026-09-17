@@ -16,12 +16,13 @@
 #include <dhcpsrv/parsers/simple_parser6.h>
 #include <dhcpsrv/shared_network.h>
 #include <exceptions/exceptions.h>
-#include <subnet_cmds.h>
-#include <subnet_cmds_log.h>
 #include <util/multi_threading_mgr.h>
 
 #include <cstdint>
 #include <sstream>
+
+#include <subnet_cmds.h>
+#include <subnet_cmds_log.h>
 
 using namespace isc::config;
 using namespace isc::data;

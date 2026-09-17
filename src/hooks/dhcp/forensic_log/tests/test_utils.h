@@ -7,26 +7,26 @@
 #define TEST_UTILS_H
 
 #include <asiolink/process_spawn.h>
-#include <exceptions/exceptions.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/legal_log_mgr.h>
+#include <exceptions/exceptions.h>
+#include <forensic_log/rotating_file.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks_parser.h>
-#include <dhcpsrv/legal_log_mgr.h>
-#include <forensic_log/rotating_file.h>
-#include <util/reconnect_ctl.h>
 #include <testutils/log_utils.h>
+#include <util/reconnect_ctl.h>
 
-#include <gtest/gtest.h>
+#include <cstdio>
+#include <fstream>
+#include <locale>
+#include <string>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <time.h>
+#include <gtest/gtest.h>
 
 #include <errno.h>
-#include <cstdio>
-#include <locale>
-#include <fstream>
-#include <string>
 #include <sys/stat.h>
+#include <time.h>
 
 using namespace isc;
 using namespace isc::data;

@@ -6,10 +6,6 @@
 
 #include <config.h>
 
-#include <high_availability/command_creator.h>
-#include <ha_log.h>
-#include <high_availability/ha_service.h>
-#include <high_availability/ha_service_states.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <config/cmd_response_creator.h>
@@ -19,17 +15,24 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <exceptions/exceptions.h>
+#include <high_availability/command_creator.h>
+#include <high_availability/ha_service.h>
+#include <high_availability/ha_service_states.h>
 #include <http/date_time.h>
-#include <http/response_json.h>
 #include <http/post_request_json.h>
+#include <http/response_json.h>
 #include <util/boost_time_utils.h>
 #include <util/multi_threading_mgr.h>
 #include <util/stopwatch.h>
-#include <boost/pointer_cast.hpp>
-#include <boost/make_shared.hpp>
-#include <boost/weak_ptr.hpp>
+
 #include <functional>
 #include <sstream>
+
+#include <boost/make_shared.hpp>
+#include <boost/pointer_cast.hpp>
+#include <boost/weak_ptr.hpp>
+
+#include <ha_log.h>
 
 using namespace isc::asiolink;
 using namespace isc::config;

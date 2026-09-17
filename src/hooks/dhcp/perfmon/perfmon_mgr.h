@@ -11,13 +11,13 @@
 #ifndef PERFMON_MGR_H
 #define PERFMON_MGR_H
 
-#include <perfmon/perfmon_config.h>
-#include <config/command_mgr.h>
-#include <config/cmds_impl.h>
-#include <perfmon/monitored_duration_store.h>
-#include <asiolink/io_service.h>
 #include <asiolink/interval_timer.h>
+#include <asiolink/io_service.h>
+#include <config/cmds_impl.h>
+#include <config/command_mgr.h>
 #include <dhcpsrv/subnet.h>
+#include <perfmon/monitored_duration_store.h>
+#include <perfmon/perfmon_config.h>
 
 namespace isc {
 namespace perfmon {

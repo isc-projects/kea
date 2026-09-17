@@ -12,29 +12,27 @@
 
 #include <config.h>
 
-#include <radius/radius.h>
-#include <radius/radius_access.h>
-#include <radius/radius_utils.h>
-#include <attribute_test.h>
-
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service_mgr.h>
 #include <asiolink/udp_socket.h>
 #include <cryptolink/crypto_hash.h>
-#include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/callout_handle_store.h>
-#include <dhcpsrv/host_data_source_factory.h>
+#include <dhcp/testutils/iface_mgr_test_config.h>
+#include <dhcp/testutils/pkt_captures.h>
 #include <dhcpsrv/cache_host_data_source.h>
+#include <dhcpsrv/callout_handle_store.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/testutils/host_data_source_utils.h>
 #include <dhcpsrv/testutils/memory_host_data_source.h>
-#include <dhcp/testutils/iface_mgr_test_config.h>
-#include <dhcp/testutils/pkt_captures.h>
 #include <hooks/callout_handle.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks_manager.h>
+#include <radius/radius.h>
+#include <radius/radius_access.h>
+#include <radius/radius_utils.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/multi_threading_utils.h>
@@ -45,6 +43,8 @@
 #include <thread>
 
 #include <gtest/gtest.h>
+
+#include <attribute_test.h>
 
 using namespace std;
 using namespace std::chrono;

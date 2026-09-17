@@ -4,15 +4,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-
 #include <config.h>
-
-#include <lease_cmds/binding_variables.h>
-#include <iostream>
 
 #include <cc/data.h>
 #include <eval/eval_context.h>
+#include <lease_cmds/binding_variables.h>
 #include <util/multi_threading_mgr.h>
+
+#include <iostream>
 
 using namespace isc::dhcp;
 using namespace isc::data;

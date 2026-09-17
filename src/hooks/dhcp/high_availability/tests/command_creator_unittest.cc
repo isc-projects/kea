@@ -6,19 +6,21 @@
 
 #include <config.h>
 
-#include <high_availability/ha_server_type.h>
-#include <high_availability/ha_service_states.h>
-#include <high_availability/lease_update_backlog.h>
-#include <high_availability/command_creator.h>
 #include <asiolink/io_address.h>
 #include <cc/data.h>
-#include <exceptions/exceptions.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/network_state.h>
+#include <exceptions/exceptions.h>
+#include <high_availability/command_creator.h>
+#include <high_availability/ha_server_type.h>
+#include <high_availability/ha_service_states.h>
+#include <high_availability/lease_update_backlog.h>
+
+#include <vector>
+
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
-#include <vector>
 
 using namespace isc;
 using namespace isc::asiolink;

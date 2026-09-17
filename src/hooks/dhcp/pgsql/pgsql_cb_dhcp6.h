@@ -7,11 +7,12 @@
 #ifndef PGSQL_CONFIG_BACKEND_DHCP6_H
 #define PGSQL_CONFIG_BACKEND_DHCP6_H
 
-#include <pgsql/pgsql_cb_impl.h>
 #include <database/database_connection.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/config_backend_dhcp6.h>
+#include <pgsql/pgsql_cb_impl.h>
 #include <pgsql/pgsql_cb_log.h>
+
 #include <boost/shared_ptr.hpp>
 
 namespace isc {

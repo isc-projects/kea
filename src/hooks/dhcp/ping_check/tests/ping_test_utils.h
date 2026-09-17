@@ -7,20 +7,21 @@
 #ifndef PING_TEST_UTILS_H
 #define PING_TEST_UTILS_H
 
-#include <ping_check/ping_channel.h>
 #include <asiolink/interval_timer.h>
-#include <asiolink/io_service.h>
 #include <asiolink/io_address.h>
-#include <testutils/gtest_utils.h>
+#include <asiolink/io_service.h>
 #include <asiolink/io_service_thread_pool.h>
+#include <ping_check/ping_channel.h>
+#include <testutils/gtest_utils.h>
 #include <util/multi_threading_mgr.h>
+
+#include <list>
+#include <map>
 #include <mutex>
+#include <queue>
+#include <thread>
 
 #include <gtest/gtest.h>
-#include <queue>
-#include <list>
-#include <thread>
-#include <map>
 
 namespace isc {
 namespace ping_check {

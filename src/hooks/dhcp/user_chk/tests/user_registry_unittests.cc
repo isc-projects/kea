@@ -8,12 +8,13 @@
 
 #include <dhcp/hwaddr.h>
 #include <exceptions/exceptions.h>
-#include <user_chk/user_registry.h>
 #include <user_chk/user_file.h>
-#include <test_data_files_config.h>
+#include <user_chk/user_registry.h>
 
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
+
+#include <test_data_files_config.h>
 
 using namespace std;
 using namespace user_chk;

@@ -10,19 +10,20 @@
 
 #include <config.h>
 
-#include <high_availability/ha_impl.h>
-#include <ha_log.h>
 #include <asiolink/io_service.h>
 #include <asiolink/io_service_mgr.h>
 #include <cc/command_interpreter.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/network_state.h>
 #include <exceptions/exceptions.h>
+#include <high_availability/ha_impl.h>
 #include <hooks/hooks.h>
 #include <process/daemon.h>
 
 #include <sstream>
 #include <string>
+
+#include <ha_log.h>
 
 namespace isc {
 namespace ha {

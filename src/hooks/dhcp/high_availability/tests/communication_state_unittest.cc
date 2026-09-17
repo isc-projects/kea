@@ -6,24 +6,26 @@
 
 #include <config.h>
 
-#include <ha_test.h>
 #include <asiolink/asio_wrapper.h>
-#include <high_availability/communication_state.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <exceptions/exceptions.h>
+#include <high_availability/communication_state.h>
 #include <http/date_time.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
 #include <util/multi_threading_mgr.h>
 
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <gtest/gtest.h>
 #include <functional>
 #include <limits>
 #include <sstream>
+
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <gtest/gtest.h>
+
+#include <ha_test.h>
 
 using namespace isc;
 using namespace isc::asiolink;

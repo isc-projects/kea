@@ -5,7 +5,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <mysql/mysql_cb_impl.h>
+
 #include <gtest/gtest.h>
 
 using namespace isc::db;

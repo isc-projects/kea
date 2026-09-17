@@ -6,19 +6,21 @@
 
 #include <config.h>
 
+#include <asiolink/crypto_tls.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
-#include <asiolink/crypto_tls.h>
-#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_multi_threading.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/network.h>
 #include <exceptions/exceptions.h>
-#include <util/multi_threading_mgr.h>
-#include <util/str.h>
-#include <ha_log.h>
 #include <high_availability/ha_config.h>
 #include <high_availability/ha_service_states.h>
+#include <util/multi_threading_mgr.h>
+#include <util/str.h>
+
 #include <sstream>
+
+#include <ha_log.h>
 
 using namespace isc::asiolink;
 using namespace isc::data;

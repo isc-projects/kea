@@ -6,18 +6,19 @@
 
 #include <config.h>
 
-#include <pgsql_fb_log.h>
-#include <pgsql/pgsql_legal_log.h>
-#include <dhcpsrv/legal_log_mgr_factory.h>
 #include <dhcpsrv/legal_log_db_log.h>
+#include <dhcpsrv/legal_log_mgr_factory.h>
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
+#include <pgsql/pgsql_legal_log.h>
 #include <util/multi_threading_mgr.h>
 
 #include <iomanip>
 #include <limits>
 #include <sstream>
 #include <string>
+
+#include <pgsql_fb_log.h>
 #include <time.h>
 
 using namespace isc;

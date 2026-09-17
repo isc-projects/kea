@@ -9,21 +9,20 @@
 
 #include <config.h>
 
-#include <exceptions/exceptions.h>
 #include <cc/data.h>
-#include <testutils/gtest_utils.h>
-#include <dhcpsrv/legal_log_mgr_factory.h>
 #include <dhcpsrv/legal_log_db_log.h>
-#include <hooks/hooks_parser.h>
+#include <dhcpsrv/legal_log_mgr_factory.h>
+#include <exceptions/exceptions.h>
 #include <forensic_log/legal_log_log.h>
 #include <forensic_log/rotating_file.h>
-#include <util/filesystem.h>
+#include <hooks/hooks_parser.h>
 #include <testutils/env_var_wrapper.h>
+#include <testutils/gtest_utils.h>
 #include <testutils/log_utils.h>
-
-#include <gtest/gtest.h>
+#include <util/filesystem.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <gtest/gtest.h>
 
 using namespace isc;
 using namespace isc::data;

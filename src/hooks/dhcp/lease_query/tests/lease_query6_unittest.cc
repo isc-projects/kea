@@ -7,15 +7,17 @@
 /// @file This file contains tests which verify DHCPv6 LeaseQuery processing.
 
 #include <config.h>
-#include <lease_query/lease_query_log.h>
+
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt6.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>
+#include <lease_query/lease_query_log.h>
 #include <stats/stats_mgr.h>
 
-#include <gtest/gtest.h>
 #include <sstream>
+
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

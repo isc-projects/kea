@@ -11,10 +11,12 @@
 
 #include <radius/client_attribute.h>
 #include <radius/radius_parsers.h>
-#include <attribute_test.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
+
 #include <gtest/gtest.h>
+
+#include <attribute_test.h>
 #include <glob.h>
 
 using namespace std;

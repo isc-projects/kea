@@ -9,9 +9,10 @@
 #ifndef TEST_FLEX_OPTION_H
 #define TEST_FLEX_OPTION_H
 
-#include <flex_option/flex_option.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <flex_option/flex_option.h>
+
 #include <gtest/gtest.h>
 
 namespace isc {

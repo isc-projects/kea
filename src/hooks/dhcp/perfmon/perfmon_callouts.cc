@@ -10,12 +10,13 @@
 
 #include <config.h>
 
-#include <perfmon_log.h>
-#include <perfmon/perfmon_mgr.h>
 #include <cc/command_interpreter.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/hooks.h>
+#include <perfmon/perfmon_mgr.h>
 #include <process/daemon.h>
+
+#include <perfmon_log.h>
 
 namespace isc {
 namespace perfmon {

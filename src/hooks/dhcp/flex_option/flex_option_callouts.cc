@@ -6,13 +6,13 @@
 
 #include <config.h>
 
-#include <flex_option/flex_option.h>
-#include <flex_option/flex_option_log.h>
 #include <cc/command_interpreter.h>
-#include <hooks/hooks.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <flex_option/flex_option.h>
+#include <flex_option/flex_option_log.h>
+#include <hooks/hooks.h>
 #include <process/daemon.h>
 
 namespace isc {

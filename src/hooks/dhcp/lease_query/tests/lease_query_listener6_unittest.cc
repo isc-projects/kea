@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
@@ -15,11 +16,12 @@
 #include <lease_query/bulk_lease_query6.h>
 #include <lease_query/lease_query_impl_factory.h>
 #include <lease_query/lease_query_listener.h>
-#include <lease_query_test_client.h>
-#include <blq6_utils.h>
 #include <testutils/gtest_utils.h>
 
 #include <gtest/gtest.h>
+
+#include <blq6_utils.h>
+#include <lease_query_test_client.h>
 
 using namespace boost::asio::ip;
 using namespace isc::asiolink;

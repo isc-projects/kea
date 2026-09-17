@@ -8,10 +8,10 @@
 
 #include <dhcp6/tests/marker_file.h>
 
-#include <gtest/gtest.h>
-
 #include <fstream>
 #include <string>
+
+#include <gtest/gtest.h>
 
 namespace isc {
 namespace dhcp {

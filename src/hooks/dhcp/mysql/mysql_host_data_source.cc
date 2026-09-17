@@ -20,7 +20,6 @@
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
-#include <mysql_hb_log.h>
 #include <mysql/mysql_host_data_source.h>
 #include <util/buffer.h>
 #include <util/multi_threading_mgr.h>
@@ -37,6 +36,7 @@
 #include <boost/pointer_cast.hpp>
 
 #include <mysql.h>
+#include <mysql_hb_log.h>
 #include <mysqld_error.h>
 
 using namespace isc;

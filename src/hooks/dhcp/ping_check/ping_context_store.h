@@ -10,16 +10,16 @@
 #include <asiolink/io_address.h>
 #include <ping_check/ping_context.h>
 
-#include <boost/multi_index/indexed_by.hpp>
-#include <boost/multi_index/member.hpp>
-#include <boost/multi_index/mem_fun.hpp>
-#include <boost/multi_index/ordered_index.hpp>
-#include <boost/multi_index_container.hpp>
-#include <boost/multi_index/composite_key.hpp>
-#include <boost/scoped_ptr.hpp>
-
 #include <mutex>
 #include <vector>
+
+#include <boost/multi_index/composite_key.hpp>
+#include <boost/multi_index/indexed_by.hpp>
+#include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/member.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/scoped_ptr.hpp>
 
 namespace isc {
 namespace ping_check {

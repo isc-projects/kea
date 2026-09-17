@@ -8,19 +8,19 @@
 
 #include <asiolink/io_address.h>
 #include <cryptolink/crypto_rng.h>
-#include <util/multi_threading_mgr.h>
 #include <radius/client_server.h>
-#include <radius_log.h>
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
+#include <util/multi_threading_mgr.h>
 
 #include <cerrno>
 #include <chrono>
 #include <limits>
 #include <sstream>
+
+#include <netdb.h>
+#include <netinet/in.h>
+#include <radius_log.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 
 using namespace isc;
 using namespace isc::asiolink;

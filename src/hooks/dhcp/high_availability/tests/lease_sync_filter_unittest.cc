@@ -8,17 +8,20 @@
 
 #include <asiolink/io_address.h>
 #include <cc/data.h>
-#include <dhcp/hwaddr.h>
 #include <dhcp/duid.h>
+#include <dhcp/hwaddr.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet_id.h>
 #include <high_availability/ha_config.h>
 #include <high_availability/ha_server_type.h>
-#include <ha_test.h>
 #include <high_availability/lease_sync_filter.h>
+
+#include <sstream>
+
 #include <boost/make_shared.hpp>
 #include <gtest/gtest.h>
-#include <sstream>
+
+#include <ha_test.h>
 
 using namespace isc::asiolink;
 using namespace isc::data;

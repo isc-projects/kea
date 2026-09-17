@@ -13,6 +13,7 @@
 #include <exceptions/exceptions.h>
 #include <lease_query/lease_query_impl.h>
 #include <lease_query/mt_lease_query_mgr.h>
+
 #include <boost/noncopyable.hpp>
 
 namespace isc {

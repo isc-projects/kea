@@ -18,13 +18,14 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp/testutils/pkt_filter_test_stub.h>
+#include <dhcp4/ctrl_dhcp4_srv.h>
+#include <dhcp4/tests/dhcp4_test_utils.h>
+#include <dhcp4/tests/marker_file.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
-#include <dhcp4/ctrl_dhcp4_srv.h>
-#include <dhcp4/tests/dhcp4_test_utils.h>
 #include <hooks/hooks_manager.h>
 #include <http/response.h>
 #include <http/response_parser.h>
@@ -36,16 +37,14 @@
 #include <util/chrono_time_utils.h>
 #include <util/filesystem.h>
 
-#include <dhcp4/tests/marker_file.h>
-
-#include <boost/scoped_ptr.hpp>
-#include <gtest/gtest.h>
-
 #include <atomic>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
 #include <thread>
+
+#include <boost/scoped_ptr.hpp>
+#include <gtest/gtest.h>
 
 #include <arpa/inet.h>
 #include <unistd.h>

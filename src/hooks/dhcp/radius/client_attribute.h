@@ -7,20 +7,22 @@
 #ifndef RADIUS_CLIENT_ATTRIBUTE_H
 #define RADIUS_CLIENT_ATTRIBUTE_H
 
-#include <exceptions/exceptions.h>
+#include <asiolink/io_address.h>
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
 #include <cc/simple_parser.h>
-#include <asiolink/io_address.h>
+#include <exceptions/exceptions.h>
 #include <radius/client_dictionary.h>
-#include <boost/multi_index_container.hpp>
+
+#include <string>
+#include <vector>
+
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
+#include <boost/multi_index_container.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
-#include <string>
-#include <vector>
 
 namespace isc {
 namespace radius {

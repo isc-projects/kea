@@ -8,6 +8,7 @@
 
 #include <database/database_connection.h>
 #include <dhcpsrv/testutils/test_config_backend_dhcp6.h>
+
 #include <boost/foreach.hpp>
 
 using namespace isc::data;

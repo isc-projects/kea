@@ -7,8 +7,8 @@
 #ifndef CONFIG_LOG_H
 #define CONFIG_LOG_H
 
-#include <log/macros.h>
 #include <config/config_messages.h>
+#include <log/macros.h>
 
 namespace isc {
 namespace config {

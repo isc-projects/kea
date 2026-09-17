@@ -7,10 +7,10 @@
 #ifndef LEASE_QUERY_IMPL_FACTORY_H
 #define LEASE_QUERY_IMPL_FACTORY_H
 
-#include <exceptions/exceptions.h>
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <cc/simple_parser.h>
+#include <exceptions/exceptions.h>
 #include <lease_query/lease_query_impl4.h>
 #include <lease_query/lease_query_impl6.h>
 

@@ -6,10 +6,10 @@
 
 #include <config.h>
 
-#include <high_availability/lease_update_backlog.h>
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
+#include <high_availability/lease_update_backlog.h>
 
 #include <boost/make_shared.hpp>
 #include <boost/pointer_cast.hpp>

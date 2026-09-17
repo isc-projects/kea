@@ -7,15 +7,17 @@
 #ifndef RADIUS_SERVICE_H
 #define RADIUS_SERVICE_H
 
-#include <radius/client_server.h>
-#include <radius/cfg_attribute.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
+#include <radius/cfg_attribute.h>
+#include <radius/client_server.h>
+
+#include <mutex>
+
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
-#include <mutex>
 
 namespace isc {
 namespace radius {

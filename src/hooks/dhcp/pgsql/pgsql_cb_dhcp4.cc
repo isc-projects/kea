@@ -22,10 +22,9 @@
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/timer_mgr.h>
-#include <pgsql/pgsql_connection.h>
 #include <pgsql/pgsql_cb_dhcp4.h>
 #include <pgsql/pgsql_cb_impl.h>
-#include <pgsql_query_macros_dhcp.h>
+#include <pgsql/pgsql_connection.h>
 #include <util/boost_time_utils.h>
 #include <util/buffer.h>
 #include <util/dhcp_space.h>
@@ -37,6 +36,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/pointer_cast.hpp>
 #include <boost/scoped_ptr.hpp>
+
+#include <pgsql_query_macros_dhcp.h>
 
 using namespace isc::cb;
 using namespace isc::db;

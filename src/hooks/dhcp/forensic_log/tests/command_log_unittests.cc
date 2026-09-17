@@ -13,16 +13,17 @@
 /// actually uses the HooksManager to load and unload the library.
 
 #include <config.h>
+
 #include <asiolink/io_address.h>
-#include <cc/data.h>
 #include <cc/command_interpreter.h>
+#include <cc/data.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
+#include <forensic_log/tests/test_utils.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>
-#include <forensic_log/tests/test_utils.h>
 
 #include <gtest/gtest.h>
 

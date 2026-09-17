@@ -11,35 +11,36 @@
 /// work.
 
 #include <config.h>
+
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
-#include <ping_check/icmp_socket.h>
-#include <ping_check/icmp_msg.h>
 #include <exceptions/exceptions.h>
-#include <util/buffer.h>
+#include <ping_check/icmp_msg.h>
+#include <ping_check/icmp_socket.h>
 #include <testutils/gtest_utils.h>
+#include <util/buffer.h>
 
-#include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
+#include <algorithm>
+#include <cstddef>
+#include <cstdlib>
+#include <list>
+#include <string>
+#include <vector>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/enable_shared_from_this.hpp>
+#include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 
-#include <string>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <algorithm>
-#include <cstdlib>
-#include <cstddef>
-#include <list>
-#include <vector>
-#include <unistd.h>
-
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 using namespace isc;
 using namespace boost::asio;

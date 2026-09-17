@@ -9,13 +9,14 @@
 #include <config.h>
 
 #include <hooks/hooks.h>
-#include <user_chk_log.h>
-#include <user_chk/user_registry.h>
 #include <user_chk/user_file.h>
+#include <user_chk/user_registry.h>
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
+
 #include <errno.h>
+#include <user_chk_log.h>
 
 using namespace isc::hooks;
 using namespace user_chk;

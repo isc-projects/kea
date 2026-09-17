@@ -6,13 +6,15 @@
 
 /// @file This file contains tests which exercise the AlarmStore class.
 #include <config.h>
-#include <perfmon/alarm_store.h>
+
 #include <dhcp/dhcp6.h>
+#include <perfmon/alarm_store.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/multi_threading_utils.h>
 
-#include <gtest/gtest.h>
 #include <sstream>
+
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

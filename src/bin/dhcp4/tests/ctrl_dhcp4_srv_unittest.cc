@@ -12,39 +12,38 @@
 #include <config/command_mgr.h>
 #include <config/testutils/socket_path.h>
 #include <config/timeouts.h>
-#include <database/database_connection.h>
 #include <config/unix_command_mgr.h>
+#include <database/database_connection.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp/testutils/pkt_filter_test_stub.h>
+#include <dhcp4/ctrl_dhcp4_srv.h>
+#include <dhcp4/tests/dhcp4_test_utils.h>
+#include <dhcp4/tests/marker_file.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
-#include <dhcp4/ctrl_dhcp4_srv.h>
-#include <dhcp4/tests/dhcp4_test_utils.h>
 #include <hooks/hooks_manager.h>
 #include <log/logger_support.h>
 #include <process/log_parser.h>
 #include <stats/stats_mgr.h>
-#include <util/multi_threading_mgr.h>
-#include <util/chrono_time_utils.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/io_utils.h>
 #include <testutils/multi_threading_utils.h>
 #include <testutils/unix_control_client.h>
-
-#include <dhcp4/tests/marker_file.h>
-
-#include <boost/scoped_ptr.hpp>
-#include <gtest/gtest.h>
+#include <util/chrono_time_utils.h>
+#include <util/multi_threading_mgr.h>
 
 #include <fstream>
 #include <iomanip>
 #include <sstream>
 #include <thread>
+
+#include <boost/scoped_ptr.hpp>
+#include <gtest/gtest.h>
 
 #include <arpa/inet.h>
 #include <unistd.h>

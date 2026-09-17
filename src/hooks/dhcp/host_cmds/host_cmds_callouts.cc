@@ -4,19 +4,19 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-
 // Functions accessed by the hooks framework use C linkage to avoid the name
 // mangling that accompanies use of the C++ compiler as well as to avoid
 // issues related to namespaces.
 
 #include <config.h>
 
-#include <host_cmds/host_cmds.h>
-#include <host_cmds_log.h>
 #include <cc/command_interpreter.h>
-#include <hooks/hooks.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <hooks/hooks.h>
+#include <host_cmds/host_cmds.h>
 #include <process/daemon.h>
+
+#include <host_cmds_log.h>
 
 using namespace isc::config;
 using namespace isc::data;

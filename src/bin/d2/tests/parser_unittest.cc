@@ -8,19 +8,17 @@
 #include <cc/data.h>
 #include <d2/parser_context.h>
 #include <d2/tests/parser_unittest.h>
+#include <d2/tests/test_data_files_config.h>
 #include <testutils/io_utils.h>
 #include <testutils/log_utils.h>
 #include <testutils/test_to_element.h>
 #include <testutils/user_context_utils.h>
 
-#include <gtest/gtest.h>
-
 #include <fstream>
 #include <set>
 
 #include <boost/algorithm/string.hpp>
-
-#include <d2/tests/test_data_files_config.h>
+#include <gtest/gtest.h>
 
 using namespace isc::data;
 using namespace isc::test;

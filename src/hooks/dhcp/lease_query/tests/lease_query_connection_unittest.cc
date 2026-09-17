@@ -10,9 +10,9 @@
 
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <testutils/log_utils.h>
 #include <lease_query/lease_query_connection.h>
 #include <lease_query/lease_query_log.h>
+#include <testutils/log_utils.h>
 
 #include <gtest/gtest.h>
 

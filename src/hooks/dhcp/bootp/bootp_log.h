@@ -7,10 +7,10 @@
 #ifndef BOOTP_LOG_H
 #define BOOTP_LOG_H
 
+#include <bootp/bootp_messages.h>
+#include <log/log_dbglevels.h>
 #include <log/logger_support.h>
 #include <log/macros.h>
-#include <log/log_dbglevels.h>
-#include <bootp/bootp_messages.h>
 
 namespace isc {
 namespace bootp {

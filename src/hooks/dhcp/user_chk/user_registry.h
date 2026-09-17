@@ -8,8 +8,8 @@
 
 /// @file user_registry.h Defines the class, UserRegistry.
 
-#include <dhcp/hwaddr.h>
 #include <dhcp/duid.h>
+#include <dhcp/hwaddr.h>
 #include <exceptions/exceptions.h>
 #include <user_chk/user.h>
 #include <user_chk/user_data_source.h>

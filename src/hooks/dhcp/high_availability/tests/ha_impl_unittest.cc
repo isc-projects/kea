@@ -6,8 +6,6 @@
 
 #include <config.h>
 
-#include <ha_test.h>
-#include <high_availability/ha_impl.h>
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
@@ -19,16 +17,18 @@
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
+#include <high_availability/ha_impl.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
 
-#include <boost/pointer_cast.hpp>
+#include <string>
 
+#include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
 
-#include <string>
+#include <ha_test.h>
 
 using namespace isc::asiolink;
 using namespace isc::config;

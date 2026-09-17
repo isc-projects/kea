@@ -6,21 +6,22 @@
 
 #include <config.h>
 
-#include <mysql_fb_log.h>
-#include <mysql/mysql_legal_log.h>
-#include <dhcpsrv/legal_log_mgr_factory.h>
 #include <dhcpsrv/legal_log_db_log.h>
+#include <dhcpsrv/legal_log_mgr_factory.h>
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
+#include <mysql/mysql_legal_log.h>
 #include <util/multi_threading_mgr.h>
 
-#include <boost/array.hpp>
-#include <mysqld_error.h>
-
 #include <iomanip>
-#include <limits.h>
 #include <sstream>
 #include <string>
+
+#include <boost/array.hpp>
+
+#include <limits.h>
+#include <mysql_fb_log.h>
+#include <mysqld_error.h>
 #include <time.h>
 
 using namespace isc;

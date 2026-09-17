@@ -8,8 +8,8 @@
 
 #include <exceptions/exceptions.h>
 #include <perfdhcp/rate_control.h>
-#include <gtest/gtest.h>
 
+#include <gtest/gtest.h>
 
 using namespace isc;
 using namespace isc::perfdhcp;

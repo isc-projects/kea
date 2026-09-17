@@ -11,6 +11,7 @@
 #include <dhcpsrv/subnet.h>
 #include <high_availability/ha_config.h>
 #include <high_availability/ha_server_type.h>
+
 #include <string>
 #include <unordered_set>
 

@@ -9,14 +9,16 @@
 
 #include <config.h>
 
+#include <cryptolink/crypto_hash.h>
 #include <radius/client_attribute.h>
 #include <radius/client_message.h>
-#include <cryptolink/crypto_hash.h>
 #include <testutils/gtest_utils.h>
 #include <util/str.h>
-#include <attribute_test.h>
+
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
+
+#include <attribute_test.h>
 
 using namespace isc;
 using namespace isc::asiolink;

@@ -7,11 +7,12 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
-#include <test_data_files_config.h>
 #include <user_chk/user_file.h>
 
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
+
+#include <test_data_files_config.h>
 
 using namespace std;
 using namespace user_chk;

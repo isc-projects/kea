@@ -8,20 +8,21 @@
 
 #include <config.h>
 
-#include <host_cache/host_cache.h>
-#include <cryptolink/cryptolink.h>
 #include <cryptolink/crypto_rng.h>
+#include <cryptolink/cryptolink.h>
 #include <database/db_exceptions.h>
-#include <dhcpsrv/testutils/host_data_source_utils.h>
 #include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
+#include <dhcpsrv/testutils/host_data_source_utils.h>
 #include <dhcpsrv/testutils/memory_host_data_source.h>
+#include <host_cache/host_cache.h>
+
+#include <iostream>
 
 #include <gtest/gtest.h>
 
-#include <sys/time.h>
 #include <stdlib.h>
+#include <sys/time.h>
 #include <unistd.h>
-#include <iostream>
 
 using namespace std;
 using namespace isc;

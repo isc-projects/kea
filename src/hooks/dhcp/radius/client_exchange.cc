@@ -11,16 +11,17 @@
 #include <asiolink/udp_endpoint.h>
 #include <asiolink/udp_socket.h>
 #include <cryptolink/crypto_rng.h>
-#include <util/multi_threading_mgr.h>
-#include <util/unlock_guard.h>
 #include <radius/client_exchange.h>
 #include <radius/radius.h>
-#include <radius_log.h>
+#include <util/multi_threading_mgr.h>
+#include <util/unlock_guard.h>
 
 #include <cerrno>
 #include <chrono>
 #include <limits>
 #include <sstream>
+
+#include <radius_log.h>
 
 using namespace isc;
 using namespace isc::asiolink;

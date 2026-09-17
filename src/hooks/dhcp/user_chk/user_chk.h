@@ -7,6 +7,7 @@
 #define USER_CHK_H
 
 #include <user_chk/user_registry.h>
+
 #include <fstream>
 #include <string>
 

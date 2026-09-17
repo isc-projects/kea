@@ -6,27 +6,28 @@
 
 #include <config.h>
 
-#include <high_availability/communication_state.h>
-#include <ha_log.h>
-#include <high_availability/ha_service_states.h>
 #include <cc/data.h>
-#include <exceptions/exceptions.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_int.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
+#include <exceptions/exceptions.h>
+#include <high_availability/communication_state.h>
+#include <high_availability/ha_service_states.h>
 #include <http/date_time.h>
 #include <util/boost_time_utils.h>
 #include <util/multi_threading_mgr.h>
-
-#include <boost/pointer_cast.hpp>
 
 #include <ctime>
 #include <functional>
 #include <limits>
 #include <sstream>
 #include <utility>
+
+#include <boost/pointer_cast.hpp>
+
+#include <ha_log.h>
 
 using namespace isc::asiolink;
 using namespace isc::data;

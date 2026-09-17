@@ -7,11 +7,12 @@
 #ifndef RADIUS_ACCESS_H
 #define RADIUS_ACCESS_H
 
-#include <hooks/hooks.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
-#include <radius/radius_service.h>
+#include <hooks/hooks.h>
 #include <radius/radius_request.h>
+#include <radius/radius_service.h>
+
 #include <map>
 #include <mutex>
 

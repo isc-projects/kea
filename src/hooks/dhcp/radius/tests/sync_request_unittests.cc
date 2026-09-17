@@ -12,9 +12,9 @@
 
 #include <config.h>
 
-#define RequestTest RequestSyncTest
-#define RequestAuth RadiusSyncAuth
-#define RequestAcct RadiusSyncAcct
+#define RequestTest    RequestSyncTest
+#define RequestAuth    RadiusSyncAuth
+#define RequestAcct    RadiusSyncAcct
 #define RequestAuthPtr RadiusSyncAuthPtr
 #define RequestAcctPtr RadiusSyncAcctPtr
 

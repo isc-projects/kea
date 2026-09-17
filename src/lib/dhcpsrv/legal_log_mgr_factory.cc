@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include <dhcpsrv/legal_log_mgr_factory.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/legal_log_mgr_factory.h>
 
 using namespace isc::db;
 using namespace std;

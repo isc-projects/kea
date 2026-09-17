@@ -6,12 +6,12 @@
 
 #include <config.h>
 
-#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_multi_threading.h>
-#include <util/multi_threading_mgr.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <lease_query/blq_service.h>
-#include <tcp/tcp_listener.h>
 #include <lease_query/lease_query_log.h>
+#include <tcp/tcp_listener.h>
+#include <util/multi_threading_mgr.h>
 
 using namespace isc;
 using namespace isc::asiolink;

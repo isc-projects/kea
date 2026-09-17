@@ -8,28 +8,29 @@
 
 #include <config.h>
 
-#include <ping_check/ping_channel.h>
-#include <ping_test_utils.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service_thread_pool.h>
 #include <dhcp/iface_mgr.h>
-#include <util/multi_threading_mgr.h>
-#include <testutils/multi_threading_utils.h>
+#include <ping_check/ping_channel.h>
 #include <testutils/gtest_utils.h>
-#include <gtest/gtest.h>
+#include <testutils/multi_threading_utils.h>
+#include <util/multi_threading_mgr.h>
 
-#include <boost/multi_index/indexed_by.hpp>
-#include <boost/multi_index/member.hpp>
-#include <boost/multi_index/mem_fun.hpp>
+#include <list>
+#include <mutex>
+#include <queue>
+#include <thread>
+
+#include <boost/multi_index/composite_key.hpp>
 #include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/indexed_by.hpp>
+#include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/member.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index_container.hpp>
-#include <boost/multi_index/composite_key.hpp>
+#include <gtest/gtest.h>
 
-#include <queue>
-#include <list>
-#include <thread>
-#include <mutex>
+#include <ping_test_utils.h>
 
 using namespace std;
 using namespace isc;

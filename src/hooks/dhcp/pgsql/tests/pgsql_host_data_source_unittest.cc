@@ -8,26 +8,26 @@
 
 #include <asiolink/io_address.h>
 #include <cc/default_credentials.h>
-#include <dhcpsrv/testutils/test_utils.h>
-#include <exceptions/exceptions.h>
 #include <dhcpsrv/host.h>
-#include <pgsql/pgsql_host_data_source.h>
+#include <dhcpsrv/host_data_source_factory.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
 #include <dhcpsrv/testutils/host_data_source_utils.h>
-#include <dhcpsrv/host_mgr.h>
-#include <dhcpsrv/host_data_source_factory.h>
+#include <dhcpsrv/testutils/test_utils.h>
+#include <exceptions/exceptions.h>
 #include <pgsql/pgsql_connection.h>
+#include <pgsql/pgsql_host_data_source.h>
 #include <pgsql/testutils/pgsql_schema.h>
 #include <testutils/multi_threading_utils.h>
 #include <util/multi_threading_mgr.h>
-
-#include <gtest/gtest.h>
 
 #include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <utility>
+
+#include <gtest/gtest.h>
 
 using namespace isc;
 using namespace isc::asiolink;

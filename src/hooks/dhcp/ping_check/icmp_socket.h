@@ -7,17 +7,16 @@
 #ifndef ICMP_SOCKET_H
 #define ICMP_SOCKET_H 1
 
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <unistd.h>
+#include <asiolink/io_asio_socket.h>
+#include <asiolink/io_service.h>
+#include <exceptions/isc_assert.h>
+#include <ping_check/icmp_endpoint.h>
 
 #include <cstddef>
 
-#include <asiolink/io_asio_socket.h>
-#include <asiolink/io_service.h>
-#include <ping_check/icmp_endpoint.h>
-
-#include <exceptions/isc_assert.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 namespace isc {
 namespace ping_check {

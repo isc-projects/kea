@@ -6,12 +6,11 @@
 
 #include <config.h>
 
-#include <asiolink/interval_timer.h>
 #include <asiodns/io_fetch.h>
+#include <asiolink/interval_timer.h>
 #include <d2srv/dns_client.h>
 #include <d2srv/testutils/stats_test_utils.h>
 #include <dns/rcode.h>
-#include <gss_tsig_api_utils.h>
 #include <gss_tsig/managed_key.h>
 #include <gss_tsig/testutils/gss_tsig_dns_server.h>
 #include <util/chrono_time_utils.h>
@@ -19,6 +18,8 @@
 #include <chrono>
 
 #include <gtest/gtest.h>
+
+#include <gss_tsig_api_utils.h>
 
 namespace {
 

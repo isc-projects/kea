@@ -7,13 +7,15 @@
 /// @file This file contains tests which exercise the PingContextStore class.
 
 #include <config.h>
-#include <ping_check/ping_context_store.h>
+
 #include <asiolink/io_address.h>
+#include <ping_check/ping_context_store.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/multi_threading_utils.h>
 
-#include <gtest/gtest.h>
 #include <sstream>
+
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

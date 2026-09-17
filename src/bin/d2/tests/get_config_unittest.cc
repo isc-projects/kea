@@ -10,20 +10,20 @@
 #include <cc/data.h>
 #include <config/unix_command_config.h>
 #include <d2/parser_context.h>
+#include <d2/tests/test_callout_libraries.h>
+#include <d2/tests/test_data_files_config.h>
 #include <d2srv/d2_cfg_mgr.h>
 #include <d2srv/d2_config.h>
 #include <hooks/hooks_parser.h>
 #include <process/testutils/d_test_stubs.h>
 #include <testutils/user_context_utils.h>
 #include <util/filesystem.h>
-#include <gtest/gtest.h>
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <string>
 
-#include <d2/tests/test_data_files_config.h>
-#include <d2/tests/test_callout_libraries.h>
+#include <gtest/gtest.h>
 
 using namespace isc::config;
 using namespace isc::d2;

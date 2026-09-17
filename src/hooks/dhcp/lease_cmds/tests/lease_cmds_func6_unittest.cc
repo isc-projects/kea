@@ -6,20 +6,20 @@
 
 #include <config.h>
 
-#include <lease_cmds/lease_cmds.h>
-#include <lease_cmds_func_unittest.h>
-#include <hooks/hooks_manager.h>
-#include <dhcpsrv/lease_mgr.h>
-#include <exceptions/exceptions.h>
 #include <cc/data.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt6.h>
-
+#include <dhcpsrv/lease_mgr.h>
+#include <exceptions/exceptions.h>
+#include <hooks/hooks_manager.h>
+#include <lease_cmds/lease_cmds.h>
 #include <testutils/gtest_utils.h>
-#include <testutils/user_context_utils.h>
 #include <testutils/multi_threading_utils.h>
+#include <testutils/user_context_utils.h>
 
 #include <gtest/gtest.h>
+
+#include <lease_cmds_func_unittest.h>
 
 using namespace std;
 using namespace isc;

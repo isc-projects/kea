@@ -6,17 +6,18 @@
 
 #include <config.h>
 
-#include <cstddef>
-#include <fstream>
-#include <gtest/gtest.h>
-#include <stdint.h>
-#include <string>
-#include <boost/date_time/posix_time/posix_time.hpp>
-
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
-
 #include <perfdhcp/tests/command_options_helper.h>
+
+#include <cstddef>
+#include <fstream>
+#include <string>
+
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <gtest/gtest.h>
+
+#include <stdint.h>
 
 using namespace std;
 using namespace isc;

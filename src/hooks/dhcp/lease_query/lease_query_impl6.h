@@ -15,8 +15,8 @@
 #include <dhcp/option6_status_code.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/pkt6.h>
-#include <dhcpsrv/lease.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/lease.h>
 #include <lease_query/lease_query_impl.h>
 
 namespace isc {

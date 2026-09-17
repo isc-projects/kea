@@ -11,12 +11,12 @@
 #include <cc/data.h>
 #include <dhcp/option.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <eval/token.h>
 #include <eval/eval_context.h>
-#include <hooks/hooks.h>
-#include <process/daemon.h>
+#include <eval/token.h>
 #include <flex_id/flex_id.h>
 #include <flex_id/flex_id_log.h>
+#include <hooks/hooks.h>
+#include <process/daemon.h>
 
 using namespace isc;
 using namespace hooks;

@@ -6,19 +6,20 @@
 
 #include <config.h>
 
-#include <radius/radius_parsers.h>
-#include <radius_log.h>
 #include <cc/data.h>
 #include <cc/default_credentials.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <eval/eval_context.h>
+#include <radius/radius_parsers.h>
 #include <util/encode/encode.h>
 
-#include <limits>
-#include <string>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <sstream>
+#include <string>
+
+#include <radius_log.h>
 
 using namespace std;
 using namespace isc;

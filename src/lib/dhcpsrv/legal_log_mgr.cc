@@ -6,21 +6,21 @@
 
 #include <config.h>
 
-#include <dhcpsrv/legal_log_mgr.h>
-#include <dhcpsrv/legal_log_mgr_factory.h>
-
 #include <database/database_connection.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/legal_log_mgr.h>
+#include <dhcpsrv/legal_log_mgr_factory.h>
 #include <eval/eval_context.h>
-#include <util/reconnect_ctl.h>
 #include <util/filesystem.h>
+#include <util/reconnect_ctl.h>
+
+#include <iostream>
+#include <sstream>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <errno.h>
-#include <iostream>
-#include <sstream>
 #include <time.h>
 
 namespace isc {

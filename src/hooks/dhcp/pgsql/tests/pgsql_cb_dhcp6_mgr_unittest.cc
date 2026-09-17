@@ -5,11 +5,13 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <cc/stamped_value.h>
 #include <dhcpsrv/config_backend_dhcp6_mgr.h>
+#include <dhcpsrv/testutils/generic_backend_unittest.h>
 #include <pgsql/pgsql_cb_dhcp6.h>
 #include <pgsql/testutils/pgsql_schema.h>
-#include <dhcpsrv/testutils/generic_backend_unittest.h>
+
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 

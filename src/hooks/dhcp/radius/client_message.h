@@ -7,10 +7,11 @@
 #ifndef RADIUS_CLIENT_MESSAGE_H
 #define RADIUS_CLIENT_MESSAGE_H
 
-#include <radius/client_attribute.h>
-#include <exceptions/exceptions.h>
 #include <asiolink/io_address.h>
+#include <exceptions/exceptions.h>
+#include <radius/client_attribute.h>
 #include <tcp/wire_data.h>
+
 #include <string>
 #include <vector>
 

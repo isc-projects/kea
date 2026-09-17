@@ -12,10 +12,12 @@
 #include <radius/radius.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
-#include <attribute_test.h>
+
+#include <sstream>
 
 #include <gtest/gtest.h>
-#include <sstream>
+
+#include <attribute_test.h>
 
 using namespace isc;
 using namespace isc::asiolink;

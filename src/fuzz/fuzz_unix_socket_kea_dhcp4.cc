@@ -17,8 +17,8 @@
 #include <util/filesystem.h>
 
 #include <cassert>
-#include <iostream>
 #include <cstdlib>
+#include <iostream>
 
 #include <fuzz/fuzz.h>
 

@@ -8,16 +8,18 @@
 /// configuration cache.
 
 #include <config.h>
-#include <ping_check/config_cache.h>
+
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>
+#include <ping_check/config_cache.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/multi_threading_utils.h>
 
+#include <sstream>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
-#include <sstream>
 
 using namespace std;
 using namespace isc;

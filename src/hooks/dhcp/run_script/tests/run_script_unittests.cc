@@ -6,8 +6,6 @@
 
 #include <config.h>
 
-#include <run_script/run_script.h>
-
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
 #include <cc/data.h>
@@ -18,6 +16,7 @@
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
+#include <run_script/run_script.h>
 
 #include <cstdio>
 #include <fstream>

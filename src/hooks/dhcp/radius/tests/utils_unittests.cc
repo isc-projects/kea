@@ -12,10 +12,12 @@
 
 #include <config.h>
 
-#include <radius/radius_utils.h>
 #include <radius/radius.h>
-#include <attribute_test.h>
+#include <radius/radius_utils.h>
+
 #include <gtest/gtest.h>
+
+#include <attribute_test.h>
 
 using namespace std;
 using namespace isc;

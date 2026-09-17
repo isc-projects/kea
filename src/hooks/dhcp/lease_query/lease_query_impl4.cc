@@ -7,21 +7,21 @@
 #include <config.h>
 
 #include <cc/command_interpreter.h>
-#include <dhcpsrv/cfgmgr.h>
 #include <dhcp/iface_mgr.h>
-#include <dhcp/option_int.h>
-#include <dhcp/option_custom.h>
 #include <dhcp/option4_addrlst.h>
+#include <dhcp/option_custom.h>
+#include <dhcp/option_int.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <lease_query/lease_query_log.h>
 #include <lease_query/lease_query_impl4.h>
+#include <lease_query/lease_query_log.h>
 #include <stats/stats_mgr.h>
 #include <util/str.h>
 
-#include <boost/pointer_cast.hpp>
-
 #include <sstream>
 #include <vector>
+
+#include <boost/pointer_cast.hpp>
 
 using namespace isc;
 using namespace isc::asiolink;

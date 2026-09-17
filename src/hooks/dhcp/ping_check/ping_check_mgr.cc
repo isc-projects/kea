@@ -6,13 +6,14 @@
 
 #include <config.h>
 
-#include <ping_check/ping_check_mgr.h>
-#include <ping_check_log.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/hooks_manager.h>
+#include <ping_check/ping_check_mgr.h>
 #include <stats/stats_mgr.h>
-#include <util/multi_threading_mgr.h>
 #include <util/chrono_time_utils.h>
+#include <util/multi_threading_mgr.h>
+
+#include <ping_check_log.h>
 
 using namespace isc;
 using namespace isc::asiolink;

@@ -8,9 +8,11 @@
 
 #include <dns/name.h>
 #include <gss_tsig/gss_tsig_key.h>
-#include <gss_tsig_api_utils.h>
 #include <testutils/gtest_utils.h>
+
 #include <gtest/gtest.h>
+
+#include <gss_tsig_api_utils.h>
 
 using namespace std;
 using namespace std::chrono;

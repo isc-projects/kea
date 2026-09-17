@@ -11,6 +11,9 @@
 #include <dns/name.h>
 #include <dns/rdata.h>
 #include <dns/tsig.h>
+#include <gss_tsig/gss_tsig_context.h>
+#include <gss_tsig/gss_tsig_key.h>
+#include <gss_tsig/tkey_exchange.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -18,9 +21,6 @@
 #include <vector>
 
 #include <fuzzer/FuzzedDataProvider.h>
-#include <gss_tsig/gss_tsig_context.h>
-#include <gss_tsig/gss_tsig_key.h>
-#include <gss_tsig/tkey_exchange.h>
 
 using namespace isc;
 using namespace isc::dns;

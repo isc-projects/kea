@@ -12,12 +12,12 @@
 #include <cc/data.h>
 #include <dhcpsrv/cfg_multi_threading.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <testutils/gtest_utils.h>
-#include <util/multi_threading_mgr.h>
 #include <lease_query/blq_service.h>
 #include <lease_query/lease_query_connection.h>
 #include <lease_query/lease_query_impl6.h>
 #include <lease_query/lease_query_log.h>
+#include <testutils/gtest_utils.h>
+#include <util/multi_threading_mgr.h>
 
 #include <gtest/gtest.h>
 

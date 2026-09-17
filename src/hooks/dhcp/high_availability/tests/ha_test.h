@@ -4,9 +4,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include <high_availability/communication_state.h>
-#include <high_availability/ha_config.h>
-#include <high_availability/ha_config_parser.h>
 #include <asiolink/io_service.h>
 #include <cc/data.h>
 #include <dhcp/duid.h>
@@ -14,16 +11,21 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/network_state.h>
+#include <high_availability/communication_state.h>
+#include <high_availability/ha_config.h>
+#include <high_availability/ha_config_parser.h>
 #include <hooks/libinfo.h>
-#include <boost/shared_ptr.hpp>
-#include <gtest/gtest.h>
+
+#include <condition_variable>
 #include <cstdint>
 #include <functional>
-#include <string>
-#include <vector>
 #include <mutex>
-#include <condition_variable>
+#include <string>
 #include <thread>
+#include <vector>
+
+#include <boost/shared_ptr.hpp>
+#include <gtest/gtest.h>
 
 namespace isc {
 namespace ha {

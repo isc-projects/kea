@@ -7,13 +7,16 @@
 #include <config.h>
 
 #include <radius/client_attribute.h>
-#include <radius_log.h>
 #include <util/encode/encode.h>
 #include <util/str.h>
-#include <boost/lexical_cast.hpp>
+
 #include <cctype>
 #include <limits>
 #include <sstream>
+
+#include <boost/lexical_cast.hpp>
+
+#include <radius_log.h>
 
 using namespace isc;
 using namespace isc::asiolink;

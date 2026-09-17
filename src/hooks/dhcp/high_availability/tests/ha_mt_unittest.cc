@@ -8,14 +8,14 @@
 
 #include <asiolink/asio_wrapper.h>
 #include <config/cmd_response_creator.h>
-#include <ha_test.h>
 #include <high_availability/ha_config.h>
 #include <high_availability/ha_service.h>
-
-#include <util/multi_threading_mgr.h>
 #include <testutils/gtest_utils.h>
+#include <util/multi_threading_mgr.h>
 
 #include <gtest/gtest.h>
+
+#include <ha_test.h>
 
 using namespace isc::asiolink;
 using namespace isc::config;

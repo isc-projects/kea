@@ -7,18 +7,20 @@
 #include <config.h>
 
 #include <dhcpsrv/cfg_globals.h>
-#include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/cfg_multi_threading.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
-#include <util/multi_threading_mgr.h>
+#include <dhcpsrv/host_mgr.h>
 #include <radius/radius.h>
 #include <radius/radius_access.h>
 #include <radius/radius_accounting.h>
-#include <radius_log.h>
 #include <radius/radius_parsers.h>
 #include <radius/radius_tls.h>
+#include <util/multi_threading_mgr.h>
+
 #include <exception>
+
+#include <radius_log.h>
 #include <sys/resource.h>
 
 using namespace std;

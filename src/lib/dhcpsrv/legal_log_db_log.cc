@@ -9,6 +9,7 @@
 #include <config.h>
 
 #include <dhcpsrv/legal_log_db_log.h>
+
 #include <mutex>
 
 using namespace isc::db;

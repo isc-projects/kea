@@ -7,13 +7,15 @@
 #include <config.h>
 
 #include <cc/command_interpreter.h>
-#include <stats/stats_mgr.h>
 #include <gss_tsig/gss_tsig_impl.h>
 #include <gss_tsig/gss_tsig_log.h>
-#include <boost/foreach.hpp>
+#include <stats/stats_mgr.h>
+
 #include <cstdlib>
 #include <list>
 #include <sstream>
+
+#include <boost/foreach.hpp>
 
 using namespace isc;
 using namespace isc::asiolink;

@@ -11,11 +11,10 @@
 
 #include <dhcp/dhcp4.h>
 #include <dhcpsrv/lease.h>
-
-#include <cstdint>
-
 #include <lease_query/bulk_lease_query.h>
 #include <lease_query/lease_query_impl.h>
+
+#include <cstdint>
 
 namespace isc {
 namespace lease_query {

@@ -7,11 +7,12 @@
 #include <config.h>
 
 #include <asiolink/io_service_mgr.h>
+#include <exceptions/exceptions.h>
 #include <gss_tsig/gss_tsig_context.h>
 #include <gss_tsig/gss_tsig_impl.h>
 #include <gss_tsig/gss_tsig_log.h>
 #include <process/daemon.h>
-#include <exceptions/exceptions.h>
+
 #include <functional>
 #include <sstream>
 #include <string>

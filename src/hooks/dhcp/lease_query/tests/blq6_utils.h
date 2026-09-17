@@ -7,19 +7,21 @@
 /// @file This file contains tests DHCPv6 Bulk Lease Queries.
 
 #include <config.h>
+
 #include <dhcp/dhcp6.h>
-#include <dhcp/option_int.h>
-#include <dhcp/option_custom.h>
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
 #include <dhcp/option6_status_code.h>
+#include <dhcp/option_custom.h>
+#include <dhcp/option_int.h>
 #include <dhcp/pkt6.h>
 #include <lease_query/lease_query_impl6.h>
 
-#include <gtest/gtest.h>
-#include <sstream>
 #include <queue>
+#include <sstream>
+
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

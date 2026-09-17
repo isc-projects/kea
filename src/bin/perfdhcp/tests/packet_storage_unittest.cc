@@ -6,9 +6,9 @@
 
 #include <config.h>
 
-#include <perfdhcp/packet_storage.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt6.h>
+#include <perfdhcp/packet_storage.h>
 
 #include <gtest/gtest.h>
 

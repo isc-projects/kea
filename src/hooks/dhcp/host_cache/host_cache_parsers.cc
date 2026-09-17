@@ -6,11 +6,12 @@
 
 #include <config.h>
 
-#include <host_cache/host_cache_parsers.h>
 #include <cc/dhcp_config_error.h>
 #include <dhcpsrv/parsers/option_data_parser.h>
-#include <boost/pointer_cast.hpp>
+#include <host_cache/host_cache_parsers.h>
+
 #include <boost/lexical_cast.hpp>
+#include <boost/pointer_cast.hpp>
 
 using namespace isc::asiolink;
 using namespace isc::data;

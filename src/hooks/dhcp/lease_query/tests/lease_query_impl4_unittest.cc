@@ -7,20 +7,22 @@
 /// @file This file contains tests LeaseQueryImpl4.
 
 #include <config.h>
+
 #include <dhcp/dhcp6.h>
-#include <dhcp/option_int.h>
-#include <dhcp/option_custom.h>
 #include <dhcp/option4_addrlst.h>
+#include <dhcp/option_custom.h>
+#include <dhcp/option_int.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <lease_query/lease_query_impl4.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
-#include <lease_query/lease_query_impl4.h>
+
+#include <sstream>
 
 #include <gtest/gtest.h>
-#include <sstream>
 
 using namespace std;
 using namespace isc;

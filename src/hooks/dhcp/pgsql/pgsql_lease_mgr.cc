@@ -11,23 +11,24 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/sflq_allocator.h>
-#include <pgsql_lb_log.h>
-#include <pgsql/pgsql_lease_mgr.h>
 #include <dhcpsrv/timer_mgr.h>
+#include <pgsql/pgsql_lease_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <util/str.h>
-
-#include <boost/make_shared.hpp>
 
 #include <iomanip>
 #include <limits>
 #include <sstream>
 #include <string>
+
+#include <boost/make_shared.hpp>
+
+#include <pgsql_lb_log.h>
 #include <time.h>
 
 using namespace isc;

@@ -12,12 +12,13 @@
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 #include <tcp/tcp_listener.h>
-#include <tcp_test_client.h>
 
 #include <cstdint>
 #include <sstream>
 
 #include <gtest/gtest.h>
+
+#include <tcp_test_client.h>
 
 using namespace boost::asio::ip;
 using namespace isc::asiolink;

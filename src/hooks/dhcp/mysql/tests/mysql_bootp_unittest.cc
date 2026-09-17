@@ -9,8 +9,8 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/testutils/alloc_engine_utils.h>
 #include <dhcpsrv/testutils/test_utils.h>
-#include <mysql/testutils/mysql_schema.h>
 #include <mysql/mysql_lease_mgr.h>
+#include <mysql/testutils/mysql_schema.h>
 #include <util/triplet.h>
 
 #include <gtest/gtest.h>

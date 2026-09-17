@@ -6,19 +6,20 @@
 
 #include <config.h>
 
-#include <ha_test.h>
-#include <high_availability/ha_config.h>
-#include <high_availability/ha_config_parser.h>
-#include <high_availability/query_filter.h>
 #include <cc/data.h>
-#include <exceptions/exceptions.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/hwaddr.h>
+#include <exceptions/exceptions.h>
+#include <high_availability/ha_config.h>
+#include <high_availability/ha_config_parser.h>
+#include <high_availability/query_filter.h>
 #include <util/multi_threading_mgr.h>
 
 #include <cstdint>
 #include <string>
+
+#include <ha_test.h>
 
 using namespace isc;
 using namespace isc::data;

@@ -6,23 +6,23 @@
 
 #include <config.h>
 
-#include <perfdhcp/tests/command_options_helper.h>
-#include <perfdhcp/perf_socket.h>
-
 #include <asiolink/io_address.h>
-#include <exceptions/exceptions.h>
 #include <dhcp/dhcp4.h>
-#include <dhcp/pkt4.h>
 #include <dhcp/iface_mgr.h>
-
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include <dhcp/pkt4.h>
+#include <exceptions/exceptions.h>
+#include <perfdhcp/perf_socket.h>
+#include <perfdhcp/tests/command_options_helper.h>
 
 #include <algorithm>
 #include <cstddef>
-#include <stdint.h>
-#include <string>
 #include <fstream>
+#include <string>
+
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
+
+#include <stdint.h>
 
 using namespace std;
 using namespace boost::posix_time;

@@ -21,6 +21,10 @@
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/json_config_parser.h>
+#include <dhcp4/tests/dhcp4_test_utils.h>
+#include <dhcp4/tests/get_config_unittest.h>
+#include <dhcp4/tests/marker_file.h>
+#include <dhcp4/tests/test_libraries.h>
 #include <dhcpsrv/cfg_expiration.h>
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_subnets4.h>
@@ -41,21 +45,16 @@
 #include <util/doubles.h>
 #include <util/filesystem.h>
 
-#include <boost/scoped_ptr.hpp>
-
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
 
-#include <arpa/inet.h>
+#include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
-#include <unistd.h>
 
-#include <dhcp4/tests/dhcp4_test_utils.h>
-#include <dhcp4/tests/get_config_unittest.h>
-#include <dhcp4/tests/marker_file.h>
-#include <dhcp4/tests/test_libraries.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
 using namespace isc;
 using namespace isc::asiolink;

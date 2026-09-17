@@ -16,6 +16,8 @@
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
+#include <radius/client_attribute.h>
+#include <radius/client_message.h>
 
 #include <chrono>
 #include <cstdint>
@@ -28,9 +30,6 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
-
-#include <radius/client_attribute.h>
-#include <radius/client_message.h>
 
 namespace isc {
 namespace radius {

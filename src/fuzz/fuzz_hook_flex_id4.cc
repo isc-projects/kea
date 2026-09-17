@@ -24,8 +24,8 @@
 #include <string>
 #include <vector>
 
-#include <fuzzer/FuzzedDataProvider.h>
 #include <fuzz/helper_func.h>
+#include <fuzzer/FuzzedDataProvider.h>
 
 using namespace isc::dhcp;
 using namespace isc::hooks;

@@ -6,28 +6,29 @@
 
 #include <config.h>
 
-#include <exceptions/exceptions.h>
-#include <hooks/hooks_manager.h>
+#include <cc/command_interpreter.h>
+#include <cc/data.h>
 #include <config/command_mgr.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
-#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/resource_handler.h>
-#include <cc/command_interpreter.h>
-#include <cc/data.h>
+#include <exceptions/exceptions.h>
+#include <hooks/hooks_manager.h>
 #include <lease_cmds/lease_cmds.h>
-#include <lease_cmds_unittest.h>
 #include <stats/stats_mgr.h>
-#include <util/filesystem.h>
-#include <testutils/user_context_utils.h>
-#include <testutils/multi_threading_utils.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/multi_threading_utils.h>
+#include <testutils/user_context_utils.h>
+#include <util/filesystem.h>
+
+#include <set>
 
 #include <gtest/gtest.h>
 
 #include <errno.h>
-#include <set>
+#include <lease_cmds_unittest.h>
 
 using namespace std;
 using namespace isc;

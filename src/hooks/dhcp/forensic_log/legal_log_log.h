@@ -7,9 +7,9 @@
 #ifndef LEGAL_LOG_LOG_H
 #define LEGAL_LOG_LOG_H
 
-#include <log/message_initializer.h>
-#include <log/macros.h>
 #include <forensic_log/legal_log_messages.h>
+#include <log/macros.h>
+#include <log/message_initializer.h>
 
 namespace isc {
 namespace legal_log {

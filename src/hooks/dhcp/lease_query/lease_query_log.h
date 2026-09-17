@@ -7,9 +7,9 @@
 #ifndef LEASE_QRY_LOG_H
 #define LEASE_QRY_LOG_H
 
+#include <lease_query/lease_query_messages.h>
 #include <log/logger_support.h>
 #include <log/macros.h>
-#include <lease_query/lease_query_messages.h>
 
 namespace isc {
 namespace lease_query {

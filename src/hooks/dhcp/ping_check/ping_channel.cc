@@ -5,12 +5,15 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <ping_check/ping_channel.h>
-#include <ping_check_log.h>
+
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
+#include <ping_check/ping_channel.h>
 #include <util/multi_threading_mgr.h>
+
 #include <iostream>
+
+#include <ping_check_log.h>
 
 using namespace isc;
 using namespace isc::asiolink;

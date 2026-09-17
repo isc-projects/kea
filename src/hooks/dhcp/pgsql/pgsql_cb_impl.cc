@@ -12,11 +12,11 @@
 #include <dhcp/option_space.h>
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
+#include <pgsql/pgsql_cb_impl.h>
+#include <pgsql/pgsql_cb_log.h>
 #include <pgsql/pgsql_exchange.h>
 #include <util/buffer.h>
 
-#include <pgsql/pgsql_cb_impl.h>
-#include <pgsql/pgsql_cb_log.h>
 #include <cstdint>
 #include <utility>
 

@@ -6,14 +6,17 @@
 
 #include <config.h>
 
-#include <high_availability/ha_config_parser.h>
-#include <ha_log.h>
-#include <high_availability/ha_service_states.h>
 #include <cc/dhcp_config_error.h>
+#include <high_availability/ha_config_parser.h>
+#include <high_availability/ha_service_states.h>
 #include <util/filesystem.h>
-#include <boost/make_shared.hpp>
+
 #include <limits>
 #include <set>
+
+#include <boost/make_shared.hpp>
+
+#include <ha_log.h>
 
 using namespace isc::data;
 using namespace isc::http;

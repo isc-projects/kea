@@ -9,18 +9,19 @@
 #include <asiolink/io_address.h>
 #include <asiolink/io_service_mgr.h>
 #include <cc/command_interpreter.h>
-#include <hooks/hooks.h>
-#include <run_script/run_script.h>
-#include <run_script_log.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
+#include <hooks/hooks.h>
 #include <process/daemon.h>
+#include <run_script/run_script.h>
 
 #include <string>
+
+#include <run_script_log.h>
 
 namespace isc {
 namespace run_script {

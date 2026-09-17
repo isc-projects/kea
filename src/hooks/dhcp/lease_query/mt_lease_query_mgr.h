@@ -10,8 +10,9 @@
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
 #include <asiolink/io_service_thread_pool.h>
-#include <tcp/mt_tcp_listener_mgr.h>
 #include <lease_query/lease_query_listener.h>
+#include <tcp/mt_tcp_listener_mgr.h>
+
 #include <thread>
 #include <vector>
 

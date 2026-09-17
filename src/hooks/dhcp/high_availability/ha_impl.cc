@@ -6,19 +6,20 @@
 
 #include <config.h>
 
-#include <high_availability/ha_config_parser.h>
-#include <high_availability/ha_impl.h>
-#include <ha_log.h>
 #include <asiolink/io_service.h>
-#include <cc/data.h>
 #include <cc/command_interpreter.h>
+#include <cc/data.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
+#include <high_availability/ha_config_parser.h>
+#include <high_availability/ha_impl.h>
 #include <stats/stats_mgr.h>
+
+#include <ha_log.h>
 
 using namespace isc::asiolink;
 using namespace isc::config;

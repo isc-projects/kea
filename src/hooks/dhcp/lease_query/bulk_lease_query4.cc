@@ -8,20 +8,20 @@
 
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
-#include <dhcp/pkt4.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
+#include <dhcp/pkt4.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <lease_query/blq_service.h>
 #include <lease_query/bulk_lease_query4.h>
 #include <lease_query/lease_query_impl4.h>
 #include <lease_query/lease_query_log.h>
-#include <lease_query/blq_service.h>
 #include <stats/stats_mgr.h>
 #include <util/encode/encode.h>
 
-#include <boost/shared_ptr.hpp>
 #include <boost/pointer_cast.hpp>
+#include <boost/shared_ptr.hpp>
 
 using namespace isc;
 using namespace isc::asiolink;

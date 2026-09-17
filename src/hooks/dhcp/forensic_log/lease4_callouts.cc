@@ -5,20 +5,22 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <asiolink/asio_wrapper.h>
 #include <cc/data.h>
 #include <dhcp/pkt4.h>
-#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_subnets4.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
+#include <dhcpsrv/legal_log_mgr_factory.h>
 #include <eval/evaluate.h>
+#include <forensic_log/legal_log_log.h>
 #include <hooks/hooks.h>
 #include <util/str.h>
-#include <forensic_log/legal_log_log.h>
-#include <dhcpsrv/legal_log_mgr_factory.h>
-#include <subnets_user_context.h>
 
 #include <sstream>
+
+#include <subnets_user_context.h>
 
 using namespace isc;
 using namespace isc::data;

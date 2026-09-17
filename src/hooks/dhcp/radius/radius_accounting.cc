@@ -12,10 +12,11 @@
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/subnet.h>
 #include <radius/radius_accounting.h>
-#include <radius_log.h>
 #include <radius/radius_status.h>
 #include <radius/radius_utils.h>
 #include <util/multi_threading_mgr.h>
+
+#include <radius_log.h>
 #include <stdio.h>
 
 using namespace std;

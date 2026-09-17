@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/tests/test_get_callout_handle.h>
 

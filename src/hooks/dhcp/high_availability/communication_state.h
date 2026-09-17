@@ -7,28 +7,28 @@
 #ifndef HA_COMMUNICATION_STATE_H
 #define HA_COMMUNICATION_STATE_H
 
-#include <high_availability/ha_config.h>
-#include <high_availability/ha_service_states.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 #include <cc/data.h>
 #include <dhcp/pkt.h>
-
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/multi_index_container.hpp>
-#include <boost/multi_index/composite_key.hpp>
-#include <boost/multi_index/hashed_index.hpp>
-#include <boost/multi_index/indexed_by.hpp>
-#include <boost/multi_index/member.hpp>
-#include <boost/multi_index/ordered_index.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
+#include <high_availability/ha_config.h>
+#include <high_availability/ha_service_states.h>
 
 #include <functional>
 #include <mutex>
 #include <set>
 #include <string>
 #include <utility>
+
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/multi_index/composite_key.hpp>
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/indexed_by.hpp>
+#include <boost/multi_index/member.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace ha {

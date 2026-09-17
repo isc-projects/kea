@@ -6,15 +6,17 @@
 
 #include <config.h>
 
-#include <gss_tsig/gss_tsig_cfg.h>
 #include <cc/command_interpreter.h>
+#include <gss_tsig/gss_tsig_cfg.h>
 #include <gss_tsig/managed_key.h>
-#include <testutils/gtest_utils.h>
-#include <testutils/test_to_element.h>
 #include <stats/stats_mgr.h>
 #include <stats/testutils/stats_test_utils.h>
-#include <gtest/gtest.h>
+#include <testutils/gtest_utils.h>
+#include <testutils/test_to_element.h>
+
 #include <limits>
+
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

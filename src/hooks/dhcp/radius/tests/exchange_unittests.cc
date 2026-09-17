@@ -7,13 +7,16 @@
 #include <config.h>
 
 #include <radius/client_exchange.h>
+#include <radius/radius.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
-#include <radius/radius.h>
-#include <attribute_test.h>
-#include <gtest/gtest.h>
+
 #include <iostream>
 #include <sstream>
+
+#include <gtest/gtest.h>
+
+#include <attribute_test.h>
 
 using namespace isc;
 using namespace isc::asiolink;

@@ -10,19 +10,19 @@
 #include <cc/base_stamped_element.h>
 #include <cc/data.h>
 #include <ddns_tuning/ddns_tuning_log.h>
-#include <dhcpsrv/cfgmgr.h>
+#include <ddns_tuning/expression_cache.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/subnet.h>
 #include <eval/evaluate.h>
 #include <eval/token.h>
-#include <dhcpsrv/subnet.h>
-#include <ddns_tuning/expression_cache.h>
-
-#include <boost/algorithm/string/split.hpp>
-#include <boost/algorithm/string/classification.hpp>
 
 #include <map>
 #include <string>
+
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 
 namespace isc {
 namespace ddns_tuning {

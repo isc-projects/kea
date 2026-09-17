@@ -12,17 +12,19 @@
 
 #include <config.h>
 
-#include <class_cmds/class_cmds.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
-#include <hooks/hooks_manager.h>
+#include <class_cmds/class_cmds.h>
 #include <config/command_mgr.h>
 #include <dhcp/libdhcp++.h>
-#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_option_def.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <hooks/hooks_manager.h>
+
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
+
 #include <errno.h>
 
 using namespace std;

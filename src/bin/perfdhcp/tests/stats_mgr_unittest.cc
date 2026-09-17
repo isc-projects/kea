@@ -6,21 +6,18 @@
 
 #include <config.h>
 
-#include <perfdhcp/tests/command_options_helper.h>
-
-#include <perfdhcp/stats_mgr.h>
-
-#include <exceptions/exceptions.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
-
-#include <gtest/gtest.h>
+#include <exceptions/exceptions.h>
+#include <perfdhcp/stats_mgr.h>
+#include <perfdhcp/tests/command_options_helper.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

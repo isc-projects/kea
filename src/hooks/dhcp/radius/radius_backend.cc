@@ -6,12 +6,13 @@
 
 #include <config.h>
 
-#include <exceptions/exceptions.h>
 #include <dhcpsrv/cache_host_data_source.h>
+#include <exceptions/exceptions.h>
 #include <radius/radius.h>
 #include <radius/radius_backend.h>
-#include <radius_log.h>
 #include <util/str.h>
+
+#include <radius_log.h>
 
 using namespace std;
 using namespace isc;

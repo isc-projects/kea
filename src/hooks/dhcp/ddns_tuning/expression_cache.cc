@@ -7,8 +7,8 @@
 #include <config.h>
 
 #include <ddns_tuning/expression_cache.h>
-#include <eval/token.h>
 #include <eval/eval_context.h>
+#include <eval/token.h>
 #include <util/multi_threading_mgr.h>
 
 using namespace isc;

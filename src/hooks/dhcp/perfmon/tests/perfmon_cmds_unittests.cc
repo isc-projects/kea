@@ -6,21 +6,23 @@
 
 /// @file This file contains tests which exercise the PerfmonMgr class.
 #include <config.h>
-#include <perfmon/perfmon_mgr.h>
+
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/subnet.h>
 #include <hooks/hooks_manager.h>
+#include <perfmon/perfmon_mgr.h>
 #include <stats/stats_mgr.h>
-#include <testutils/log_utils.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/log_utils.h>
 #include <testutils/multi_threading_utils.h>
 #include <util/boost_time_utils.h>
 
-#include <gtest/gtest.h>
 #include <list>
 #include <sstream>
+
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

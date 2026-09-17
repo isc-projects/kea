@@ -8,7 +8,7 @@
 ///                   values.
 
 #include <config.h>
-#include <util/str.h>
+
 #include <asiolink/asio_wrapper.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
@@ -18,11 +18,13 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/host.h>
-#include <hooks/hooks.h>
+#include <eval/eval_context.h>
 #include <eval/evaluate.h>
 #include <eval/token.h>
-#include <eval/eval_context.h>
 #include <flex_id/flex_id_log.h>
+#include <hooks/hooks.h>
+#include <util/str.h>
+
 #include <algorithm>
 #include <sstream>
 

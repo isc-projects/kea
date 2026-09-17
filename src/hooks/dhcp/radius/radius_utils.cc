@@ -6,9 +6,10 @@
 
 #include <config.h>
 
-#include <util/str.h>
 #include <dhcp/dhcp4.h>
 #include <radius/radius_utils.h>
+#include <util/str.h>
+
 #include <cctype>
 #include <iomanip>
 #include <sstream>

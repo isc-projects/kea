@@ -6,10 +6,11 @@
 
 #include <config.h>
 
-#include <host_cmds/host_data_parser.h>
 #include <cc/data.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/std_option_defs.h>
+#include <host_cmds/host_data_parser.h>
+
 #include <gtest/gtest.h>
 
 using namespace isc::data;

@@ -8,8 +8,10 @@
 #define GSS_TSIG_API_UTILS_H
 
 #include <gss_tsig/gss_tsig_context.h>
-#include <gtest/gtest.h>
+
 #include <cstdlib>
+
+#include <gtest/gtest.h>
 
 namespace isc {
 namespace gss_tsig {

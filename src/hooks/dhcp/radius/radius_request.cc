@@ -6,11 +6,13 @@
 
 #include <config.h>
 
-#include <radius/radius_request.h>
 #include <radius/radius_access.h>
 #include <radius/radius_accounting.h>
-#include <radius_log.h>
+#include <radius/radius_request.h>
+
 #include <sstream>
+
+#include <radius_log.h>
 
 using namespace isc::asiolink;
 using namespace isc::dhcp;

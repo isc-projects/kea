@@ -7,8 +7,8 @@
 #include <config.h>
 
 #include <bootp/bootp_log.h>
-#include <hooks/hooks.h>
 #include <dhcp/pkt4.h>
+#include <hooks/hooks.h>
 #include <process/daemon.h>
 #include <stats/stats_mgr.h>
 

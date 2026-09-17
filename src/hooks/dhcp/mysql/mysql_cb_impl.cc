@@ -6,19 +6,20 @@
 
 #include <config.h>
 
-#include <mysql/mysql_cb_impl.h>
-#include <mysql/mysql_cb_log.h>
 #include <asiolink/io_address.h>
 #include <config_backend/constants.h>
 #include <dhcp/option_space.h>
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
+#include <mysql/mysql_cb_impl.h>
+#include <mysql/mysql_cb_log.h>
 #include <util/buffer.h>
+
+#include <cstdint>
+#include <utility>
 
 #include <mysql.h>
 #include <mysqld_error.h>
-#include <cstdint>
-#include <utility>
 
 using namespace isc::asiolink;
 using namespace isc::cb;

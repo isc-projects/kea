@@ -7,13 +7,15 @@
 /// @file This file contains tests which exercise the ICMPMsg class.
 
 #include <config.h>
-#include <ping_check/icmp_msg.h>
+
 #include <asiolink/io_address.h>
+#include <ping_check/icmp_msg.h>
 #include <testutils/gtest_utils.h>
 #include <util/str.h>
 
-#include <gtest/gtest.h>
 #include <list>
+
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

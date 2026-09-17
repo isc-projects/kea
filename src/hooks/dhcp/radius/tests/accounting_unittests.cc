@@ -12,11 +12,6 @@
 
 #include <config.h>
 
-#include <radius/radius.h>
-#include <radius/radius_accounting.h>
-#include <radius/radius_utils.h>
-#include <attribute_test.h>
-
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service_mgr.h>
@@ -32,6 +27,9 @@
 #include <hooks/callout_handle.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks_manager.h>
+#include <radius/radius.h>
+#include <radius/radius_accounting.h>
+#include <radius/radius_utils.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/multi_threading_utils.h>
 
@@ -40,6 +38,8 @@
 #include <thread>
 
 #include <gtest/gtest.h>
+
+#include <attribute_test.h>
 
 using namespace std;
 using namespace std::chrono;

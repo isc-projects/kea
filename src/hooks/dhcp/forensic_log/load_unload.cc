@@ -11,19 +11,20 @@
 #include <asiolink/io_service.h>
 #include <asiolink/io_service_mgr.h>
 #include <cc/data.h>
-#include <hooks/hooks.h>
 #include <database/database_connection.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <process/daemon.h>
-#include <forensic_log/legal_log_log.h>
-#include <legal_syslog.h>
 #include <dhcpsrv/legal_log_mgr.h>
+#include <forensic_log/legal_log_log.h>
 #include <forensic_log/rotating_file.h>
-
-#include <boost/lexical_cast.hpp>
+#include <hooks/hooks.h>
+#include <process/daemon.h>
 
 #include <sstream>
 #include <string>
+
+#include <boost/lexical_cast.hpp>
+
+#include <legal_syslog.h>
 
 using namespace isc;
 using namespace isc::asiolink;

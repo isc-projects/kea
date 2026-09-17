@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <database/db_exceptions.h>
 #include <database/server.h>
 #include <database/testutils/schema.h>
@@ -16,15 +17,17 @@
 #include <dhcpsrv/testutils/test_utils.h>
 #include <mysql/mysql_cb_dhcp6.h>
 #include <mysql/testutils/mysql_schema.h>
-#include <testutils/multi_threading_utils.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/multi_threading_utils.h>
+
+#include <map>
+#include <sstream>
 
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
+
 #include <mysql.h>
-#include <map>
-#include <sstream>
 
 using namespace isc;
 using namespace isc::asiolink;

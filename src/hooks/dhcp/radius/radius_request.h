@@ -7,11 +7,11 @@
 #ifndef RADIUS_REQUEST_H
 #define RADIUS_REQUEST_H
 
-#include <radius/client_exchange.h>
-#include <radius/radius.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/timer_mgr.h>
+#include <radius/client_exchange.h>
+#include <radius/radius.h>
 
 #include <functional>
 #include <sstream>

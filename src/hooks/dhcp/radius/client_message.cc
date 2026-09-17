@@ -6,15 +6,18 @@
 
 #include <config.h>
 
-#include <radius/client_attribute.h>
-#include <radius/client_message.h>
-#include <radius_log.h>
 #include <cryptolink/crypto_hash.h>
 #include <cryptolink/crypto_hmac.h>
 #include <cryptolink/crypto_rng.h>
-#include <boost/scoped_ptr.hpp>
+#include <radius/client_attribute.h>
+#include <radius/client_message.h>
+
 #include <cstring>
 #include <sstream>
+
+#include <boost/scoped_ptr.hpp>
+
+#include <radius_log.h>
 
 using namespace isc;
 using namespace isc::asiolink;

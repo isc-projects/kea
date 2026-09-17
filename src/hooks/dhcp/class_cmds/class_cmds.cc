@@ -6,15 +6,17 @@
 
 #include <config.h>
 
-#include <class_cmds/class_cmds.h>
-#include <class_cmds_log.h>
 #include <cc/command_interpreter.h>
+#include <class_cmds/class_cmds.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <util/multi_threading_mgr.h>
-#include <string>
+
 #include <sstream>
+#include <string>
+
+#include <class_cmds_log.h>
 
 using namespace isc::config;
 using namespace isc::dhcp;

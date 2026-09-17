@@ -19,8 +19,8 @@
 #include <cstdlib>
 #include <string>
 
-#include <fuzzer/FuzzedDataProvider.h>
 #include <fuzz/helper_func.h>
+#include <fuzzer/FuzzedDataProvider.h>
 #include <unistd.h>
 
 using namespace isc::config;

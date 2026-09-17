@@ -7,10 +7,10 @@
 #ifndef FLEX_OPTION_LOG_H
 #define FLEX_OPTION_LOG_H
 
+#include <flex_option/flex_option_messages.h>
+#include <log/log_dbglevels.h>
 #include <log/logger_support.h>
 #include <log/macros.h>
-#include <log/log_dbglevels.h>
-#include <flex_option/flex_option_messages.h>
 
 namespace isc {
 namespace flex_option {

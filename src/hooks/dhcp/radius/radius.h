@@ -7,20 +7,17 @@
 #ifndef RADIUS_H
 #define RADIUS_H
 
-#include <radius/cfg_attribute.h>
-#include <radius/client_exchange.h>
-#include <radius/radius_backend.h>
-#include <exceptions/exceptions.h>
-#include <cc/data.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_service.h>
 #include <asiolink/io_service_thread_pool.h>
+#include <cc/data.h>
 #include <dhcpsrv/cache_host_data_source.h>
 #include <dhcpsrv/host.h>
+#include <exceptions/exceptions.h>
+#include <radius/cfg_attribute.h>
+#include <radius/client_exchange.h>
+#include <radius/radius_backend.h>
 #include <tcp/tcp_client.h>
-
-#include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
 
 #include <atomic>
 #include <list>
@@ -29,6 +26,9 @@
 #include <thread>
 #include <unordered_set>
 #include <vector>
+
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace radius {

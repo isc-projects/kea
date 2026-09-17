@@ -7,21 +7,23 @@
 /// @file This file contains tests which exercise the PingCheckMgr class.
 #include <config.h>
 
-#include <ping_check/ping_check_mgr.h>
-#include <ping_test_utils.h>
 #include <cc/data.h>
 #include <dhcp/pkt4.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
 #include <hooks/hooks_manager.h>
+#include <ping_check/ping_check_mgr.h>
 #include <stats/stats_mgr.h>
-#include <util/chrono_time_utils.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/multi_threading_utils.h>
+#include <util/chrono_time_utils.h>
+
+#include <chrono>
+#include <mutex>
 
 #include <gtest/gtest.h>
-#include <mutex>
-#include <chrono>
+
+#include <ping_test_utils.h>
 
 using namespace std;
 using namespace isc;

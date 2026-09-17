@@ -6,10 +6,10 @@
 
 #include <config.h>
 
-#include <perfmon/perfmon_config.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
+#include <perfmon/perfmon_config.h>
 
 using namespace isc;
 using namespace isc::data;

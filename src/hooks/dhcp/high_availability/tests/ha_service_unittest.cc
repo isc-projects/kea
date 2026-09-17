@@ -7,10 +7,6 @@
 #include <config.h>
 
 #include <asiolink/asio_wrapper.h>
-#include <ha_test.h>
-#include <high_availability/ha_config.h>
-#include <high_availability/ha_service.h>
-#include <high_availability/ha_service_states.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
@@ -28,6 +24,9 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/subnet_id.h>
+#include <high_availability/ha_config.h>
+#include <high_availability/ha_service.h>
+#include <high_availability/ha_service_states.h>
 #include <hooks/parking_lots.h>
 #include <http/basic_auth_config.h>
 #include <http/date_time.h>
@@ -38,20 +37,22 @@
 #include <http/response_creator_factory.h>
 #include <http/response_json.h>
 #include <stats/stats_mgr.h>
-#include <util/multi_threading_mgr.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
+#include <util/multi_threading_mgr.h>
+
+#include <functional>
+#include <set>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/pointer_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 
-#include <functional>
-#include <sstream>
-#include <set>
-#include <string>
-#include <vector>
+#include <ha_test.h>
 
 using namespace isc::asiolink;
 using namespace isc::config;

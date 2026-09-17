@@ -5,16 +5,18 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <perfmon/monitored_duration.h>
+
 #include <cc/data.h>
 #include <dhcp/dhcp6.h>
-#include <util/boost_time_utils.h>
+#include <perfmon/monitored_duration.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
+#include <util/boost_time_utils.h>
 
-#include <gtest/gtest.h>
 #include <sstream>
 #include <unordered_set>
+
+#include <gtest/gtest.h>
 
 using namespace isc;
 using namespace isc::data;

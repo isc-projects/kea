@@ -6,21 +6,24 @@
 
 #include <config.h>
 
-#include <attribute_test.h>
-#include <cryptolink/crypto_hash.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/udp_socket.h>
+#include <cryptolink/crypto_hash.h>
 #include <database/database_connection.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
+#include <radius/radius.h>
 #include <radius/radius_access.h>
 #include <radius/radius_accounting.h>
 #include <radius/radius_status.h>
-#include <radius/radius.h>
-#include <gtest/gtest.h>
-#include <boost/date_time/posix_time/posix_time.hpp>
+
 #include <atomic>
+
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <gtest/gtest.h>
+
+#include <attribute_test.h>
 
 using namespace std;
 using namespace isc;

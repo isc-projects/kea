@@ -10,13 +10,14 @@
 
 #include <config.h>
 
-#include <lease_cmds/lease_cmds.h>
-#include <lease_cmds_log.h>
-#include <lease_cmds/binding_variables.h>
 #include <cc/command_interpreter.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/hooks.h>
+#include <lease_cmds/binding_variables.h>
+#include <lease_cmds/lease_cmds.h>
 #include <process/daemon.h>
+
+#include <lease_cmds_log.h>
 #include <sflq_cmds.h>
 
 using namespace isc::config;

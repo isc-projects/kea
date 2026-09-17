@@ -7,12 +7,13 @@
 #include <config.h>
 
 #include <dhcpsrv/testutils/pgsql_generic_backend_unittest.h>
+#include <pgsql/pgsql_cb_impl.h>
 #include <pgsql/testutils/pgsql_schema.h>
 #include <testutils/gtest_utils.h>
 
-#include <gtest/gtest.h>
-#include <pgsql/pgsql_cb_impl.h>
 #include <vector>
+
+#include <gtest/gtest.h>
 
 using namespace isc::db;
 using namespace isc::dhcp;

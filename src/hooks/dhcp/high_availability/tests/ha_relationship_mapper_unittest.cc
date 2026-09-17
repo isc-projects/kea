@@ -6,9 +6,10 @@
 
 #include <config.h>
 
+#include <exceptions/exceptions.h>
 #include <high_availability/ha_config.h>
 #include <high_availability/ha_relationship_mapper.h>
-#include <exceptions/exceptions.h>
+
 #include <gtest/gtest.h>
 
 using namespace isc;

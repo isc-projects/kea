@@ -6,11 +6,12 @@
 
 #include <config.h>
 
-#include <radius/cfg_attribute.h>
 #include <eval/evaluate.h>
+#include <radius/cfg_attribute.h>
 #include <util/encode/encode.h>
-#include <sstream>
+
 #include <iomanip>
+#include <sstream>
 
 using namespace std;
 using namespace isc;

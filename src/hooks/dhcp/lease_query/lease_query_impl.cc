@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include <lease_query/lease_query_impl.h>
 #include <lease_query/blq_service.h>
+#include <lease_query/lease_query_impl.h>
 
 using namespace isc;
 using namespace isc::asiolink;

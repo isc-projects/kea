@@ -12,9 +12,9 @@
 
 #include <config.h>
 
-#define RequestTest RequestAsyncTest
-#define RequestAuth RadiusAsyncAuth
-#define RequestAcct RadiusAsyncAcct
+#define RequestTest    RequestAsyncTest
+#define RequestAuth    RadiusAsyncAuth
+#define RequestAcct    RadiusAsyncAcct
 #define RequestAuthPtr RadiusAsyncAuthPtr
 #define RequestAcctPtr RadiusAsyncAcctPtr
 

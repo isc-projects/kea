@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-#include <user_chk/user_registry.h>
 #include <user_chk/user.h>
+#include <user_chk/user_registry.h>
 
 namespace user_chk {
 

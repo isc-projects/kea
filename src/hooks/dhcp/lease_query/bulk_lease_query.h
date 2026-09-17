@@ -10,8 +10,10 @@
 #include <config.h>
 
 #include <lease_query/blq_msg.h>
-#include <boost/enable_shared_from_this.hpp>
+
 #include <functional>
+
+#include <boost/enable_shared_from_this.hpp>
 
 namespace isc {
 namespace lease_query {

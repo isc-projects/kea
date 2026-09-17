@@ -13,19 +13,19 @@
 #include <asiolink/io_service_thread_pool.h>
 #include <cc/data.h>
 #include <cc/simple_parser.h>
-#include <dhcpsrv/host.h>
-#include <dhcpsrv/srv_config.h>
-#include <hooks/callout_handle.h>
 #include <dhcp/pkt4.h>
+#include <dhcpsrv/host.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/network_state.h>
-#include <ping_check/ping_context_store.h>
-#include <ping_check/ping_channel.h>
+#include <dhcpsrv/srv_config.h>
+#include <hooks/callout_handle.h>
 #include <ping_check/config_cache.h>
-
-#include <boost/enable_shared_from_this.hpp>
+#include <ping_check/ping_channel.h>
+#include <ping_check/ping_context_store.h>
 
 #include <mutex>
+
+#include <boost/enable_shared_from_this.hpp>
 
 namespace isc {
 namespace ping_check {

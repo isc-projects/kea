@@ -5,14 +5,13 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <gtest/gtest.h>
 
-#include <dhcp/option.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/option.h>
+#include <perfdhcp/localized_option.h>
 
 #include <boost/scoped_ptr.hpp>
-
-#include <perfdhcp/localized_option.h>
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

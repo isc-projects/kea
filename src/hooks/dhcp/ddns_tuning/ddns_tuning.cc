@@ -6,14 +6,14 @@
 
 #include <config.h>
 
+#include <cc/simple_parser.h>
 #include <ddns_tuning/ddns_tuning.h>
 #include <ddns_tuning/ddns_tuning_log.h>
-#include <eval/token.h>
-#include <eval/eval_context.h>
-#include <cc/simple_parser.h>
-#include <dhcpsrv/cfgmgr.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <eval/eval_context.h>
+#include <eval/token.h>
 
 using namespace isc;
 using namespace isc::data;

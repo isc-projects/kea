@@ -7,13 +7,15 @@
 /// @file This file contains tests which verify flexible option.
 
 #include <config.h>
+
 #include <bootp/bootp_log.h>
 #include <dhcp/pkt4.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>
 
-#include <gtest/gtest.h>
 #include <sstream>
+
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;

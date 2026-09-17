@@ -7,11 +7,12 @@
 #ifndef MYSQL_CONFIG_BACKEND_DHCP4_H
 #define MYSQL_CONFIG_BACKEND_DHCP4_H
 
-#include <mysql/mysql_cb_impl.h>
 #include <database/database_connection.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/config_backend_dhcp4.h>
+#include <mysql/mysql_cb_impl.h>
 #include <mysql/mysql_cb_log.h>
+
 #include <boost/shared_ptr.hpp>
 
 namespace isc {

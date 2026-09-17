@@ -6,13 +6,16 @@
 
 #include <config.h>
 
-#include <util/str.h>
 #include <radius/client_dictionary.h>
-#include <radius_log.h>
-#include <boost/lexical_cast.hpp>
+#include <util/str.h>
+
 #include <fstream>
 #include <limits>
 #include <sstream>
+
+#include <boost/lexical_cast.hpp>
+
+#include <radius_log.h>
 
 using namespace isc;
 using namespace isc::util;

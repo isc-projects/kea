@@ -8,20 +8,21 @@
 #define LEASE_QUERY_CONNECTION_H
 
 #include <config.h>
+
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_service.h>
 #include <dhcp/pkt6.h>
+#include <lease_query/bulk_lease_query.h>
 #include <tcp/tcp_listener.h>
 #include <tcp/tcp_stream_msg.h>
-#include <lease_query/bulk_lease_query.h>
 
 #include <boost/multi_index/indexed_by.hpp>
-#include <boost/multi_index/member.hpp>
-#include <boost/multi_index_container.hpp>
 #include <boost/multi_index/mem_fun.hpp>
-#include <boost/multi_index/sequenced_index.hpp>
+#include <boost/multi_index/member.hpp>
 #include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/sequenced_index.hpp>
 #include <boost/multi_index/tag.hpp>
+#include <boost/multi_index_container.hpp>
 
 namespace isc {
 namespace lease_query {

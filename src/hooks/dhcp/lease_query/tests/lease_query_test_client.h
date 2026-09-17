@@ -8,14 +8,15 @@
 #define LEASE_QUERY_TEST_CLIENT_H
 
 #include <cc/data.h>
-#include <exceptions/exceptions.h>
-#include <dhcp/pkt.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/pkt.h>
+#include <exceptions/exceptions.h>
 #include <lease_query/lease_query_connection.h>
-#include <boost/asio/read.hpp>
+
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/read.hpp>
 #include <gtest/gtest.h>
 
 using namespace boost::asio::ip;

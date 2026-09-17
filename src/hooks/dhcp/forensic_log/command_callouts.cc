@@ -7,22 +7,24 @@
 /// @file command_callouts.cc Defines lease4_select and lease4_renew callout functions.
 
 #include <config.h>
+
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <cc/simple_parser.h>
-#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/cfg_subnets6.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/legal_log_mgr_factory.h>
 #include <dhcpsrv/subnet.h>
+#include <forensic_log/legal_log_log.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks.h>
 #include <util/str.h>
-#include <forensic_log/legal_log_log.h>
-#include <dhcpsrv/legal_log_mgr_factory.h>
-#include <subnets_user_context.h>
 
 #include <sstream>
 #include <unordered_set>
+
+#include <subnets_user_context.h>
 
 using namespace isc;
 using namespace isc::config;

@@ -8,12 +8,13 @@
 #define LEASE_QUERY_LISTENER_H
 
 #include <config.h>
+
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_service.h>
 #include <dhcp/pkt.h>
-#include <tcp/tcp_listener.h>
-#include <tcp/tcp_connection.h>
 #include <lease_query/lease_query_connection.h>
+#include <tcp/tcp_connection.h>
+#include <tcp/tcp_listener.h>
 
 namespace isc {
 namespace lease_query {

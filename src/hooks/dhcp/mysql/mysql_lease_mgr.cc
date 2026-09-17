@@ -16,23 +16,24 @@
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/sflq_allocator.h>
 #include <dhcpsrv/timer_mgr.h>
-#include <mysql_lb_log.h>
-#include <mysql/mysql_lease_mgr.h>
 #include <mysql/mysql_connection.h>
+#include <mysql/mysql_lease_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <util/str.h>
 
-#include <boost/array.hpp>
-#include <boost/make_shared.hpp>
-#include <mysqld_error.h>
-
 #include <ctime>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <limits>
 #include <sstream>
 #include <string>
 #include <vector>
+
+#include <boost/array.hpp>
+#include <boost/make_shared.hpp>
+
+#include <mysql_lb_log.h>
+#include <mysqld_error.h>
 
 using namespace isc;
 using namespace isc::asiolink;

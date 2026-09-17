@@ -7,9 +7,9 @@
 #ifndef GSS_TSIG_LOG_H
 #define GSS_TSIG_LOG_H
 
+#include <gss_tsig/gss_tsig_messages.h>
 #include <log/logger_support.h>
 #include <log/macros.h>
-#include <gss_tsig/gss_tsig_messages.h>
 
 namespace isc {
 namespace gss_tsig {

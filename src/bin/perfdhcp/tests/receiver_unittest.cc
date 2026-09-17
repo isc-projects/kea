@@ -6,15 +6,12 @@
 
 #include <config.h>
 
-#include <perfdhcp/tests/command_options_helper.h>
-
 #include <dhcp/iface_mgr.h>
-
-
 #include <exceptions/exceptions.h>
 #include <perfdhcp/receiver.h>
-#include <gtest/gtest.h>
+#include <perfdhcp/tests/command_options_helper.h>
 
+#include <gtest/gtest.h>
 
 using namespace isc;
 using namespace isc::dhcp;

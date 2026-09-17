@@ -8,18 +8,20 @@
 
 #include <config.h>
 
+#include <dhcpsrv/cfgmgr.h>
+#include <hooks/hooks_manager.h>
 #include <host_cache/host_cache.h>
 #include <host_cache/host_cache_parsers.h>
-#include <hooks/hooks_manager.h>
-#include <dhcpsrv/cfgmgr.h>
 #include <testutils/env_var_wrapper.h>
-#include <testutils/multi_threading_utils.h>
 #include <testutils/log_utils.h>
-#include <gtest/gtest.h>
+#include <testutils/multi_threading_utils.h>
+
 #include <fstream>
 #include <functional>
 #include <iostream>
 #include <list>
+
+#include <gtest/gtest.h>
 
 using namespace isc;
 using namespace isc::asiolink;

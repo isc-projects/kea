@@ -5,28 +5,32 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <host_cmds/host_cmds.h>
-#include <config/command_mgr.h>
-#include <config/cmds_impl.h>
-#include <host_cmds/host_data_parser.h>
-#include <cc/command_interpreter.h>
-#include <cc/simple_parser.h>
-#include <cc/data.h>
+
 #include <asiolink/io_address.h>
-#include <host_cmds_log.h>
-#include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/host_mgr.h>
+#include <cc/command_interpreter.h>
+#include <cc/data.h>
+#include <cc/simple_parser.h>
+#include <config/cmds_impl.h>
+#include <config/command_mgr.h>
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/cfg_subnets6.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/subnet_id.h>
+#include <exceptions/exceptions.h>
+#include <host_cmds/host_cmds.h>
+#include <host_cmds/host_data_parser.h>
 #include <util/encode/encode.h>
 #include <util/str.h>
-#include <exceptions/exceptions.h>
+
+#include <sstream>
+#include <string>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
-#include <string>
-#include <sstream>
+
+#include <host_cmds_log.h>
 
 using namespace isc::dhcp;
 using namespace isc::data;

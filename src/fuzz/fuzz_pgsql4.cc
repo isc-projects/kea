@@ -11,12 +11,12 @@
 #include <asiolink/io_address.h>
 #include <database/database_connection.h>
 #include <database/server_selector.h>
-#include <pgsql/pgsql_cb_dhcp4.h>
-#include <pgsql/pgsql_cb_impl.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
+#include <pgsql/pgsql_cb_dhcp4.h>
+#include <pgsql/pgsql_cb_impl.h>
 #include <pgsql/pgsql_exchange.h>
 #include <process/daemon.h>
 

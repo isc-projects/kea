@@ -9,13 +9,14 @@
 // issues related to namespaces.
 #include <config.h>
 
-#include <perfmon_log.h>
-#include <perfmon/perfmon_mgr.h>
 #include <cc/simple_parser.h>
 #include <config/cmd_response_creator.h>
-#include <stats/stats_mgr.h>
 #include <dhcp/dhcp6.h>
+#include <perfmon/perfmon_mgr.h>
+#include <stats/stats_mgr.h>
 #include <util/boost_time_utils.h>
+
+#include <perfmon_log.h>
 
 namespace isc {
 namespace perfmon {

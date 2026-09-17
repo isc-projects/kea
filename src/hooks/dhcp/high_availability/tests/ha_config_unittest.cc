@@ -6,20 +6,22 @@
 
 #include <config.h>
 
-#include <high_availability/ha_impl.h>
-#include <high_availability/ha_service_states.h>
-#include <ha_test.h>
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
 #include <config/command_mgr.h>
 #include <dhcpsrv/shared_network.h>
-#include <util/state_model.h>
-#include <util/multi_threading_mgr.h>
+#include <high_availability/ha_impl.h>
+#include <high_availability/ha_service_states.h>
 #include <testutils/gtest_utils.h>
+#include <util/multi_threading_mgr.h>
+#include <util/state_model.h>
+
 #include <limits>
 #include <string>
+
+#include <ha_test.h>
 
 using namespace isc;
 using namespace isc::asiolink;

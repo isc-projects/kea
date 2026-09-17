@@ -10,14 +10,15 @@
 
 #include <config.h>
 
-#include <host_cache/host_cache.h>
-#include <host_cache_log.h>
 #include <cc/command_interpreter.h>
-#include <hooks/hooks.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
+#include <dhcpsrv/host_mgr.h>
+#include <hooks/hooks.h>
+#include <host_cache/host_cache.h>
 #include <process/daemon.h>
+
+#include <host_cache_log.h>
 
 using namespace isc::db;
 using namespace isc::dhcp;

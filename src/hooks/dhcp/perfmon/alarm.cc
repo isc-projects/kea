@@ -6,9 +6,9 @@
 
 #include <config.h>
 
+#include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
-#include <dhcp/dhcp6.h>
 #include <exceptions/exceptions.h>
 #include <perfmon/alarm.h>
 
