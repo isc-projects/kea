@@ -169,6 +169,9 @@ public:
     /// close the connection gracefully if all data has been sent, or will
     /// call @ref doSend() again to send remaining data.
     void doSend() {
+        // doSend is called only when there is something to send so
+        // remaining is guaranteed to be greater than 0 and position_
+        // to point inside the buffer.
         size_t remaining = response_.size() - position_;
         socket_->asyncSend(&response_[position_], remaining,
            std::bind(&Connection::sendHandler, shared_from_this(), ph::_1, ph::_2));
@@ -392,7 +395,7 @@ Connection::receiveHandler(const boost::system::error_code& ec,
     }
 
     // No response generated. Connection will be closed.
-    if (!rsp) {
+    if (!rsp || rsp->str().empty()) {
         LOG_WARN(command_logger, COMMAND_RESPONSE_ERROR)
             .arg(cmd ? cmd->str() : "unknown");
         rsp = createAnswer(CONTROL_RESULT_ERROR,
@@ -405,7 +408,7 @@ Connection::receiveHandler(const boost::system::error_code& ec,
         scheduleTimer();
 
         // Let's convert JSON response to text. Note that at this stage
-        // the rsp pointer is always set.
+        // the rsp pointer is always set and its rendering not empty.
         response_ = rsp->str();
 
         doSend();

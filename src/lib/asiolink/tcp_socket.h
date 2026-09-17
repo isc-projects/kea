@@ -322,8 +322,8 @@ TCPSocket<C>::asyncSend(const void* data, size_t length,
     const IOEndpoint*, C& callback) {
     if (socket_.is_open()) {
 
-        /// Need create a two-byte count buffer and use a sequence of buffers
-        /// with this header buffer and data buffer.
+        /// Need to create a two-byte count buffer and use a sequence
+        /// of buffers with this header buffer and data buffer.
         try {
             /// Ensure it fits into 16 bits
             uint16_t count = boost::numeric_cast<uint16_t>(length);

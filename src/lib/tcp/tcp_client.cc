@@ -1604,6 +1604,9 @@ Connection::doSend(const uint64_t transid) {
                                        ph::_1,
                                        ph::_2));
     try {
+        // doSend is called only when there is something to send so
+        // remaining is guaranteed to be greater than 0 and position_
+        // to point inside the buffer.
         size_t remaining = buf_.size() - position_;
         if (tcp_socket_) {
             tcp_socket_->asyncSend(&buf_[position_], remaining, socket_cb);

@@ -338,7 +338,7 @@ TLSSocket<C>::asyncSend(const void* data, size_t length,
                   "attempt to send on a TLS socket that is not open");
     }
 
-    /// Need create a two-byte count buffer and use a sequence of buffers
+    /// Need to create a two-byte count buffer and use a sequence of buffers
     /// with this header buffer and data buffer.
     try {
         /// Ensure it fits into 16 bits

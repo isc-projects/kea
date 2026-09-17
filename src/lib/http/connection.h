@@ -188,11 +188,14 @@ protected:
         }
 
         /// @brief Returns pointer to the first byte of the output buffer.
+        ///
+        /// @note: outputDataAvail() is called before so position_ is
+        /// guaranteed to point inside the output buffer.
         const char* getOutputBufData() const {
             return (&output_buf_[position_]);
         }
 
-        /// @brief Returns size of the output buffer.
+        /// @brief Returns remaining size of the output buffer.
         size_t getOutputBufSize() const {
             return (output_buf_.size() - position_);
         }
