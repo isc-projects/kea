@@ -8,14 +8,12 @@
 
 #include <perfdhcp/avalanche_scen.h>
 
-
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 using namespace std;
 using namespace boost::posix_time;
 using namespace isc;
 using namespace isc::dhcp;
-
 
 namespace isc {
 namespace perfdhcp {
@@ -84,14 +82,14 @@ AvalancheScen::resendPackets(ExchangeType xchg_type) {
     }
     if (current_cycle_resent_cnt > 0) {
         auto now = microsec_clock::universal_time();
-        std::cout << now << " " << xchg_type << ": still waiting for "
-                  << still_left_cnt << " answers, resent " << current_cycle_resent_cnt
-                  << ", retrying " << retrans.size() << std::endl;
+        std::ostringstream ss;
+        ss << now << " " << xchg_type << ": still waiting for "
+           << still_left_cnt << " answers, resent " << current_cycle_resent_cnt
+           << ", retrying " << retrans.size() << std::endl;
+        std::cout << ss.str();
     }
-    return still_left_cnt;
+    return (still_left_cnt);
 }
-
-
 
 int
 AvalancheScen::run() {
@@ -190,11 +188,13 @@ AvalancheScen::run() {
         total_rcvd_pkts += tc_.getStatsMgr().getRcvdPacketsNum(stage2_xchg_);
     }
 
-    std::cout << "It took " << duration.length() << " to provision " << clients_num
-              << " clients. " << std::endl
-              << "Requests sent + resent: " << total_sent_pkts << std::endl
-              << "Requests resent: " << total_resent_ << std::endl
-              << "Responses received: " << total_rcvd_pkts << std::endl;
+    std::ostringstream ss;
+    ss << "It took " << duration.length() << " to provision " << clients_num
+       << " clients. " << std::endl
+       << "Requests sent + resent: " << total_sent_pkts << std::endl
+       << "Requests resent: " << total_resent_ << std::endl
+       << "Responses received: " << total_rcvd_pkts << std::endl;
+    std::cout << ss.str();
 
     return (0);
 }
