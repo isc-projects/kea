@@ -59,7 +59,7 @@ public:
     ///
     /// @param request request string to send.
     void connect() {
-        tcp::endpoint endpoint(make_address(server_address_), server_port_);
+        boost::asio::ip::tcp::endpoint endpoint(make_address(server_address_), server_port_);
         socket_.async_connect(endpoint,
         [this](const boost::system::error_code& ec) {
             receive_done_ = false;
@@ -90,7 +90,7 @@ public:
     /// timeout the connection.
     void startRequest(BlqQueryPtr request) {
 
-        tcp::endpoint endpoint(make_address(server_address_), server_port_);
+        boost::asio::ip::tcp::endpoint endpoint(make_address(server_address_), server_port_);
         socket_.async_connect(endpoint,
         [this, request](const boost::system::error_code& ec) {
             receive_done_ = false;
@@ -130,7 +130,7 @@ public:
     void startRequests(const std::list<BlqQueryPtr>& requests) {
         requests_to_send_ = requests;
 
-        tcp::endpoint endpoint(make_address(server_address_), server_port_);
+        boost::asio::ip::tcp::endpoint endpoint(make_address(server_address_), server_port_);
         socket_.async_connect(endpoint,
         [this](const boost::system::error_code& ec) {
             receive_done_ = false;
