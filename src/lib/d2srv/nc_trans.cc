@@ -13,9 +13,10 @@
 #include <dns/rdataclass.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
-
+#include <boost/algorithm/string.hpp>
 #include <sstream>
 
+using namespace isc::dns;
 using namespace isc::hooks;
 using namespace isc::util;
 
@@ -429,6 +430,21 @@ NameChangeTransaction::getNcr() const {
 const TransactionKey&
 NameChangeTransaction::getTransactionKey() const {
     return (ncr_->getDhcid());
+}
+
+const std::string&
+NameChangeTransaction::getFqdn() const {
+    return (ncr_->getFqdn());
+}
+
+std::string
+NameChangeTransaction::getFqdnLower() const {
+    return (ncr_->getFqdnLower());
+}
+
+const asiolink::IOAddress&
+NameChangeTransaction::getIOAddress() const {
+    return (ncr_->getIOAddress());
 }
 
 std::string

@@ -13,6 +13,7 @@
 #include <d2srv/dns_client.h>
 #include <d2srv/d2_cfg_mgr.h>
 #include <d2srv/d2_tsig_key.h>
+#include <dns/name.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <exceptions/exceptions.h>
 #include <util/state_model.h>
@@ -441,6 +442,21 @@ public:
     /// @return A const reference to the TransactionKey.
     const TransactionKey& getTransactionKey() const;
 
+    /// @brief Fetches the request FQDN
+    ///
+    /// @return a std::string containing the FQDN
+    const std::string& getFqdn() const;
+
+    /// @brief Fetches the request FQDN converted to lower-case
+    ///
+    /// @return string containing lower-cased FQDN
+    std::string getFqdnLower() const;
+
+    /// @brief Fetches the request IP address.
+    ///
+    /// @return the IP address
+    const asiolink::IOAddress& getIOAddress() const;
+
     /// @brief Fetches the request id that identifies this transaction.
     ///
     /// This is a wrapper around getRequestId from the NCR which currently
@@ -538,6 +554,7 @@ private:
     asiolink::IOServicePtr io_service_;
 
     /// @brief The NameChangeRequest that the transaction is to fulfill.
+    /// Constructor guarantees it can never be null.
     dhcp_ddns::NameChangeRequestPtr ncr_;
 
     /// @brief The forward domain that matches the request.

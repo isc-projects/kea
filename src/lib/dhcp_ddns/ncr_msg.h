@@ -20,6 +20,7 @@
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 
+#include <boost/algorithm/string/case_conv.hpp>
 #include <time.h>
 #include <string>
 
@@ -513,8 +514,15 @@ public:
     /// @brief Fetches the request FQDN
     ///
     /// @return a string containing the FQDN
-    const std::string getFqdn() const {
+    const std::string& getFqdn() const {
         return (fqdn_);
+    }
+
+    /// @brief Fetches the request FQDN lower-cased
+    ///
+    /// @return a string containing the FQDN lower-cased
+    std::string getFqdnLower() const {
+        return (boost::algorithm::to_lower_copy(fqdn_));
     }
 
     /// @brief Sets the FQDN to the given value.
@@ -535,6 +543,10 @@ public:
     /// @return a string containing the IP address
     std::string getIpAddress() const {
         return (ip_io_address_.toText());
+    }
+
+    const asiolink::IOAddress& getIOAddress() const {
+        return (ip_io_address_);
     }
 
     /// @brief Fetches the request IP address as an IOAddress.
@@ -562,6 +574,11 @@ public:
     ///
     /// @param value contains the new value to assign to the IP address
     void setIpAddress(const std::string& value);
+
+    /// @brief Sets the IP address to the given value.
+    ///
+    /// @param value contains the new value to assign to the IP address
+    void setIpAddress(const asiolink::IOAddress& value);
 
     /// @brief Sets the IP address to the value of the given Element.
     ///
