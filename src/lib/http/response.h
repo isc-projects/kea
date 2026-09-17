@@ -11,10 +11,11 @@
 #include <http/header_context.h>
 #include <http/http_message.h>
 #include <http/response_context.h>
+
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
+#include <cstdint>
 #include <string>
-#include <vector>
 
 namespace isc {
 namespace http {

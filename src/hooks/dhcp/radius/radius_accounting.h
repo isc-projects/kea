@@ -12,6 +12,7 @@
 #include <radius/radius_service.h>
 #include <util/csv_file.h>
 
+#include <cstdint>
 #include <mutex>
 
 #include <boost/date_time/gregorian/gregorian_types.hpp>

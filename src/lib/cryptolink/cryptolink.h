@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,14 +7,14 @@
 #ifndef ISC_CRYPTO_H
 #define ISC_CRYPTO_H
 
-#include <string>
-#include <util/buffer.h>
 #include <exceptions/exceptions.h>
+#include <util/buffer.h>
+
+#include <cstdint>
+#include <string>
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
-
-#include <memory>
 
 namespace isc {
 namespace cryptolink {

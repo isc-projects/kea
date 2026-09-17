@@ -12,6 +12,7 @@
 #include <radius/client_attribute.h>
 #include <tcp/wire_data.h>
 
+#include <cstdint>
 #include <string>
 #include <vector>
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,10 +9,13 @@
 
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
-#include <boost/shared_ptr.hpp>
+
+#include <cstdint>
 #include <map>
 #include <string>
 #include <vector>
+
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dhcp {
