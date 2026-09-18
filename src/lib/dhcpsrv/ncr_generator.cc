@@ -21,34 +21,26 @@ using namespace isc::dhcp_ddns;
 
 namespace {
 
-/// @brief Sends name change request to D2 using lease information.
-///
-/// This method is exception safe.
+/// @brief Construcs a name change request using lease information.
 ///
 /// @param chg_type type of change to create CHG_ADD or CHG_REMOVE
 /// @param lease Pointer to a lease for which NCR should be sent.
 /// @param identifier Identifier to be used to generate DHCID for
 /// the DNS update. For DHCPv4 it will be hardware address or client
 /// identifier. For DHCPv6 it will be a DUID.
-/// @param label Client identification information in the textual format.
-/// This is used for logging purposes.
 /// @param subnet subnet to which the lease belongs.
 ///
 /// @tparam LeasePtrType Pointer to a lease.
 /// @tparam IdentifierType HW Address, Client Identifier or DUID.
 template<typename LeasePtrType, typename IdentifierType>
-void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
-                    const IdentifierType& identifier, const std::string& label,
-                    const ConstSubnetPtr subnet) {
+NameChangeRequestPtr
+generateNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
+             const IdentifierType& identifier,
+             const ConstSubnetPtr subnet) {
     // Check if there is a need for update.
     if (lease->hostname_.empty() || (!lease->fqdn_fwd_ && !lease->fqdn_rev_)
         || !CfgMgr::instance().getD2ClientMgr().ddnsEnabled()) {
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-                  DHCPSRV_QUEUE_NCR_SKIP)
-            .arg(label)
-            .arg(lease->addr_.toText());
-
-        return;
+        return (NameChangeRequestPtr());
     }
 
     ConflictResolutionMode conflict_resolution_mode = CHECK_WITH_DHCID;
@@ -72,31 +64,59 @@ void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
         ddns_ttl_max = ddns_params.getTtlMax();
     }
 
-    try {
-        // Create DHCID
-        std::vector<uint8_t> hostname_wire;
-        OptionDataTypeUtil::writeFqdn(lease->hostname_, hostname_wire, true);
-        D2Dhcid dhcid = D2Dhcid(identifier, hostname_wire);
+    // Create DHCID
+    std::vector<uint8_t> hostname_wire;
+    OptionDataTypeUtil::writeFqdn(lease->hostname_, hostname_wire, true);
+    D2Dhcid dhcid = D2Dhcid(identifier, hostname_wire);
 
-        // Calculate the TTL based on lease life time.
-        uint32_t ttl = calculateDdnsTtl(lease->valid_lft_,
-                                        ddns_ttl_percent, ddns_ttl,
-                                        ddns_ttl_min, ddns_ttl_max);
-
-        // Create name change request.
-        NameChangeRequestPtr ncr
+    // Calculate the TTL based on lease life time.
+    uint32_t ttl = calculateDdnsTtl(lease->valid_lft_,
+                                    ddns_ttl_percent, ddns_ttl,
+                                    ddns_ttl_min, ddns_ttl_max);
+    // Create name change request.
+    NameChangeRequestPtr ncr
             (new NameChangeRequest(chg_type, lease->fqdn_fwd_, lease->fqdn_rev_,
                                    lease->hostname_, lease->addr_.toText(),
                                    dhcid, ttl, conflict_resolution_mode));
 
+    return (ncr);
+}
+
+/// @brief Sends name change request to D2 using lease information.
+///
+/// This method is exception safe.
+///
+/// @param chg_type type of change to create CHG_ADD or CHG_REMOVE
+/// @param lease Pointer to a lease for which NCR should be sent.
+/// @param identifier Identifier to be used to generate DHCID for
+/// the DNS update. For DHCPv4 it will be hardware address or client
+/// identifier. For DHCPv6 it will be a DUID.
+/// @param label Client identification information in the textual format.
+/// This is used for logging purposes.
+/// @param subnet subnet to which the lease belongs.
+///
+/// @tparam LeasePtrType Pointer to a lease.
+/// @tparam IdentifierType HW Address, Client Identifier or DUID.
+template<typename LeasePtrType, typename IdentifierType>
+void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
+                    const IdentifierType& identifier, const std::string& label,
+                    const ConstSubnetPtr subnet) {
+
+    try {
+        NameChangeRequestPtr ncr = generateNCRCommon(chg_type, lease, identifier, subnet);
+        if (!ncr) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_QUEUE_NCR_SKIP)
+                .arg(label)
+                .arg(lease->addr_.toText());
+            return;
+        }
+
+        // Send name change request.
+        CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL_DATA, DHCPSRV_QUEUE_NCR)
             .arg(label)
             .arg(chg_type == CHG_ADD ? "add" : "remove")
             .arg(ncr->toText());
-
-        // Send name change request.
-        CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
-
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_QUEUE_NCR_FAILED)
             .arg(label)
@@ -131,6 +151,37 @@ void queueNCR(const NameChangeType& chg_type, const Lease4Ptr& lease) {
     }
 }
 
+NameChangeRequestPtr
+generateNCR(const NameChangeType& chg_type, const Lease4Ptr& lease) {
+    NameChangeRequestPtr ncr;
+    if (lease) {
+        // Figure out from the lease's subnet if we should use conflict resolution.
+        // If there's no subnet, something hinky is going on so we'll set it true.
+        ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()
+                                 ->getCfgSubnets4()->getSubnet(lease->subnet_id_);
+
+        try {
+            // Client id takes precedence over HW address.
+            if (lease->client_id_) {
+                ncr = generateNCRCommon(chg_type, lease,
+                                        lease->client_id_->getClientId(), subnet);
+            } else {
+                // Client id is not specified for the lease. Use HW address
+                // instead.
+                ncr = generateNCRCommon(chg_type, lease, lease->hwaddr_, subnet);
+            }
+        } catch (const std::exception& ex) {
+            LOG_ERROR(dhcpsrv_logger, DHCPSRV_GENERATE_NCR4_FAILED)
+                .arg(Pkt4::makeLabel(lease->hwaddr_, lease->client_id_))
+                .arg(chg_type == CHG_ADD ? "add" : "remove")
+                .arg(lease->addr_.toText())
+                .arg(ex.what());
+        }
+    }
+
+    return (ncr);
+}
+
 void queueNCR(const NameChangeType& chg_type, const Lease6Ptr& lease) {
     // DUID is required to generate NCR.
     if (lease && (lease->type_ != Lease::TYPE_PD) && lease->duid_) {
@@ -138,9 +189,33 @@ void queueNCR(const NameChangeType& chg_type, const Lease6Ptr& lease) {
         // If there's no subnet, something hinky is going on so we'll set it true.
         ConstSubnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()
                             ->getCfgSubnets6()->getSubnet(lease->subnet_id_);
+
         queueNCRCommon(chg_type, lease, *(lease->duid_),
                        Pkt6::makeLabel(lease->duid_, lease->hwaddr_), subnet);
     }
+}
+
+NameChangeRequestPtr
+generateNCR(const NameChangeType& chg_type, const Lease6Ptr& lease) {
+    NameChangeRequestPtr ncr;
+    // DUID is required to generate NCR.
+    if (lease && (lease->type_ != Lease::TYPE_PD) && lease->duid_) {
+        // Figure out from the lease's subnet if we should use conflict resolution.
+        // If there's no subnet, something hinky is going on so we'll set it true.
+        ConstSubnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()
+                            ->getCfgSubnets6()->getSubnet(lease->subnet_id_);
+        try {
+            ncr = generateNCRCommon(chg_type, lease, *(lease->duid_), subnet);
+        } catch (const std::exception& ex) {
+            LOG_ERROR(dhcpsrv_logger, DHCPSRV_GENERATE_NCR6_FAILED)
+                .arg(Pkt6::makeLabel(lease->duid_, lease->hwaddr_))
+                .arg(chg_type == CHG_ADD ? "add" : "remove")
+                .arg(lease->addr_.toText())
+                .arg(ex.what());
+        }
+    }
+
+    return (ncr);
 }
 
 uint32_t calculateDdnsTtl(uint32_t lease_lft,

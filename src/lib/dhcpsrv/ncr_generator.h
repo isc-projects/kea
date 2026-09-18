@@ -14,20 +14,40 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Creates name change request from the DHCPv4 lease.
+/// @brief Creates NameChangeRequest from the DHCPv4 lease and queues it to be sent to D2.
+///
+/// This function creates name change request from the information contained
+/// in the DHCPv4 lease. If the client identifier is present in the lease,
+/// this identifier is used to compute the DHCID, otherwise the HW address
+/// is used. If an NCR is generated it is queued for delivery to D2.
+///
+/// This function is exception safe. On failure, it logs an error and returns an
+/// empty pointer.
+///
+/// @param chg_type Type of the name change request
+/// @param lease Pointer to the lease.
+void queueNCR(const dhcp_ddns::NameChangeType& chg_type, const Lease4Ptr& lease);
+
+/// @brief Creates NameChangeRequest from the DHCPv4 lease.
+///
+/// This function is exception safe. On failure, it logs an error.
 ///
 /// This function creates name change request from the information contained
 /// in the DHCPv4 lease. If the client identifier is present in the lease,
 /// this identifier is used to compute the DHCID, otherwise the HW address
 /// is used.
 ///
-/// This function is exception safe. On failure, it logs an error.
-///
 /// @param chg_type Type of the name change request
 /// @param lease Pointer to the lease.
-void queueNCR(const dhcp_ddns::NameChangeType& chg_type, const Lease4Ptr& lease);
+/// @return A pointer to the newly created NameChangeRequest or an empty
+/// pointer.
+dhcp_ddns::NameChangeRequestPtr
+generateNCR(const dhcp_ddns::NameChangeType& chg_type, const Lease4Ptr& lease);
 
 /// @brief Creates name change request from the DHCPv6 lease.
+///
+/// This function is exception safe. On failure, it logs an error and returns an
+/// empty pointer.
 ///
 /// This function creates name change request from the information contained
 /// in the DHCPv6 lease. The DUID is used to compute the DHCID for the name
@@ -41,6 +61,20 @@ void queueNCR(const dhcp_ddns::NameChangeType& chg_type, const Lease4Ptr& lease)
 /// @param chg_type Type of the name change request
 /// @param lease Pointer to the lease.
 void queueNCR(const dhcp_ddns::NameChangeType& chg_type, const Lease6Ptr& lease);
+
+/// @brief Creates NameChangeRequest from the DHCPv6 lease.
+///
+/// This function is exception safe. On failure, it logs an error.
+///
+/// This function creates name change request from the information contained
+/// in the DHCPv6 lease. 
+///
+/// @param chg_type Type of the name change request
+/// @param lease Pointer to the lease.
+/// @return A pointer to the newly created NameChangeRequest or an empty
+/// pointer.
+dhcp_ddns::NameChangeRequestPtr
+generateNCR(const dhcp_ddns::NameChangeType& chg_type, const Lease6Ptr& lease);
 
 /// @brief Calculates TTL for a DNS resource record based on lease life time.
 ///

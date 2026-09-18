@@ -2529,6 +2529,8 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
     // For the first address in each IA_NA, create the appropriate NCR(s).
     /// @todo TKM - we should really consider only doing this for the first
     /// IA_NA.
+    NameChangeRequestPtr remove_ncr;
+    NameChangeRequestPtr add_ncr;
     for (auto& ia_ctx : ctx.getIAContexts()) {
         if ((ia_ctx.type_ != Lease::TYPE_NA) || !ia_ctx.ia_rsp_) {
             continue;
@@ -2579,7 +2581,7 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
                     // NCR will only be created if the lease hostname is not
                     // empty and at least one of the direction flags is true
                     if (ddns_changed) {
-                        queueNCR(CHG_REMOVE, l);
+                        remove_ncr = generateNCR(CHG_REMOVE, l);
                     }
                 }
 
@@ -2599,28 +2601,35 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
         // This is an FQDN included in the response to the client, so it
         // holds a fully qualified domain-name already (not partial).
         // Get the IP address from the lease.
-        NameChangeRequestPtr ncr;
         auto cr_mode = StringToConflictResolutionMode(ctx.getDdnsParams()->getConflictResolutionMode());
-        ncr.reset(new NameChangeRequest(isc::dhcp_ddns::CHG_ADD, do_fwd, do_rev, opt_fqdn->getDomainName(),
-                                        iaaddr->getAddress().toText(), dhcid,
-                                        calculateDdnsTtl(iaaddr->getValid(),
-                                                         ctx.getDdnsParams()->getTtlPercent(),
-                                                         ctx.getDdnsParams()->getTtl(),
-                                                         ctx.getDdnsParams()->getTtlMin(),
-                                                         ctx.getDdnsParams()->getTtlMax()),
-                                        cr_mode));
+        add_ncr.reset(
+            new NameChangeRequest(isc::dhcp_ddns::CHG_ADD, do_fwd,
+                                  do_rev, opt_fqdn->getDomainName(),
+                                  iaaddr->getAddress().toText(),
+                                  dhcid, calculateDdnsTtl(iaaddr->getValid(),
+                                  ctx.getDdnsParams()->getTtlPercent(),
+                                  ctx.getDdnsParams()->getTtl(),
+                                  ctx.getDdnsParams()->getTtlMin(),
+                                  ctx.getDdnsParams()->getTtlMax()),
+                                  cr_mode));
+
         LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL, DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST)
             .arg(answer->getLabel())
-            .arg(ncr->toText());
-
-        // Post the NCR to the D2ClientMgr.
-        CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
+            .arg(add_ncr->toText());
 
         /// @todo Currently we create NCR with the first IPv6 address that
         /// is carried in one of the IA_NAs. In the future, the NCR API should
         /// be extended to map multiple IPv6 addresses to a single FQDN.
-        /// In such case, this return statement will be removed.
-        return;
+        /// In such case, this break statement will be removed.
+        break;
+    }
+
+    if (remove_ncr) {
+        // Chain the remove and add together so they arrive in-order.
+        remove_ncr->setNextNcr(add_ncr);
+        CfgMgr::instance().getD2ClientMgr().sendRequest(remove_ncr);
+    } else if (add_ncr) {
+        CfgMgr::instance().getD2ClientMgr().sendRequest(add_ncr);
     }
 }
 

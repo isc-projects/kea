@@ -1,0 +1,7 @@
+[bug]		tmark
+	Related name change requests (NCRs), are now
+	sent by kea-dhcp4 and kea-dhcp6 in a single
+	message to kea-dhcp-ddns.  This ensures that
+	kea-dhcp-ddns processes them in the order they
+	were received.
+	(Gitlab #4806, #3005)

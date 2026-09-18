@@ -878,7 +878,7 @@ public:
     /// if the value supplied is not empty):w
     /// @param lifetime - lease's valid lifetime from which NCR ttl was
     /// generated
-    /// @param exp_conflict_resolution_mode expected value of conflict resolution mode
+    /// @param exp_cr_mode expected value of conflict resolution mode
     /// @param ddns_ttl_percent expected configured value for ddns-ttl-percent
     /// @param ddns_ttl expected configured value for ddns-ttl
     /// @param ddns_ttl_min expected configured value for ddns-ttl-min
@@ -889,7 +889,7 @@ public:
                                  const std::string& fqdn,
                                  const std::string& dhcid,
                                  const uint16_t valid_lft,
-                                 const ConflictResolutionMode exp_conflict_resolution_mode = CHECK_WITH_DHCID,
+                                 const ConflictResolutionMode exp_cr_mode = CHECK_WITH_DHCID,
                                  Optional<double> ddns_ttl_percent = Optional<double>(),
                                  Optional<uint32_t> ddns_ttl = Optional<uint32_t>(),
                                  Optional<uint32_t> ddns_ttl_min = Optional<uint32_t>(),
@@ -914,10 +914,75 @@ public:
 
         EXPECT_EQ(ttl, ncr->getLeaseLength());
         EXPECT_EQ(isc::dhcp_ddns::ST_NEW, ncr->getStatus());
-        EXPECT_EQ(exp_conflict_resolution_mode, ncr->getConflictResolutionMode());
+        EXPECT_EQ(exp_cr_mode, ncr->getConflictResolutionMode());
+
+        EXPECT_FALSE(ncr->getNextNcr()) << "NCR should not have next_ncr" << std::endl;
 
         // Process the message off the queue
         ASSERT_NO_THROW(d2_mgr_.runReadyIO());
+    }
+
+    ///@brief Verify that the nested NameChangeRequest holds valid values.
+    ///
+    /// Peeks at the NCR at the top of the send queue and checks the contents
+    /// of the NCR at a given position within an NCR chain against a number of
+    /// expected parameters.  It does NOT remove the NCR from the send queue.
+    ///
+    /// @param index - zero-based position within a chain of NCRs
+    /// @param type - expected NCR change type, CHG_ADD or CHG_REMOVE
+    /// @param reverse - flag indicating whether or not the NCR specifies
+    /// reverse change
+    /// @param forward - flag indication whether or not the NCR specifies
+    /// forward change
+    /// @param addr  - expected lease address in the NCR
+    /// @param fqdn  - expected FQDN in the NCR
+    /// @param dhcid - expected DHCID in the NCR (comparison is performed only
+    /// if the value supplied is not empty):w
+    /// @param valid_lft - lease's valid lifetime from which NCR ttl was
+    /// generated
+    /// @param exp_cr_mode expected value of conflict resolution mode
+    /// @param ddns_ttl_percent expected configured value for ddns-ttl-percent
+    /// @param ddns_ttl expected configured value for ddns-ttl
+    /// @param ddns_ttl_min expected configured value for ddns-ttl-min
+    /// @param ddns_ttl_max expected configured value for ddns-ttl-max
+    void verifyNestedNameChangeRequest(const size_t index,
+                                       const isc::dhcp_ddns::NameChangeType type,
+                                       const bool reverse, const bool forward,
+                                       const std::string& addr,
+                                       const std::string& fqdn,
+                                       const std::string& dhcid,
+                                       const uint16_t valid_lft,
+                                       const ConflictResolutionMode exp_cr_mode = CHECK_WITH_DHCID,
+                                       Optional<double> ddns_ttl_percent = Optional<double>(),
+                                       Optional<uint32_t> ddns_ttl = Optional<uint32_t>(),
+                                       Optional<uint32_t> ddns_ttl_min = Optional<uint32_t>(),
+                                       Optional<uint32_t> ddns_ttl_max = Optional<uint32_t>()) {
+        NameChangeRequestPtr ncr;
+        ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
+        ASSERT_TRUE(ncr);
+
+        for (size_t i = 0; i < index; ++i) {
+            ncr = ncr->getNextNcr();
+            ASSERT_TRUE(ncr) << "Nested NCR index " << index << " is out of range" << std::endl;
+        }
+
+        EXPECT_EQ(type, ncr->getChangeType());
+        EXPECT_EQ(forward, ncr->isForwardChange());
+        EXPECT_EQ(reverse, ncr->isReverseChange());
+        EXPECT_EQ(addr, ncr->getIpAddress());
+        EXPECT_EQ(fqdn, ncr->getFqdn());
+        // Compare dhcid if it is not empty. In some cases, the DHCID is
+        // not known in advance and can't be compared.
+        if (!dhcid.empty()) {
+            EXPECT_EQ(dhcid, ncr->getDhcid().toStr());
+        }
+
+        uint32_t ttl = calculateDdnsTtl(valid_lft, ddns_ttl_percent,
+                                        ddns_ttl, ddns_ttl_min, ddns_ttl_max);
+
+        EXPECT_EQ(ttl, ncr->getLeaseLength());
+        EXPECT_EQ(isc::dhcp_ddns::ST_NEW, ncr->getStatus());
+        EXPECT_EQ(exp_cr_mode, ncr->getConflictResolutionMode());
     }
 
     /// @brief Tests processing a request with the given client flags
@@ -1316,25 +1381,46 @@ TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsUpdateOnRenew) {
             ASSERT_NO_THROW(srv_->createNameChangeRequests(scenario.new_lease_,
                                                            scenario.old_lease_,
                                                            *getDdnsParams()));
-            // Verify queue count is correct.
-            ASSERT_EQ((scenario.remove_ + scenario.add_), d2_mgr_.getQueueSize());
 
-            // If we expect a remove, check it.
-            if (scenario.remove_ > 0) {
-                // Verify NCR content
-                verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
-                                        scenario.old_lease_->addr_.toText(),
-                                        scenario.old_lease_->hostname_, "",
-                                        scenario.old_lease_->valid_lft_);
-            }
+            if ((scenario.remove_ + scenario.add_) == 2) {
+                // Verify queue count is correct.
+                ASSERT_EQ(1U, d2_mgr_.getQueueSize());
 
-            // If we expect an add, check it.
-            if (scenario.add_ > 0) {
-                // Verify NCR content
-                verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                                        scenario.new_lease_->addr_.toText(),
-                                        scenario.new_lease_->hostname_, "",
-                                        scenario.new_lease_->valid_lft_);
+                // Verify Remove NCR content
+                verifyNestedNameChangeRequest(0, isc::dhcp_ddns::CHG_REMOVE, true, true,
+                                              scenario.old_lease_->addr_.toText(),
+                                              scenario.old_lease_->hostname_, "",
+                                              scenario.old_lease_->valid_lft_);
+
+                // Verify Add NCR content
+                verifyNestedNameChangeRequest(1, isc::dhcp_ddns::CHG_ADD, true, true,
+                                              scenario.new_lease_->addr_.toText(),
+                                              scenario.new_lease_->hostname_, "",
+                                              scenario.new_lease_->valid_lft_);
+
+                // Process the message off the queue
+                ASSERT_NO_THROW(d2_mgr_.runReadyIO());
+            } else {
+                // Verify queue count is correct.
+                ASSERT_EQ((scenario.remove_ + scenario.add_), d2_mgr_.getQueueSize());
+
+                // If we expect a remove, check it.
+                if (scenario.remove_ > 0) {
+                    // Verify NCR content
+                    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
+                                            scenario.old_lease_->addr_.toText(),
+                                            scenario.old_lease_->hostname_, "",
+                                            scenario.old_lease_->valid_lft_);
+                 }
+
+                // If we expect an add, check it.
+                if (scenario.add_ > 0) {
+                    // Verify NCR content
+                    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                                            scenario.new_lease_->addr_.toText(),
+                                            scenario.new_lease_->hostname_, "",
+                                            scenario.new_lease_->valid_lft_);
+                }
             }
         }
     }
@@ -1490,21 +1576,24 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsFqdn) {
 
     checkResponse(reply, DHCPACK, 1234);
 
-    // There should be two NameChangeRequests. Verify that they are valid.
-    ASSERT_EQ(2U, d2_mgr_.getQueueSize());
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
-                            reply->getYiaddr().toText(),
-                            "myhost.example.com.",
-                            "00010132E91AA355CFBB753C0F0497A5A940436"
-                            "965B68B6D438D98E680BF10B09F3BCF",
-                            subnet_->getValid());
+    // There should be two nested NameChangeRequests. Verify that they are valid.
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
+    verifyNestedNameChangeRequest(0, isc::dhcp_ddns::CHG_REMOVE, true, true,
+                                  reply->getYiaddr().toText(),
+                                  "myhost.example.com.",
+                                  "00010132E91AA355CFBB753C0F0497A5A940436"
+                                  "965B68B6D438D98E680BF10B09F3BCF",
+                                  subnet_->getValid());
 
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                            reply->getYiaddr().toText(),
-                            "otherhost.example.com.",
-                            "000101A5AEEA7498BD5AD9D3BF600E49FF39A7E3"
-                            "AFDCE8C3D0E53F35CC584DD63C89CA",
-                            subnet_->getValid());
+    verifyNestedNameChangeRequest(1, isc::dhcp_ddns::CHG_ADD, true, true,
+                                  reply->getYiaddr().toText(),
+                                  "otherhost.example.com.",
+                                  "000101A5AEEA7498BD5AD9D3BF600E49FF39A7E3"
+                                  "AFDCE8C3D0E53F35CC584DD63C89CA",
+                                  subnet_->getValid());
+
+    // Process the message off the queue
+    ASSERT_NO_THROW(d2_mgr_.runReadyIO());
 }
 
 // Test that client may send two requests, each carrying Hostname option with
@@ -1551,20 +1640,23 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
     checkResponse(reply, DHCPACK, 1234);
 
     // There should be two NameChangeRequests. Verify that they are valid.
-    ASSERT_EQ(2U, d2_mgr_.getQueueSize());
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
-                            reply->getYiaddr().toText(),
-                            "myhost.example.com.",
-                            "00010132E91AA355CFBB753C0F0497A5A940436"
-                            "965B68B6D438D98E680BF10B09F3BCF",
-                            subnet_->getValid());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
+    verifyNestedNameChangeRequest(0, isc::dhcp_ddns::CHG_REMOVE, true, true,
+                                  reply->getYiaddr().toText(),
+                                  "myhost.example.com.",
+                                  "00010132E91AA355CFBB753C0F0497A5A940436"
+                                  "965B68B6D438D98E680BF10B09F3BCF",
+                                  subnet_->getValid());
 
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                            reply->getYiaddr().toText(),
-                            "otherhost.example.com.",
-                            "000101A5AEEA7498BD5AD9D3BF600E49FF39A7E3"
-                            "AFDCE8C3D0E53F35CC584DD63C89CA",
-                            subnet_->getValid());
+    verifyNestedNameChangeRequest(1, isc::dhcp_ddns::CHG_ADD, true, true,
+                                  reply->getYiaddr().toText(),
+                                  "otherhost.example.com.",
+                                  "000101A5AEEA7498BD5AD9D3BF600E49FF39A7E3"
+                                  "AFDCE8C3D0E53F35CC584DD63C89CA",
+                                  subnet_->getValid());
+
+    // Process the message off the queue
+    ASSERT_NO_THROW(d2_mgr_.runReadyIO());
 }
 
 // Test that client may send two requests, each carrying the same FQDN option.
@@ -1858,33 +1950,36 @@ TEST_F(NameDhcpv4SrvTest, fqdnReservation) {
     ASSERT_TRUE(lease);
     EXPECT_EQ("foobar.fake-suffix.isc.org.", lease->hostname_);
 
-    // Now there should be two name NCRs. One that removes the previous entry
+    // Now there should be two nested NCRs. One that removes the previous entry
     // and the one that adds a new entry for the new hostname.
-    ASSERT_EQ(2U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    ASSERT_EQ(1U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 
     {
         SCOPED_TRACE("Verify the correctness of the CHG_REMOVE NCR for the "
                      "unique-host.example.com");
 
-        verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
-                                resp->getYiaddr().toText(),
-                                "unique-host.example.com.",
-                                "000001B6547DCC62E44C4D1A42D0A05B149EA1168"
-                                "01A9481A98E3A876A9E0D261F8326",
-                                subnet_->getValid());
+        verifyNestedNameChangeRequest(0, isc::dhcp_ddns::CHG_REMOVE, true, true,
+                                      resp->getYiaddr().toText(),
+                                      "unique-host.example.com.",
+                                      "000001B6547DCC62E44C4D1A42D0A05B149EA1168"
+                                      "01A9481A98E3A876A9E0D261F8326",
+                                      subnet_->getValid());
     }
 
     {
         SCOPED_TRACE("Verify the correctness of the CHG_ADD NCR for the "
                      "foobar.fake-suffix.isc.org");
 
-        verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                                resp->getYiaddr().toText(),
-                                "foobar.fake-suffix.isc.org.",
-                                "0000017C29B3C236344924E448E247F3FD56C7E9"
-                                "167B3397B1305FB664C160B967CE1F",
-                                subnet_->getValid());
+        verifyNestedNameChangeRequest(1, isc::dhcp_ddns::CHG_ADD, true, true,
+                                      resp->getYiaddr().toText(),
+                                      "foobar.fake-suffix.isc.org.",
+                                      "0000017C29B3C236344924E448E247F3FD56C7E9"
+                                      "167B3397B1305FB664C160B967CE1F",
+                                      subnet_->getValid());
     }
+
+    // Process the message off the queue
+    ASSERT_NO_THROW(d2_mgr_.runReadyIO());
 }
 
 // This test verifies that the server sends the Hostname option to the client
@@ -1970,32 +2065,35 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservation) {
     ASSERT_TRUE(lease);
     EXPECT_EQ("foobar.fake-suffix.isc.org", lease->hostname_);
 
-    // Now there should be two name NCRs. One that removes the previous entry
+    // Now there should be two nested NCRs. One that removes the previous entry
     // and the one that adds a new entry for the new hostname.
-    ASSERT_EQ(2U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+    ASSERT_EQ(1U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     {
         SCOPED_TRACE("Verify the correctness of the CHG_REMOVE NCR for the "
                      "unique-host.example.com");
 
-        verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
-                                resp->getYiaddr().toText(),
-                                "unique-host.example.com.",
-                                "000001B6547DCC62E44C4D1A42D0A05B149EA1168"
-                                "01A9481A98E3A876A9E0D261F8326",
-                                subnet_->getValid());
+        verifyNestedNameChangeRequest(0, isc::dhcp_ddns::CHG_REMOVE, true, true,
+                                      resp->getYiaddr().toText(),
+                                      "unique-host.example.com.",
+                                      "000001B6547DCC62E44C4D1A42D0A05B149EA1168"
+                                      "01A9481A98E3A876A9E0D261F8326",
+                                      subnet_->getValid());
     }
 
     {
         SCOPED_TRACE("Verify the correctness of the CHG_ADD NCR for the "
                      "foobar.fake-suffix.isc.org");
 
-        verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                                resp->getYiaddr().toText(),
-                                "foobar.fake-suffix.isc.org.",
-                                "0000017C29B3C236344924E448E247F3FD56C7E9"
-                                "167B3397B1305FB664C160B967CE1F",
-                                subnet_->getValid());
+        verifyNestedNameChangeRequest(1, isc::dhcp_ddns::CHG_ADD, true, true,
+                                      resp->getYiaddr().toText(),
+                                      "foobar.fake-suffix.isc.org.",
+                                      "0000017C29B3C236344924E448E247F3FD56C7E9"
+                                      "167B3397B1305FB664C160B967CE1F",
+                                      subnet_->getValid());
     }
+
+    // Process the message off the queue
+    ASSERT_NO_THROW(d2_mgr_.runReadyIO());
 }
 
 // This test verifies that the server sends the Hostname option to the client

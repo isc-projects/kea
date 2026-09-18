@@ -381,6 +381,7 @@ public:
     ///   integer and may range between 1 and 4294967295 (2^32 - 1) inclusive.
     /// - use-conflict-resolution - when true, follow RFC 4703 which uses
     ///   DHCID records to prohibit multiple clients from updating an FQDN
+    /// - next-ncr - optional map defining a the next NCR in a chain
     ///
     /// Examples:
     ///
@@ -420,6 +421,46 @@ public:
     ///
     /// @throw NcrMessageError if an error occurs creating new request.
     static NameChangeRequestPtr fromJSON(const std::string& json);
+
+    /// @brief Static method for creating a NameChangeRequest from an
+    /// Element map.
+    ///
+    /// The Elements in the map expected are described below:
+    ///
+    /// - change-type - indicates whether this request is to add or update
+    ///   DNS entries or to remove them.  The value is an integer and is
+    ///   0 for add/update and 1 for remove.
+    /// - forward-change - indicates whether the forward (name to
+    ///   address) DNS zone should be updated.  The value is a string
+    ///   representing a boolean.  It is "true" if the zone should be updated
+    ///   and "false" if not. (Unlike the keyword, the boolean value is
+    ///   case-insensitive.)
+    /// - reverse-change - indicates whether the reverse (address to
+    ///   name) DNS zone should be updated.  The value is a string
+    ///   representing a boolean.  It is "true" if the zone should be updated
+    ///   and "false" if not. (Unlike the keyword, the boolean value is
+    ///   case-insensitive.)
+    /// - fqdn - fully qualified domain name such as "myhost.example.com.".
+    ///   (Note that a trailing dot will be appended if not supplied.)
+    /// - ip-address - the IPv4 or IPv6 address of the client.  The value
+    ///   is a string representing the IP address (e.g. "192.168.0.1" or
+    ///   "2001:db8:1::2").
+    /// - dhcid - identification of the DHCP client to whom the IP address has
+    ///   been leased.  The value is a string containing an even number of
+    ///   hexadecimal digits without delimiters such as "2C010203040A7F8E3D"
+    ///   (case insensitive).
+    /// - lease-length - the length of the lease in seconds.  This is an
+    ///   integer and may range between 1 and 4294967295 (2^32 - 1) inclusive.
+    /// - use-conflict-resolution - when true, follow RFC 4703 which uses
+    ///   DHCID records to prohibit multiple clients from updating an FQDN
+    /// - next-ncr - optional map element defining the next NCR in a chain
+    ///
+    /// @param elements pointer to an map of elements defining the NCR.
+    ///
+    /// @return a pointer to the new NameChangeRequest
+    ///
+    /// @throw NcrMessageError if an error occurs creating new request.
+    static NameChangeRequestPtr fromJSON(isc::data::ConstElementPtr elements);
 
     /// @brief Instance method for marshalling the contents of the request
     /// into a string of JSON text.
@@ -689,6 +730,18 @@ public:
         return (status_);
     }
 
+    /// @brief Fetches the next NCR (if one)
+    ///
+    /// @return NameChangeRequestPtr to the next NCR or an empty pointer.
+    NameChangeRequestPtr getNextNcr() const {
+        return (next_ncr_);
+    }
+
+    /// @brief Fetches the next NCR (if one)
+    void setNextNcr(NameChangeRequestPtr next_ncr) {
+        next_ncr_ = next_ncr;
+    }
+
     /// @brief Sets the request status to the given value.
     ///
     /// @param value contains the new value to assign to request status
@@ -752,6 +805,9 @@ private:
 
     /// @brief The processing status of the request.  Used internally.
     NameChangeStatus status_;
+
+    /// @brief Points to the next NCR in the chain, if one.
+    NameChangeRequestPtr next_ncr_;
 };
 
 }  // namespace dhcp_ddns

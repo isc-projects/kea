@@ -1429,8 +1429,8 @@ TEST_F(AddrRegTest, renewDdnsHostname) {
 
     // DDNS is not skipped when the hostname changed.
     EXPECT_FALSE(ctx2.getDdnsParams()->getUpdateOnRenew());
-    // One CHG_REMOVE and one CHG_ADD (no CHG_UPDATE).
-    EXPECT_EQ(2U, d2_mgr.getQueueSize());
+    // One CHG_REMOVE and one CHG_ADD chained together.
+    EXPECT_EQ(1U, d2_mgr.getQueueSize());
 
     string expected = "DHCPSRV_MEMFILE_ADD_ADDR6 ";
     expected += "adding IPv6 lease with address 2001:db8:1::1";
