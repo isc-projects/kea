@@ -45,7 +45,8 @@ $PACKAGES
   "relationships": [
 $RELATIONSHIPS
   ]
-}''')
+}
+''')
 
 # Template for the root package (the project being analysed)
 ROOT_PACKAGE_TEMPLATE = Template('''{
