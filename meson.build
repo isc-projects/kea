@@ -1073,6 +1073,39 @@ if premium
     subdir('premium')
 endif
 
+# SBOM
+
+run_target(
+    'sbom',
+    command: [CD_AND_RUN, TOP_SOURCE_DIR, 'tools/sbom/meson2spdx.py'],
+)
+
+sbom_conf_data = configuration_data()
+sbom_conf_data.set('DATADIR', DATADIR)
+sbom_conf_data.set('INSTALL', INSTALL.full_path())
+sbom_conf_data.set('PREFIX', PREFIX)
+sbom_conf_data.set('TOP_SOURCE_DIR', TOP_SOURCE_DIR)
+
+if KEA_MSG_COMPILER.found()
+    sbom_conf_data.set('kea_msg_compiler_found', 'true')
+else
+    sbom_conf_data.set('kea_msg_compiler_found', 'false')
+endif
+
+if NETCONF_DEP.found()
+    sbom_conf_data.set('kea_netconf_found', 'true')
+else
+    sbom_conf_data.set('kea_netconf_found', 'false')
+endif
+
+install_sbom = configure_file(
+    input: 'tools/sbom/install-sbom.sh.in',
+    output: 'install-sbom.sh',
+    configuration: sbom_conf_data,
+)
+
+meson.add_install_script(install_sbom)
+
 #### pkg-config
 
 requires = []

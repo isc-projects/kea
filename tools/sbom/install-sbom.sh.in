@@ -1,0 +1,30 @@
+#!/bin/sh
+
+set -eu
+
+# Destdir is set everytime the installation happens through meson or ninja even when --destdir is not passed.
+# Set target path to prefix in case someone wants to run this script directly.
+target_path='@PREFIX@'
+if test -n "${MESON_INSTALL_DESTDIR_PREFIX+x}"; then
+    target_path="${MESON_INSTALL_DESTDIR_PREFIX}"
+fi
+
+if test ! -f "@TOP_SOURCE_DIR@/sbom.spdx.json"; then
+    echo 'Warning: SBOM is not generated. Not installing SBOM.'
+    exit
+fi
+
+sbom_path="${target_path}/@DATADIR@/kea/sbom"
+mkdir -p "${sbom_path}"
+
+@INSTALL@ -c -m 644 "@TOP_SOURCE_DIR@/sbom.spdx.json" "${sbom_path}/kea-dhcp4.sbom.spdx.json"
+@INSTALL@ -c -m 644 "@TOP_SOURCE_DIR@/sbom.spdx.json" "${sbom_path}/kea-dhcp6.sbom.spdx.json"
+@INSTALL@ -c -m 644 "@TOP_SOURCE_DIR@/sbom.spdx.json" "${sbom_path}/kea-dhcp-ddns.sbom.spdx.json"
+@INSTALL@ -c -m 644 "@TOP_SOURCE_DIR@/sbom.spdx.json" "${sbom_path}/kea-lfc.sbom.spdx.json"
+@INSTALL@ -c -m 644 "@TOP_SOURCE_DIR@/sbom.spdx.json" "${sbom_path}/perfdhcp.sbom.spdx.json"
+if "@kea_msg_compiler_found@"; then
+    @INSTALL@ -c -m 644 "@TOP_SOURCE_DIR@/sbom.spdx.json" "${sbom_path}/kea-msg-compiler.sbom.spdx.json"
+fi
+if "@kea_netconf_found@"; then
+    @INSTALL@ -c -m 644 "@TOP_SOURCE_DIR@/sbom.spdx.json" "${sbom_path}/kea-netconf.sbom.spdx.json"
+fi

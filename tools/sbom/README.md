@@ -32,9 +32,14 @@ meson setup build -D cpp_std=c++17 -D crypto=openssl -D default_library=static \
   -D postgresql=enabled -D mysql=enabled -D krb5=enabled
 meson compile --verbose -C build
 
-# Run the script
-cd tools/sbom
-python3 meson2spdx.py -b ../../build -o sbom.spdx.json -r ../..
+# Run the script:
+./tools/sbom/meson2spdx.py
+
+# Or with explicit flags:
+./tools/sbom/meson2spdx.py -b ./build -o ./sbom.spdx.json -r .
+
+# Or using Meson:
+meson compile -C build sbom
 
 # Output in sbom.spdx.json from the above command
 cat sbom.spdx.json
