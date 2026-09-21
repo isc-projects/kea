@@ -94,7 +94,7 @@ def _run(cmd: list) -> Optional:
         stderr is redirected to DEVNULL to suppress error messages.
     """
     try:
-        return subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL).strip()
+        return subprocess.check_output(cmd, universal_newlines=True, stderr=subprocess.DEVNULL).strip()
     except (OSError, subprocess.SubprocessError):
         return None
 
