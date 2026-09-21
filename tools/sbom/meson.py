@@ -88,7 +88,7 @@ def _json_read(path: Path):
         return None
 
 
-def discover_meson(build_dir: Path, project_dir: Path) -> tuple[str, str, dict, list, list, dict]:
+def discover_meson(build_dir: Path, project_dir: Path) -> tuple:
     """Discover and extract comprehensive project metadata from Meson build system.
 
     This function performs complete introspection of a Meson-based project by reading
@@ -136,7 +136,7 @@ def discover_meson(build_dir: Path, project_dir: Path) -> tuple[str, str, dict, 
 
     # Store base project dependencies in a normalised dictionary structure
     # Each dependency entry contains name, type, and version information
-    deps: dict[str, dict] = {}
+    deps: dict = {}
     for dep in intro_deps:
         name = dep.get('name') or dep.get('depname') or dep.get('project_name')
         if not name:

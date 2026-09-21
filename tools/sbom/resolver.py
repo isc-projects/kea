@@ -24,7 +24,7 @@ from typing import Optional
 from pkgconfig import PcCache
 
 
-def _normalised_name(old: str, info: dict, wraps_meta: dict) -> Optional[str]:
+def _normalised_name(old: str, info: dict, wraps_meta: dict) -> Optional:
     """Determine the canonical name for a dependency package.
 
     Different sources (Meson, pkg-config, .wrap files) may refer to the same package
@@ -73,7 +73,7 @@ def _normalised_name(old: str, info: dict, wraps_meta: dict) -> Optional[str]:
     return old
 
 
-def normalise_deps_inplace(deps: dict[str, dict], wraps_meta: dict) -> None:
+def normalise_deps_inplace(deps: dict, wraps_meta: dict) -> None:
     """Normalise dependency dictionary keys and merge duplicate entries in-place.
 
     This function applies name normalisation to all dependency entries and handles
@@ -95,7 +95,7 @@ def normalise_deps_inplace(deps: dict[str, dict], wraps_meta: dict) -> None:
         and only missing fields are filled from the source entry.
     """
     remap = {}
-    drops: set[str] = set()
+    drops: set = set()
 
     # First pass: identify packages to drop and rename mappings
     for old_name, package_info in list(deps.items()):
@@ -139,14 +139,14 @@ class Graph:
         edges: Set of tuples (parent, child) representing dependency relationships.
     """
 
-    def __init__(self, deps: dict[str, dict]):
+    def __init__(self, deps: dict):
         """Initialise graph with existing package metadata.
 
         Args:
             deps: Initial dictionary of package metadata.
         """
         self.deps = deps
-        self.edges: set[tuple[str, str]] = set()
+        self.edges: set = set()
 
     def ensure_pkg(self, name: str, cache: PcCache):
         """Ensure a pkg-config package exists in the graph with enriched metadata.
@@ -212,7 +212,7 @@ class Graph:
 
 
 def _search_pkg(pkg: str, graph: Graph, cache: PcCache, wraps_meta: dict, *,
-                visited: set[str], stack: set[str], max_depth: int, depth: int):
+                visited: set, stack: set, max_depth: int, depth: int):
     """Recursively discover and add transitive dependencies to the graph.
 
     This function performs depth-first traversal of the dependency tree starting
@@ -297,7 +297,7 @@ def build_pkg_graph_recursive(graph: Graph, wraps_meta: dict, max_depth: int):
         This ensures we only traverse dependencies that can be queried via pkg-config.
     """
     cache = PcCache()
-    visited: set[str] = set()
+    visited: set = set()
 
     # Identify seed packages: those with pkg-config metadata
     seeds = [name for name, info in list(graph.deps.items())

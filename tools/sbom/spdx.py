@@ -81,7 +81,7 @@ PACKAGE_TEMPLATE = Template('''{
 REL_LINE_TEMPLATE = Template('{"spdxElementId":"$SRC","relationshipType":"$TYPE","relatedSpdxElement":"$DST"}')
 
 
-def _run(cmd: list[str]) -> Optional[str]:
+def _run(cmd: list) -> Optional:
     """Execute a shell command and return its output.
 
     Args:
@@ -122,7 +122,7 @@ def _purl(name: str, ver: str) -> str:
     return f'pkg:generic/{name}@{ver}'
 
 
-def _dedupe_relationships(rel_list: list[dict]) -> list[dict]:
+def _dedupe_relationships(rel_list: list) -> list:
     """Remove duplicate relationship entries from a list.
 
     Relationships are deduplicated based on the tuple of (spdxElementId,
@@ -150,7 +150,7 @@ def _dedupe_relationships(rel_list: list[dict]) -> list[dict]:
     return out
 
 
-def _get_pkg_version(pkg_name: str) -> Optional[str]:
+def _get_pkg_version(pkg_name: str) -> Optional:
     """Query the OS package manager for a package's version.
 
     Currently supports dpkg (Debian/Ubuntu). Additional package managers
@@ -271,7 +271,7 @@ def ldd_libs(binary: Path):
     return libs
 
 
-def map_os_pkg(path: Path) -> Optional[str]:
+def map_os_pkg(path: Path) -> Optional:
     """Determine which OS package owns a given file.
 
     Queries the system package manager to find which package installed
@@ -351,8 +351,8 @@ def build_spdx(proj_name: str, proj_ver: str, graph, binaries) -> str:
     document_namespace = doc_ns
 
     # Generate package entries for all build-time dependencies
-    idmap: dict[str, str] = {}
-    package_lines: list[str] = [root_pkg_str]
+    idmap: dict = {}
+    package_lines: list = [root_pkg_str]
     sorted_deps = sorted(graph.deps.items(), key=lambda item: item[0].lower())
     print(f'Found {len(sorted_deps)} build-time dependencies')
     cnt = 1
@@ -392,7 +392,7 @@ def build_spdx(proj_name: str, proj_ver: str, graph, binaries) -> str:
         package_lines.append(pkg_line)
 
     # Establish SPDX relationships
-    rel_lines: list[str] = []
+    rel_lines: list = []
 
     # Document DESCRIBES the root package
     rel_lines.append(REL_LINE_TEMPLATE.substitute(SRC='SPDXRef-DOCUMENT', TYPE='DESCRIBES', DST=root_spdx))
@@ -414,7 +414,7 @@ def build_spdx(proj_name: str, proj_ver: str, graph, binaries) -> str:
     # Discover and add runtime OS library dependencies from binaries
     if binaries:
         print(f'Found {len(binaries)} binaries to process')
-        os_ids: dict[str, str] = {}
+        os_ids: dict = {}
         os_edges: set = set()
         cnt = 1
         for binary_path in binaries:
