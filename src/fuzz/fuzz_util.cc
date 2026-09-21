@@ -121,19 +121,12 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
         // Silent exceptions
     }
 
-    // Prepare posix_time object
-    ptime pt;
-    try {
-        pt = time_from_string(payload);
-    } catch (...) {
-        // Failed for time_from_string, try from_iso_extended_string
-        try {
-            pt = from_iso_extended_string(payload);
-        } catch (...) {
-            // Failed to create posix_time object, early exit
-            return 0;
-        }
+    struct tm tm_result;
+    if (!strptime(payload.c_str(), "%Y-%m-%d %H:%M:%S", &tm_result)) {
+        return 0;
     }
+
+    ptime pt = boost::posix_time::ptime_from_tm(tm_result);
 
     // Target ptimeToText
     try {
