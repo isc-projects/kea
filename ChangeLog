@@ -1,3 +1,7 @@
+2554.	[bug]		razvan
+	Fixed improper unpacking of long VIVSO options.
+	(Gitlab #4770)
+
 2553.	[bug]		razvan
 	Fixed bugs related to out of bound container access which can
 	cause Kea to crash if -D_GLIBCXX_ASSERTIONS flag is used at

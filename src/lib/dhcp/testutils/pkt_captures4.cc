@@ -336,7 +336,7 @@ Bootstrap Protocol (Discover)
 }
 
 Pkt4Ptr PktCaptures::discoverWithMaximumVIVSO() {
-/* DISCOVER that contains VIVSO option 125 with an suboption with maximum length of 255
+/* DISCOVER that contains VIVSO option 125 with a suboption with maximum length of 255
 User Datagram Protocol, Src Port: 67, Dst Port: 67
 Bootstrap Protocol (Discover)
     Message type: Boot Request (1)
