@@ -34,7 +34,7 @@ _REQ_TOKEN = re.compile(r'^[A-Za-z0-9_.+-]+')
 _LIB_TOKEN = re.compile(r'^-l([A-Za-z0-9_.+-]+)$')
 
 
-def _run(cmd: list) -> Optional:
+def _run(cmd: 'list[str]') -> Optional[str]:
     """Execute a shell command and return its output.
 
     Args:
@@ -69,10 +69,10 @@ class PcCache:
 
     def __init__(self):
         """Initialise empty caches for pkg-config query results."""
-        self._exists: dict = {}
-        self._info: dict = {}
-        self._requires: dict = {}
-        self._libs: dict = {}
+        self._exists: dict[str, bool] = {}
+        self._info: dict[str, dict] = {}
+        self._requires: dict[str, list[str]] = {}
+        self._libs: dict[str, list[str]] = {}
 
     def exists(self, name: str) -> bool:
         """Check if a pkg-config package exists on the system.
@@ -137,7 +137,7 @@ class PcCache:
         self._info[name] = data
         return data
 
-    def requires(self, name: str) -> list:
+    def requires(self, name: str) -> 'list[str]':
         """Discover all direct dependencies of a pkg-config package.
 
         Queries both public (Requires) and private (Requires.private) dependencies
@@ -158,7 +158,7 @@ class PcCache:
         """
         if name in self._requires:
             return self._requires[name]
-        required_packages: set = set()
+        required_packages: set[str] = set()
 
         # Query both public and private dependencies for complete coverage
         for flag in ('--print-requires', '--print-requires-private'):
@@ -177,7 +177,7 @@ class PcCache:
         self._requires[name] = sorted(required_packages)
         return self._requires[name]
 
-    def libs(self, name: str) -> list:
+    def libs(self, name: str) -> 'list[str]':
         """Extract library names from pkg-config linker flags.
 
         Queries both public (--libs) and private (--libs-private) linker flags
@@ -199,7 +199,7 @@ class PcCache:
         """
         if name in self._libs:
             return self._libs[name]
-        library_names: set = set()
+        library_names: set[str] = set()
 
         # Query both public and private library flags for complete coverage
         for flag in ('--libs', '--libs-private'):
