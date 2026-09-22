@@ -255,7 +255,6 @@ public:
 
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
-
 };
 
 // This test checks that the client can acquire and decline the lease.
@@ -270,10 +269,12 @@ TEST_F(DeclineTest, declineNoIdentifierChangeMemfile) {
 // This test checks that the client can acquire and decline the lease.
 TEST_F(DeclineTest, declineNoIdentifierChangeMySQL) {
     MySqlLeaseMgrInit init;
+    db::test::createMySQLSchema();
     Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",
                       SHOULD_PASS, 1);
+    db::test::destroyMySQLSchema();
 }
 #endif
 
@@ -281,10 +282,12 @@ TEST_F(DeclineTest, declineNoIdentifierChangeMySQL) {
 // This test checks that the client can acquire and decline the lease.
 TEST_F(DeclineTest, declineNoIdentifierChangePgSQL) {
     PgSqlLeaseMgrInit init;
+    db::test::createPgSQLSchema();
     Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",
                       SHOULD_PASS, 2);
+    db::test::destroyPgSQLSchema();
 }
 #endif
 
