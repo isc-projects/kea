@@ -1006,6 +1006,40 @@ command to get the current state of the lease, selecting the lease from the
 response, modifying it to the required outcome, and then issuing the
 :isccmd:`lease4-update` / :isccmd:`lease6-update` command with the resulting lease attached.
 
+This is especially important for lease user-context. This parameter is used by
+Kea to hold a varying amount of information depending upon what features are
+in use. Extended information about relays, data used by limits hook library,
+and binding variables are a few examples. If this information is not carried
+over from the existing lease, it will be lost on update. The following shows
+an example of a IPv4 lease4-get command returning a lease that has user-context
+data: 
+
+::
+
+  {
+    "arguments": {
+        "client-id": "01:00:0c:01:02:03:04",
+        "cltt": 1790262426,
+        "fqdn-fwd": false,
+        "fqdn-rev": false,
+        "hostname": "",
+        "hw-address": "00:0c:01:02:03:04",
+        "ip-address": "175.0.0.100",
+        "state": 0,
+        "subnet-id": 1,
+        "user-context": {
+            "ISC": {
+                "binding-variables": {
+                    "service-name": "my-random-text"
+                }
+            }
+        },
+        "valid-lft": 86400
+    },
+    "result": 0,
+    "text": "IPv4 lease found."
+  }
+
 .. isccmd:: lease4-wipe
 .. _command-lease4-wipe:
 
