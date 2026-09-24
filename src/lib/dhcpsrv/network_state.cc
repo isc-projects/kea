@@ -66,6 +66,73 @@ public:
         }
     }
 
+    /// @brief Check if the service state is disabled by user.
+    ///
+    /// @return True if the service state is disabled by user, false otherwise.
+    bool disabledByUser() {
+        if (!globally_disabled_) {
+            return (false);
+        }
+        std::set<unsigned int> ordered(disabled_by_origin_.begin(), disabled_by_origin_.end());
+        for (auto const& origin : ordered) {
+            if (origin == NetworkState::USER_COMMAND) {
+                return (true);
+            }
+        }
+        return (false);
+    }
+
+    /// @brief Check if the service state is disabled by database connection.
+    ///
+    /// @return True if the service state is disabled by database connection,
+    /// false otherwise.
+    bool disabledByDbConnection() {
+        if (!globally_disabled_) {
+            return (false);
+        }
+        std::set<unsigned int> ordered(disabled_by_origin_.begin(), disabled_by_origin_.end());
+        for (auto const& origin : ordered) {
+            if (origin >= NetworkState::DB_CONNECTION) {
+                return (true);
+            }
+        }
+        return (false);
+    }
+
+    /// @brief Check if the service state is disabled by local commands.
+    ///
+    /// @return True if the service state is disabled by local commands,
+    /// false otherwise.
+    bool disabledByLocalCommand() {
+        if (!globally_disabled_) {
+            return (false);
+        }
+        std::set<unsigned int> ordered(disabled_by_origin_.begin(), disabled_by_origin_.end());
+        for (auto const& origin : ordered) {
+            if (origin >= NetworkState::HA_LOCAL_COMMAND && origin < NetworkState::HA_REMOTE_COMMAND) {
+                return (true);
+            }
+        }
+        return (false);
+    }
+
+    /// @brief Check if the service state is disabled by remote commands.
+    ///
+    /// @return True if the service state is disabled by remote commands,
+    /// false otherwise.
+    bool disabledByRemoteCommand() {
+        if (!globally_disabled_) {
+            return (false);
+        }
+        std::set<unsigned int> ordered(disabled_by_origin_.begin(), disabled_by_origin_.end());
+        for (auto const& origin : ordered) {
+            if (origin >= NetworkState::HA_REMOTE_COMMAND && origin < NetworkState::DB_CONNECTION) {
+                return (true);
+            }
+        }
+        return (false);
+    }
+
     /// @brief Reset internal counters for a database connection origin.
     ///
     /// @note The dhcp service will remain disabled until all flags are cleared.
@@ -235,6 +302,30 @@ void
 NetworkState::enableService(unsigned int origin) {
     MultiThreadingLock lock(*mutex_);
     impl_->delayedEnable(origin);
+}
+
+bool
+NetworkState::disabledByUser() {
+    MultiThreadingLock lock(*mutex_);
+    return (impl_->disabledByUser());
+}
+
+bool
+NetworkState::disabledByDbConnection() {
+    MultiThreadingLock lock(*mutex_);
+    return (impl_->disabledByDbConnection());
+}
+
+bool
+NetworkState::disabledByLocalCommand() {
+    MultiThreadingLock lock(*mutex_);
+    return (impl_->disabledByLocalCommand());
+}
+
+bool
+NetworkState::disabledByRemoteCommand() {
+    MultiThreadingLock lock(*mutex_);
+    return (impl_->disabledByRemoteCommand());
 }
 
 void

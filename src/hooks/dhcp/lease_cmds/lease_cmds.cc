@@ -127,12 +127,12 @@ public:
         uint32_t iaid;
 
         /// @brief Indicates whether or not DNS should be updated.
-        bool updateDDNS;
+        bool update_ddns;
 
         /// @brief Default constructor.
         Parameters()
             : subnet_id(0), addr("::"), query_type(TYPE_ADDR),
-              lease_type(Lease::TYPE_NA), iaid(0), updateDDNS(false) {
+              lease_type(Lease::TYPE_NA), iaid(0), update_ddns(false) {
         }
     };
 
@@ -714,7 +714,7 @@ LeaseCmdsImpl::getParameters(bool v6, const ConstElementPtr& params) {
         if (tmp->getType() != Element::boolean) {
             isc_throw(BadValue, "'update-ddns' is not a boolean");
         } else {
-            x.updateDDNS = tmp->boolValue();
+            x.update_ddns = tmp->boolValue();
         }
     }
 
@@ -1561,7 +1561,7 @@ LeaseCmdsImpl::lease4DelHandler(CalloutHandle& handle) {
         }
 
         // Queue an NCR to remove DNS if configured and the lease has it.
-        if (p.updateDDNS) {
+        if (p.update_ddns) {
             queueNCR(CHG_REMOVE, lease4);
         }
 
@@ -1841,7 +1841,7 @@ LeaseCmdsImpl::lease6DelHandler(CalloutHandle& handle) {
         }
 
         // Queue an NCR to remove DNS if configured and the lease has it.
-        if (p.updateDDNS) {
+        if (p.update_ddns) {
             queueNCR(CHG_REMOVE, lease6);
         }
 

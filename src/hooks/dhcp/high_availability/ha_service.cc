@@ -1753,6 +1753,9 @@ HAService::processStatusGet() const {
 
 ConstElementPtr
 HAService::processHeartbeat() {
+    if (network_state_->disabledByUser() || network_state_->disabledByDbConnection()) {
+        return (ConstElementPtr());
+    }
     ElementPtr arguments = Element::createMap();
     std::string state_label = getState(getCurrState())->getLabel();
     arguments->set("state", Element::create(state_label));

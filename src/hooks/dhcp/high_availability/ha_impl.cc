@@ -760,6 +760,9 @@ HAImpl::heartbeatHandler(CalloutHandle& callout_handle) {
 
     // Command parsing was successful, so let's process the command.
     ConstElementPtr response = service->processHeartbeat();
+    if (!response) {
+        return;
+    }
     callout_handle.setArgument("response", response);
 }
 

@@ -125,6 +125,29 @@ public:
     /// @param origin The origin of the state transition.
     void enableService(unsigned int origin);
 
+    /// @brief Check if the service state is disabled by user.
+    ///
+    /// @return True if the service state is disabled by user, false otherwise.
+    bool disabledByUser();
+
+    /// @brief Check if the service state is disabled by database connection.
+    ///
+    /// @return True if the service state is disabled by database connection,
+    /// false otherwise.
+    bool disabledByDbConnection();
+
+    /// @brief Check if the service state is disabled by local commands.
+    ///
+    /// @return True if the service state is disabled by local commands,
+    /// false otherwise.
+    bool disabledByLocalCommand();
+
+    /// @brief Check if the service state is disabled by remote commands.
+    ///
+    /// @return True if the service state is disabled by remote commands,
+    /// false otherwise.
+    bool disabledByRemoteCommand();
+
     /// @brief Reset internal counters for database connection.
     ///
     /// It results in enabling the network service if network service for
