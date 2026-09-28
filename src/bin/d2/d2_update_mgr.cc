@@ -165,7 +165,9 @@ D2UpdateMgr::makeTransaction(NameChangeRequestPtr& next_ncr) {
                       .arg(next_ncr->toText());
         } else {
             bool matched = cfg_mgr_->matchReverse(next_ncr->getIpAddress(),
-                                                  reverse_domain);
+                                                  reverse_domain,
+                                                  next_ncr->getReverseZone());
+
             // Could not find a match for reverse DNS server. Log it and get
             // out. This has the net affect of dropping the request on the
             // floor.

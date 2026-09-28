@@ -22,6 +22,9 @@ using namespace isc::process;
 namespace isc {
 namespace d2 {
 
+const std::string DDNS_REV_ZONE_DEFAULT4 = "in-addr.arpa.";
+const std::string DDNS_REV_ZONE_DEFAULT6 = "ip6.arpa.";
+
 namespace {
 
 typedef std::vector<uint8_t> ByteAddress;
@@ -127,10 +130,6 @@ D2CfgContext::toElement() const {
 
 // *********************** D2CfgMgr  *************************
 
-const char* D2CfgMgr::IPV4_REV_ZONE_SUFFIX = "in-addr.arpa.";
-
-const char* D2CfgMgr::IPV6_REV_ZONE_SUFFIX = "ip6.arpa.";
-
 D2CfgMgr::D2CfgMgr() : DCfgMgrBase(ConfigPtr(new D2CfgContext())) {
 }
 
@@ -169,9 +168,10 @@ D2CfgMgr::matchForward(const std::string& fqdn, DdnsDomainPtr& domain) {
 }
 
 bool
-D2CfgMgr::matchReverse(const std::string& ip_address, DdnsDomainPtr& domain) {
+D2CfgMgr::matchReverse(const std::string& ip_address, DdnsDomainPtr& domain,
+                       const std::string& reverse_zone /* = "" */) {
     // Note, reverseIpAddress will throw if the ip_address is invalid.
-    std::string reverse_address = reverseIpAddress(ip_address);
+    std::string reverse_address = reverseIpAddress(ip_address, reverse_zone);
 
     // Fetch the reverse manager from the D2 context.
     DdnsDomainListMgrPtr mgr = getD2CfgContext()->getReverseMgr();
@@ -180,16 +180,17 @@ D2CfgMgr::matchReverse(const std::string& ip_address, DdnsDomainPtr& domain) {
 }
 
 std::string
-D2CfgMgr::reverseIpAddress(const std::string& address) {
+D2CfgMgr::reverseIpAddress(const std::string& address,
+                           const std::string& reverse_zone /* = "" */) {
     try {
         // Convert string address into an IOAddress and invoke the
         // appropriate reverse method.
         isc::asiolink::IOAddress ioaddr(address);
         if (ioaddr.isV4()) {
-            return (reverseV4Address(ioaddr));
+            return (reverseV4Address(ioaddr, reverse_zone));
         }
 
-        return (reverseV6Address(ioaddr));
+        return (reverseV6Address(ioaddr, reverse_zone));
 
     } catch (const isc::Exception& ex) {
         isc_throw(D2CfgError, "D2CfgMgr cannot reverse address: "
@@ -198,7 +199,7 @@ D2CfgMgr::reverseIpAddress(const std::string& address) {
 }
 
 std::string
-D2CfgMgr::reverseV4Address(const isc::asiolink::IOAddress& ioaddr) {
+D2CfgMgr::reverseV4Address(const isc::asiolink::IOAddress& ioaddr, const std::string& reverse_zone) {
     if (!ioaddr.isV4()) {
         isc_throw(D2CfgError, "D2CfgMgr address is not IPv4 address :"
                   << ioaddr);
@@ -215,12 +216,20 @@ D2CfgMgr::reverseV4Address(const isc::asiolink::IOAddress& ioaddr) {
     }
 
     // Tack on the suffix and we're done.
-    stream << IPV4_REV_ZONE_SUFFIX;
+    if (reverse_zone.empty()) {
+        stream << DDNS_REV_ZONE_DEFAULT4;
+    } else {
+        stream << reverse_zone;
+        if (reverse_zone.back() != '.') {
+            stream << ".";
+        }
+    }
+
     return(stream.str());
 }
 
 std::string
-D2CfgMgr::reverseV6Address(const isc::asiolink::IOAddress& ioaddr) {
+D2CfgMgr::reverseV6Address(const isc::asiolink::IOAddress& ioaddr, const std::string& reverse_zone) {
     if (!ioaddr.isV6()) {
         isc_throw(D2CfgError, "D2Cfg address is not IPv6 address: " << ioaddr);
     }
@@ -237,7 +246,15 @@ D2CfgMgr::reverseV6Address(const isc::asiolink::IOAddress& ioaddr) {
     }
 
     // Tack on the suffix and we're done.
-    stream << IPV6_REV_ZONE_SUFFIX;
+    if (reverse_zone.empty()) {
+        stream << DDNS_REV_ZONE_DEFAULT6;
+    } else {
+        stream << reverse_zone;
+        if (reverse_zone.back() != '.') {
+            stream << ".";
+        }
+    }
+
     return(stream.str());
 }
 

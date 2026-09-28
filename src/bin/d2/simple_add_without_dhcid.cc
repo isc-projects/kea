@@ -500,7 +500,8 @@ SimpleAddWithoutDHCIDTransaction::buildReplaceRevPtrsRequest() {
     D2UpdateMessagePtr request = prepNewRequest(getReverseDomain());
 
     // Create the reverse IP address "FQDN".
-    std::string rev_addr = D2CfgMgr::reverseIpAddress(getNcr()->getIpAddress());
+    std::string rev_addr = D2CfgMgr::reverseIpAddress(getNcr()->getIpAddress(),
+                                                      getNcr()->getReverseZone());
     dns::Name rev_ip(rev_addr);
 
     // Create the TTL based on lease length.

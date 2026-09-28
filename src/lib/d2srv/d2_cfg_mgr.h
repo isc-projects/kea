@@ -21,6 +21,12 @@
 namespace isc {
 namespace d2 {
 
+/// @brief Default reverse DNS domain for V4.
+extern const std::string DDNS_REV_ZONE_DEFAULT4;
+
+/// @brief Default reverse DNS domain for V6.
+extern const std::string DDNS_REV_ZONE_DEFAULT6;
+
 class D2CfgContext;
 /// @brief Pointer to a configuration context.
 typedef boost::shared_ptr<D2CfgContext> D2CfgContextPtr;
@@ -246,10 +252,15 @@ public:
     /// @param ip_address is the name for which to look.
     /// @param domain receives the matching domain. Note that it will be reset
     /// upon entry and only set if a match is subsequently found.
+    /// @param reverse_zone string containing the top-level zone to put
+    /// the PTR record in. If empty, reverseIpAddress() will supply
+    /// protocol-specific default.
     ///
     /// @return returns true if a match is found, false otherwise.
     /// @throw throws D2CfgError if given an invalid fqdn.
-    bool matchReverse(const std::string& ip_address, DdnsDomainPtr& domain);
+    bool matchReverse(const std::string& ip_address,
+                      DdnsDomainPtr& domain,
+                      const std::string& reverse_zone = "");
 
     /// @brief Generate a reverse order string for the given IP address
     ///
@@ -257,14 +268,19 @@ public:
     /// contents in reverse order.  This format is used for matching
     /// against reverse DDNS domains in DHCP_DDNS configuration.
     /// After reversing the syllables of the address, it appends the
-    /// appropriate suffix.
+    /// given suffix and then a final dot if needed.
     ///
     /// @param address string containing a valid IPv4 or IPv6 address.
+    ///
+    /// @param reverse_zone string containing the top-level zone to put
+    /// the PTR record. If empty it will use "in-addr.arpa." for a V4
+    /// address and "ip6.arpa." for a V6 address.
     ///
     /// @return a std::string containing the reverse order address.
     ///
     /// @throw D2CfgError if given an invalid address.
-    static std::string reverseIpAddress(const std::string& address);
+    static std::string reverseIpAddress(const std::string& address,
+                                        const std::string& reverse_zone = "");
 
     /// @brief Generate a reverse order string for the given IP address
     ///
@@ -272,18 +288,21 @@ public:
     /// contents in reverse order.  This format is used for matching
     /// against reverse DDNS domains in DHCP_DDNS configuration.
     /// After reversing the syllables of the address, it appends the
-    /// appropriate suffix.
+    /// given suffix and then a final dot if needed.
     ///
     /// Example:
-    ///   input:  192.168.1.15
+    ///   input:  192.168.1.15, in-addr.arpa
     ///  output:  15.1.168.192.in-addr.arpa.
     ///
     /// @param ioaddr is the IPv4 IOaddress to convert
     ///
+    /// @param reverse_zone string containing the top-level zone to put
+    ///        the PTR record in, typically "in-addr.arpa"
+    ///
     /// @return a std::string containing the reverse order address.
     ///
     /// @throw D2CfgError if not given an IPv4  address.
-    static std::string reverseV4Address(const isc::asiolink::IOAddress& ioaddr);
+    static std::string reverseV4Address(const isc::asiolink::IOAddress& ioaddr, const std::string& reverse_zone);
 
     /// @brief Generate a reverse order string for the given IP address
     ///
@@ -291,19 +310,22 @@ public:
     /// contents in reverse order.  This format is used for matching
     /// against reverse DDNS domains in DHCP_DDNS configuration.
     /// After reversing the syllables of the address, it appends the
-    /// appropriate suffix.
+    /// given suffix and then a final dot if needed.
     ///
     /// IPv6 example:
-    /// input:  2001:db8:302:99::
+    /// input:  2001:db8:302:99::, ip6.arpa
     /// output:
     ///0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.9.9.0.0.2.0.3.0.8.B.D.0.1.0.0.2.ip6.arpa.
     ///
     /// @param ioaddr string containing a valid IPv6 address.
     ///
+    /// @param reverse_zone string containing the top-level zone to put
+    ///        the PTR record in, typically "ip6.arpa"
+    ///
     /// @return a std::string containing the reverse order address.
     ///
     /// @throw D2CfgError if not given an IPv6 address.
-    static std::string reverseV6Address(const isc::asiolink::IOAddress& ioaddr);
+    static std::string reverseV6Address(const isc::asiolink::IOAddress& ioaddr, const std::string& reverse_zone);
 
     /// @brief Convenience method fetches the D2Params from context
     ///

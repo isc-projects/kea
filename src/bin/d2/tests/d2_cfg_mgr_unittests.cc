@@ -901,15 +901,87 @@ TEST_F(D2CfgMgrTest, matchReverse) {
     EXPECT_EQ("*", match->getName());
 
     // Verify a IPv6 match.
-    EXPECT_TRUE(cfg_mgr_->matchReverse("2001:db8:302:99::",match));
+    EXPECT_TRUE(cfg_mgr_->matchReverse("2001:db8:302:99::", match));
     EXPECT_EQ("2.0.3.0.8.b.d.0.1.0.0.2.IP6.ARPA.", match->getName());
 
     // Verify a IPv6 wild card match.
-    EXPECT_TRUE(cfg_mgr_->matchReverse("2001:db8:99:302::",match));
+    EXPECT_TRUE(cfg_mgr_->matchReverse("2001:db8:99:302::", match));
     EXPECT_EQ("*", match->getName());
 
     // Verify that an attempt to match an invalid IP address throws.
     ASSERT_THROW(cfg_mgr_->matchReverse("", match), D2CfgError);
+}
+
+/// @brief Tests D2CfgMgr reverse FQDN-domain matching with varying reverse-zone
+/// inputs.
+TEST_F(D2CfgMgrTest, matchReverseZone) {
+    std::string config = "{ "
+                        "\"ip-address\" : \"192.168.1.33\" , "
+                        "\"port\" : 88 , "
+                        "\"tsig-keys\": [] ,"
+                        "\"forward-ddns\" : {}, "
+                        "\"reverse-ddns\" : {"
+                        "\"ddns-domains\": [ "
+                        "{ \"name\": \"100.168.192.in-addr.arpa.\" , "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.1\" } "
+                        "  ] }, "
+                        "{ \"name\": \"100.168.192.backward.com.\" , "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.2\" } "
+                        "  ] }, "
+                        // Note mixed case to test case insensitivity.
+                        "{ \"name\": \"2.0.3.0.8.b.d.0.1.0.0.2.ip6.arpa.\" , "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.3\" } "
+                        "  ] },"
+                        "{ \"name\": \"2.0.3.0.8.b.d.0.1.0.0.2.backward6.com.\" , "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.4\" } "
+                        "  ] } "
+                        "] } }";
+
+    // Verify that we can parse the configuration.
+    RUN_CONFIG_OK(config);
+
+    // Verify that the D2 context can be retrieved and is not null.
+    D2CfgContextPtr context;
+    ASSERT_NO_THROW(context = cfg_mgr_->getD2CfgContext());
+
+    // Test directional update flags.
+    EXPECT_FALSE(cfg_mgr_->forwardUpdatesEnabled());
+    EXPECT_TRUE(cfg_mgr_->reverseUpdatesEnabled());
+
+    DdnsDomainPtr match;
+
+    // V4 tests.
+    // Verify empty reverse zone matches the default.
+    ASSERT_TRUE(cfg_mgr_->matchReverse("192.168.100.5", match, ""));
+    EXPECT_EQ("100.168.192.in-addr.arpa.", match->getName());
+
+    // Verify custom reverse zone matches.
+    ASSERT_TRUE(cfg_mgr_->matchReverse("192.168.100.5", match, "backward.com."));
+    EXPECT_EQ("100.168.192.backward.com.", match->getName());
+
+    // Verify custom reverse zone without trailing dot matches.
+    ASSERT_TRUE(cfg_mgr_->matchReverse("192.168.100.5", match, "backward.com"));
+    EXPECT_EQ("100.168.192.backward.com.", match->getName());
+
+    // V6 tests.
+    // Verify empty reverse zone matches the default.
+    ASSERT_TRUE(cfg_mgr_->matchReverse("2001:db8:302:99::", match, ""));
+    EXPECT_EQ("2.0.3.0.8.b.d.0.1.0.0.2.ip6.arpa.", match->getName());
+
+    // Verify custom reverse zone matches.
+    ASSERT_TRUE(cfg_mgr_->matchReverse("2001:db8:302:99::", match, "backward6.com."));
+    EXPECT_EQ("2.0.3.0.8.b.d.0.1.0.0.2.backward6.com.", match->getName());
+
+    // Verify custom reverse zone without trailing dot matches.
+    ASSERT_TRUE(cfg_mgr_->matchReverse("2001:db8:302:99::", match, "backward6.com"));
+    EXPECT_EQ("2.0.3.0.8.b.d.0.1.0.0.2.backward6.com.", match->getName());
+
+    // Verify non-existant reverse zone does not match.
+    EXPECT_FALSE(cfg_mgr_->matchReverse("2001:db8:302:99::", match, "bogus.com."));
 }
 
 /// @brief Tests D2 config parsing against a wide range of config permutations.

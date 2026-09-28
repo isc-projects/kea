@@ -690,7 +690,8 @@ CheckExistsRemoveTransaction::buildRemoveRevPtrsRequest() {
     D2UpdateMessagePtr request = prepNewRequest(getReverseDomain());
 
     // Create the reverse IP address "FQDN".
-    std::string rev_addr = D2CfgMgr::reverseIpAddress(getNcr()->getIpAddress());
+    std::string rev_addr = D2CfgMgr::reverseIpAddress(getNcr()->getIpAddress(),
+                                                      getNcr()->getReverseZone());
     dns::Name rev_ip(rev_addr);
 
     // Content on this request is based on RFC 4703, section 5.5, paragraph 2.

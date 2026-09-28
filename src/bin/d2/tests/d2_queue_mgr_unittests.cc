@@ -60,7 +60,19 @@ const char *valid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\" : \"check-with-dhcid\""
-     "}"
+     "}",
+    // Valid Add with reverse-zone.
+     "{"
+     " \"change-type\" : 0 , "
+     " \"forward-change\" : true , "
+     " \"reverse-change\" : false , "
+     " \"fqdn\" : \"walah.walah.com\" , "
+     " \"ip-address\" : \"192.168.2.1\" , "
+     " \"dhcid\" : \"010203040A7F8E3D\" , "
+     " \"lease-length\" : 1300, "
+     " \"conflict-resolution-mode\" : \"check-with-dhcid\","
+     " \"reverse-zone\" : \"backward.com.\""
+     "}",
 };
 
 static const size_t VALID_MSG_CNT = sizeof(valid_msgs) / sizeof(char*);
@@ -398,7 +410,7 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
     }
 
     StatMap stats_ncr = {
-        { "ncr-received", 3},
+        { "ncr-received", 4},
         { "ncr-invalid", 0},
         { "ncr-error", 0},
         { "queue-mgr-queue-full", 0}
@@ -419,7 +431,7 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
     }
 
     StatMap stats_ncr_new = {
-        { "ncr-received", 6},
+        { "ncr-received", 8},
         { "ncr-invalid", 0},
         { "ncr-error", 0},
         { "queue-mgr-queue-full", 0}
@@ -439,7 +451,7 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
     EXPECT_EQ(D2QueueMgr::STOPPED_QUEUE_FULL, queue_mgr_->getMgrState());
 
     StatMap stats_ncr_full = {
-        { "ncr-received", 7},
+        { "ncr-received", 9},
         { "ncr-invalid", 0},
         { "ncr-error", 0},
         { "queue-mgr-queue-full", 1}
