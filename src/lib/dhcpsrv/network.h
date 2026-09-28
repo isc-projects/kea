@@ -667,6 +667,23 @@ public:
         ddns_qualifying_suffix_ = ddns_qualifying_suffix;
     }
 
+    /// @brief Returns ddns-reverse-zone
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<std::string>
+    getDdnsReverseZone(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getDdnsReverseZone,
+                                     ddns_reverse_zone_, inheritance,
+                                     CfgGlobals::DDNS_REVERSE_ZONE));
+    }
+
+    /// @brief Sets new ddns-reverse-zone
+    ///
+    /// @param ddns_reverse_zone New value to use.
+    void setDdnsReverseZone(const util::Optional<std::string>& ddns_reverse_zone) {
+        ddns_reverse_zone_ = ddns_reverse_zone;
+    }
+
     /// @brief Returns ddns-ttl-percent
     ///
     /// @param inheritance inheritance mode to be used.
@@ -701,7 +718,6 @@ public:
     void setDdnsTtl(const util::Optional<uint32_t>& ddns_ttl) {
         ddns_ttl_ = ddns_ttl;
     }
-
 
     /// @brief Returns ddns-ttl-min
     ///
@@ -1282,6 +1298,9 @@ protected:
 
     /// @brief Suffix Kea should use when to qualify partial domain-names.
     util::Optional<std::string> ddns_qualifying_suffix_;
+
+    /// @brief Reverse zone Kea should use for PTR records.
+    util::Optional<std::string> ddns_reverse_zone_;
 
     /// @brief Regular expression describing invalid characters for client
     /// hostnames.

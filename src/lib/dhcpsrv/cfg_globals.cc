@@ -38,6 +38,7 @@ CfgGlobals::nameToIndex = {
     { "ddns-replace-client-name", DDNS_REPLACE_CLIENT_NAME },
     { "ddns-generated-prefix", DDNS_GENERATED_PREFIX },
     { "ddns-qualifying-suffix", DDNS_QUALIFYING_SUFFIX },
+    { "ddns-reverse-zone", DDNS_REVERSE_ZONE },
     { "store-extended-info", STORE_EXTENDED_INFO },
     { "statistic-default-sample-count", STATISTIC_DEFAULT_SAMPLE_COUNT },
     { "statistic-default-sample-age", STATISTIC_DEFAULT_SAMPLE_AGE },

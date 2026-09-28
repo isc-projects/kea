@@ -253,6 +253,7 @@ public:
                 "ddns-replace-client-name": "always",
                 "ddns-generated-prefix": "prefix",
                 "ddns-qualifying-suffix": "suffix",
+                "ddns-reverse-zone": "zone",
                 "hostname-char-set": "[a-z]",
                 "hostname-char-replacement": "X",
                 "ddns-update-on-renew": true,
@@ -298,6 +299,9 @@ public:
 
         ASSERT_FALSE(pool->getDdnsQualifyingSuffix().unspecified());
         EXPECT_EQ(pool->getDdnsQualifyingSuffix().get(), "suffix");
+
+        ASSERT_FALSE(pool->getDdnsReverseZone().unspecified());
+        EXPECT_EQ(pool->getDdnsReverseZone().get(), "zone");
 
         ASSERT_FALSE(pool->getHostnameCharSet().unspecified());
         EXPECT_EQ(pool->getHostnameCharSet().get(), "[a-z]");

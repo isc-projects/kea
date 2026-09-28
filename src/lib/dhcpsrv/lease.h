@@ -296,6 +296,26 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// @return True the user-context was modified.
     bool updateUserContextISC(const std::string elem_name,
                               data::ConstElementPtr new_values);
+
+    /// Remove an entry the ISC map in the lease's user-context
+    ///
+    /// Removes the named element from the "ISC" map if it exits.
+    ///
+    /// @param elem_name ISC element name to delete.
+    /// @return True the user-context was modified.
+    bool deleteFromUserContextISC(const std::string elem_name);
+
+    /// Retrieves the reverse zone from the lease's user-context.
+    ///
+    /// @return string containing the ddns-reverse-zone or an
+    /// empty string.
+    std::string getDdnsReverseZone() const;
+
+    /// Sets the lease's ddns-reverse-zone in the lease's user-context.
+    ///
+    /// @param zone new value for ddns-reverse-zone
+    void setDdnsReverseZone(const std::string& zone);
+
 protected:
 
     /// @brief Sets common (for v4 and v6) properties of the lease object.

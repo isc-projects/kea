@@ -77,8 +77,8 @@ generateNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
     NameChangeRequestPtr ncr
             (new NameChangeRequest(chg_type, lease->fqdn_fwd_, lease->fqdn_rev_,
                                    lease->hostname_, lease->addr_.toText(),
-                                   dhcid, ttl, conflict_resolution_mode));
-
+                                   dhcid, ttl, conflict_resolution_mode,
+                                   lease->getDdnsReverseZone()));
     return (ncr);
 }
 

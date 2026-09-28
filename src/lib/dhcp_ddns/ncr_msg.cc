@@ -258,25 +258,30 @@ NameChangeRequest::NameChangeRequest()
     : change_type_(CHG_ADD), forward_change_(false), reverse_change_(false),
       fqdn_(""), ip_io_address_("0.0.0.0"), dhcid_(), lease_length_(0),
       conflict_resolution_mode_(CHECK_WITH_DHCID), status_(ST_NEW),
-      next_ncr_(NameChangeRequestPtr()) {
+      next_ncr_(NameChangeRequestPtr()), reverse_zone_("") {
 }
 
 NameChangeRequest::NameChangeRequest(const NameChangeType change_type,
             const bool forward_change, const bool reverse_change,
             const std::string& fqdn, const std::string& ip_address,
             const D2Dhcid& dhcid, const uint32_t lease_length,
-            const ConflictResolutionMode conflict_resolution_mode)
+            const ConflictResolutionMode conflict_resolution_mode,
+            const std::string& reverse_zone)
     : change_type_(change_type), forward_change_(forward_change),
     reverse_change_(reverse_change), fqdn_(fqdn), ip_io_address_("0.0.0.0"),
     dhcid_(dhcid), lease_length_(lease_length),
     conflict_resolution_mode_(conflict_resolution_mode),
-    status_(ST_NEW), next_ncr_(NameChangeRequestPtr()) {
+    status_(ST_NEW), next_ncr_(NameChangeRequestPtr()),
+    reverse_zone_(reverse_zone) {
 
     // User setter to validate fqdn.
     setFqdn(fqdn);
 
     // User setter to validate address.
     setIpAddress(ip_address);
+
+    // User setter to validate reverse_zone.
+    setReverseZone(reverse_zone);
 
     // Validate the contents. This will throw a NcrMessageError if anything
     // is invalid.
@@ -430,6 +435,12 @@ NameChangeRequest::fromJSON(isc::data::ConstElementPtr elements) {
         ncr->setNextNcr(next_ncr);
     }
 
+    found = element_map.find("reverse-zone");
+    if (found != element_map.end()) {
+        element = ncr->getElement("reverse-zone", element_map);
+        ncr->setReverseZone(element);
+    }
+
     // All members were in the Element set and were correct lexically. Now
     // validate the overall content semantically.  This will throw an
     // NcrMessageError if anything is amiss.
@@ -458,6 +469,10 @@ NameChangeRequest::toJSON() const {
         << "\"lease-length\":" << getLeaseLength() << ","
         << "\"conflict-resolution-mode\":"
         << "\"" << ConflictResolutionModeToString(getConflictResolutionMode()) << "\"";
+
+    if (!getReverseZone().empty()) {
+        stream << ",\"reverse-zone\":\"" << getReverseZone() << "\"";
+    }
 
     if (next_ncr_) {
         stream << ",\"next-ncr\":" << next_ncr_->toJSON();
@@ -683,6 +698,28 @@ NameChangeRequest::setConflictResolutionMode(isc::data::ConstElementPtr element)
 }
 
 void
+NameChangeRequest::setReverseZone(isc::data::ConstElementPtr element) {
+    setReverseZone(element->stringValue());
+}   
+    
+void              
+NameChangeRequest::setReverseZone(const std::string& value) {
+    if (value.empty()) {
+        reverse_zone_ = "";
+        return;
+    }
+
+    try {
+        dns::Name tmp(value);
+        reverse_zone_ = tmp.toText();
+    } catch (const std::exception& ex) {
+        isc_throw(NcrMessageError,
+                  "Invalid reverse zone value: " << value << ", reason: "
+                  << ex.what());
+    }
+}   
+
+void
 NameChangeRequest::setStatus(const NameChangeStatus value) {
     status_ = value;
 }
@@ -715,6 +752,10 @@ NameChangeRequest::toText() const {
            << "Conflict Resolution Mode: "
            << ConflictResolutionModeToString(getConflictResolutionMode())
            << std::endl;
+
+    if (!reverse_zone_.empty()) {
+        stream << "Reverse Zone: [" << reverse_zone_ << "]" << std::endl;
+    }
 
     if (next_ncr_) {
         stream << "Next NCR:" << std::endl << next_ncr_->toText();

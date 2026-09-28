@@ -173,6 +173,7 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("ddns-replace-client-name", Element::create("always"));
     globals_->set("ddns-generated-prefix", Element::create("gp"));
     globals_->set("ddns-qualifying-suffix", Element::create("gs"));
+    globals_->set("ddns-reverse-zone", Element::create("gz"));
     globals_->set("hostname-char-set", Element::create("gc"));
     globals_->set("hostname-char-replacement", Element::create("gr"));
     globals_->set("store-extended-info", Element::create(true));
@@ -311,6 +312,12 @@ TEST_F(NetworkTest, inheritanceSupport4) {
                                              "ns", "gs");
     }
     {
+        SCOPED_TRACE("ddns-reverse-zone");
+        testNetworkInheritance<TestNetwork4>(&Network4::getDdnsReverseZone,
+                                             &Network4::setDdnsReverseZone,
+                                             "nz", "gz");
+    }
+    {
         SCOPED_TRACE("hostname-char-set");
         testNetworkInheritance<TestNetwork4>(&Network4::getHostnameCharSet,
                                              &Network4::setHostnameCharSet,
@@ -414,6 +421,7 @@ TEST_F(NetworkTest, inheritanceSupport6) {
     globals_->set("ddns-replace-client-name", Element::create("always"));
     globals_->set("ddns-generated-prefix", Element::create("gp"));
     globals_->set("ddns-qualifying-suffix", Element::create("gs"));
+    globals_->set("ddns-reverse-zone", Element::create("gz"));
     globals_->set("hostname-char-set", Element::create("gc"));
     globals_->set("hostname-char-replacement", Element::create("gr"));
     globals_->set("store-extended-info", Element::create(true));
@@ -475,6 +483,12 @@ TEST_F(NetworkTest, inheritanceSupport6) {
         testNetworkInheritance<TestNetwork6>(&Network6::getDdnsQualifyingSuffix,
                                              &Network6::setDdnsQualifyingSuffix,
                                              "ns", "gs");
+    }
+    {
+        SCOPED_TRACE("ddns-reverse-zone");
+        testNetworkInheritance<TestNetwork6>(&Network6::getDdnsReverseZone,
+                                             &Network6::setDdnsReverseZone,
+                                             "nz", "gz");
     }
     {
         SCOPED_TRACE("hostname-char-set");

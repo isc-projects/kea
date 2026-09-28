@@ -1722,7 +1722,7 @@ private:
     ///
     /// @return allocated lease (or NULL in the unlikely case of the lease just
     ///        become unavailable)
-    Lease4Ptr createLease4(const ClientContext4& ctx,
+    Lease4Ptr createLease4(ClientContext4& ctx,
                            const isc::asiolink::IOAddress& addr,
                            hooks::CalloutHandle::CalloutNextStep& callout_status);
 

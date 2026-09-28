@@ -253,6 +253,19 @@ public:
         ddns_qualifying_suffix_ = ddns_qualifying_suffix;
     }
 
+    /// @brief Returns ddns-reverse-zone
+    util::Optional<std::string>
+    getDdnsReverseZone() const {
+        return (ddns_reverse_zone_);
+    }
+
+    /// @brief Sets new ddns-reverse-zone
+    ///
+    /// @param ddns_qualifying_suffix New value to use.
+    void setDdnsReverseZone(const util::Optional<std::string>& ddns_reverse_zone) {
+        ddns_reverse_zone_ = ddns_reverse_zone;
+    }
+
     /// @brief Returns ddns-update-on-renew
     util::Optional<bool>
     getDdnsUpdateOnRenew() const {
@@ -443,6 +456,9 @@ protected:
 
     /// @brief Suffix Kea should use when to qualify partial domain-names.
     util::Optional<std::string> ddns_qualifying_suffix_;
+
+    /// @brief Reverse zone Kea should use for PTR records.
+    util::Optional<std::string> ddns_reverse_zone_;
 
     /// @brief Should Kea perform updates when leases are extended
     util::Optional<bool> ddns_update_on_renew_;

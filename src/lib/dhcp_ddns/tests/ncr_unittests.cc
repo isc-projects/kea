@@ -78,7 +78,31 @@ const char *valid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-length\" : 1300, "
      " \"use-conflict-resolution\": true"
-     "}"
+     "}",
+     // Valid Add with reverse zone.
+     "{"
+     " \"change-type\" : 0 , "
+     " \"forward-change\" : true , "
+     " \"reverse-change\" : false , "
+     " \"fqdn\" : \"walah.walah.com\" , "
+     " \"ip-address\" : \"192.168.2.1\" , "
+     " \"dhcid\" : \"010203040A7F8E3D\" , "
+     " \"lease-length\" : 1300, "
+     " \"conflict-resolution-mode\": \"check-with-dhcid\","
+     " \"reverse-zone\": \"backward.com.\""
+     "}",
+     // Valid Add with empty reverse zone.
+     "{"
+     " \"change-type\" : 0 , "
+     " \"forward-change\" : true , "
+     " \"reverse-change\" : false , "
+     " \"fqdn\" : \"walah.walah.com\" , "
+     " \"ip-address\" : \"192.168.2.1\" , "
+     " \"dhcid\" : \"010203040A7F8E3D\" , "
+     " \"lease-length\" : 1300, "
+     " \"conflict-resolution-mode\": \"check-with-dhcid\","
+     " \"reverse-zone\": \"\""
+     "}",
 };
 
 /// @brief Defines a list of invalid JSON NameChangeRequest renditions.
@@ -227,6 +251,18 @@ const char *invalid_msgs[] =
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-length\" : 1300, "
      " \"use-conflict-resolution\": \"bogus\""
+     "}",
+    // Malformed reverse-zone
+     "{"
+     " \"change-type\" : 0 , "
+     " \"forward-change\" : true , "
+     " \"reverse-change\" : false , "
+     " \"fqdn\" : \"walah.walah.com\" , "
+     " \"ip-address\" : \"192.168.2.1\" , "
+     " \"dhcid\" : \"010203040A7F8E3D\" , "
+     " \"lease-length\" : 1300, "
+     " \"conflict-resolution-mode\": \"check-with-dhcid\","
+     " \"reverse-zone\" : \".bad_name\""
      "}"
 };
 
@@ -559,6 +595,33 @@ TEST(NameChangeRequestTest, basicJsonTest) {
     // Verify that the request ID matches the string from the DHCID.
     std::string dhcid_str = "010203040A7F8E3D";
     EXPECT_EQ(dhcid_str, ncr->getRequestId());
+}
+
+/// @brief Verifies converting from and to JSON with reverse-zone.
+TEST(NameChangeRequestTest, jsonTestWithReverseZone) {
+    // Define valid JSON rendition of a request.
+    std::string msg_str = "{"
+                            "\"change-type\":1,"
+                            "\"forward-change\":true,"
+                            "\"reverse-change\":false,"
+                            "\"fqdn\":\"walah.walah.com.\","
+                            "\"ip-address\":\"192.168.2.1\","
+                            "\"dhcid\":\"010203040A7F8E3D\","
+                            "\"lease-length\":1300,"
+                            "\"conflict-resolution-mode\":\"check-with-dhcid\","
+                            "\"reverse-zone\":\"backward.com.\""
+                          "}";
+
+    // Verify that a NameChangeRequests can be instantiated from the
+    // a valid JSON rendition.
+    NameChangeRequestPtr ncr;
+    ASSERT_NO_THROW_LOG(ncr  = NameChangeRequest::fromJSON(msg_str));
+    ASSERT_TRUE(ncr);
+
+    // Verify that the JSON string created by the new request equals the
+    // original input string.
+    std::string json_str = ncr->toJSON();
+    EXPECT_EQ(msg_str, json_str);
 }
 
 /// @brief Tests a variety of invalid JSON message strings.

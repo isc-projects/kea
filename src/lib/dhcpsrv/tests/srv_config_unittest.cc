@@ -1396,6 +1396,7 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     subnet2->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_ALWAYS);
     subnet2->setDdnsGeneratedPrefix("prefix");
     subnet2->setDdnsQualifyingSuffix("example.com.");
+    subnet2->setDdnsReverseZone("reverse.example.com.");
     subnet2->setHostnameCharSet("");
     subnet2->setDdnsUpdateOnRenew(true);
     subnet2->setDdnsConflictResolutionMode("no-check-with-dhcid");
@@ -1411,6 +1412,7 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     EXPECT_EQ(D2ClientConfig::RCM_NEVER, params->getReplaceClientNameMode());
     EXPECT_TRUE(params->getGeneratedPrefix().empty());
     EXPECT_TRUE(params->getQualifyingSuffix().empty());
+    EXPECT_TRUE(params->getReverseZone().empty());
     EXPECT_EQ("[^A-Z]", params->getHostnameCharSet());
     EXPECT_EQ("x", params->getHostnameCharReplacement());
     EXPECT_FALSE(params->getUpdateOnRenew());
@@ -1435,6 +1437,7 @@ TEST_F(SrvConfigTest, getDdnsParamsTest4) {
     EXPECT_EQ(D2ClientConfig::RCM_ALWAYS, params->getReplaceClientNameMode());
     EXPECT_EQ("prefix", params->getGeneratedPrefix());
     EXPECT_EQ("example.com.", params->getQualifyingSuffix());
+    EXPECT_EQ("reverse.example.com.", params->getReverseZone());
     EXPECT_EQ("", params->getHostnameCharSet());
     EXPECT_EQ("x", params->getHostnameCharReplacement());
     EXPECT_TRUE(params->getUpdateOnRenew());
@@ -1492,12 +1495,14 @@ TEST_F(SrvConfigTest, getDdnsParamsNoSubnetTest4) {
     conf.addConfiguredGlobal("ddns-replace-client-name", Element::create("always"));
     conf.addConfiguredGlobal("ddns-generated-prefix", Element::create("some_prefix"));
     conf.addConfiguredGlobal("ddns-qualifying-suffix", Element::create("example.com"));
+    conf.addConfiguredGlobal("ddns-reverse-zone", Element::create("reverse.example.com"));
     conf.addConfiguredGlobal("hostname-char-set", Element::create("[^A-Z]"));
     conf.addConfiguredGlobal("hostname-char-replacement", Element::create("x"));
     conf.addConfiguredGlobal("ddns-update-on-renew", Element::create(true));
     conf.addConfiguredGlobal("ddns-conflict-resolution-mode",
                              Element::create("no-check-with-dhcid"));
     conf.addConfiguredGlobal("ddns-ttl-percent", Element::create(77.0));
+    conf.addConfiguredGlobal("ddns-reverse-zone", Element::create("backward.com."));
 
     // Get DDNS params for no subnet.
     Subnet4Ptr subnet4;
@@ -1515,6 +1520,7 @@ TEST_F(SrvConfigTest, getDdnsParamsNoSubnetTest4) {
     EXPECT_FALSE(params->getUpdateOnRenew());
     EXPECT_EQ("check-with-dhcid", params->getConflictResolutionMode());
     EXPECT_TRUE(params->getTtlPercent().unspecified());
+    EXPECT_TRUE(params->getReverseZone().empty());
 }
 
 // Verifies that the scoped values for DDNS parameters can be fetched
@@ -1576,6 +1582,7 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     subnet2->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_ALWAYS);
     subnet2->setDdnsGeneratedPrefix("prefix");
     subnet2->setDdnsQualifyingSuffix("example.com.");
+    subnet2->setDdnsReverseZone("reverse.example.com.");
     subnet2->setHostnameCharSet("");
     subnet2->setDdnsUpdateOnRenew(true);
     subnet2->setDdnsConflictResolutionMode("no-check-with-dhcid");
@@ -1591,6 +1598,7 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     EXPECT_EQ(D2ClientConfig::RCM_NEVER, params->getReplaceClientNameMode());
     EXPECT_TRUE(params->getGeneratedPrefix().empty());
     EXPECT_TRUE(params->getQualifyingSuffix().empty());
+    EXPECT_TRUE(params->getReverseZone().empty());
     EXPECT_EQ("[^A-Z]", params->getHostnameCharSet());
     EXPECT_EQ("x", params->getHostnameCharReplacement());
     EXPECT_FALSE(params->getUpdateOnRenew());
@@ -1615,6 +1623,7 @@ TEST_F(SrvConfigTest, getDdnsParamsTest6) {
     EXPECT_EQ(D2ClientConfig::RCM_ALWAYS, params->getReplaceClientNameMode());
     EXPECT_EQ("prefix", params->getGeneratedPrefix());
     EXPECT_EQ("example.com.", params->getQualifyingSuffix());
+    EXPECT_EQ("reverse.example.com.", params->getReverseZone());
     EXPECT_EQ("", params->getHostnameCharSet());
     EXPECT_EQ("x", params->getHostnameCharReplacement());
     EXPECT_TRUE(params->getUpdateOnRenew());
@@ -1678,6 +1687,7 @@ TEST_F(SrvConfigTest, getDdnsParamsNoSubnetTest6) {
     conf.addConfiguredGlobal("ddns-conflict-resolution-mode",
                              Element::create("no-check-with-dhcid"));
     conf.addConfiguredGlobal("ddns-ttl-percent", Element::create(77.0));
+    conf.addConfiguredGlobal("ddns-reverse-zone", Element::create("backward.com."));
 
     // Get DDNS params for no subnet.
     Subnet6Ptr subnet6;
@@ -1695,6 +1705,7 @@ TEST_F(SrvConfigTest, getDdnsParamsNoSubnetTest6) {
     EXPECT_FALSE(params->getUpdateOnRenew());
     EXPECT_EQ("check-with-dhcid", params->getConflictResolutionMode());
     EXPECT_TRUE(params->getTtlPercent().unspecified());
+    EXPECT_TRUE(params->getReverseZone().empty());
 }
 
 // Verifies that adding multi threading settings works
@@ -2495,6 +2506,12 @@ public:
             EXPECT_EQ(params->getQualifyingSuffix(), subnet->getDdnsQualifyingSuffix().get());
         }
 
+        if (pool && !(pool->getDdnsReverseZone().unspecified())) {
+            EXPECT_EQ(params->getReverseZone(), pool->getDdnsReverseZone().get());
+        } else {
+            EXPECT_EQ(params->getReverseZone(), subnet->getDdnsReverseZone().get());
+        }
+
         if (pool && !(pool->getDdnsUpdateOnRenew().unspecified())) {
             EXPECT_EQ(params->getUpdateOnRenew(), pool->getDdnsUpdateOnRenew().get());
         } else {
@@ -2530,6 +2547,12 @@ public:
         } else {
             EXPECT_EQ(params->getTtlMax(), subnet->getDdnsTtlMax().get());
         }
+
+        if (pool && !(pool->getDdnsReverseZone().unspecified())) {
+            EXPECT_EQ(params->getReverseZone(), pool->getDdnsReverseZone().get());
+        } else {
+            EXPECT_EQ(params->getReverseZone(), subnet->getDdnsReverseZone().get());
+        }
     }
 };
 
@@ -2552,6 +2575,7 @@ TEST_F(DdnsParamsTest, checkDdnsParameters4) {
     subnet->setDdnsTtlMax(750);
     subnet->setHostnameCharReplacement("X");
     subnet->setHostnameCharSet("[^A-Z]");
+    subnet->setDdnsReverseZone("subnet_rev_zone.com.");
 
     // Create a pool and add it to the subnet.
     Pool4Ptr pool(new Pool4(IOAddress("192.0.2.1"), IOAddress("192.0.2.100")));
@@ -2584,6 +2608,7 @@ TEST_F(DdnsParamsTest, checkDdnsParameters4) {
     pool->setDdnsTtlMax(650);
     pool->setHostnameCharReplacement("y");
     pool->setHostnameCharSet("[^a-z]");
+    pool->setDdnsReverseZone("pool_rev_zone.com.");
 
     {
         // Values all come from pool.
@@ -2612,6 +2637,7 @@ TEST_F(DdnsParamsTest, checkDdnsParameters6) {
     subnet->setDdnsTtlMax(750);
     subnet->setHostnameCharReplacement("X");
     subnet->setHostnameCharSet("[^A-Z]");
+    subnet->setDdnsReverseZone("subnet_rev_zone.com.");
 
     // Create a pool and add it to the subnet.
     Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::"),
@@ -2645,6 +2671,7 @@ TEST_F(DdnsParamsTest, checkDdnsParameters6) {
     pool->setDdnsTtlMax(650);
     pool->setHostnameCharReplacement("y");
     pool->setHostnameCharSet("[^a-z]");
+    pool->setDdnsReverseZone("pool_rev_zone.com.");
 
     {
         // Values all come from pool.

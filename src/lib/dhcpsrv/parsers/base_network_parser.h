@@ -171,6 +171,7 @@ public:
     /// - ddns-replace-client-name
     /// - ddns-generated-prefix
     /// - ddns-qualifying-suffix
+    /// - ddns-reverse-zone
     /// - ddns-use-conflict-resolution (retained for backward compatibility)
     /// - ddns-update-on-renew
     /// - ddns-ttl-percent
@@ -216,6 +217,10 @@ public:
 
         if (config->contains("ddns-qualifying-suffix")) {
             owner->setDdnsQualifyingSuffix(getString(config, "ddns-qualifying-suffix"));
+        }
+
+        if (config->contains("ddns-reverse-zone")) {
+            owner->setDdnsReverseZone(getString(config, "ddns-reverse-zone"));
         }
 
         std::string hostname_char_set;

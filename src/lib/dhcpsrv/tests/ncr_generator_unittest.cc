@@ -138,6 +138,7 @@ public:
     /// check is skipped
     /// @param conflict_resolution_mode expected value of conflict resolution
     /// mode.
+    /// @param reverse_zone expected value of the reverse zone. 
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
@@ -145,7 +146,8 @@ public:
                                  const uint16_t len,
                                  const std::string& fqdn="",
                                  const ConflictResolutionMode
-                                 conflict_resolution_mode = CHECK_WITH_DHCID) {
+                                 conflict_resolution_mode = CHECK_WITH_DHCID,
+                                 const std::string& reverse_zone="") {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = CfgMgr::instance().getD2ClientMgr().peekAt(0));
         ASSERT_TRUE(ncr);
@@ -158,6 +160,7 @@ public:
         EXPECT_EQ(len, ncr->getLeaseLength());
         EXPECT_EQ(isc::dhcp_ddns::ST_NEW, ncr->getStatus());
         EXPECT_EQ(conflict_resolution_mode, ncr->getConflictResolutionMode());
+        EXPECT_EQ(reverse_zone, ncr->getReverseZone());
 
         if (!fqdn.empty()) {
            EXPECT_EQ(fqdn, ncr->getFqdn());
@@ -188,10 +191,11 @@ public:
     /// @param rev Perform reverse update.
     /// @param fqdn Hostname.
     void sendNCR(const NameChangeType chg_type, const bool fwd, const bool rev,
-                 const std::string& fqdn) {
+                 const std::string& fqdn, const std::string& reverse_zone = "") {
         lease_->fqdn_fwd_ = fwd;
         lease_->fqdn_rev_ = rev;
         lease_->hostname_ = fqdn;
+        lease_->setDdnsReverseZone(reverse_zone);
 
         /// Send NCR to D2.
         ASSERT_NO_THROW(queueNCR(chg_type, lease_));
@@ -245,7 +249,7 @@ public:
 
         // Check the details of the NCR.
         verifyNameChangeRequest(chg_type, rev, fwd, lease_->addr_.toText(), exp_dhcid,
-                                ttl, fqdn, exp_cr_mode);
+                                ttl, fqdn, exp_cr_mode, lease_->getDdnsReverseZone());
     }
 
     /// @brief Test that calling queueNCR for NULL lease doesn't cause
@@ -257,7 +261,27 @@ public:
         ASSERT_NO_FATAL_FAILURE(queueNCR(chg_type, lease_));
         EXPECT_EQ(0U, d2_mgr_.getQueueSize());
     }
+
+    /// @brief Test that an NCR generated with the expected reverse zone value.
+    ///
+    /// @param reverse_zone reverse zone value that set in the lease
+    void testReverseZone(const std::string& reverse_zone) {
+        // Queue NCR.
+        ASSERT_NO_FATAL_FAILURE(sendNCR(CHG_ADD, true, true, "example.com", reverse_zone));
+        // Expecting one NCR be generated.
+        ASSERT_EQ(1U, d2_mgr_.getQueueSize());
+
+        NameChangeRequestPtr ncr;
+        ASSERT_NO_THROW(ncr = CfgMgr::instance().getD2ClientMgr().peekAt(0));
+        ASSERT_TRUE(ncr);
+
+        EXPECT_EQ(reverse_zone, ncr->getReverseZone());
+    
+        // Process the message off the queue
+        ASSERT_NO_THROW(CfgMgr::instance().getD2ClientMgr().runReadyIO());
+    }
 };
+
 
 /// @brief Test fixture class implementation for DHCPv6.
 class NCRGenerator6Test : public NCRGeneratorTest<Lease6Ptr> {
@@ -796,6 +820,16 @@ TEST_F(NCRGenerator4Test, calculateDdnsTtlThroughQueueNcr) {
                 scenario.ddns_ttl_min_,
                 scenario.ddns_ttl_max_);
     }
+}
+
+TEST_F(NCRGenerator4Test, reverseZone) {
+    testReverseZone("");
+    testReverseZone("backward.com.");
+}
+
+TEST_F(NCRGenerator6Test, reverseZone) {
+    testReverseZone("");
+    testReverseZone("backward.com.");
 }
 
 } // end of anonymous namespace

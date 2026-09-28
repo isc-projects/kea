@@ -281,6 +281,10 @@ Network::toElement() const {
                  Element::create(adaptive_lease_time_threshold_));
     }
 
+    if (!ddns_reverse_zone_.unspecified()) {
+        map->set("ddns-reverse-zone", Element::create(ddns_reverse_zone_));
+    }
+
     return (map);
 }
 

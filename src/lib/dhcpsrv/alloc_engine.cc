@@ -2134,6 +2134,7 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
     lease->fqdn_rev_ = ctx.rev_dns_update_;
     lease->hostname_ = ctx.hostname_;
+    lease->setDdnsReverseZone(ctx.getDdnsParams()->getReverseZone());
 
     // Let's execute all callouts registered for lease6_select
     if (ctx.callout_handle_ &&
@@ -2488,11 +2489,13 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
     lease->cltt_ = time(NULL);
     if ((lease->fqdn_fwd_ != ctx.fwd_dns_update_) ||
         (lease->fqdn_rev_ != ctx.rev_dns_update_) ||
-        (lease->hostname_ != ctx.hostname_)) {
+        (lease->hostname_ != ctx.hostname_) ||
+        (lease->getDdnsReverseZone() != ctx.getDdnsParams()->getReverseZone())) {
         changed = true;
         lease->hostname_ = ctx.hostname_;
         lease->fqdn_fwd_ = ctx.fwd_dns_update_;
         lease->fqdn_rev_ = ctx.rev_dns_update_;
+        lease->setDdnsReverseZone(ctx.getDdnsParams()->getReverseZone());
     }
     if ((!ctx.hwaddr_ && lease->hwaddr_) ||
         (ctx.hwaddr_ &&
@@ -4626,7 +4629,7 @@ useMinValidLft(const AllocEngine::ClientContext4& ctx, const IOAddress&addr) {
 } // end of anonymous namespace.
 
 Lease4Ptr
-AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
+AllocEngine::createLease4(ClientContext4& ctx, const IOAddress& addr,
                           CalloutHandle::CalloutNextStep& callout_status) {
     if (!ctx.hwaddr_) {
         isc_throw(BadValue, "Can't create a lease with NULL HW address");
@@ -4656,6 +4659,7 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
     lease->fqdn_fwd_ = ctx.fwd_dns_update_;
     lease->fqdn_rev_ = ctx.rev_dns_update_;
     lease->hostname_ = ctx.hostname_;
+    lease->setDdnsReverseZone(ctx.getDdnsParams()->getReverseZone());
 
     // Add (update) the extended information on the lease.
     static_cast<void>(updateLease4ExtendedInfo(lease, ctx));
@@ -5374,11 +5378,13 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
 
     if ((lease->fqdn_fwd_ != ctx.fwd_dns_update_) ||
         (lease->fqdn_rev_ != ctx.rev_dns_update_) ||
-        (lease->hostname_ != ctx.hostname_)) {
+        (lease->hostname_ != ctx.hostname_) ||
+        (lease->getDdnsReverseZone() != ctx.getDdnsParams()->getReverseZone())) {
         changed = true;
         lease->fqdn_fwd_ = ctx.fwd_dns_update_;
         lease->fqdn_rev_ = ctx.rev_dns_update_;
         lease->hostname_ = ctx.hostname_;
+        lease->setDdnsReverseZone(ctx.getDdnsParams()->getReverseZone());
     }
 
     // Add (update) the extended information on the lease.

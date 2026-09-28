@@ -188,6 +188,10 @@ Pool::toElement() const {
             map->set("ddns-qualifying-suffix", Element::create(ddns_qualifying_suffix_));
         }
 
+        if (!ddns_reverse_zone_.unspecified()) {
+            map->set("ddns-reverse-zone", Element::create(ddns_reverse_zone_));
+        }
+
         if (!ddns_update_on_renew_.unspecified()) {
             map->set("ddns-update-on-renew", Element::create(ddns_update_on_renew_));
         }

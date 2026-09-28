@@ -1097,6 +1097,22 @@ DdnsParams::getQualifyingSuffix() const {
 }
 
 std::string
+DdnsParams::getReverseZone() const {
+    if (!subnet_) {
+        return ("");
+    }
+
+    if (pool_) {
+        auto optional = pool_->getDdnsReverseZone();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
+    }
+
+    return (subnet_->getDdnsReverseZone().get());
+}
+
+std::string
 DdnsParams::getHostnameCharSet() const {
     if (!subnet_) {
         return ("");

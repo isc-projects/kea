@@ -636,6 +636,17 @@ TEST_F(Lease4Test, stateToText) {
     EXPECT_EQ("unknown (5)", Lease4::statesToText(5));
 }
 
+TEST_F(Lease4Test, ddnsReverseZone) {
+    Lease4 lease = createLease4("myhost.example.com.", true, true);
+    ASSERT_TRUE(lease.getDdnsReverseZone().empty());
+
+    lease.setDdnsReverseZone("backward.com.");
+    ASSERT_EQ("backward.com.", lease.getDdnsReverseZone());
+
+    lease.setDdnsReverseZone("");
+    ASSERT_TRUE(lease.getDdnsReverseZone().empty());
+}
+
 /// @brief Creates an instance of the lease with certain FQDN data.
 ///
 /// @param hostname Hostname.
@@ -1443,6 +1454,17 @@ TEST(Lease6Test, stateToText) {
     EXPECT_EQ("released", Lease6::statesToText(Lease::STATE_RELEASED));
     EXPECT_EQ("registered", Lease6::statesToText(Lease::STATE_REGISTERED));
     EXPECT_EQ("unknown (5)", Lease6::statesToText(5));
+}
+
+TEST(Lease6Test, ddnsReverseZone) {
+    Lease6 lease = createLease6("myhost.example.com.", true, true);
+    ASSERT_TRUE(lease.getDdnsReverseZone().empty());
+
+    lease.setDdnsReverseZone("backward.com.");
+    ASSERT_EQ("backward.com.", lease.getDdnsReverseZone());
+
+    lease.setDdnsReverseZone("");
+    ASSERT_TRUE(lease.getDdnsReverseZone().empty());
 }
 
 } // end of anonymous namespace

@@ -259,6 +259,7 @@ TEST(Pool4Test, toElement) {
     pool3.setDdnsReplaceClientNameMode(D2ClientConfig::RCM_NEVER);
     pool3.setDdnsGeneratedPrefix("prefix");
     pool3.setDdnsQualifyingSuffix("example.com.");
+    pool3.setDdnsReverseZone("reverse.example.com.");
     pool3.setDdnsUpdateOnRenew(false);
     pool3.setDdnsConflictResolutionMode("check-without-dhcid");
     pool3.setDdnsTtlPercent(0.85);
@@ -279,6 +280,7 @@ TEST(Pool4Test, toElement) {
          "ddns-replace-client-name": "never",
          "ddns-generated-prefix": "prefix",
          "ddns-qualifying-suffix": "example.com.",
+         "ddns-reverse-zone": "reverse.example.com.",
          "ddns-update-on-renew": false,
          "ddns-conflict-resolution-mode": "check-without-dhcid",
          "ddns-ttl": 400,

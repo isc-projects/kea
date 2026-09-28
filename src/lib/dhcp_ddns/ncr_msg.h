@@ -283,15 +283,17 @@ public:
     /// @param lease_length the amount of time in seconds for which the
     /// lease is valid (TTL).
     /// @param conflict_resolution_mode conflict resolution mode to use, defaults
-    /// to CHECK_WITH_DHCID.
-    /// (per RFC 4703) is enabled.
+    /// to CHECK_WITH_DHCID (per RFC 4703) is enabled.
+    /// @param reverse_zone the domain name whose reverse pointer record should
+    /// be updated. Defaults to empty string.
     NameChangeRequest(const NameChangeType change_type,
                       const bool forward_change, const bool reverse_change,
                       const std::string& fqdn, const std::string& ip_address,
                       const D2Dhcid& dhcid,
                       const uint32_t lease_length,
                       const ConflictResolutionMode
-                      conflict_resolution_mode = CHECK_WITH_DHCID);
+                      conflict_resolution_mode = CHECK_WITH_DHCID,
+                      const std::string& reverse_zone = "");
 
     /// @brief Static method for creating a NameChangeRequest from a
     /// buffer containing a marshalled request in a given format.
@@ -354,7 +356,9 @@ public:
     ///      "ip-address" : "<address>",
     ///      "dhcid" : "<hex_string>",
     ///      "lease-length" : <secs>,
-    ///      "use-conflict-resolution": <boolean>
+    ///      "use-conflict-resolution": <boolean>,
+    ///      "next-ncr": <ncr>,
+    ///      "reverse-zone" : "<fqdn>"
     ///     }
     /// @endcode
     ///
@@ -385,7 +389,8 @@ public:
     /// - use-conflict-resolution - when true, follow RFC 4703 which uses
     ///   DHCID records to prohibit multiple clients from updating an FQDN
     /// - next-ncr - optional map defining a the next NCR in a chain
-    ///
+    /// - reverse-zone - fully qualified domain name such as "in-addr.arpa.".
+    ///   (Note that a trailing dot will be appended if not supplied.)
     /// Examples:
     ///
     /// Removal of an IPv4 address from the forward DNS zone only:
@@ -399,7 +404,8 @@ public:
     ///     "ip-address" : "192.168.2.1" ,
     ///     "dhcid" : "010203040A7F8E3D" ,
     ///     "lease-length" : 1300,
-    ///     "use-conflict-resolution": true
+    ///     "use-conflict-resolution": true,
+    ///     "reverse-zone" : "reverse.com."
     ///  }
     /// @endcode
     ///
@@ -414,7 +420,8 @@ public:
     ///     "ip-address" : "2001::db8:1::2",
     ///     "dhcid" : "010203040A7F8E3D" , "
     ///     "lease-length" : 27400,
-    ///     "use-conflict-resolution": true
+    ///     "use-conflict-resolution": true,
+    ///     "reverse-zone" : "reverse6.com."
     ///   }
     /// @endcode
     ///
@@ -745,6 +752,26 @@ public:
         next_ncr_ = next_ncr;
     }
 
+    /// @brief Fetches the request reverse zone
+    ///
+    /// @return a string containing the reverse zone
+    const std::string getReverseZone() const {
+        return (reverse_zone_);
+    }
+
+    /// @brief Sets the reverse zone override to the given value.
+    ///
+    /// @param value contains the new value to assign to the reverse zone FQDN
+    void setReverseZone(const std::string& value);
+
+    /// @brief Sets the reverse zone to the value of the given Element.
+    ///
+    /// @param element is a string Element containing the reverse zone
+    ///
+    /// @throw NcrMessageError if the element is not a string
+    /// Element
+    void setReverseZone(isc::data::ConstElementPtr element);
+
     /// @brief Sets the request status to the given value.
     ///
     /// @param value contains the new value to assign to request status
@@ -811,6 +838,11 @@ private:
 
     /// @brief Points to the next NCR in the chain, if one.
     NameChangeRequestPtr next_ncr_;
+
+    /// @brief reverse_zone string containing the top-level zone to put
+    /// the PTR record in, e.g. "reverse.com.".  If blank, D2 will
+    /// supply the protocol specific default.
+    std::string reverse_zone_;
 };
 
 }  // namespace dhcp_ddns

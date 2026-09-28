@@ -144,6 +144,11 @@ public:
     /// @return the DDNS conflict resolution mode
     std::string getConflictResolutionMode() const;
 
+    /// @brief Returns the reverse zone Kea should use for PTR records.
+    ///
+    /// @return The value from the subnet_ or an empty string if subnet_ is empty.
+    std::string getReverseZone() const;
+
     /// @brief Returns the subnet-id of the subnet associated with these parameters
     ///
     /// @return value of subnet-id (or 0 if no subnet is associated)
