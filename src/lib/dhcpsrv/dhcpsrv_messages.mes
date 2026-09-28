@@ -358,6 +358,20 @@ Logged at debug log level 40.
 This debug message is issued when a backend factory was successfully
 registered. It is now possible to use forensic backend of this type.
 
+% DHCPSRV_GENERATE_NCR4_FAILED %1: generating %2 name change request failed for lease %3: %4
+This error message is logged when generating a v4 NameChangeRequest
+to DHCP DDNS failed. The first argument includes the client identification
+information. The second argument indicates whether the DNS entry is to be
+added or removed. The third argument specifies the leased address. The
+last argument provides the reason for failure.
+
+% DHCPSRV_GENERATE_NCR6_FAILED %1: generating %2 name change request failed for lease %3: %4
+This error message is logged when generating a v6 NameChangeRequest
+to DHCP DDNS failed. The first argument includes the client identification
+information. The second argument indicates whether the DNS entry is to be
+added or removed. The third argument specifies the leased address. The
+last argument provides the reason for failure.
+
 % DHCPSRV_HOOK_LEASE4_RECOVER_SKIP DHCPv4 lease %1 was not recovered from the declined state because a callout set the skip status.
 Logged at debug log level 40.
 This debug message is printed when a callout installed on lease4_recover
@@ -1043,17 +1057,3 @@ disabled and the path specified for forensic logging output
 does not comply with the supported path. The server will
 still use the specified path but is warning that doing so may
 pose a security risk.
-
-% DHCPSRV_GENERATE_NCR4_FAILED %1: generating %2 name change request failed for lease %3: %4
-This error message is logged when generating a v4 NameChangeRequest
-to DHCP DDNS failed. The first argument includes the client identification
-information. The second argument indicates whether the DNS entry is to be
-added or removed. The third argument specifies the leased address. The
-last argument provides the reason for failure.
-
-% DHCPSRV_GENERATE_NCR6_FAILED %1: generating %2 name change request failed for lease %3: %4
-This error message is logged when generating a v6 NameChangeRequest
-to DHCP DDNS failed. The first argument includes the client identification
-information. The second argument indicates whether the DNS entry is to be
-added or removed. The third argument specifies the leased address. The
-last argument provides the reason for failure.

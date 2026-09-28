@@ -5211,28 +5211,28 @@ DHCP4_PACKET_DROP_0011
 
 .. code-block:: text
 
-    dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by thread %6
+    dropped as sent by the same client as a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4 processed by thread %5
 
 Logged at debug log level 15.
 Currently multi-threading processing avoids races between packets sent by
 a client using the same client id option by dropping new packets until
 processing is finished.
-Packet details and thread identifiers are included for both packets in
-this warning message.
+Packet details or summary, and thread identifiers are included for
+both packets in this warning message.
 
 DHCP4_PACKET_DROP_0012
 ======================
 
 .. code-block:: text
 
-    dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by thread %6
+    dropped as sent by the same client as a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4 processed by thread %5
 
 Logged at debug log level 15.
 Currently multi-threading processing avoids races between packets sent by
 a client using the same hardware address by dropping new packets until
 processing is finished.
-Packet details and thread identifiers are included for both packets in
-this warning message.
+Packet details or summary, and thread identifiers are included for
+both packets in this warning message.
 
 DHCP4_PACKET_DROP_0013
 ======================
@@ -7502,13 +7502,13 @@ DHCP6_PACKET_DROP_DUPLICATE
 
 .. code-block:: text
 
-    dropped as sent by the same client than a packet being processed by another thread: dropped %1 %2 by thread %3 as duplicate of %4 %5 processed by thread %6
+    dropped as sent by the same client as a packet being processed by another thread: dropped %1 %2 by thread %3 as duplicate of %4 processed by thread %5
 
 Logged at debug log level 15.
 Currently multi-threading processing avoids races between packets sent by
 the same client by dropping new packets until processing is finished.
-Packet details and thread identifiers are included for both packets in
-this warning message.
+Packet details or summary, and thread identifiers are included for
+both packets in this warning message.
 
 DHCP6_PACKET_DROP_PARSE_FAIL
 ============================
@@ -9144,6 +9144,32 @@ DHCPSRV_FORENSIC_BACKEND_REGISTER
 Logged at debug log level 40.
 This debug message is issued when a backend factory was successfully
 registered. It is now possible to use forensic backend of this type.
+
+DHCPSRV_GENERATE_NCR4_FAILED
+============================
+
+.. code-block:: text
+
+    %1: generating %2 name change request failed for lease %3: %4
+
+This error message is logged when generating a v4 NameChangeRequest
+to DHCP DDNS failed. The first argument includes the client identification
+information. The second argument indicates whether the DNS entry is to be
+added or removed. The third argument specifies the leased address. The
+last argument provides the reason for failure.
+
+DHCPSRV_GENERATE_NCR6_FAILED
+============================
+
+.. code-block:: text
+
+    %1: generating %2 name change request failed for lease %3: %4
+
+This error message is logged when generating a v6 NameChangeRequest
+to DHCP DDNS failed. The first argument includes the client identification
+information. The second argument indicates whether the DNS entry is to be
+added or removed. The third argument specifies the leased address. The
+last argument provides the reason for failure.
 
 DHCPSRV_HOOK_LEASE4_RECOVER_SKIP
 ================================

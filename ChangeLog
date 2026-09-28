@@ -1,3 +1,84 @@
+Kea 3.2.1 (stable) released on September 30, 2026
+
+2511.	[bug]		tmark
+	Related name change requests (NCRs), are now
+	sent by kea-dhcp4 and kea-dhcp6 in a single
+	message to kea-dhcp-ddns.  This ensures that
+	kea-dhcp-ddns processes them in the order they
+	were received.
+	(Gitlab #4806, #3005)
+
+2510.	[bug]		tmark
+	Modified kea-dhcp-ddns to avoid starting a
+	transaction for a request if there is already
+	a transaction for the request's FQDN or ip address.
+	Prior to this it used the DHCID to guard against
+	concurrent work.
+	(Gitlab #4805,#4585)
+
+2509.	[func]		tmark
+	Modified kea-dhcp4 and kea-dhcp6 to avoid
+	scheduling unnecessary DDNS entry removals
+	when renewing leases.
+	(Gitlab #4804, #4794)
+
+2508.	[bug]		fdupont
+	Made lexical analyzers more robust with null characters
+	in input, e.g. in server or agent configuration files.
+	(Gitlab #4795,#4739)
+
+2507.	[build]		fdupont
+	Added OpenSSL 4.0.x support.
+	(Gitlab #4756, #4673)
+
+2506.	[bug]		tmark
+	Improved handling of special characters
+	in values written to memfile lease database.
+	(Gitlab #4787, #4393)
+
+2505.	[bug]		razvan, fdupont
+	Fixed bugs related to out of bound container access which can
+	cause Kea to crash if -D_GLIBCXX_ASSERTIONS flag is used at
+	compilation time. This affected perfdhcp, host_cache hook
+	library, kea-dhcp4, kea-dhcp6, kea-dhcp-ddns and kea-netconf.
+	Thank you to Joseph Bisch (joseph.bisch@gmail.com) for reporting
+	this issue.
+	(Gitlab #4783,#4741,#4708)
+
+2504.	[bug]		fdupont
+	Made parsing of DHCPv6 relayed messages stricter:
+	now truncated RELAY-FORW and RELAY-REPLY headers
+	cause the whole message to be dropped. Thank you to
+	Qifan Zhang from Palo Alto Networks for reporting
+	the issue.
+	(Gitlab #4752,#4560,#4735)
+
+2503.	[bug]		fdupont
+	Set the broadcast flag in DHCPNAK responses to relayed
+	DHCPREQUEST queries as required by RFC 2131 4.3.2.
+	Thank you to Florian Krieger from Frauscher Sensor Technology
+	Group GmbH for reporting the issue.
+	(Gitlab #4751,#4424)
+
+2502.	[bug]		razvan,tmark
+	Corrected MLM_MYSQL_FETCH_FAILURE to 1 so MySQL
+	selectQuery and host lookups detect mysql_stmt_fetch
+	errors instead of silently ignoring them.
+	(Gitlab #4754,#4658)
+
+2501.	[bug]		fdupont,tmark
+	Fixed an issue in debug-level logging of dropped packets
+	that could cause the server to crash under heavy load.
+	Applies to both kea-dhcp4 and kea-dhcp6.
+	(Gitlab #4750,#4755,#4719,#4748)
+
+2500.	[bug]		fdupont,tmark
+	Removed spurious DHCP_RECEIVE4_UNKNOWN and
+	DHCP_RECEIVE6_UNKNOWN warnings sent for instance
+	when a command is received. This bug was introduced
+	in 3.2.0 release.
+	(Gitlab #4749, #4674)
+
 2499.	[build]		razvan
 	The library version numbers have been bumped up for the Kea 3.2.1
 	stable release.
