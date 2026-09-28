@@ -3963,6 +3963,24 @@ which cannot be found in the configuration. Either a hook written
 before the classification was added to Kea is used, or class naming is
 inconsistent.
 
+DHCP4_CLIENTID_FORCED_USE_FOR_LEASES
+====================================
+
+.. code-block:: text
+
+    %1: forced using client identifier for lease allocation for subnet %2
+
+Logged at debug log level 50.
+This debug message is issued when the server is processing the DHCPv4 message
+for which client identifier is used when allocating new lease or renewing
+existing lease. The server is explicitly configured to not use client
+identifier but the client hardware address was empty so was not available
+for identifying the client. The first argument includes the client and
+transaction identification information. The second argument specifies
+the identifier of the subnet where the client is connected and for which
+the not matching client identifier mode of operation is configured on
+the server.
+
 DHCP4_CLIENTID_IGNORED_FOR_LEASES
 =================================
 
@@ -9355,6 +9373,32 @@ Logged at debug log level 40.
 This debug message is issued when a backend factory was successfully
 registered. It is now possible to use forensic backend of this type.
 
+DHCPSRV_GENERATE_NCR4_FAILED
+============================
+
+.. code-block:: text
+
+    %1: generating %2 name change request failed for lease %3: %4
+
+This error message is logged when generating a v4 NameChangeRequest
+to DHCP DDNS failed. The first argument includes the client identification
+information. The second argument indicates whether the DNS entry is to be
+added or removed. The third argument specifies the leased address. The
+last argument provides the reason for failure.
+
+DHCPSRV_GENERATE_NCR6_FAILED
+============================
+
+.. code-block:: text
+
+    %1: generating %2 name change request failed for lease %3: %4
+
+This error message is logged when generating a v6 NameChangeRequest
+to DHCP DDNS failed. The first argument includes the client identification
+information. The second argument indicates whether the DNS entry is to be
+added or removed. The third argument specifies the leased address. The
+last argument provides the reason for failure.
+
 DHCPSRV_HOOK_LEASE4_RECOVER_SKIP
 ================================
 
@@ -11177,6 +11221,17 @@ Logged at debug log level 50.
 This is a debug message issued when the DHCP-DDNS application encountered an
 error while decoding a response to DNS Update message. Typically, this error
 will be encountered when a response message is malformed.
+
+DHCP_DDNS_IO_FETCH_RESULT
+=========================
+
+.. code-block:: text
+
+    DNS update callback handling IO result: %1.
+
+Logged at debug log level 50.
+This debug message indicates that the DNS update callback has been called with the
+IOFetch result contained in the message argument.
 
 DHCP_DDNS_LISTENING_ON_ALL_INTERFACES
 =====================================
@@ -28289,6 +28344,17 @@ TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_OPCODE
 
 This error message indicates that the GSS-TKEY exchange failed because the response
 contains invalid opcode. The argument contains the wrong opcode.
+
+TKEY_EXCHANGE_IO_FETCH_RESULT
+=============================
+
+.. code-block:: text
+
+    exchange callback handling IO result: %1.
+
+Logged at debug log level 40.
+This debug message indicates that the exchange callback has been called with the
+IOFetch result contained in the message argument.
 
 TKEY_EXCHANGE_NOT_A_RESPONSE
 ============================

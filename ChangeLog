@@ -1,3 +1,81 @@
+Kea 3.3.2 (development) released on September 30, 2026
+
+2567.	[bug]		erichu
+	Fixed the perfmon-get-all-durations result-set so
+	total-duration-usecs and mean-duration-usecs are
+	reported as separate column names.
+	(Gitlab #4797)
+
+2566.	[bug]		tmark
+	Added missing cascade delete and update actions
+	to the subnet-id foreign key constraints on the
+	dhcp4_pool, dhcp6_pool and dhcp6_pd_pool tables
+	in the postgresql schema.
+	(Gitlab #4323)
+
+2565.	[bug]		fdupont
+	When reusing an expired lease, kea-dhcp6
+	now correctly recalculates the lease life
+	times. Prior to this it was using the values
+	from the expired lease.
+	(Gitlab #4591)
+
+2564.	[doc]		tmark
+	Updated kea-dhcp4 and kea-dhcp6 ARM sections
+	to state that client-class definitions are
+	shareable among servers in config back end.
+	(Gitlab #4372)
+
+2563.	[bug]		tmark
+	Related name change requests (NCRs), are now
+	sent by kea-dhcp4 and kea-dhcp6 in a single
+	message to kea-dhcp-ddns.  This ensures that
+	kea-dhcp-ddns processes them in the order they
+	were received.
+	(Gitlab #3005)
+
+2562.	[bug]		wlodek,tmark
+	Quoted YANG XPath list-key predicates safely so
+	configuration values containing quotes no longer
+	break or retarget sysrepo paths.
+	(Gitlab #4668)
+
+2561.	[func]		tmark
+	Modified kea-dhcp4 and kea-dhcp6 to avoid
+	scheduling unnecessary DDNS entry removals
+	when renewing leases.
+	(Gitlab #4794)
+
+2560.	[bug]		wlodek
+	Fixed IOFetch so asynchronous I/O failures invoke the
+	completion callback with IO_ERROR instead of hanging when
+	no timeout is configured.
+	(Gitlab #4633)
+
+2559.	[bug]		fdupont
+	Made lexical analyzers more robust with null characters
+	in input, e.g. in server or agent configuration files.
+	(Gitlab #4739)
+
+2558.	[build]		fdupont
+	Added OpenSSL 4.0.x support.
+	(Gitlab #4673)
+
+2557.	[bug]		tmark
+	Modified kea-dhcp-ddns to avoid starting a
+	transaction for a request if there is already
+	a transaction for the request's FQDN or ip address.
+	Prior to this it used the DHCID to guard against
+	concurrent work.
+	(Gitlab #4585)
+
+2556.	[func]*		fdupont
+	Configuring 'match-client-id' to false has now no
+	effect when the query hardware address is empty.
+	Thank you to Qifan Zhang from Palo Alto Networks
+	for reporting the issue.
+	(Gitlab #4535)
+
 2555.	[build]		razvan
 	The library version numbers have been bumped up for the Kea 3.3.2
 	development release.
