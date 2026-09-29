@@ -3,7 +3,7 @@
 	kea-dhcp6. This allows the user to supply the a value
 	to be sent to kea-dhcp-ddns, for the reverse domain in
 	PTR records. Prior to this kea-dhcp-ddns always used
-    "in-addr.arpa." for V4 and "ip6.arpa." for V6. Thanks to
+	"in-addr.arpa." for V4 and "ip6.arpa." for V6. Thanks to
 	Steinar H. Gunderson for requesting this feature and for
-    submitting the patch from which this change was made. 
+	submitting the patch from which this change was made.
 	(Gitlab #2169)

@@ -249,12 +249,11 @@
         // only controls part of the reverse zone, and someone
         // (possibly an upstream ISP) has delegated some records
         // to another zone that you control, possibly via CNAME.
-        //
         // It may be specified at the global, shared-network and
         // subnet levels. The default value is an empty string
         // which ultimately instructs kea-dhcp-ddns to use
         // "ip6.arpa."
-        "ddns-reverse-zone": "backword.com.",
+        "ddns-reverse-zone": "backward.com.",
 
         // Enumeration specifying whether the server should honor
         // the hostname or Client FQDN sent by the client or replace
@@ -867,7 +866,7 @@
                 "ddns-qualifying-suffix": "",
 
                 // Shared-network level value. See description at the global level.
-                "ddns-reverse-zone": "snetwork.backword.com.",
+                "ddns-reverse-zone": "snetwork.backward.com.",
 
                 // Shared-network level value. See description at the global level.
                 "ddns-replace-client-name": "never",
@@ -1016,7 +1015,7 @@
                         "ddns-qualifying-suffix": "",
 
                         // Subnet-level value. See description at the global level.
-                        "ddns-reverse-zone": "subnet.backword.com.",
+                        "ddns-reverse-zone": "subnet.backward.com.",
 
                         // Subnet-level value. See description at the global level.
                         "ddns-replace-client-name": "never",
