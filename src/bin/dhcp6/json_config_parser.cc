@@ -808,7 +808,8 @@ processDhcp6Config(isc::data::ConstElementPtr config_set) {
                  (config_pair.first == "ddns-ttl") ||
                  (config_pair.first == "ddns-ttl-min") ||
                  (config_pair.first == "ddns-ttl-max") ||
-                 (config_pair.first == "pd-allocator") ) {
+                 (config_pair.first == "pd-allocator") ||
+                 (config_pair.first == "ddns-reverse-zone")) {
                 CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
                                                                         config_pair.second);
                 continue;

@@ -618,6 +618,7 @@ public:
     /// @param fqdn The expected string value of the FQDN, if blank the
     /// check is skipped
     /// @param exp_cr_mode expected value of NCR::conflict_resolution_mode_
+    /// @param reverse_zone configured value for reverse_zone
     /// @param ddns_ttl_percent expected value of ddns_ttl_percent used for
     /// the NCR
     /// @param exp_ddns_ttl expected configured value for ddns-ttl
@@ -630,6 +631,7 @@ public:
                                  const uint16_t valid_lft,
                                  const std::string& fqdn = "",
                                  const ConflictResolutionMode exp_cr_mode = CHECK_WITH_DHCID,
+                                 const std::string& reverse_zone = "",
                                  util::Optional<double> exp_ddns_ttl_percent = util::Optional<double>(),
                                  Optional<uint32_t> exp_ddns_ttl = Optional<uint32_t>(),
                                  Optional<uint32_t> exp_ddns_ttl_min = Optional<uint32_t>(),
@@ -658,6 +660,7 @@ public:
         }
 
         EXPECT_EQ(exp_cr_mode, ncr->getConflictResolutionMode());
+        EXPECT_EQ(reverse_zone, ncr->getReverseZone());
 
         // Process the message off the queue
         ASSERT_NO_THROW(d2_mgr_.runReadyIO());
@@ -690,12 +693,13 @@ public:
     /// @param fqdn The expected string value of the FQDN, if blank the
     /// check is skipped
     /// @param exp_cr_mode expected value of NCR::conflict_resolution_mode_
+    /// @param reverse_zone configured value for reverse_zone
     /// @param ddns_ttl_percent expected value of ddns_ttl_percent used for
     /// the NCR
     /// @param exp_ddns_ttl expected configured value for ddns-ttl
     /// @param exp_ddns_ttl_min expected configured value for ddns-ttl-min
     /// @param exp_ddns_ttl_max expected configured value for ddns-ttl-max
-    void 
+    void
     verifyNestedNameChangeRequest(const size_t index,
                                   const isc::dhcp_ddns::NameChangeType type,
                                   const bool reverse, const bool forward,
@@ -704,6 +708,7 @@ public:
                                   const uint16_t valid_lft,
                                   const std::string& fqdn = "",
                                   const ConflictResolutionMode exp_cr_mode = CHECK_WITH_DHCID,
+                                  const std::string& reverse_zone = "",
                                   util::Optional<double> exp_ddns_ttl_percent = util::Optional<double>(),
                                   Optional<uint32_t> exp_ddns_ttl = Optional<uint32_t>(),
                                   Optional<uint32_t> exp_ddns_ttl_min = Optional<uint32_t>(),
@@ -737,6 +742,7 @@ public:
         }
 
         EXPECT_EQ(exp_cr_mode, ncr->getConflictResolutionMode());
+        EXPECT_EQ(reverse_zone, ncr->getReverseZone());
     }
 
     /// @brief Updates inherited subnet and pool members
@@ -823,7 +829,7 @@ public:
                                 "2001:db8:1::1",
                                 "000201415AA33D1187D148275136FA30300478"
                                 "FAAAA3EBD29826B5C907B2C9268A6F52",
-                                valid_lft, "", NO_CHECK_WITH_DHCID,
+                                valid_lft, "", NO_CHECK_WITH_DHCID, "",
                                 ddns_ttl_percent,
                                 ddns_ttl,
                                 ddns_ttl_min,
@@ -2551,6 +2557,85 @@ TEST_F(FqdnDhcpv6SrvTest, fqdnScrubbedEmpty) {
     // Should not have an FQDN option in the answer.
     EXPECT_FALSE(answer->getOption(D6O_CLIENT_FQDN));
     countFile("DHCP6_CLIENT_FQDN_SCRUBBED_EMPTY");
+}
+
+TEST_F(FqdnDhcpv6SrvTest, ddnsReverseZone) {
+    isc::dhcp::test::IfaceMgrTestConfig test_config(true);
+
+    string config_str = "{ "
+        "\"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 4000, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        " { "
+        "    \"id\": 1, \n"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1:1::/64\" } ],"
+        "    \"interface\": \"eth0\" , "
+        "   \"reservations\": ["
+        "    {"
+        "        \"duid\": \"" + duid_->toText() + "\","
+        "        \"ip-addresses\": [ \"2001:db8:1:1::babe\" ],"
+        "        \"hostname\": \"alice\""
+        "    }"
+        "    ]"
+        " } ],"
+        " \"ddns-qualifying-suffix\": \"example.com\", "
+        " \"dhcp-ddns\": {"
+        "     \"enable-updates\": true }"
+        "}";
+
+    configure(config_str);
+
+    // Update subnet_ and pool_ members after config
+    setSubnetAndPool(0, 0, Lease::TYPE_NA);
+
+    ASSERT_NO_THROW(srv_->startD2());
+
+    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+    // Verify that the host reservation is found and lease name/FQDN are
+    // formed properly from the host name and qualifying suffix.
+    testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
+                       "alice.example.com.", 1, IOAddress("2001:db8:1:1::babe"));
+
+    // Verify that NameChangeRequest is correct.
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            "2001:db8:1:1::babe",
+                            "000201E2EB74FB53A5778E74AFD43870ECA5"
+                            "4150B1F52B0CFED434802DA1259D6D3CA4",
+                            4000, "alice.example.com.", CHECK_WITH_DHCID, "");
+
+    // Change global ddns-reverse-zone.
+    CfgMgr::instance().getCurrentCfg()->getConfiguredGlobals()
+        ->set(CfgGlobals::DDNS_REVERSE_ZONE, Element::create("backward.com."));
+
+    // Renew the lease.
+    testProcessMessage(DHCPV6_RENEW, "myhost.example.com",
+                       "alice.example.com.", 1, IOAddress("2001:db8:1:1::babe"));
+
+    // Should have 1 NCR, a remove with a nested add.
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
+    verifyNestedNameChangeRequest(0, isc::dhcp_ddns::CHG_REMOVE, true, true,
+                                  "2001:db8:1:1::babe",
+                                  "000201E2EB74FB53A5778E74AFD43870ECA5"
+                                  "4150B1F52B0CFED434802DA1259D6D3CA4",
+                                  4000, "alice.example.com.",
+                                  CHECK_WITH_DHCID, "");
+
+    verifyNestedNameChangeRequest(1, isc::dhcp_ddns::CHG_ADD, true, true,
+                                  "2001:db8:1:1::babe",
+                                  "000201E2EB74FB53A5778E74AFD43870ECA5"
+                                  "4150B1F52B0CFED434802DA1259D6D3CA4",
+                                  4000, "alice.example.com.",
+                                  CHECK_WITH_DHCID, "backward.com.");
+
+    // Process the message off the queue
+    ASSERT_NO_THROW(d2_mgr_.runReadyIO());
 }
 
 } // end of anonymous namespace

@@ -887,6 +887,18 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"ddns-reverse-zone\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::POOLS:
+        return isc::dhcp::Dhcp4Parser::make_DDNS_REVERSE_ZONE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ddns-reverse-zone", driver.loc_);
+    }
+}
+
 \"ddns-update-on-renew\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:

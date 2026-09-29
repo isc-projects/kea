@@ -141,6 +141,7 @@ using namespace std;
   DDNS_REPLACE_CLIENT_NAME "ddns-replace-client-name"
   DDNS_GENERATED_PREFIX "ddns-generated-prefix"
   DDNS_QUALIFYING_SUFFIX "ddns-qualifying-suffix"
+  DDNS_REVERSE_ZONE "ddns-reverse-zone"
   DDNS_UPDATE_ON_RENEW "ddns-update-on-renew"
   DDNS_USE_CONFLICT_RESOLUTION "ddns-use-conflict-resolution"
   DDNS_TTL_PERCENT "ddns-ttl-percent"
@@ -572,6 +573,7 @@ global_param: valid_lifetime
             | ddns_replace_client_name
             | ddns_generated_prefix
             | ddns_qualifying_suffix
+            | ddns_reverse_zone
             | ddns_update_on_renew
             | ddns_use_conflict_resolution
             | ddns_conflict_resolution_mode
@@ -768,6 +770,15 @@ ddns_qualifying_suffix: DDNS_QUALIFYING_SUFFIX {
 } COLON STRING {
     ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("ddns-qualifying-suffix", s);
+    ctx.leave();
+};
+
+ddns_reverse_zone: DDNS_REVERSE_ZONE {
+    ctx.unique("ddns-reverse-zone", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr s(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("ddns-reverse-zone", s);
     ctx.leave();
 };
 
@@ -1706,6 +1717,7 @@ subnet4_param: valid_lifetime
              | ddns_replace_client_name
              | ddns_generated_prefix
              | ddns_qualifying_suffix
+             | ddns_reverse_zone
              | ddns_update_on_renew
              | ddns_use_conflict_resolution
              | ddns_conflict_resolution_mode
@@ -1911,6 +1923,7 @@ shared_network_param: name
                     | ddns_replace_client_name
                     | ddns_generated_prefix
                     | ddns_qualifying_suffix
+                    | ddns_reverse_zone
                     | ddns_update_on_renew
                     | ddns_use_conflict_resolution
                     | ddns_conflict_resolution_mode
@@ -2267,6 +2280,7 @@ pool_param: pool_entry
           | ddns_replace_client_name
           | ddns_generated_prefix
           | ddns_qualifying_suffix
+          | ddns_reverse_zone
           | ddns_update_on_renew
           | ddns_conflict_resolution_mode
           | ddns_ttl_percent

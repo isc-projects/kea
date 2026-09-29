@@ -2566,7 +2566,9 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
                 // changed.
                 bool ddns_changed = ((*(ctx.duid_) != *(l->duid_)) ||
                                      (l->hostname_ != opt_fqdn->getDomainName()) ||
-                                     (l->fqdn_fwd_ != do_fwd) || (l->fqdn_rev_ != do_rev));
+                                     (l->fqdn_fwd_ != do_fwd) || (l->fqdn_rev_ != do_rev) ||
+                                     (l->getDdnsReverseZone() != 
+                                      ctx.getDdnsParams()->getReverseZone()));
 
                 if ((l->reuseable_valid_lft_ > 0) ||
                     (!ctx.getDdnsParams()->getUpdateOnRenew() && !ddns_changed)) {
@@ -2606,7 +2608,7 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
                                   ctx.getDdnsParams()->getTtl(),
                                   ctx.getDdnsParams()->getTtlMin(),
                                   ctx.getDdnsParams()->getTtlMax()),
-                                  cr_mode));
+                                  cr_mode, ctx.getDdnsParams()->getReverseZone()));
 
         LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL, DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST)
             .arg(answer->getLabel())

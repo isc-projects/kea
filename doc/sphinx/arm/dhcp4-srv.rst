@@ -3705,6 +3705,7 @@ DDNS-related parameters are split into two groups:
     -  ``ddns-ttl-max``
     -  ``hostname-char-set``
     -  ``hostname-char-replacement``
+    -  ``ddns-reverse-zone``
 
 .. note::
 
@@ -4171,6 +4172,18 @@ qualifying suffix is "example.com", and the default value is used for
     a dot if the client sent it already qualified and ending with a dot.
     When the client sends the FQDN option, the FQDN returned in the response
     will always end with a dot.
+
+Kea 3.3.3 added the ``ddns-reverse-zone`` parameter. This value is included
+in each NameChangeRequest sent to :iscman:`kea-dhcp-ddns` which will use it to construct
+the record name for the reverse DNS PTR record in the form: 
+"[lease address reversed].[ddns-reverse-zone]". If the parameter is unspecified
+(the default) or specified as an empty string, :iscman:`kea-dhcp-ddns` will use the value
+``in-addr.arpa.`` for V4 addresses. For example, if the lease address is "172.16.1.10",
+by default the PTR record name will be ``10.1.16.172.in-addr.arpa.``. If ``ddns-reverse-zone`` 
+is set to "example.com." the record name will be ``10.1.16.172.example.com.``. 
+By default, ``ddns-reverse-zone`` is unspecified.  Changing it from the default 
+can be useful if parts of a reverse zone has been delegated to somewhere else 
+using CNAME records.
 
 .. _dhcp4-host-name-sanitization:
 

@@ -3032,7 +3032,8 @@ Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
     bool ddns_changed = (old_lease &&
                          (!old_lease->belongsToClient(lease->hwaddr_, lease->client_id_) ||
                           !old_lease->hasIdenticalFqdn(*lease) ||
-                          (old_lease->addr_ != lease->addr_)));
+                          (old_lease->addr_ != lease->addr_) ||
+                          (old_lease->getDdnsReverseZone() != lease->getDdnsReverseZone())));
 
     if (lease->reuseable_valid_lft_ == 0 &&
         (!old_lease || ddns_params.getUpdateOnRenew() || ddns_changed)) {

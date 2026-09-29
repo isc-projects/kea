@@ -526,6 +526,34 @@ TEST_F(Dhcp4SrvD2Test, senderEqServer) {
     EXPECT_EQ(CONTROL_RESULT_ERROR, rcode);
 }
 
+TEST_F(Dhcp4SrvD2Test, simpleSendWithReverseZone) {
+    // Grab the manager and verify that be default ddns is off
+    // and a sender was not started.
+    dhcp::D2ClientMgr& mgr = CfgMgr::instance().getD2ClientMgr();
+    ASSERT_FALSE(mgr.ddnsEnabled());
+
+    // Configure it enabled and start it.
+    ASSERT_NO_FATAL_FAILURE(configureD2(true));
+    ASSERT_TRUE(mgr.ddnsEnabled());
+    ASSERT_NO_THROW(mgr.clearQueue());
+    EXPECT_EQ(0U, mgr.getQueueSize());
+    ASSERT_NO_THROW(srv_.startD2());
+    ASSERT_TRUE(mgr.amSending());
+
+    // Verify that we can queue up a message.
+    dhcp_ddns::NameChangeRequestPtr ncr = buildTestNcr();
+    ncr->setReverseZone("backward.com.");
+    ASSERT_NO_THROW(mgr.sendRequest(ncr));
+    EXPECT_EQ(1U, mgr.getQueueSize());
+
+    // Calling receive should detect the ready IO on the sender's select-fd,
+    // and invoke callback, which should complete the send.
+    ASSERT_NO_THROW(IfaceMgr::instance().receive4(0,0));
+
+    // Verify the queue is now empty.
+    EXPECT_EQ(0U, mgr.getQueueSize());
+}
+
 } // namespace test
 } // namespace dhcp
 } // namespace isc

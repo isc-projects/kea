@@ -244,6 +244,18 @@
         // shared-network, and subnet levels.
         "ddns-qualifying-suffix": "",
 
+        // The base zone for the reverse DNS entry, if enabled.
+        // This is useful for cases where you or the DHCP server
+        // only controls part of the reverse zone, and someone
+        // (possibly an upstream ISP) has delegated some records
+        // to another zone that you control, possibly via CNAME.
+        //
+        // It may be specified at the global, shared-network and
+        // subnet levels. The default value is an empty string
+        // which ultimately instructs kea-dhcp-ddns to use
+        // "ip6.arpa."
+        "ddns-reverse-zone": "backword.com.",
+
         // Enumeration specifying whether the server should honor
         // the hostname or Client FQDN sent by the client or replace
         // this name. The acceptable values are: "never" (use the
@@ -855,6 +867,9 @@
                 "ddns-qualifying-suffix": "",
 
                 // Shared-network level value. See description at the global level.
+                "ddns-reverse-zone": "snetwork.backword.com.",
+
+                // Shared-network level value. See description at the global level.
                 "ddns-replace-client-name": "never",
 
                 // Shared-network level value. See description at the global level.
@@ -999,6 +1014,9 @@
 
                         // Subnet-level value. See description at the global level.
                         "ddns-qualifying-suffix": "",
+
+                        // Subnet-level value. See description at the global level.
+                        "ddns-reverse-zone": "subnet.backword.com.",
 
                         // Subnet-level value. See description at the global level.
                         "ddns-replace-client-name": "never",
@@ -1171,6 +1189,9 @@
 
                                 // Pool-level value. See description at the global level.
                                 "ddns-qualifying-suffix": "pool.example.com.",
+
+                                // Pool-level value. See description at the global level.
+                                "ddns-reverse-zone": "pool.backward.com.",
 
                                 // Pool-level value. See description at the global level.
                                 "ddns-replace-client-name": "always",

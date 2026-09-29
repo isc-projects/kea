@@ -3460,6 +3460,7 @@ DDNS-related parameters are split into two groups:
     -  ``ddns-ttl-max``
     -  ``hostname-char-set``
     -  ``hostname-char-replacement``
+    -  ``ddns-reverse-zone``
 
 .. note::
 
@@ -3924,9 +3925,17 @@ qualifying suffix is "example.com", and the default value is used for
 
 ``myhost-3001-1--70E.example.com.``
 
-As of Kea 2.7.8, generated prefixes that would have ended in a hyphen
-will have a zero appended to the end. For example, the generated prefix
-for the address "2001:db8:1::" would be "myhost-2001-db8-1--0".
+Kea 3.3.3 added the ``ddns-reverse-zone`` parameter. This value is included 
+in each NameChangeRequest sent to :iscman:`kea-dhcp-ddns` which will use it to construct
+the record name for the reverse DNS PTR record in the form: 
+``[lease address reversed].[ddns-reverse-zone]``. If the parameter is unspecified 
+(the default) or specified as an empty string, :iscman:`kea-dhcp-ddns` will use the value
+``ip6.arpa.`` for V6 addresses. For example, if the lease address is "3001:1::70E",
+by default the PTR record name will be ``e.0.7.(...etc...).1.0.0.3.ip6.arpa.``.
+If ``ddns-reverse-zone`` is set to "example.com." the record name will be 
+``e.0.7.(...etc...).1.0.0.3.example.com.``.  By default, ``ddns-reverse-zone`` 
+is unspecified.  Changing it from the default can be useful if parts of a reverse
+zone has been delegated to somewhere else using CNAME records.
 
 .. _dhcp6-host-name-sanitization:
 
