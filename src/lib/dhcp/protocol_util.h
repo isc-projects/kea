@@ -8,6 +8,7 @@
 #define PROTOCOL_UTIL_H
 
 #include <dhcp/pkt4.h>
+#include <dhcp/iface_mgr.h>
 #include <util/buffer.h>
 
 #include <stdint.h>
@@ -38,6 +39,12 @@ static const size_t ETHERNET_PACKET_TYPE_OFFSET = 12;
 /// inclusion of additional headers, which have different names
 /// and locations on different OSes.
 static const uint16_t ETHERNET_TYPE_IP = 0x0800;
+
+/// Size of the IPoIB pseude frame header.
+static const size_t IPOIB_HEADER_LEN = 24;
+/// Offset of the 2-byte word in the IPoIB pseudo packet which
+/// holds the type of the protocol it encapsulates.
+static const size_t IPOIB_PACKET_TYPE_OFFSET = 20;
 
 /// Minimal IPv4 header length.
 static const size_t MIN_IP_HEADER_LEN = 20;
@@ -75,6 +82,25 @@ static const size_t UDP_DEST_PORT = 2;
 /// @throw BadValue if pkt object is NULL.
 void decodeEthernetHeader(util::InputBuffer& buf, Pkt4Ptr& pkt);
 
+/// @brief Decode the IPoIB pseudo header.
+///
+/// This function reads IPoIB pesudo frame header from the provided
+/// buffer at the current read position. The source HW address
+/// is read from the header and assigned as client address in
+/// the pkt object. The buffer read pointer is set to the end
+/// of the IPoIB frame header if read was successful.
+///
+/// @warning This function does not check that the provided 'pkt'
+/// pointer is valid. Caller must make sure that pointer is
+/// allocated.
+///
+/// @param buf input buffer holding header to be parsed.
+/// @param [out] pkt packet object receiving HW source address read from header.
+///
+/// @throw InvalidPacketHeader if packet header is truncated
+/// @throw BadValue if pkt object is NULL.
+void decodeIPoIBHeader(util::InputBuffer& buf, Pkt4Ptr& pkt);
+
 /// @brief Decode IP and UDP header.
 ///
 /// This function reads IP and UDP headers from the provided buffer
@@ -104,6 +130,17 @@ void decodeIpUdpHeader(util::InputBuffer& buf, Pkt4Ptr& pkt);
 /// @param [out] out_buf buffer where a header is written.
 void writeEthernetHeader(const Pkt4Ptr& pkt,
                          util::OutputBuffer& out_buf);
+
+/// @brief Writes IPoIB pseudo frame header into a buffer.
+///
+/// @warning This function does not check that the provided 'pkt'
+/// pointer is valid. Caller must make sure that pointer is
+/// allocated.
+///
+/// @param pkt packet object holding source and destination HW address.
+/// @param [out] out_buf buffer where a header is written.
+void writeIPoIBHeader(const Iface& iface, const Pkt4Ptr& pkt,
+                      util::OutputBuffer& out_buf);
 
 /// @brief Writes both IP and UDP header into output buffer
 ///
