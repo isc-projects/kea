@@ -187,10 +187,8 @@ public:
     /// This method is intended to be used to provide a consistent way to
     /// identify packets within log statements.  It is an instance-level
     /// wrapper around static makeLabel(). See this method for string
-    /// content.
-    ///
-    /// @note Currently this method doesn't include the HW address in the
-    /// returned text.
+    /// content.  It will include the hardware address if Pkt6::cached_hwaddr_
+    /// is set.
     ///
     /// @return string with text representation
     virtual std::string getLabel() const;
