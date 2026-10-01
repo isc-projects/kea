@@ -37,6 +37,8 @@ std::string stateToString(int state) {
         return ("terminated");
     case HA_WAITING_ST:
         return ("waiting");
+    case HA_DOWN_ST:
+        return ("down");
     case HA_UNAVAILABLE_ST:
         return ("unavailable");
     default:
@@ -82,6 +84,9 @@ int stringToState(const std::string& state_name) {
 
     } else if (state_name == "waiting") {
         return (HA_WAITING_ST);
+
+    } else if (state_name == "down") {
+        return (HA_DOWN_ST);
 
     } else if (state_name == "unavailable") {
         return (HA_UNAVAILABLE_ST);

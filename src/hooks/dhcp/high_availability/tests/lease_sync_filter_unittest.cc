@@ -179,5 +179,4 @@ TEST_F(LeaseSyncFilterTest, noAssociationsInSubnets4) {
     }
 }
 
-
 } // end of anonymous namespace

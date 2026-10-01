@@ -871,7 +871,7 @@ public:
             // replace this object with our own implementation to have an ability to
             // modify its poke time.
             NakedCommunicationState4Ptr state(new NakedCommunicationState4(io_service_,
-                                                                       config_storage));
+                                                                           config_storage));
             // Set poke time 30s in the past. If the state is poked it will be reset
             // to the current time. This allows for testing whether the object has been
             // poked by the HA service.
@@ -993,7 +993,7 @@ public:
             // replace this object with our own implementation to have an ability to
             // modify its poke time.
             NakedCommunicationState6Ptr state(new NakedCommunicationState6(io_service_,
-                                                                       config_storage));
+                                                                           config_storage));
             // Set poke time 30s in the past. If the state is poked it will be reset
             // to the current time. This allows for testing whether the object has been
             // poked by the HA service.
@@ -2438,7 +2438,7 @@ public:
             // replace this object with our own implementation to have an ability to
             // modify its poke time.
             NakedCommunicationState4Ptr state(new NakedCommunicationState4(io_service_,
-                                                                       config_storage));
+                                                                           config_storage));
             // Set poke time 30s in the past. If the state is poked it will be reset
             // to the current time. This allows for testing whether the object has been
             // poked by the HA service.
@@ -5315,6 +5315,7 @@ TEST_F(HAServiceTest, processMaintenanceNotify) {
         HA_PARTNER_DOWN_ST,
         HA_LOAD_BALANCING_ST,
         HA_HOT_STANDBY_ST,
+        HA_DOWN_ST,
     };
 
     TestHAService service(1, io_service_, network_state_, config_storage);
@@ -6139,6 +6140,190 @@ TEST_F(HAServiceTest, processSyncCompleteNotify) {
     EXPECT_TRUE(service.network_state_->isServiceEnabled());
 }
 
+// This test checks transitions to HA_DOWN_ST in load balancing mode.
+TEST_F(HAServiceTest, downStateTransitionLoadBalancingPrimary) {
+    std::vector<int> state_list = {
+        HA_COMMUNICATION_RECOVERY_ST,
+        HA_HOT_STANDBY_ST,
+        HA_LOAD_BALANCING_ST,
+        HA_PARTNER_DOWN_ST,
+        HA_PARTNER_IN_MAINTENANCE_ST,
+        HA_SYNCING_ST,
+        HA_DOWN_ST
+    };
+    for (auto state : state_list) {
+        // Create HA configuration for 3 servers. This server is
+        // server 1.
+        HAConfigPtr config_storage = createValidConfiguration();
+
+        TestHAService service(1, io_service_, network_state_, config_storage);
+        std::cout << "testing: " << service.getStateLabel(state) << std::endl;
+
+        // Transition the server to the desired state.
+        EXPECT_NO_THROW(service.transition(state, HAService::NOP_EVT));
+
+        EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::DB_CONNECTION));
+
+        // Run the heartbeat.
+        service.postNextEvent(HAService::NOP_EVT);
+
+        service.runModel(HAService::NOP_EVT);
+
+        EXPECT_EQ(HA_DOWN_ST, service.getCurrState());
+
+        EXPECT_NO_THROW(service.network_state_->enableService(NetworkState::DB_CONNECTION));
+
+        // Run the heartbeat.
+        service.postNextEvent(HAService::NOP_EVT);
+
+        // Make partner available.
+        service.communication_state_->poke();
+        // Ensure runModel does not transition multiple states:
+        // (HA_DOWN_ST -> HA_WAITING_ST -> HA_SYNCING_ST) by setting the partner in
+        // HA_SYNCING_ST state. This effectively makes this instance only transition
+        // to HA_WAITING_ST state (what this code is testing).
+        service.communication_state_->setPartnerState("syncing");
+
+        service.runModel(HAService::NOP_EVT);
+
+        EXPECT_EQ(HA_WAITING_ST, service.getCurrState());
+    }
+}
+
+// This test checks no transition change in secondary when primary switched to HA_DOWN_ST in load balancing mode.
+TEST_F(HAServiceTest, downStateTransitionLoadBalancingSecondary) {
+    std::vector<int> state_list = {
+        HA_BACKUP_ST,
+        HA_IN_MAINTENANCE_ST,
+        HA_PARTNER_DOWN_ST,
+        HA_PARTNER_IN_MAINTENANCE_ST,
+        HA_PASSIVE_BACKUP_ST,
+        HA_TERMINATED_ST,
+        HA_WAITING_ST,
+        HA_DOWN_ST
+    };
+    for (auto state : state_list) {
+        // Create HA configuration for 3 servers. This server is
+        // server 1.
+        HAConfigPtr config_storage = createValidConfiguration();
+
+        TestHAService service(1, io_service_, network_state_, config_storage);
+        std::cout << "testing: " << service.getStateLabel(state) << std::endl;
+
+        // Transition the server to the desired state.
+        EXPECT_NO_THROW(service.transition(state, HAService::NOP_EVT));
+
+        if (state == HA_DOWN_ST) {
+            EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::DB_CONNECTION));
+        }
+
+        // Make partner available.
+        service.communication_state_->poke();
+        service.communication_state_->setPartnerState("down");
+
+        // Run the heartbeat.
+        service.postNextEvent(HAService::NOP_EVT);
+
+        service.runModel(HAService::NOP_EVT);
+
+        EXPECT_EQ(state, service.getCurrState());
+
+        EXPECT_NO_THROW(service.network_state_->enableService(NetworkState::DB_CONNECTION));
+    }
+}
+
+// This test checks transitions to HA_DOWN_ST in hot standby mode.
+TEST_F(HAServiceTest, downStateTransitionHotStandbyPrimary) {
+    std::vector<int> state_list = {
+        HA_COMMUNICATION_RECOVERY_ST,
+        HA_HOT_STANDBY_ST,
+        HA_LOAD_BALANCING_ST,
+        HA_PARTNER_DOWN_ST,
+        HA_PARTNER_IN_MAINTENANCE_ST,
+        HA_SYNCING_ST,
+        HA_DOWN_ST
+    };
+    for (auto state : state_list) {
+        // Create HA configuration for 3 servers. This server is
+        // server 1.
+        HAConfigPtr config_storage = createValidConfiguration(HAConfig::HOT_STANDBY);
+
+        TestHAService service(1, io_service_, network_state_, config_storage);
+        std::cout << "testing: " << service.getStateLabel(state) << std::endl;
+
+        // Transition the server to the desired state.
+        EXPECT_NO_THROW(service.transition(state, HAService::NOP_EVT));
+
+        EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::DB_CONNECTION));
+
+        // Run the heartbeat.
+        service.postNextEvent(HAService::NOP_EVT);
+
+        service.runModel(HAService::NOP_EVT);
+
+        EXPECT_EQ(HA_DOWN_ST, service.getCurrState());
+
+        EXPECT_NO_THROW(service.network_state_->enableService(NetworkState::DB_CONNECTION));
+
+        // Run the heartbeat.
+        service.postNextEvent(HAService::NOP_EVT);
+
+        // Make partner available.
+        service.communication_state_->poke();
+        // Ensure runModel does not transition multiple states:
+        // (HA_DOWN_ST -> HA_WAITING_ST -> HA_SYNCING_ST) by setting the partner in
+        // HA_SYNCING_ST state. This effectively makes this instance only transition
+        // to HA_WAITING_ST state (what this code is testing).
+        service.communication_state_->setPartnerState("syncing");
+
+        service.runModel(HAService::NOP_EVT);
+
+        EXPECT_EQ(HA_WAITING_ST, service.getCurrState());
+    }
+}
+
+// This test checks no transition change in standby when primary switched to HA_DOWN_ST in hot standby mode.
+TEST_F(HAServiceTest, downStateTransitionHotStandbyStandby) {
+    std::vector<int> state_list = {
+        HA_BACKUP_ST,
+        HA_IN_MAINTENANCE_ST,
+        HA_PARTNER_DOWN_ST,
+        HA_PARTNER_IN_MAINTENANCE_ST,
+        HA_PASSIVE_BACKUP_ST,
+        HA_TERMINATED_ST,
+        HA_WAITING_ST,
+        HA_DOWN_ST
+    };
+    for (auto state : state_list) {
+        // Create HA configuration for 3 servers. This server is
+        // server 1.
+        HAConfigPtr config_storage = createValidConfiguration(HAConfig::HOT_STANDBY);
+
+        TestHAService service(1, io_service_, network_state_, config_storage);
+        std::cout << "testing: " << service.getStateLabel(state) << std::endl;
+
+        // Transition the server to the desired state.
+        EXPECT_NO_THROW(service.transition(state, HAService::NOP_EVT));
+
+        if (state == HA_DOWN_ST) {
+            EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::DB_CONNECTION));
+        }
+
+        // Make partner available.
+        service.communication_state_->poke();
+        service.communication_state_->setPartnerState("down");
+
+        // Run the heartbeat.
+        service.postNextEvent(HAService::NOP_EVT);
+
+        service.runModel(HAService::NOP_EVT);
+
+        EXPECT_EQ(state, service.getCurrState());
+
+        EXPECT_NO_THROW(service.network_state_->enableService(NetworkState::DB_CONNECTION));
+    }
+}
+
 /// @brief HA partner to the server under test.
 ///
 /// This is a wrapper class around @c HttpListener which simulates a
@@ -6267,6 +6452,7 @@ private:
 
     /// @brief Instance of the listener wrapped by this class.
     HttpListenerPtr listener_;
+
     /// @brief Instance of the response factory used by the listener.
     TestHttpResponseCreatorFactoryPtr factory_;
 
@@ -6435,6 +6621,9 @@ public:
     /// @param final_state expected state to transition to.
     void testTransition(const MyState& my_state, const PartnerState& partner_state,
                         const FinalState& final_state) {
+        std::cout << "my state: " << service_->getStateLabel(my_state.state_)
+                  << " - partner state: " << service_->getStateLabel(partner_state.state_)
+                  << std::endl;
         // We need to shutdown the partner only if the partner is to be in the
         // 'unavailable state'.
         if (partner_state.state_ != HA_UNAVAILABLE_ST) {
@@ -6466,8 +6655,11 @@ public:
         // we detect that the partner is considered offline (after running the
         // whole failure detection algorithm). The server in the in-maintenance
         // state is excluded from this because it must not transition out of this
-        // state until an administrator makes some action.
+        // state until an administrator makes some action. The server in the down
+        // state is also excluded from this because it must not transition out of
+        // this state until the database connection is restored.
         if ((my_state.state_ != HA_IN_MAINTENANCE_ST) &&
+            (my_state.state_ != HA_DOWN_ST) &&
             (partner_state.state_ == HA_UNAVAILABLE_ST)) {
             // Transition this server back to the initial state.
             service_->transition(my_state.state_, HAService::NOP_EVT);
@@ -7253,9 +7445,14 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
 
     startService(createValidConfiguration());
 
-    // COMMUNICATION RECOVERY state transitions
+    // HA_BACKUP_ST state has no meaning for load balancing primary.
+
+    // HA_COMMUNICATION_RECOVERY_ST state transitions
     {
         SCOPED_TRACE("COMMUNICATION RECOVERY state transitions");
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
@@ -7275,6 +7472,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
         testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
+
         testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_COMMUNICATION_RECOVERY_ST));
 
@@ -7287,13 +7487,21 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
         testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_COMMUNICATION_RECOVERY_ST));
 
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
         testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_COMMUNICATION_RECOVERY_ST));
     }
 
-    // LOAD BALANCING state transitions
+    // HA_HOT_STANDBY_ST state has no meaning for load balancing primary.
+
+    // HA_LOAD_BALANCING_ST state transitions
     {
         SCOPED_TRACE("LOAD BALANCING state transitions");
+
+        testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_LOAD_BALANCING_ST));
 
         testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
@@ -7313,6 +7521,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
         testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_LOAD_BALANCING_ST));
+
         testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
 
@@ -7325,13 +7536,19 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
         testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
 
+        testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
         testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_COMMUNICATION_RECOVERY_ST));
     }
 
-    // in-maintenance state transitions
+    // HA_IN_MAINTENANCE_ST state transitions
     {
         SCOPED_TRACE("in-maintenance state transitions");
+
+        testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_IN_MAINTENANCE_ST));
 
         testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
@@ -7351,6 +7568,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
         testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_IN_MAINTENANCE_ST));
+
         testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
@@ -7363,13 +7583,19 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
         testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_IN_MAINTENANCE_ST));
+
         testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
     }
 
-    // PARTNER DOWN state transitions
+    // HA_PARTNER_DOWN_ST state transitions
     {
         SCOPED_TRACE("PARTNER DOWN state transitions");
+
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_WAITING_ST));
@@ -7389,6 +7615,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_WAITING_ST));
 
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
 
@@ -7401,13 +7630,19 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
 
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
     }
 
-    // PARTNER in-maintenance state transitions
+    // HA_PARTNER_IN_MAINTENANCE_ST state transitions
     {
         SCOPED_TRACE("PARTNER in-maintenance state transitions");
+
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
 
         testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
@@ -7427,6 +7662,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
         testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
+
         testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
 
@@ -7439,13 +7677,21 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
         testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
+
         testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
     }
 
-    // READY state transitions
+    // HA_PASSIVE_BACKUP_ST state has no meaning for load balancing primary.
+
+    // HA_READY_ST state transitions
     {
         SCOPED_TRACE("READY state transitions");
+
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_READY_ST));
 
         testTransition(MyState(HA_READY_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
@@ -7465,6 +7711,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
         testTransition(MyState(HA_READY_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_READY_ST));
+
         testTransition(MyState(HA_READY_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
 
@@ -7477,13 +7726,23 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
         testTransition(MyState(HA_READY_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_READY_ST));
 
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
         testTransition(MyState(HA_READY_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_READY_ST));
     }
 
-    // WAITING state transitions
+    // HA_SYNCING_ST state transitions can not be tested using testTransition
+
+    // HA_TERMINATED_ST state transitions can not be tested using testTransition
+
+    // HA_WAITING_ST state transitions
     {
         SCOPED_TRACE("WAITING state transitions");
+
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_SYNCING_ST));
@@ -7503,21 +7762,76 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingPrimary) {
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_SYNCING_ST));
 
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
+
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_SYNCING_ST));
 
-        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_TERMINATED_ST),
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_SYNCING_ST),
                        FinalState(HA_WAITING_ST));
 
-        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_SYNCING_ST),
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_TERMINATED_ST),
                        FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_SYNCING_ST));
 
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_WAITING_ST));
+
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_WAITING_ST));
     }
+
+    // HA_DOWN_ST state transitions
+    {
+        SCOPED_TRACE("DOWN state transitions");
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_HOT_STANDBY_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_LOAD_BALANCING_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_IN_MAINTENANCE_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_PARTNER_DOWN_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_READY_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_SYNCING_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_TERMINATED_ST),
+                       FinalState(HA_TERMINATED_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_WAITING_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_UNAVAILABLE_ST),
+                       FinalState(HA_WAITING_ST));
+    }
+
+    // HA_UNAVAILABLE_ST state has no meaning for load balancing primary.
 }
 
 // This test checks that the server in the load balancing mode does not
@@ -7562,6 +7876,7 @@ TEST_F(HAServiceStateMachineTest, terminateTransitionsLoadBalancingPrimary) {
 
     testTerminateTransition(MyState(HA_LOAD_BALANCING_ST));
     testTerminateTransition(MyState(HA_PARTNER_DOWN_ST));
+    testTerminateTransition(MyState(HA_DOWN_ST));
     testTerminateTransition(MyState(HA_READY_ST));
     testTerminateTransition(MyState(HA_WAITING_ST));
 }
@@ -7666,9 +7981,14 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
 
     partner_->startup();
 
-    // COMMUNICATION RECOVERY state transitions
+    // HA_BACKUP_ST state has no meaning for load balancing secondary.
+
+    // HA_COMMUNICATION_RECOVERY_ST state transitions
     {
         SCOPED_TRACE("COMMUNICATION RECOVERY state transitions");
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
@@ -7688,6 +8008,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
         testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
+
         testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_COMMUNICATION_RECOVERY_ST));
 
@@ -7700,13 +8023,21 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
         testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_COMMUNICATION_RECOVERY_ST));
 
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
         testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_COMMUNICATION_RECOVERY_ST));
     }
 
-    // LOAD BALANCING state transitions
+    // HA_HOT_STANDBY_ST state has no meaning for load balancing secondary.
+
+    // HA_LOAD_BALANCING_ST state transitions
     {
         SCOPED_TRACE("LOAD BALANCING state transitions");
+
+        testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_LOAD_BALANCING_ST));
 
         testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
@@ -7726,6 +8057,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
         testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_LOAD_BALANCING_ST));
+
         testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
 
@@ -7738,13 +8072,19 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
         testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
 
+        testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
         testTransition(MyState(HA_LOAD_BALANCING_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_COMMUNICATION_RECOVERY_ST));
     }
 
-    // in-maintenance state transitions
+    // HA_IN_MAINTENANCE_ST state transitions
     {
         SCOPED_TRACE("in-maintenance state transitions");
+
+        testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_IN_MAINTENANCE_ST));
 
         testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
@@ -7764,6 +8104,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
         testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_IN_MAINTENANCE_ST));
+
         testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
@@ -7776,13 +8119,19 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
         testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_IN_MAINTENANCE_ST));
+
         testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
     }
 
-    // PARTNER DOWN state transitions
+    // HA_PARTNER_DOWN_ST state transitions
     {
         SCOPED_TRACE("PARTNER DOWN state transitions");
+
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_WAITING_ST));
@@ -7802,6 +8151,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_WAITING_ST));
 
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
 
@@ -7814,13 +8166,19 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
 
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
     }
 
-    // PARTNER in-maintenance state transitions
+    // HA_PARTNER_IN_MAINTENANCE_ST state transitions
     {
         SCOPED_TRACE("PARTNER in-maintenance state transitions");
+
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
 
         testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
@@ -7840,6 +8198,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
         testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
+
         testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
 
@@ -7852,13 +8213,21 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
         testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
+
         testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
     }
 
-    // READY state transitions
+    // HA_PASSIVE_BACKUP_ST state has no meaning for load balancing secondary.
+
+    // HA_READY_ST state transitions
     {
         SCOPED_TRACE("READY state transitions");
+
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_READY_ST));
 
         testTransition(MyState(HA_READY_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_LOAD_BALANCING_ST));
@@ -7878,6 +8247,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
         testTransition(MyState(HA_READY_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_READY_ST));
+
         testTransition(MyState(HA_READY_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_READY_ST));
 
@@ -7890,13 +8262,23 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
         testTransition(MyState(HA_READY_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_READY_ST));
 
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
         testTransition(MyState(HA_READY_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_READY_ST));
     }
 
-    // WAITING state transitions
+    // HA_SYNCING_ST state transitions can not be tested using testTransition
+
+    // HA_TERMINATED_ST state transitions can not be tested using testTransition
+
+    // HA_WAITING_ST state transitions
     {
         SCOPED_TRACE("WAITING state transitions");
+
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_SYNCING_ST));
@@ -7916,6 +8298,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_SYNCING_ST));
 
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
+
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_SYNCING_ST));
 
@@ -7928,9 +8313,61 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingSecondary) {
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_WAITING_ST));
 
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_WAITING_ST));
+
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_WAITING_ST));
     }
+
+    // HA_DOWN_ST state transitions
+    {
+        SCOPED_TRACE("DOWN state transitions");
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_HOT_STANDBY_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_LOAD_BALANCING_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_IN_MAINTENANCE_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_PARTNER_DOWN_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_READY_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_SYNCING_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_TERMINATED_ST),
+                       FinalState(HA_TERMINATED_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_WAITING_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_UNAVAILABLE_ST),
+                       FinalState(HA_WAITING_ST));
+    }
+
+    // HA_UNAVAILABLE_ST state has no meaning for load balancing secondary.
 }
 
 // This test checks that the server in the load balancing mode does not
@@ -7967,6 +8404,7 @@ TEST_F(HAServiceStateMachineTest, terminateTransitionsLoadBalancingSecondary) {
 
     testTerminateTransition(MyState(HA_LOAD_BALANCING_ST));
     testTerminateTransition(MyState(HA_PARTNER_DOWN_ST));
+    testTerminateTransition(MyState(HA_DOWN_ST));
     testTerminateTransition(MyState(HA_READY_ST));
     testTerminateTransition(MyState(HA_WAITING_ST));
 }
@@ -8341,9 +8779,61 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
 
     startService(valid_config);
 
-    // HOT STANDBY state transitions
+    // HA_BACKUP_ST state has no meaning for hot standby primary.
+
+    // HA_COMMUNICATION_RECOVERY_ST state transitions
+    {
+        SCOPED_TRACE("COMMUNICATION RECOVERY state transitions");
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_HOT_STANDBY_ST),
+                       FinalState(HA_HOT_STANDBY_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_LOAD_BALANCING_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_IN_MAINTENANCE_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_PARTNER_DOWN_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
+                       FinalState(HA_IN_MAINTENANCE_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_READY_ST),
+                       FinalState(HA_COMMUNICATION_RECOVERY_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_SYNCING_ST),
+                       FinalState(HA_COMMUNICATION_RECOVERY_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_TERMINATED_ST),
+                       FinalState(HA_TERMINATED_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_WAITING_ST),
+                       FinalState(HA_COMMUNICATION_RECOVERY_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_UNAVAILABLE_ST),
+                       FinalState(HA_COMMUNICATION_RECOVERY_ST));
+    }
+
+    // HA_HOT_STANDBY_ST state transitions
     {
         SCOPED_TRACE("HOT STANDBY state transitions");
+
+        testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_HOT_STANDBY_ST));
 
         testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_WAITING_ST));
@@ -8363,6 +8853,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
         testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_HOT_STANDBY_ST));
+
         testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_HOT_STANDBY_ST));
 
@@ -8375,13 +8868,21 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
         testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_HOT_STANDBY_ST));
 
+        testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
         testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_HOT_STANDBY_ST));
     }
 
-    // in-maintenance state transitions
+    // HA_LOAD_BALANCING_ST state has no meaning for hot standby primary.
+
+    // HA_IN_MAINTENANCE_ST state transitions
     {
         SCOPED_TRACE("in-maintenance state transitions");
+
+        testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_IN_MAINTENANCE_ST));
 
         testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
@@ -8401,6 +8902,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
         testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_IN_MAINTENANCE_ST));
+
         testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
@@ -8413,19 +8917,28 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
         testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_IN_MAINTENANCE_ST));
+
         testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
     }
 
-    // PARTNER DOWN state transitions
+    // HA_PARTNER_DOWN_ST state transitions
     {
         SCOPED_TRACE("PARTNER DOWN state transitions");
+
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_HOT_STANDBY_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
+
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_LOAD_BALANCING_ST),
+                       FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_IN_MAINTENANCE_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
@@ -8435,6 +8948,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_HOT_STANDBY_ST));
@@ -8448,13 +8964,19 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
 
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
     }
 
-    // PARTNER in-maintenance state transitions
+    // HA_PARTNER_IN_MAINTENANCE_ST state transitions
     {
         SCOPED_TRACE("PARTNER in-maintenance state transitions");
+
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
 
         testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
@@ -8474,6 +8996,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
         testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
+
         testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
 
@@ -8486,13 +9011,21 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
         testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
+
         testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
     }
 
-    // READY state transitions
+    // HA_PASSIVE_BACKUP_ST state has no meaning for hot standby primary.
+
+    // HA_READY_ST state transitions
     {
         SCOPED_TRACE("READY state transitions");
+
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_READY_ST));
 
         testTransition(MyState(HA_READY_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_WAITING_ST));
@@ -8512,6 +9045,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
         testTransition(MyState(HA_READY_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_READY_ST));
+
         testTransition(MyState(HA_READY_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_HOT_STANDBY_ST));
 
@@ -8524,13 +9060,23 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
         testTransition(MyState(HA_READY_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_READY_ST));
 
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
         testTransition(MyState(HA_READY_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_READY_ST));
     }
 
-    // WAITING state transitions
+    // HA_SYNCING_ST state transitions can not be tested using testTransition
+
+    // HA_TERMINATED_ST state transitions can not be tested using testTransition
+
+    // HA_WAITING_ST state transitions
     {
         SCOPED_TRACE("WAITING state transitions");
+
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_WAITING_ST));
@@ -8550,6 +9096,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_SYNCING_ST));
 
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
+
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_SYNCING_ST));
 
@@ -8562,9 +9111,61 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyPrimary) {
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_SYNCING_ST));
 
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_WAITING_ST));
+
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_WAITING_ST));
     }
+
+    // HA_DOWN_ST state transitions
+    {
+        SCOPED_TRACE("DOWN state transitions");
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_HOT_STANDBY_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_LOAD_BALANCING_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_IN_MAINTENANCE_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_PARTNER_DOWN_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_READY_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_SYNCING_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_TERMINATED_ST),
+                       FinalState(HA_TERMINATED_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_WAITING_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_UNAVAILABLE_ST),
+                       FinalState(HA_WAITING_ST));
+    }
+
+    // HA_UNAVAILABLE_ST state has no meaning for hot standby primary.
 }
 
 // This test checks that the server in the hot standby mode does not
@@ -8625,9 +9226,61 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyStandby) {
 
     startService(valid_config);
 
-    // HOT STANDBY state transitions
+    // HA_BACKUP_ST state has no meaning for hot standby standby.
+
+    // HA_COMMUNICATION_RECOVERY_ST state transitions
+    {
+        SCOPED_TRACE("COMMUNICATION RECOVERY state transitions");
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_HOT_STANDBY_ST),
+                       FinalState(HA_HOT_STANDBY_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_LOAD_BALANCING_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_IN_MAINTENANCE_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_PARTNER_DOWN_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
+                       FinalState(HA_IN_MAINTENANCE_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_READY_ST),
+                       FinalState(HA_COMMUNICATION_RECOVERY_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_SYNCING_ST),
+                       FinalState(HA_COMMUNICATION_RECOVERY_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_TERMINATED_ST),
+                       FinalState(HA_TERMINATED_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_WAITING_ST),
+                       FinalState(HA_COMMUNICATION_RECOVERY_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
+        testTransition(MyState(HA_COMMUNICATION_RECOVERY_ST), PartnerState(HA_UNAVAILABLE_ST),
+                       FinalState(HA_COMMUNICATION_RECOVERY_ST));
+    }
+
+    // HA_HOT_STANDBY_ST state transitions
     {
         SCOPED_TRACE("HOT STANDBY state transitions");
+
+        testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_HOT_STANDBY_ST));
 
         testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_WAITING_ST));
@@ -8647,6 +9300,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyStandby) {
         testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_HOT_STANDBY_ST));
+
         testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_HOT_STANDBY_ST));
 
@@ -8659,13 +9315,21 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyStandby) {
         testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_HOT_STANDBY_ST));
 
-        testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_HOT_STANDBY_ST),
+        testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
+        testTransition(MyState(HA_HOT_STANDBY_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_HOT_STANDBY_ST));
     }
 
-    // in-maintenance state transitions
+    // HA_LOAD_BALANCING_ST state has no meaning for hot standby standby.
+
+    // HA_IN_MAINTENANCE_ST state transitions
     {
         SCOPED_TRACE("in-maintenance state transitions");
+
+        testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_IN_MAINTENANCE_ST));
 
         testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
@@ -8685,6 +9349,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyStandby) {
         testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_IN_MAINTENANCE_ST));
+
         testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
@@ -8697,13 +9364,19 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyStandby) {
         testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_IN_MAINTENANCE_ST));
+
         testTransition(MyState(HA_IN_MAINTENANCE_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
     }
 
-    // PARTNER DOWN state transitions
+    // HA_PARTNER_DOWN_ST state transitions
     {
         SCOPED_TRACE("PARTNER DOWN state transitions");
+
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
 
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_WAITING_ST));
@@ -8723,6 +9396,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyStandby) {
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_WAITING_ST));
 
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_HOT_STANDBY_ST));
 
@@ -8735,14 +9411,68 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyStandby) {
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
 
+        testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
         testTransition(MyState(HA_PARTNER_DOWN_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_PARTNER_DOWN_ST));
     }
 
+    // HA_PARTNER_IN_MAINTENANCE_ST state transitions
+    {
+        SCOPED_TRACE("PARTNER in-maintenance state transitions");
 
-    // READY state transitions
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
+
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
+
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_HOT_STANDBY_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
+
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_LOAD_BALANCING_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
+
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_IN_MAINTENANCE_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
+
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_PARTNER_DOWN_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
+
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
+
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
+
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_READY_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
+
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_SYNCING_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
+
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_TERMINATED_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
+
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_WAITING_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
+
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_PARTNER_IN_MAINTENANCE_ST));
+
+        testTransition(MyState(HA_PARTNER_IN_MAINTENANCE_ST), PartnerState(HA_UNAVAILABLE_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+    }
+
+    // HA_PASSIVE_BACKUP_ST state has no meaning for hot standby standby.
+
+    // HA_READY_ST state transitions
     {
         SCOPED_TRACE("READY state transitions");
+
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_READY_ST));
 
         testTransition(MyState(HA_READY_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_WAITING_ST));
@@ -8762,6 +9492,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyStandby) {
         testTransition(MyState(HA_READY_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_IN_MAINTENANCE_ST));
 
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_READY_ST));
+
         testTransition(MyState(HA_READY_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_READY_ST));
 
@@ -8774,13 +9507,23 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyStandby) {
         testTransition(MyState(HA_READY_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_READY_ST));
 
+        testTransition(MyState(HA_READY_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_PARTNER_DOWN_ST));
+
         testTransition(MyState(HA_READY_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_READY_ST));
     }
 
-    // WAITING state transitions
+    // HA_SYNCING_ST state transitions can not be tested using testTransition
+
+    // HA_TERMINATED_ST state transitions can not be tested using testTransition
+
+    // HA_WAITING_ST state transitions
     {
         SCOPED_TRACE("WAITING state transitions");
+
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
 
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
                        FinalState(HA_WAITING_ST));
@@ -8800,6 +9543,9 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyStandby) {
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
                        FinalState(HA_SYNCING_ST));
 
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
+
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_READY_ST),
                        FinalState(HA_SYNCING_ST));
 
@@ -8812,9 +9558,61 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsHotStandbyStandby) {
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_WAITING_ST),
                        FinalState(HA_WAITING_ST));
 
+        testTransition(MyState(HA_WAITING_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_WAITING_ST));
+
         testTransition(MyState(HA_WAITING_ST), PartnerState(HA_UNAVAILABLE_ST),
                        FinalState(HA_WAITING_ST));
     }
+
+    // HA_DOWN_ST state transitions
+    {
+        SCOPED_TRACE("DOWN state transitions");
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_COMMUNICATION_RECOVERY_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_HOT_STANDBY_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_LOAD_BALANCING_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_IN_MAINTENANCE_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_PARTNER_DOWN_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_PARTNER_IN_MAINTENANCE_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_PASSIVE_BACKUP_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_READY_ST),
+                       FinalState(HA_SYNCING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_SYNCING_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_TERMINATED_ST),
+                       FinalState(HA_TERMINATED_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_WAITING_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_DOWN_ST),
+                       FinalState(HA_WAITING_ST));
+
+        testTransition(MyState(HA_DOWN_ST), PartnerState(HA_UNAVAILABLE_ST),
+                       FinalState(HA_WAITING_ST));
+    }
+
+    // HA_UNAVAILABLE_ST state has no meaning for hot standby standby.
 }
 
 // This test checks that the server in the hot standby mode does not
@@ -9028,6 +9826,7 @@ TEST_F(HAServiceStateMachineTest, shouldSendLeaseUpdatesHotStandbyStandby) {
     EXPECT_TRUE(expectLeaseUpdates(MyState(HA_HOT_STANDBY_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_IN_MAINTENANCE_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_PARTNER_DOWN_ST), peer_config));
+    EXPECT_FALSE(expectLeaseUpdates(MyState(HA_DOWN_ST), peer_config));
     EXPECT_TRUE(expectLeaseUpdates(MyState(HA_PARTNER_IN_MAINTENANCE_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_READY_ST), peer_config));
     EXPECT_FALSE(expectLeaseUpdates(MyState(HA_SYNCING_ST), peer_config));

@@ -204,6 +204,9 @@ CommunicationStateTest::partnerStateTest() {
     state_.setPartnerState("load-balancing");
     EXPECT_EQ(HA_LOAD_BALANCING_ST, state_.getPartnerState());
 
+    state_.setPartnerState("down");
+    EXPECT_EQ(HA_DOWN_ST, state_.getPartnerState());
+
     state_.setPartnerState("partner-down");
     EXPECT_EQ(HA_PARTNER_DOWN_ST, state_.getPartnerState());
 

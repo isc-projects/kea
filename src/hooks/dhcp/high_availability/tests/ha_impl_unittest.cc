@@ -2855,6 +2855,39 @@ TEST_F(HAImplTest, haHeartbeat) {
     checkAnswer(response, CONTROL_RESULT_SUCCESS, "HA peer status returned.");
 }
 
+// Test ha-heartbeat command handler with a specified server name which is in down state.
+TEST_F(HAImplTest, haHeartbeatDownState) {
+    ha_impl_.reset(new HAImpl());
+    ha_impl_->setIOService(io_service_);
+    ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState());
+    network_state->disableService(NetworkState::DB_CONNECTION);
+    ASSERT_NO_THROW(ha_impl_->startServices(network_state,
+                                            HAServerType::DHCPv4));
+
+    ConstElementPtr command = Element::fromJSON(
+        "{"
+        "    \"command\": \"ha-heartbeat\","
+        "    \"arguments\": {"
+        "        \"server-name\": \"server1\""
+        "    }"
+        "}"
+    );
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl_->heartbeatHandler(*callout_handle));
+
+    ConstElementPtr response;
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_SUCCESS, "HA peer status returned.");
+}
+
 // Test ha-heartbeat command handler without a specified server name.
 TEST_F(HAImplTest, haHeartbeatNoServerName) {
     ha_impl_.reset(new HAImpl());

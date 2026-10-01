@@ -212,7 +212,7 @@ private:
     /// DHCP queries, possibly allocating the same addresses to two
     /// different clients. This doesn't occur in load-balancing mode
     /// because the address pools are required to be split.
-    void communicationRecoveryHandler();
+    void communicationRecoveryStateHandler();
 
     /// @brief Handler for the "hot-standby" and "load-balancing"
     /// states.
@@ -255,6 +255,12 @@ private:
     /// state responds to all DHCP queries. The server in the
     /// "in-maintenance" state responds to no DHCP queries.
     void inMaintenanceStateHandler();
+
+    /// @brief Handler for the "down" state.
+    ///
+    /// This is a handler invoked when the servers detected that the
+    /// dhcp state has been disabled by user or by database connection.
+    void downStateHandler();
 
     /// @brief Handler for "partner-down" state.
     ///
@@ -583,6 +589,12 @@ protected:
     ///
     /// @return true if the maintenance was canceled, false otherwise.
     bool isMaintenanceCanceled() const;
+
+    /// @brief Convenience method checking if the dhcp state has been disabled
+    /// by user of by database connection.
+    ///
+    /// @return true if the dhcp state has been disabled, false otherwise.
+    bool isDHCPServiceDisabled() const;
 
     /// @brief Indicates if the partner's state is invalid.
     ///

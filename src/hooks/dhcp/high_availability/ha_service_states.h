@@ -49,6 +49,9 @@ const int HA_TERMINATED_ST = util::StateModel::SM_DERIVED_STATE_MIN + 11;
 /// Server waiting state, i.e. waiting for another server to be ready.
 const int HA_WAITING_ST = util::StateModel::SM_DERIVED_STATE_MIN + 12;
 
+/// Server waiting state, i.e. waiting for another server to be ready.
+const int HA_DOWN_ST = util::StateModel::SM_DERIVED_STATE_MIN + 13;
+
 /// Special state indicating that this server is unable to communicate with
 /// the partner.
 const int HA_UNAVAILABLE_ST = util::StateModel::SM_DERIVED_STATE_MIN + 1000;

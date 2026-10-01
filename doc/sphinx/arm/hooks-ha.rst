@@ -434,6 +434,13 @@ The following is the list of all possible server states:
    ``partner-down`` state immediately after discovering that the server in
    maintenance has been shut down.
 
+-  ``down`` - an active server transitions to this state after detecting that
+   it can no longer process DHCP traffic. This can be caused by multiple factors,
+   including the connection loss to the database lease storage. In this state the
+   server responds to :isccmd:`ha-heartbeat` commands, but does not handle lease
+   update commands. The server trasitions to ``waiting`` state as soon as it
+   determines that is can start processing DHCP traffic.
+
 -  ``partner-down`` - an active server transitions to this state after detecting
    that its partner (another active server) is offline. The server does not
    transition to this state if only a backup server is unavailable. In the
@@ -560,6 +567,8 @@ An in-depth explanation of the scopes can be found below.
    +------------------------+-----------------+-----------------+----------------+
    | in-maintenance         | active server   | disabled        | none           |
    +------------------------+-----------------+-----------------+----------------+
+   | down                   | active server   | disabled        | none           |
+   +------------------------+-----------------+-----------------+----------------+
    | partner-down           | active server   | enabled         | all scopes     |
    +------------------------+-----------------+-----------------+----------------+
    | partner-in-maintenance | active server   | enabled         | all scopes     |
@@ -617,14 +626,14 @@ message directly to the server which has allocated the lease being renewed. If
 this server is no longer available, the client will get no response. In that
 case, the client continues to use its lease and attempts to renew until the
 rebind timer (T2) elapses. The client then enters the rebinding phase, in which
-it sends a DHCPREQUEST (DHCPv4) or Rebind (DHCPv6) message to any available
+case it sends a DHCPREQUEST (DHCPv4) or Rebind (DHCPv6) message to any available
 server. The surviving server receives the rebinding request and typically
 extends the lifetime of the lease. The client then continues to contact that new
 server to renew its lease as appropriate.
 
 If and when the other server once again becomes available, both active servers
 will eventually transition to the ``load-balancing`` or ``hot-standby`` state,
-in which they will again be responsible for their own scopes. Some clients
+in which case they will again be responsible for their own scopes. Some clients
 belonging to the scope of the restarted server will try to renew their leases
 via the surviving server, but this server will no longer respond to them; the
 client will eventually transition back to the correct server via the rebinding
@@ -717,9 +726,7 @@ only difference that ``this-server-name`` should be set to "server2" and
 Two hook libraries must be loaded to enable HA: :ischooklib:`libdhcp_lease_cmds.so` and
 :ischooklib:`libdhcp_ha.so`. The latter implements the HA feature, while the former
 enables control commands required by HA to fetch and manipulate leases on the
-remote servers. In the example provided above, it is assumed that Kea libraries
-are installed in the ``/usr/lib`` directory. If Kea is not installed in the
-``/usr`` directory, the hook libraries' locations must be updated accordingly.
+remote servers.
 
 The HA configuration is specified within the scope of :ischooklib:`libdhcp_ha.so`.
 Note that while the top-level parameter ``high-availability`` is a list, only a
@@ -732,7 +739,9 @@ respect to HA:
    setup. It must match one of the servers specified within the ``peers`` list.
 
 -  ``mode`` - specifies an HA mode of operation. The currently supported modes
-   are ``load-balancing`` and ``hot-standby``.
+   are ``load-balancing``, ``hot-standby`` and ``passive-backu``. In the
+   ``load-balancing`` setup configuration, this value must be set to
+   ``load-balancing``.
 
 -  ``heartbeat-delay`` - specifies a duration in milliseconds between sending
    the last heartbeat (or other command sent to the partner) and the next
@@ -1195,6 +1204,7 @@ configuration examples are not relevant in the ``passive-backup`` mode, thus
 they are not specified here. For example: ``heartbeat-delay``,
 ``max-unacked-clients``, ``max-rejected-lease-updates``, and others related to
 the failover mechanism should not be specified in the ``passive-backup`` mode.
+The ``mode`` is now set to ``passive-backup``.
 
 The ``wait-backup-ack`` is a boolean parameter not present in previous examples.
 It defaults to ``false`` and must not be modified in the ``load-balancing`` and
@@ -1555,16 +1565,16 @@ never transitions out of these states anyway.
 Multi-Threaded Configuration (HA+MT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-It is possible to configure HA to use direct
-multi-threaded communication between peers. We refer to this mode as HA+MT.
+It is possible to configure HA to use direct multi-threaded communication between peers.
+We refer to this mode as HA+MT.
 With HA+MT enabled, each peer runs its own dedicated, internal HTTP listener
 (i.e. server) which receives and responds to commands directly, thus eliminating
-the sequentialization of commands including for the HA protocol between peers. In addition, both
-the listener and client components use multi-threading to support multiple
-concurrent connections between peers. By eliminating the overloading of
-the control channel and executing
-multiple command exchanges in parallel, HA throughput between peers
-improves considerably over earlier versions of Kea in most situations.
+the sequentialization of commands including for the HA protocol between peers.
+In addition, both the listener and client components use multi-threading to support
+multiple concurrent connections between peers. By eliminating the overloading of
+the control channel and executing multiple command exchanges in parallel, HA
+throughput between peers improves considerably over earlier versions of Kea in most
+situations.
 
 The following parameters have been added to the HA configuration, to support
 HA+MT operation:
@@ -1681,11 +1691,11 @@ Parked-Packet Limit
 
 Refer to :ref:`parked-packet-limit` for a basic introduction to packet parking.
 
-The HA hook library uses this mechanism. When an HA server
-needs to send a lease update to its peers to notify them of the change to the
-lease, it parks the client response until the peers acknowledge the lease
-update. At that point, the server unparks the response and sends it to the
-client. This applies to client queries that cause lease changes, such as
+The HA hook library uses this mechanism. When an HA server needs to send a lease
+update to its peers to notify them of the change to the lease, it parks the client
+response until the peers acknowledge the lease update.
+At that point, the server unparks the response and sends it to the client.
+This applies to client queries that cause lease changes, such as
 DHCPREQUEST for DHCPv4 and Request, Renew, and Rebind for DHCPv6. It does not
 apply to DHCPDISCOVERs (v4) or Solicits (v6).
 
@@ -1724,8 +1734,8 @@ as this is the server which is going to handle the DHCP traffic while the other
 one is offline. ``server1`` responds with an error if its state or the partner's
 state does not allow for a maintenance shutdown: for example, if maintenance is
 not supported for the backup server or if the server is in the ``terminated``
-state. Also, an error is returned if the :isccmd:`ha-maintenance-start` request was
-already sent to the other server.
+or ``down`` state. Also, an error is returned if the :isccmd:`ha-maintenance-start`
+request was already sent to the other server.
 
 Upon receiving the :isccmd:`ha-maintenance-start` command, ``server1`` sends the
 :isccmd:`ha-maintenance-notify` command to ``server2`` to put it in the
@@ -2003,10 +2013,10 @@ it takes some time for the surviving server to realize it. The
 :ref:`ha-scope-transition` section describes the algorithm which the surviving
 server follows before it transitions to the ``partner-down`` state. If the
 :isccmd:`ha-heartbeat` command is sent during the time window between the failure of
-one of the servers and the transition of the surviving server to the
-``partner-down`` state, the response from the surviving server does not reflect
-the failure. Resending the command detects the failure once the surviving server
-has entered the ``partner-down`` state.
+one of the servers and the transition of the surviving server to the ``partner-down``
+state, the response from the surviving server does not reflect the failure. Resending
+the command detects the failure once the surviving server has entered the
+``partner-down`` state.
 
 .. note:
 
