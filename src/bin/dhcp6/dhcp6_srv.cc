@@ -483,7 +483,7 @@ Dhcpv6Srv::setHostIdentifiers(AllocEngine::ClientContext6& ctx) {
 }
 
 void
-Dhcpv6Srv::initContext0(const Pkt6Ptr& query,
+Dhcpv6Srv::initContext0(Pkt6Ptr& query,
                         AllocEngine::ClientContext6& ctx) {
     // Pointer to client's query.
     ctx.query_ = query;
@@ -496,7 +496,7 @@ Dhcpv6Srv::initContext0(const Pkt6Ptr& query,
 }
 
 bool
-Dhcpv6Srv::earlyGHRLookup(const Pkt6Ptr& query,
+Dhcpv6Srv::earlyGHRLookup(Pkt6Ptr& query,
                           AllocEngine::ClientContext6& ctx) {
     // First part of context initialization.
     initContext0(query, ctx);
@@ -2628,13 +2628,14 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
 }
 
 HWAddrPtr
-Dhcpv6Srv::getMAC(const Pkt6Ptr& pkt) {
+Dhcpv6Srv::getMAC(Pkt6Ptr& pkt) {
     CfgMACSources mac_sources = CfgMgr::instance().getCurrentCfg()->
         getMACSources().get();
     HWAddrPtr hwaddr;
     for (auto const& it : mac_sources) {
         hwaddr = pkt->getMAC(it);
         if (hwaddr) {
+            pkt->setCachedHWAddr(hwaddr);
             return (hwaddr);
         }
     }

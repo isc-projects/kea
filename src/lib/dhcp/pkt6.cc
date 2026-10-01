@@ -728,11 +728,7 @@ Pkt6::makeLabel(const DuidPtr duid, const HWAddrPtr& hwaddr) {
 
 std::string
 Pkt6::getLabel() const {
-    /// @todo Do not print HW address as it is unclear how it should
-    /// be retrieved if there is no access to user configuration which
-    /// specifies the order of various techniques to be used to retrieve
-    /// it.
-    return (makeLabel(getClientId(), getTransid(), HWAddrPtr()));}
+    return (makeLabel(getClientId(), getTransid(), cached_hwaddr_));}
 
 std::string
 Pkt6::toText(bool /* verbose = false */) const {
@@ -1021,6 +1017,7 @@ Pkt6::getMACFromDocsisCMTS() {
     }
 
     return (mac);
+
 }
 
 HWAddrPtr
@@ -1061,6 +1058,16 @@ Pkt6::getMACFromRemoteIdRelayOption() {
     }
 
     return (mac);
+}
+
+HWAddrPtr
+Pkt6::getCachedHWAddr() const {
+    return (cached_hwaddr_);
+}
+
+void
+Pkt6::setCachedHWAddr(const HWAddrPtr& addr) {
+    cached_hwaddr_ = addr;
 }
 
 } // end of namespace isc::dhcp

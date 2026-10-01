@@ -1,0 +1,5 @@
+[func]		tmark
+	kea-dhcp6 will now emit the MAC address on most
+	log statements that include packet details. Prior
+	to this it always emitted "[no hwaddr info]"
+	(Gitlab #4243)

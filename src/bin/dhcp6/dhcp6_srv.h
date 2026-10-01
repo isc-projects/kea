@@ -285,7 +285,7 @@ public:
     ///
     /// @param query The query message.
     /// @param ctx Reference to client context.
-    void initContext0(const Pkt6Ptr& query,
+    void initContext0(Pkt6Ptr& query,
                       AllocEngine::ClientContext6& ctx);
 
     /// @brief Initialize client context and perform early global
@@ -295,7 +295,7 @@ public:
     /// @param ctx Reference to client context.
     /// @return true if processing can continue, false if the query must be
     /// dropped.
-    bool earlyGHRLookup(const Pkt6Ptr& query,
+    bool earlyGHRLookup(Pkt6Ptr& query,
                         AllocEngine::ClientContext6& ctx);
 
     /// @brief Set host identifiers within a context.
@@ -958,7 +958,7 @@ protected:
     ///
     /// @param pkt will try to exact MAC address from this packet
     /// @return HWaddr pointer (or NULL if configured methods fail)
-    static HWAddrPtr getMAC(const Pkt6Ptr& pkt);
+    static HWAddrPtr getMAC(Pkt6Ptr& pkt);
 
     /// @brief Processes Relay-supplied options, if present
     ///

@@ -2051,6 +2051,13 @@ TEST_F(Pkt6Test, getLabel) {
     EXPECT_EQ("duid=[01:02:02:02:02:03:03:03:03:03:03], [no hwaddr info], tid=0x2312",
               pkt_clone->getLabel());
 
+    HWAddrPtr hwaddr(new HWAddr(HWAddr::fromText("01:02:03:04:05:06",
+                                                 HTYPE_ETHER)));
+
+    // Verify cached_hwaddr_ is used if set.
+    pkt_clone->setCachedHWAddr(hwaddr);
+    EXPECT_EQ("duid=[01:02:02:02:02:03:03:03:03:03:03], [hwtype=1 01:02:03:04:05:06], tid=0x2312",
+              pkt_clone->getLabel());
 }
 
 // Test that empty client identifier option doesn't cause an exception from

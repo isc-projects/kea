@@ -241,7 +241,7 @@ public:
     ///
     /// @param request a message received from client
     /// @return REPLY message or null
-    Pkt6Ptr processSolicit(const Pkt6Ptr& solicit) {
+    Pkt6Ptr processSolicit(Pkt6Ptr& solicit) {
         AllocEngine::ClientContext6 ctx;
         bool drop = !earlyGHRLookup(solicit, ctx);
         if (drop) {
@@ -262,7 +262,7 @@ public:
     ///
     /// @param request a message received from client
     /// @return REPLY message or null
-    Pkt6Ptr processRequest(const Pkt6Ptr& request) {
+    Pkt6Ptr processRequest(Pkt6Ptr& request) {
         AllocEngine::ClientContext6 ctx;
         bool drop = !earlyGHRLookup(request, ctx);
         if (drop) {
@@ -283,7 +283,7 @@ public:
     ///
     /// @param renew a message received from client
     /// @return REPLY message or null
-    Pkt6Ptr processRenew(const Pkt6Ptr& renew) {
+    Pkt6Ptr processRenew(Pkt6Ptr& renew) {
         AllocEngine::ClientContext6 ctx;
         bool drop = !earlyGHRLookup(renew, ctx);
         if (drop) {
@@ -304,7 +304,7 @@ public:
     ///
     /// @param rebind a message received from client
     /// @return REPLY message or null
-    Pkt6Ptr processRebind(const Pkt6Ptr& rebind) {
+    Pkt6Ptr processRebind(Pkt6Ptr& rebind) {
         AllocEngine::ClientContext6 ctx;
         bool drop = !earlyGHRLookup(rebind, ctx);
         if (drop) {
@@ -325,7 +325,7 @@ public:
     ///
     /// @param release a message received from client
     /// @return REPLY message or null
-    Pkt6Ptr processRelease(const Pkt6Ptr& release) {
+    Pkt6Ptr processRelease(Pkt6Ptr& release) {
         AllocEngine::ClientContext6 ctx;
         bool drop = !earlyGHRLookup(release, ctx);
         if (drop) {
@@ -346,7 +346,7 @@ public:
     ///
     /// @param decline a message received from client
     /// @return REPLY message or null
-    Pkt6Ptr processDecline(const Pkt6Ptr& decline) {
+    Pkt6Ptr processDecline(Pkt6Ptr& decline) {
         AllocEngine::ClientContext6 ctx;
         bool drop = !earlyGHRLookup(decline, ctx);
         if (drop) {
@@ -367,7 +367,7 @@ public:
     ///
     /// @param addr_reg_inf a message received from client
     /// @return Addr-reg-reply message or null
-    Pkt6Ptr processAddrRegInform(const Pkt6Ptr& addr_reg_inf) {
+    Pkt6Ptr processAddrRegInform(Pkt6Ptr& addr_reg_inf) {
         AllocEngine::ClientContext6 ctx;
         bool drop = !earlyGHRLookup(addr_reg_inf, ctx);
         if (drop) {

@@ -6017,7 +6017,8 @@ TEST_F(HooksDhcpv6SrvTest, ddns6Update) {
     ASSERT_TRUE(callback_qry_pkt6_);
     ASSERT_TRUE(client.getContext().query_);
     EXPECT_EQ(client.getContext().query_->getType(), callback_qry_pkt6_->getType());
-    EXPECT_EQ(client.getContext().query_->getLabel(), callback_qry_pkt6_->getLabel());
+    // Compare client-id as cached-hwaddr has not been set in the client context query.
+    EXPECT_EQ(*(client.getContext().query_->getClientId()), *(callback_qry_pkt6_->getClientId()));
 
     // Verify response in the callout is as expected.
     ASSERT_TRUE(callback_resp_pkt6_);

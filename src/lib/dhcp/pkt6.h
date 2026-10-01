@@ -475,6 +475,14 @@ public:
     /// client).
     std::vector<RelayInfo> relay_info_;
 
+    /// @brief Returns cached hardware address
+    /// @return hardware address structure
+    HWAddrPtr getCachedHWAddr() const;
+
+    /// @brief Sets the cached hardware address
+    /// @return cached hardware address structure
+    void setCachedHWAddr(const HWAddrPtr& addr);
+
 protected:
 
     /// @brief Attempts to generate MAC/Hardware address from IPv6 link-local
@@ -621,6 +629,12 @@ protected:
 
     /// DHCPv6 message type
     uint8_t msg_type_;
+
+    /// @brief link-layer address and hardware information
+    /// represents 3 fields: htype (hardware type, 1 byte), hlen (length of the
+    /// hardware address, up to 16) and chaddr (hardware address field,
+    /// 16 bytes).
+    HWAddrPtr cached_hwaddr_;
 
 }; // Pkt6 class
 
