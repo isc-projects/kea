@@ -1,0 +1,102 @@
+#!/bin/sh
+
+# Copyright (C) 2025-2026 Internet Systems Consortium, Inc. ("ISC") #
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+prefix="@prefix@"
+
+# Include utilities based on location of this script. Check for sources first,
+# so that the unexpected situations with weird paths fall on the default
+# case of installed.
+script_path=$(cd "$(dirname "${0}")" && pwd)
+if test "${script_path}" = "@abs_top_builddir@/src/share/database/scripts/mysql"; then
+    # shellcheck source=./src/bin/admin/admin-utils.sh.in
+    . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
+else
+    # shellcheck source=./src/bin/admin/admin-utils.sh.in
+    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
+fi
+
+# Check only major version to allow for intermediary backported schema changes.
+version=$(mysql_version "${@}" | cut -d '.' -f 1)
+if test "${version}" != '35'; then
+    printf 'This script upgrades 35.* to 36.0. '
+    printf 'Reported version is %s. Skipping upgrade.\n' "${version}"
+    exit 0
+fi
+
+mysql "$@" <<EOF
+
+-- This line starts the schema upgrade to version 36.0.
+
+-- Add missing DDNS related columns to shared networks, subnets, and pools
+ALTER TABLE dhcp4_shared_network
+    ADD COLUMN ddns_conflict_resolution_mode VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_reverse_zone VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN hostname_char_set VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN hostname_char_replacement VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE dhcp6_shared_network
+    ADD COLUMN ddns_conflict_resolution_mode VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_reverse_zone VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN hostname_char_set VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN hostname_char_replacement VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE dhcp4_subnet
+    ADD COLUMN ddns_conflict_resolution_mode VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_reverse_zone VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN hostname_char_set VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN hostname_char_replacement VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE dhcp6_subnet
+    ADD COLUMN ddns_conflict_resolution_mode VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_reverse_zone VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN hostname_char_set VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN hostname_char_replacement VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE dhcp4_pool
+    ADD COLUMN ddns_send_updates TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_override_no_update TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_override_client_update TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_replace_client_name TINYINT(3) DEFAULT NULL,
+    ADD COLUMN ddns_generated_prefix VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_qualifying_suffix VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_update_on_renew TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_conflict_resolution_mode VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_ttl INT(10) DEFAULT NULL,
+    ADD COLUMN ddns_ttl_min INT(10) DEFAULT NULL,
+    ADD COLUMN ddns_ttl_max INT(10) DEFAULT NULL,
+    ADD COLUMN ddns_ttl_percent float DEFAULT NULL,
+    ADD COLUMN ddns_reverse_zone VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE dhcp6_pool
+    ADD COLUMN ddns_send_updates TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_override_no_update TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_override_client_update TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_replace_client_name TINYINT(3) DEFAULT NULL,
+    ADD COLUMN ddns_generated_prefix VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_qualifying_suffix VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_update_on_renew TINYINT(1) DEFAULT NULL,
+    ADD COLUMN ddns_conflict_resolution_mode VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_ttl INT(10) DEFAULT NULL,
+    ADD COLUMN ddns_ttl_min INT(10) DEFAULT NULL,
+    ADD COLUMN ddns_ttl_max INT(10) DEFAULT NULL,
+    ADD COLUMN ddns_ttl_percent float DEFAULT NULL,
+    ADD COLUMN ddns_reverse_zone VARCHAR(255) DEFAULT NULL;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '36', minor = '0';
+
+-- This line concludes the schema upgrade to version 36.0.
+
+EOF

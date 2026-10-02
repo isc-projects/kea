@@ -13,6 +13,138 @@ namespace isc {
 namespace dhcp {
 
 bool
+DdnsParams::getEnableUpdates() const {
+    if (!subnet_) {
+        return (false);
+    }
+
+    if (pool_) {
+        auto optional = pool_->getDdnsSendUpdates();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
+    }
+
+    return (d2_client_enabled_ && subnet_->getDdnsSendUpdates().get());
+}
+
+bool
+DdnsParams::getOverrideNoUpdate() const {
+    if (!subnet_) {
+        return (false);
+    }
+
+    if (pool_) {
+        auto optional = pool_->getDdnsOverrideNoUpdate();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
+    }
+
+    return (subnet_->getDdnsOverrideNoUpdate().get());
+}
+
+bool DdnsParams::getOverrideClientUpdate() const {
+    if (!subnet_) {
+        return (false);
+    }
+
+    if (pool_) {
+        auto optional = pool_->getDdnsOverrideClientUpdate();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
+    }
+
+    return (subnet_->getDdnsOverrideClientUpdate().get());
+}
+
+D2ClientConfig::ReplaceClientNameMode
+DdnsParams::getReplaceClientNameMode() const {
+    if (!subnet_) {
+        return (D2ClientConfig::RCM_NEVER);
+    }
+
+    if (pool_) {
+        auto optional = pool_->getDdnsReplaceClientNameMode();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
+    }
+
+    return (subnet_->getDdnsReplaceClientNameMode().get());
+}
+
+std::string
+DdnsParams::getGeneratedPrefix() const {
+    if (!subnet_) {
+        return ("");
+    }
+
+    if (pool_) {
+        auto optional = pool_->getDdnsGeneratedPrefix();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
+    }
+
+    return (subnet_->getDdnsGeneratedPrefix().get());
+}
+
+std::string
+DdnsParams::getQualifyingSuffix() const {
+    if (!subnet_) {
+        return ("");
+    }
+
+    if (pool_) {
+        auto optional = pool_->getDdnsQualifyingSuffix();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
+    }
+
+    return (subnet_->getDdnsQualifyingSuffix().get());
+}
+
+std::string
+DdnsParams::getHostnameCharSet() const {
+    if (!subnet_) {
+        return ("");
+    }
+
+    return (subnet_->getHostnameCharSet().get());
+}
+
+std::string
+DdnsParams::getHostnameCharReplacement() const {
+    if (!subnet_) {
+        return ("");
+    }
+
+    return (subnet_->getHostnameCharReplacement().get());
+}
+
+util::str::StringSanitizerPtr
+DdnsParams::getHostnameSanitizer() const {
+    util::str::StringSanitizerPtr sanitizer;
+    if (subnet_) {
+        std::string char_set = getHostnameCharSet();
+        if (!char_set.empty()) {
+            try {
+                sanitizer.reset(new util::str::StringSanitizer(char_set,
+                                                               getHostnameCharReplacement()));
+            } catch (const std::exception& ex) {
+                isc_throw(BadValue, "hostname_char_set_: '" << char_set <<
+                                    "' is not a valid regular expression");
+            }
+        }
+    }
+
+    return (sanitizer);
+}
+
+bool
 DdnsParams::getUpdateOnRenew() const {
     if (!subnet_) {
         return (false);

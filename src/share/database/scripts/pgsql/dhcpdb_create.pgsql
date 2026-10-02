@@ -7808,6 +7808,69 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 35.0.
 
+-- This line starts the schema upgrade to version 36.0.
+
+-- Add missing DDNS related columns to shared networks, subnets, and pools
+ALTER TABLE dhcp4_shared_network
+    ADD COLUMN ddns_conflict_resolution_mode VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_reverse_zone VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN hostname_char_set VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN hostname_char_replacement VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE dhcp6_shared_network
+    ADD COLUMN ddns_conflict_resolution_mode VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_reverse_zone VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN hostname_char_set VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN hostname_char_replacement VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE dhcp4_subnet
+    ADD COLUMN ddns_conflict_resolution_mode VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_reverse_zone VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN hostname_char_set VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN hostname_char_replacement VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE dhcp6_subnet
+    ADD COLUMN ddns_conflict_resolution_mode VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_reverse_zone VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN hostname_char_set VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN hostname_char_replacement VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE dhcp4_pool
+    ADD COLUMN ddns_send_updates BOOLEAN DEFAULT NULL,
+    ADD COLUMN ddns_override_no_update BOOLEAN DEFAULT NULL,
+    ADD COLUMN ddns_override_client_update BOOLEAN DEFAULT NULL,
+    ADD COLUMN ddns_replace_client_name INT8 DEFAULT NULL,
+    ADD COLUMN ddns_generated_prefix VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_qualifying_suffix VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_update_on_renew BOOLEAN DEFAULT NULL,
+    ADD COLUMN ddns_conflict_resolution_mode VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_ttl BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_min BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_max BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_percent FLOAT DEFAULT NULL,
+    ADD COLUMN ddns_reverse_zone VARCHAR(255) DEFAULT NULL;
+
+ALTER TABLE dhcp6_pool
+    ADD COLUMN ddns_send_updates BOOLEAN DEFAULT NULL,
+    ADD COLUMN ddns_override_no_update BOOLEAN DEFAULT NULL,
+    ADD COLUMN ddns_override_client_update BOOLEAN DEFAULT NULL,
+    ADD COLUMN ddns_replace_client_name INT8 DEFAULT NULL,
+    ADD COLUMN ddns_generated_prefix VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_qualifying_suffix VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_update_on_renew BOOLEAN DEFAULT NULL,
+    ADD COLUMN ddns_conflict_resolution_mode VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN ddns_ttl BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_min BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_max BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_percent FLOAT DEFAULT NULL,
+    ADD COLUMN ddns_reverse_zone VARCHAR(255) DEFAULT NULL;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '36', minor = '0';
+
+-- This line concludes the schema upgrade to version 36.0.
+
 -- Commit the script transaction.
 COMMIT;
 

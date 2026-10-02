@@ -166,7 +166,7 @@ pgsql_db_version_test() {
     run_command \
         "${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "35.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "36.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -1247,6 +1247,68 @@ pgsql_upgrade_33_to_34_test() {
     run_statement "Post-test deletes" "${qry}"
 }
 
+pgsql_upgrade_35_to_36_test() {
+    # check missing ddns fields were added to dhcp4_shared_network
+    table="dhcp4_shared_network"
+    check_table_column ddns_conflict_resolution_mode ${table}
+    check_table_column ddns_reverse_zone ${table}
+    check_table_column hostname_char_set ${table}
+    check_table_column hostname_char_replacement ${table}
+
+    # check missing ddns fields were added to dhcp6_shared_network
+    table="dhcp6_shared_network"
+    check_table_column ddns_conflict_resolution_mode ${table}
+    check_table_column ddns_reverse_zone ${table}
+    check_table_column hostname_char_set ${table}
+    check_table_column hostname_char_replacement ${table}
+
+    # check missing ddns fields were added to dhcp4_subnet
+    table="dhcp4_subnet"
+    check_table_column ddns_conflict_resolution_mode ${table}
+    check_table_column ddns_reverse_zone ${table}
+    check_table_column hostname_char_set ${table}
+    check_table_column hostname_char_replacement ${table}
+
+    # check missing ddns fields were added to
+    table="dhcp6_subnet"
+    check_table_column ddns_conflict_resolution_mode ${table}
+    check_table_column ddns_reverse_zone ${table}
+    check_table_column hostname_char_set ${table}
+    check_table_column hostname_char_replacement ${table}
+
+    # check missing ddns fields were added to dhcp4_pool
+    table="dhcp4_pool"
+    check_table_column ddns_send_updates ${table}
+    check_table_column ddns_override_no_update ${table}
+    check_table_column ddns_override_client_update ${table}
+    check_table_column ddns_replace_client_name ${table}
+    check_table_column ddns_generated_prefix ${table}
+    check_table_column ddns_qualifying_suffix ${table}
+    check_table_column ddns_update_on_renew ${table}
+    check_table_column ddns_conflict_resolution_mode ${table}
+    check_table_column ddns_ttl ${table}
+    check_table_column ddns_ttl_min ${table}
+    check_table_column ddns_ttl_max ${table}
+    check_table_column ddns_ttl_percent ${table}
+    check_table_column ddns_reverse_zone ${table}
+
+    # check missing ddns fields were added to dhcp6_pool
+    table="dhcp6_pool"
+    check_table_column ddns_send_updates ${table}
+    check_table_column ddns_override_no_update ${table}
+    check_table_column ddns_override_client_update ${table}
+    check_table_column ddns_replace_client_name ${table}
+    check_table_column ddns_generated_prefix ${table}
+    check_table_column ddns_qualifying_suffix ${table}
+    check_table_column ddns_update_on_renew ${table}
+    check_table_column ddns_conflict_resolution_mode ${table}
+    check_table_column ddns_ttl ${table}
+    check_table_column ddns_ttl_min ${table}
+    check_table_column ddns_ttl_max ${table}
+    check_table_column ddns_ttl_percent ${table}
+    check_table_column ddns_reverse_zone ${table}
+}
+
 pgsql_upgrade_test() {
     test_start "pgsql.upgrade"
 
@@ -1265,7 +1327,7 @@ pgsql_upgrade_test() {
 
     # Verify upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "35.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
+    assert_str_eq "36.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
 
     # Check 1.0 to 2.0 upgrade
     pgsql_upgrade_1_0_to_2_0_test
@@ -1359,6 +1421,9 @@ pgsql_upgrade_test() {
 
     # Check 33 to 34 upgrade
     pgsql_upgrade_33_to_34_test
+
+    # Check 35 to 36 upgrade
+    pgsql_upgrade_35_to_36_test
 
     # Let's wipe the whole database
     pgsql_wipe

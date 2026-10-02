@@ -165,7 +165,7 @@ mysql_db_version_test() {
     run_command \
         "${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "35.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "36.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1252,6 +1252,68 @@ mysql_upgrade_34_to_35_test() {
     run_statement "Post-test deletes" "${qry}"
 }
 
+mysql_upgrade_35_to_36_test() {
+    # check missing ddns fields were added to dhcp4_shared_network
+    table="dhcp4_shared_network"
+    check_table_column ddns_conflict_resolution_mode ${table}
+    check_table_column ddns_reverse_zone ${table}
+    check_table_column hostname_char_set ${table}
+    check_table_column hostname_char_replacement ${table}
+
+    # check missing ddns fields were added to dhcp6_shared_network
+    table="dhcp6_shared_network"
+    check_table_column ddns_conflict_resolution_mode ${table}
+    check_table_column ddns_reverse_zone ${table}
+    check_table_column hostname_char_set ${table}
+    check_table_column hostname_char_replacement ${table}
+
+    # check missing ddns fields were added to dhcp4_subnet
+    table="dhcp4_subnet"
+    check_table_column ddns_conflict_resolution_mode ${table}
+    check_table_column ddns_reverse_zone ${table}
+    check_table_column hostname_char_set ${table}
+    check_table_column hostname_char_replacement ${table}
+
+    # check missing ddns fields were added to
+    table="dhcp6_subnet"
+    check_table_column ddns_conflict_resolution_mode ${table}
+    check_table_column ddns_reverse_zone ${table}
+    check_table_column hostname_char_set ${table}
+    check_table_column hostname_char_replacement ${table}
+
+    # check missing ddns fields were added to dhcp4_pool
+    table="dhcp4_pool"
+    check_table_column ddns_send_updates ${table}
+    check_table_column ddns_override_no_update ${table}
+    check_table_column ddns_override_client_update ${table}
+    check_table_column ddns_replace_client_name ${table}
+    check_table_column ddns_generated_prefix ${table}
+    check_table_column ddns_qualifying_suffix ${table}
+    check_table_column ddns_update_on_renew ${table}
+    check_table_column ddns_conflict_resolution_mode ${table}
+    check_table_column ddns_ttl ${table}
+    check_table_column ddns_ttl_min ${table}
+    check_table_column ddns_ttl_max ${table}
+    check_table_column ddns_ttl_percent ${table}
+    check_table_column ddns_reverse_zone ${table}
+
+    # check missing ddns fields were added to dhcp6_pool
+    table="dhcp6_pool"
+    check_table_column ddns_send_updates ${table}
+    check_table_column ddns_override_no_update ${table}
+    check_table_column ddns_override_client_update ${table}
+    check_table_column ddns_replace_client_name ${table}
+    check_table_column ddns_generated_prefix ${table}
+    check_table_column ddns_qualifying_suffix ${table}
+    check_table_column ddns_update_on_renew ${table}
+    check_table_column ddns_conflict_resolution_mode ${table}
+    check_table_column ddns_ttl ${table}
+    check_table_column ddns_ttl_min ${table}
+    check_table_column ddns_ttl_max ${table}
+    check_table_column ddns_ttl_percent ${table}
+    check_table_column ddns_reverse_zone ${table}
+}
+
 mysql_upgrade_test() {
 
     test_start "mysql.upgrade"
@@ -1273,7 +1335,7 @@ mysql_upgrade_test() {
 
     # Verify that the upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "35.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "36.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's check that the new tables are indeed there.
 
@@ -1974,6 +2036,9 @@ SET @disable_audit = 0"
 
     # Check upgrade from 34.0 to 35.0.
     mysql_upgrade_34_to_35_test
+
+    # Check upgrade from 35.0 to 36.0.
+    mysql_upgrade_35_to_36_test
 
     # Let's wipe the whole database
     mysql_wipe
@@ -5036,8 +5101,8 @@ mysql_migrate_IA_TA() {
     qry="select count(*) from lease6 where lease_type = 2;"
     run_statement "Step 2 - PD" "$qry" 1
 
-    # Upgrade to schema 35.0
-    mysql_upgrade_schema_to_version 35.0
+    # Upgrade to schema 36.0
+    mysql_upgrade_schema_to_version 36.0
 
     # Verify the post-upgrade record counts.
     qry="select count(*) from lease6 where lease_type = 0;"
