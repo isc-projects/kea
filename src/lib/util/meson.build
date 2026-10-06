@@ -57,6 +57,7 @@ kea_util_headers = [
     'labeled_value.h',
     'multi_threading_mgr.h',
     'optional.h',
+    'patricia_tree.h',
     'pid_file.h',
     'pointer_util.h',
     'poll_event_handler.h',

@@ -27,6 +27,7 @@ kea_util_tests = executable(
     'labeled_value_unittest.cc',
     'multi_threading_mgr_unittest.cc',
     'optional_unittest.cc',
+    'patricia_tree_unittest.cc',
     'pid_file_unittest.cc',
     'poll_event_handler_unittests.cc',
     'range_utilities_unittest.cc',
