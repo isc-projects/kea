@@ -128,6 +128,24 @@ namespace {
     "  s.ddns_ttl," \
     "  s.ddns_ttl_min," \
     "  s.ddns_ttl_max," \
+    "  s.ddns_update_on_renew, " \
+    "  s.ddns_conflict_resolution_mode, " \
+    "  s.ddns_reverse_zone, " \
+    "  s.hostname_char_set, " \
+    "  s.hostname_char_replacement, " \
+    "  p.ddns_send_updates," \
+    "  p.ddns_override_no_update," \
+    "  p.ddns_override_client_update," \
+    "  p.ddns_replace_client_name," \
+    "  p.ddns_generated_prefix," \
+    "  p.ddns_qualifying_suffix," \
+    "  p.ddns_ttl_percent," \
+    "  p.ddns_ttl," \
+    "  p.ddns_ttl_min," \
+    "  p.ddns_ttl_max," \
+    "  p.ddns_update_on_renew, " \
+    "  p.ddns_conflict_resolution_mode, " \
+    "  p.ddns_reverse_zone, " \
     "  srv.tag " \
     "FROM dhcp4_subnet AS s " \
     server_join \
@@ -268,6 +286,24 @@ namespace {
     "  s.ddns_ttl," \
     "  s.ddns_ttl_min," \
     "  s.ddns_ttl_max," \
+    "  s.ddns_update_on_renew, " \
+    "  s.ddns_conflict_resolution_mode, " \
+    "  s.ddns_reverse_zone, " \
+    "  s.hostname_char_set, " \
+    "  s.hostname_char_replacement, " \
+    "  p.ddns_send_updates," \
+    "  p.ddns_override_no_update," \
+    "  p.ddns_override_client_update," \
+    "  p.ddns_replace_client_name," \
+    "  p.ddns_generated_prefix," \
+    "  p.ddns_qualifying_suffix," \
+    "  p.ddns_ttl_percent," \
+    "  p.ddns_ttl," \
+    "  p.ddns_ttl_min," \
+    "  p.ddns_ttl_max," \
+    "  p.ddns_update_on_renew, " \
+    "  p.ddns_conflict_resolution_mode, " \
+    "  p.ddns_reverse_zone, " \
     "  srv.tag " \
     "FROM dhcp6_subnet AS s " \
     server_join \
@@ -489,6 +525,11 @@ namespace {
     "  n.ddns_ttl," \
     "  n.ddns_ttl_min," \
     "  n.ddns_ttl_max," \
+    "  n.ddns_update_on_renew, " \
+    "  n.ddns_conflict_resolution_mode, " \
+    "  n.ddns_reverse_zone, " \
+    "  n.hostname_char_set, " \
+    "  n.hostname_char_replacement, " \
     "  s.tag " \
     "FROM dhcp4_shared_network AS n " \
     server_join \
@@ -577,6 +618,11 @@ namespace {
     "  n.ddns_ttl," \
     "  n.ddns_ttl_min," \
     "  n.ddns_ttl_max," \
+    "  n.ddns_update_on_renew, " \
+    "  n.ddns_conflict_resolution_mode, " \
+    "  n.ddns_reverse_zone, " \
+    "  n.hostname_char_set, " \
+    "  n.hostname_char_replacement, " \
     "  s.tag " \
     "FROM dhcp6_shared_network AS n " \
     server_join \
@@ -878,8 +924,21 @@ namespace {
     "  client_classes," \
     "  evaluate_additional_classes," \
     "  user_context," \
+    "  ddns_send_updates," \
+    "  ddns_override_no_update," \
+    "  ddns_override_client_update," \
+    "  ddns_replace_client_name," \
+    "  ddns_generated_prefix," \
+    "  ddns_qualifying_suffix," \
+    "  ddns_ttl_percent," \
+    "  ddns_ttl," \
+    "  ddns_ttl_min," \
+    "  ddns_ttl_max," \
+    "  ddns_update_on_renew, " \
+    "  ddns_conflict_resolution_mode, " \
+    "  ddns_reverse_zone, " \
     "  modification_ts" \
-    ") VALUES (?, ?, ?, ?, ?, ?, ?)"
+    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 #endif
 
 #ifndef MYSQL_INSERT_PD_POOL

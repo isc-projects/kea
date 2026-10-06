@@ -139,6 +139,21 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
     subnet->setOfferLft(77);
     subnet->setAllocatorType("random");
     subnet->setDdnsTtl(880);
+    subnet->setDdnsOverrideNoUpdate(true);
+    subnet->setDdnsOverrideClientUpdate(true);
+    subnet->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_WHEN_PRESENT);
+    subnet->setDdnsGeneratedPrefix("myprefix");
+    subnet->setDdnsQualifyingSuffix("mysuffix.com");
+    subnet->setDdnsTtlPercent(0.25);
+    subnet->setDdnsTtlMin(1);
+    subnet->setDdnsTtlMax(100);
+    subnet->setDdnsUpdateOnRenew(true);
+    subnet->setDdnsConflictResolutionMode("no-check-with-dhcid");
+#if 0  // WAITING for #4243
+    subnet->setDdnsReverseZone("backward.com.");
+#endif
+    subnet->setHostnameCharSet("[^B-Zb-z0-9.-]");
+    subnet->setHostnameCharReplacement("z");
 
     Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.10"),
                              IOAddress("192.0.2.20")));
@@ -163,6 +178,28 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
 
     pool1.reset(new Pool4(IOAddress("10.0.0.10"),
                           IOAddress("10.0.0.20")));
+    // Set all pool params in pool1.
+    pool1->allowClientClass("guard1");
+    pool1->addAdditionalClass("extra1");
+    pool1->setContext(user_context);
+    pool1->setDdnsSendUpdates(false);
+    pool1->setDdnsTtl(700);
+    pool1->setDdnsOverrideNoUpdate(false);
+    pool1->setDdnsOverrideClientUpdate(false);
+    pool1->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_WHEN_PRESENT);
+    pool1->setDdnsGeneratedPrefix("pool_prefix");
+    pool1->setDdnsQualifyingSuffix("pool_suffix.com");
+    pool1->setDdnsTtlPercent(0.75);
+    pool1->setDdnsTtlMin(10);
+    pool1->setDdnsTtlMax(200);
+    pool1->setDdnsUpdateOnRenew(false);
+    pool1->setDdnsConflictResolutionMode("no-check-with-dhcid");
+#if 0  // WAITING for #4243
+    subnet->setDdnsReverseZone("pool.backward.com.");
+#endif
+    /// @todo TKM add hostname_char...
+    //pool1->setHostnameCharSet("[^P-Zb-z0-9.-]");
+    //pool1->setHostnameCharReplacement("y");
     subnet->addPool(pool1);
 
     pool1->getCfgOption()->add(*test_options_[3], test_options_[3]->space_name_);
@@ -243,6 +280,22 @@ GenericConfigBackendDHCPv4Test::initTestSharedNetworks() {
     shared_network->setDdnsTtlPercent(0.70);
     shared_network->setDdnsTtlMin(200);
     shared_network->setDdnsTtlMax(800);
+    shared_network->setDdnsTtl(880);
+    shared_network->setDdnsOverrideNoUpdate(true);
+    shared_network->setDdnsOverrideClientUpdate(true);
+    shared_network->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_WHEN_PRESENT);
+    shared_network->setDdnsGeneratedPrefix("myprefix");
+    shared_network->setDdnsQualifyingSuffix("mysuffix.com");
+    shared_network->setDdnsTtlPercent(0.25);
+    shared_network->setDdnsTtlMin(1);
+    shared_network->setDdnsTtlMax(100);
+    shared_network->setDdnsUpdateOnRenew(true);
+    shared_network->setDdnsConflictResolutionMode("no-check-with-dhcid");
+#if 0  // WAITING for #4243
+    shared_network->setDdnsReverseZone("backward.com.");
+#endif
+    shared_network->setHostnameCharSet("[^C-Zb-z0-9.-]");
+    shared_network->setHostnameCharReplacement("w");
 
     // Add several options to the shared network.
     shared_network->getCfgOption()->add(*test_options_[2], test_options_[2]->space_name_);

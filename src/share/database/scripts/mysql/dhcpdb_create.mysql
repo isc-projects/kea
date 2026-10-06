@@ -7571,24 +7571,28 @@ UPDATE schema_version
 
 -- Add missing DDNS related columns to shared networks, subnets, and pools
 ALTER TABLE dhcp4_shared_network
+    ADD COLUMN ddns_update_on_renew TINYINT(1) DEFAULT NULL,
     ADD COLUMN ddns_conflict_resolution_mode VARCHAR(255) DEFAULT NULL,
     ADD COLUMN ddns_reverse_zone VARCHAR(255) DEFAULT NULL,
     ADD COLUMN hostname_char_set VARCHAR(255) DEFAULT NULL,
     ADD COLUMN hostname_char_replacement VARCHAR(255) DEFAULT NULL;
 
 ALTER TABLE dhcp6_shared_network
+    ADD COLUMN ddns_update_on_renew TINYINT(1) DEFAULT NULL,
     ADD COLUMN ddns_conflict_resolution_mode VARCHAR(255) DEFAULT NULL,
     ADD COLUMN ddns_reverse_zone VARCHAR(255) DEFAULT NULL,
     ADD COLUMN hostname_char_set VARCHAR(255) DEFAULT NULL,
     ADD COLUMN hostname_char_replacement VARCHAR(255) DEFAULT NULL;
 
 ALTER TABLE dhcp4_subnet
+    ADD COLUMN ddns_update_on_renew TINYINT(1) DEFAULT NULL,
     ADD COLUMN ddns_conflict_resolution_mode VARCHAR(255) DEFAULT NULL,
     ADD COLUMN ddns_reverse_zone VARCHAR(255) DEFAULT NULL,
     ADD COLUMN hostname_char_set VARCHAR(255) DEFAULT NULL,
     ADD COLUMN hostname_char_replacement VARCHAR(255) DEFAULT NULL;
 
 ALTER TABLE dhcp6_subnet
+    ADD COLUMN ddns_update_on_renew TINYINT(1) DEFAULT NULL,
     ADD COLUMN ddns_conflict_resolution_mode VARCHAR(255) DEFAULT NULL,
     ADD COLUMN ddns_reverse_zone VARCHAR(255) DEFAULT NULL,
     ADD COLUMN hostname_char_set VARCHAR(255) DEFAULT NULL,

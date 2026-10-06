@@ -82,6 +82,12 @@ constexpr unsigned long DNS_NAME_BUF_LENGTH = 255;
 
 constexpr unsigned long ALLOCATOR_TYPE_BUF_LENGTH = 64;
 
+constexpr unsigned long DDNS_CR_MODE_LENGTH = 255;
+
+constexpr unsigned long HOSTNAME_CHAR_SET_LENGTH = 255;
+
+constexpr unsigned long HOSTNAME_CHAR_REPLACMENT_LENGTH = 255;
+
 //*}
 
 } // end of namespace isc::cb

@@ -290,85 +290,103 @@ public:
         // line counting and indexing match.
         // The server tag must be the last field.
         MySqlBindingCollection out__bindings = {
-            MySqlBinding::createInteger<uint32_t>(), // subnet_id
-            MySqlBinding::createString(SUBNET4_PREFIX_BUF_LENGTH), // subnet_prefix
-            MySqlBinding::createString(DHCP4O6_INTERFACE_BUF_LENGTH), // 4o6_interface
-            MySqlBinding::createString(DHCP4O6_INTERFACE_ID_BUF_LENGTH), // 4o6_interface_id
-            MySqlBinding::createString(DHCP4O6_SUBNET_BUF_LENGTH), // 4o6_subnet
-            MySqlBinding::createString(BOOT_FILE_NAME_BUF_LENGTH), // boot_file_name
-            MySqlBinding::createString(CLIENT_CLASS_BUF_LENGTH), // client_class
-            MySqlBinding::createString(INTERFACE_BUF_LENGTH), // interface
-            MySqlBinding::createInteger<uint8_t>(), // match_client_id
-            MySqlBinding::createTimestamp(), // modification_ts
-            MySqlBinding::createInteger<uint32_t>(), // next_server
-            MySqlBinding::createInteger<uint32_t>(), // rebind_timer
-            MySqlBinding::createString(RELAY_BUF_LENGTH), // relay
-            MySqlBinding::createInteger<uint32_t>(), // renew_timer
-            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // evaluate_additional_classes
-            MySqlBinding::createInteger<uint8_t>(), // reservations_global
-            MySqlBinding::createString(SERVER_HOSTNAME_BUF_LENGTH), // server_hostname
-            MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // shared_network_name
-            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // user_context
-            MySqlBinding::createInteger<uint32_t>(), // valid_lifetime
-            MySqlBinding::createInteger<uint64_t>(), // pool: id
-            MySqlBinding::createInteger<uint32_t>(), // pool: start_address
-            MySqlBinding::createInteger<uint32_t>(), // pool: end_address
-            MySqlBinding::createInteger<uint32_t>(), // pool: subnet_id
-            MySqlBinding::createTimestamp(), // pool: modification_ts
-            MySqlBinding::createInteger<uint64_t>(), // pool option: option_id
-            MySqlBinding::createInteger<uint8_t>(), // pool option: code
-            MySqlBinding::createBlob(OPTION_VALUE_BUF_LENGTH), // pool option: value
-            MySqlBinding::createString(FORMATTED_OPTION_VALUE_BUF_LENGTH), // pool option: formatted_value
-            MySqlBinding::createString(OPTION_SPACE_BUF_LENGTH), // pool option: space
-            MySqlBinding::createInteger<uint8_t>(), // pool option: persistent
-            MySqlBinding::createInteger<uint8_t>(), // pool option: cancelled
-            MySqlBinding::createInteger<uint32_t>(), // pool option: dhcp4_subnet_id
-            MySqlBinding::createInteger<uint8_t>(), // pool option: scope_id
-            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // pool option: user_context
-            MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // pool option: shared_network_name
-            MySqlBinding::createInteger<uint64_t>(), // pool option: pool_id
-            MySqlBinding::createTimestamp(), //pool option: modification_ts
-            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // pool option: client_classes
-            MySqlBinding::createInteger<uint64_t>(), // option: option_id
-            MySqlBinding::createInteger<uint8_t>(), // option: code
-            MySqlBinding::createBlob(OPTION_VALUE_BUF_LENGTH), // option: value
-            MySqlBinding::createString(FORMATTED_OPTION_VALUE_BUF_LENGTH), // option: formatted_value
-            MySqlBinding::createString(OPTION_SPACE_BUF_LENGTH), // option: space
-            MySqlBinding::createInteger<uint8_t>(), // option: persistent
-            MySqlBinding::createInteger<uint8_t>(), // option: cancelled
-            MySqlBinding::createInteger<uint32_t>(), // option: dhcp4_subnet_id
-            MySqlBinding::createInteger<uint8_t>(), // option: scope_id
-            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // option: user_context
-            MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // option: shared_network_name
-            MySqlBinding::createInteger<uint64_t>(), // option: pool_id
-            MySqlBinding::createTimestamp(), //option: modification_ts
-            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // option: client_classes
-            MySqlBinding::createInteger<uint8_t>(), // calculate_tee_times
-            MySqlBinding::createInteger<float>(), // t1_percent
-            MySqlBinding::createInteger<float>(), // t2_percent
-            MySqlBinding::createInteger<uint8_t>(), // authoritative
-            MySqlBinding::createInteger<uint32_t>(), // min_valid_lifetime
-            MySqlBinding::createInteger<uint32_t>(), // max_valid_lifetime
-            MySqlBinding::createString(CLIENT_CLASS_BUF_LENGTH), // pool: client_class
-            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // pool: evaluate_additional_classes
-            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // pool: user_context
-            MySqlBinding::createInteger<uint8_t>(), // ddns_send_updates
-            MySqlBinding::createInteger<uint8_t>(), // ddns_override_no_update
-            MySqlBinding::createInteger<uint8_t>(), // ddns_override_client_update
-            MySqlBinding::createInteger<uint8_t>(), // ddns_replace_client_name
-            MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // ddns_generated_prefix
-            MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // ddns_qualifying_suffix
-            MySqlBinding::createInteger<uint8_t>(), // reservations_in_subnet
-            MySqlBinding::createInteger<uint8_t>(), // reservations_out_of_pool
-            MySqlBinding::createInteger<float>(), // cache_threshold
-            MySqlBinding::createInteger<uint32_t>(), // cache_max_age
-            MySqlBinding::createInteger<uint32_t>(), // offer lifetime
-            MySqlBinding::createString(ALLOCATOR_TYPE_BUF_LENGTH), // allocator
-            MySqlBinding::createInteger<float>(), // ddns_ttl_percent
-            MySqlBinding::createInteger<uint32_t>(), // ddns_ttl
-            MySqlBinding::createInteger<uint32_t>(), // ddns_ttl_min
-            MySqlBinding::createInteger<uint32_t>(), // ddns_ttl_max
-            MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
+            MySqlBinding::createInteger<uint32_t>(), // subnet_id 0
+            MySqlBinding::createString(SUBNET4_PREFIX_BUF_LENGTH), // subnet_prefix 1
+            MySqlBinding::createString(DHCP4O6_INTERFACE_BUF_LENGTH), // 4o6_interface 2
+            MySqlBinding::createString(DHCP4O6_INTERFACE_ID_BUF_LENGTH), // 4o6_interface_id 3
+            MySqlBinding::createString(DHCP4O6_SUBNET_BUF_LENGTH), // 4o6_subnet 4
+            MySqlBinding::createString(BOOT_FILE_NAME_BUF_LENGTH), // boot_file_name 5
+            MySqlBinding::createString(CLIENT_CLASS_BUF_LENGTH), // client_class 6
+            MySqlBinding::createString(INTERFACE_BUF_LENGTH), // interface 7
+            MySqlBinding::createInteger<uint8_t>(), // match_client_id 8
+            MySqlBinding::createTimestamp(), // modification_ts 9
+            MySqlBinding::createInteger<uint32_t>(), // next_server 10
+            MySqlBinding::createInteger<uint32_t>(), // rebind_timer 11
+            MySqlBinding::createString(RELAY_BUF_LENGTH), // relay 12
+            MySqlBinding::createInteger<uint32_t>(), // renew_timer 13
+            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // evaluate_additional_classes 14
+            MySqlBinding::createInteger<uint8_t>(), // reservations_global 15
+            MySqlBinding::createString(SERVER_HOSTNAME_BUF_LENGTH), // server_hostname 16
+            MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // shared_network_name 17
+            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // user_context 18
+            MySqlBinding::createInteger<uint32_t>(), // valid_lifetime 19
+            MySqlBinding::createInteger<uint64_t>(), // pool: id 20
+            MySqlBinding::createInteger<uint32_t>(), // pool: start_address 21
+            MySqlBinding::createInteger<uint32_t>(), // pool: end_address 22
+            MySqlBinding::createInteger<uint32_t>(), // pool: subnet_id 23
+            MySqlBinding::createTimestamp(), // pool: modification_ts 24
+            MySqlBinding::createInteger<uint64_t>(), // pool option: option_id 25
+            MySqlBinding::createInteger<uint8_t>(), // pool option: code 26
+            MySqlBinding::createBlob(OPTION_VALUE_BUF_LENGTH), // pool option: value 27
+            MySqlBinding::createString(FORMATTED_OPTION_VALUE_BUF_LENGTH), // pool option: formatted_value 28
+            MySqlBinding::createString(OPTION_SPACE_BUF_LENGTH), // pool option: space 29
+            MySqlBinding::createInteger<uint8_t>(), // pool option: persistent 30
+            MySqlBinding::createInteger<uint8_t>(), // pool option: cancelled 31
+            MySqlBinding::createInteger<uint32_t>(), // pool option: dhcp4_subnet_id 32
+            MySqlBinding::createInteger<uint8_t>(), // pool option: scope_id 33
+            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // pool option: user_context 34
+            MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // pool option: shared_network_name 35
+            MySqlBinding::createInteger<uint64_t>(), // pool option: pool_id 36
+            MySqlBinding::createTimestamp(), //pool option: modification_ts 37
+            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // pool option: client_classes 38
+            MySqlBinding::createInteger<uint64_t>(), // option: option_id 39
+            MySqlBinding::createInteger<uint8_t>(), // option: code 40
+            MySqlBinding::createBlob(OPTION_VALUE_BUF_LENGTH), // option: value 41
+            MySqlBinding::createString(FORMATTED_OPTION_VALUE_BUF_LENGTH), // option: formatted_value 42
+            MySqlBinding::createString(OPTION_SPACE_BUF_LENGTH), // option: space 43
+            MySqlBinding::createInteger<uint8_t>(), // option: persistent 44
+            MySqlBinding::createInteger<uint8_t>(), // option: cancelled 45
+            MySqlBinding::createInteger<uint32_t>(), // option: dhcp4_subnet_id 46
+            MySqlBinding::createInteger<uint8_t>(), // option: scope_id 47
+            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // option: user_context 48
+            MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // option: shared_network_name 49
+            MySqlBinding::createInteger<uint64_t>(), // option: pool_id 50
+            MySqlBinding::createTimestamp(), //option: modification_ts 51
+            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // option: client_classes 52
+            MySqlBinding::createInteger<uint8_t>(), // calculate_tee_times 53
+            MySqlBinding::createInteger<float>(), // t1_percent 54
+            MySqlBinding::createInteger<float>(), // t2_percent 55
+            MySqlBinding::createInteger<uint8_t>(), // authoritative 56
+            MySqlBinding::createInteger<uint32_t>(), // min_valid_lifetime 57
+            MySqlBinding::createInteger<uint32_t>(), // max_valid_lifetime 58
+            MySqlBinding::createString(CLIENT_CLASS_BUF_LENGTH), // pool: client_class 59
+            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // pool: evaluate_additional_classes 60
+            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // pool: user_context 61
+            MySqlBinding::createInteger<uint8_t>(), // ddns_send_updates 62
+            MySqlBinding::createInteger<uint8_t>(), // ddns_override_no_update 63
+            MySqlBinding::createInteger<uint8_t>(), // ddns_override_client_update 64
+            MySqlBinding::createInteger<uint8_t>(), // ddns_replace_client_name 65
+            MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // ddns_generated_prefix 66
+            MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // ddns_qualifying_suffix 67
+            MySqlBinding::createInteger<uint8_t>(), // reservations_in_subnet 68
+            MySqlBinding::createInteger<uint8_t>(), // reservations_out_of_pool 69
+            MySqlBinding::createInteger<float>(), // cache_threshold 70
+            MySqlBinding::createInteger<uint32_t>(), // cache_max_age 71
+            MySqlBinding::createInteger<uint32_t>(), // offer lifetime 72
+            MySqlBinding::createString(ALLOCATOR_TYPE_BUF_LENGTH), // allocator 73
+            MySqlBinding::createInteger<float>(),    // ddns_ttl_percent 74
+            MySqlBinding::createInteger<uint32_t>(), // ddns_ttl 75
+            MySqlBinding::createInteger<uint32_t>(), // ddns_ttl_min 76
+            MySqlBinding::createInteger<uint32_t>(), // ddns_ttl_max 77
+            MySqlBinding::createInteger<uint8_t>(),  // ddns_update_on_renew 78
+            MySqlBinding::createString(DDNS_CR_MODE_LENGTH), // ddns_conflict_resolution_mode 79
+            MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // ddns_reverse_zone 80
+            MySqlBinding::createString(HOSTNAME_CHAR_SET_LENGTH), // hostname_char_set 81
+            MySqlBinding::createString(HOSTNAME_CHAR_REPLACMENT_LENGTH), //  hostname_char_replacement 82
+            MySqlBinding::createInteger<uint8_t>(), // pool:ddns_send_updates 83
+            MySqlBinding::createInteger<uint8_t>(), // pool:ddns_override_no_update 84
+            MySqlBinding::createInteger<uint8_t>(), // pool:ddns_override_client_update 85
+            MySqlBinding::createInteger<uint8_t>(), // pool:ddns_replace_client_name 86
+            MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // pool:ddns_generated_prefix 87
+            MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // pool:ddns_qualifying_suffix 88
+            MySqlBinding::createInteger<float>(), // pool:ddns_ttl_percent 89
+            MySqlBinding::createInteger<uint32_t>(), // pool:ddns_ttl 90
+            MySqlBinding::createInteger<uint32_t>(), // pool:ddns_ttl_min 91
+            MySqlBinding::createInteger<uint32_t>(), // pool:ddns_ttl_max 92
+            MySqlBinding::createInteger<uint8_t>(), // pool:ddns_update_on_renew 93
+            MySqlBinding::createString(DDNS_CR_MODE_LENGTH), // pool:ddns_conflict_resolution_mode 94
+            MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // pool:ddns_reverse_zone 95
+            MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag 96
         };
 
         uint64_t last_pool_id = 0;
@@ -577,7 +595,8 @@ public:
 
                 // ddns_replace_client_name at 65.
                 if (!out_bindings[65]->amNull()) {
-                    last_subnet->setDdnsReplaceClientNameMode(static_cast<D2ClientConfig::ReplaceClientNameMode>
+                    last_subnet->setDdnsReplaceClientNameMode(
+                        static_cast<D2ClientConfig::ReplaceClientNameMode>
                         (out_bindings[65]->getInteger<uint8_t>()));
                 }
 
@@ -642,7 +661,33 @@ public:
                     last_subnet->setDdnsTtlMax(out_bindings[77]->getInteger<uint32_t>());
                 }
 
-                // server_tag at 78.
+                // 78 ddns_update_on_renew
+                if (!out_bindings[78]->amNull()) {
+                    last_subnet->setDdnsUpdateOnRenew(out_bindings[78]->getBool());
+                }
+
+                // 79 ddns_update_conflict_resolution_mode
+                if (!out_bindings[79]->amNull()) {
+                    last_subnet->setDdnsConflictResolutionMode(out_bindings[79]->getString());
+                }
+
+#if 0   // need #4243 merged first
+                // 80 ddns_reverse_zone
+                if (!out_bindings[80]->amNull()) {
+                    last_subnet->setDdnsReverseZone(out_bindings[80]->getString());
+                }
+#endif
+                // 81 hostname_char_set
+                if (!out_bindings[81]->amNull()) {
+                    last_subnet->setHostnameCharSet(out_bindings[81]->getString());
+                }
+
+                // 82 hostname_char_set
+                if (!out_bindings[82]->amNull()) {
+                    last_subnet->setHostnameCharReplacement(out_bindings[82]->getString());
+                }
+
+                // server_tag at 97.
 
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.insert(last_subnet);
@@ -655,10 +700,10 @@ public:
                 }
             }
 
-            // Check for new server tags at 78.
-            if (!out_bindings[78]->amNull() &&
-                (last_tag != out_bindings[78]->getString())) {
-                last_tag = out_bindings[78]->getString();
+            // Check for new server tags at 96
+            if (!out_bindings[96]->amNull() &&
+                (last_tag != out_bindings[96]->getString())) {
+                last_tag = out_bindings[96]->getString();
                 if (!last_tag.empty() && !last_subnet->hasServerTag(ServerTag(last_tag))) {
                     last_subnet->setServerTag(last_tag);
                 }
@@ -694,6 +739,74 @@ public:
                     last_pool->setContext(user_context);
                 }
 
+                // pool ddns_send_updates at 83
+                if (!out_bindings[83]->amNull()) {
+                    last_pool->setDdnsSendUpdates(out_bindings[83]->getBool());
+                }
+
+                // pool ddns_override_no_update at 84
+                if (!out_bindings[84]->amNull()) {
+                    last_pool->setDdnsOverrideNoUpdate(out_bindings[84]->getBool());
+                }
+
+                // pool ddns_override_client_update at 85
+                if (!out_bindings[85]->amNull()) {
+                    last_pool->setDdnsOverrideClientUpdate(out_bindings[85]->getBool());
+                }
+
+                // pool ddns_replace_client_name at 86
+                if (!out_bindings[86]->amNull()) {
+                    last_pool->setDdnsReplaceClientNameMode(
+                        static_cast<D2ClientConfig::ReplaceClientNameMode>
+                        (out_bindings[86]->getInteger<uint8_t>()));
+                }
+
+                // pool ddns_generated_prefix at 87
+                if (!out_bindings[87]->amNull()) {
+                    last_pool->setDdnsGeneratedPrefix(out_bindings[87]->getString());
+                }
+
+                // pool ddns_qualifying_suffix at 88
+                if (!out_bindings[88]->amNull()) {
+                    last_pool->setDdnsQualifyingSuffix(out_bindings[88]->getString());
+                }
+
+                // ddns_ttl_percent at 89.
+                if (!out_bindings[89]->amNull()) {
+                    last_pool->setDdnsTtlPercent(out_bindings[89]->getFloat());
+                }
+
+                // ddns_ttl at 90.
+                if (!out_bindings[90]->amNull()) {
+                    last_pool->setDdnsTtl(out_bindings[90]->getInteger<uint32_t>());
+                }
+
+                // ddns_ttl_min at 91.
+                if (!out_bindings[91]->amNull()) {
+                    last_pool->setDdnsTtlMin(out_bindings[91]->getInteger<uint32_t>());
+                }
+
+                // ddns_ttl_max at 92.
+                if (!out_bindings[92]->amNull()) {
+                    last_pool->setDdnsTtlMax(out_bindings[92]->getInteger<uint32_t>());
+                }
+
+                // ddns_update_on_renew at 93
+                if (!out_bindings[93]->amNull()) {
+                    last_pool->setDdnsUpdateOnRenew(out_bindings[93]->getBool());
+                }
+
+                // ddns_update_conflict_resolution_mode at 94
+                if (!out_bindings[94]->amNull()) {
+                    last_pool->setDdnsConflictResolutionMode(out_bindings[94]->getString());
+                }
+
+#if 0   // need #4243 merged first
+                // ddns_reverse_zone at 95
+                if (!out_bindings[95]->amNull()) {
+                    last_pool->setDdnsReverseZone(out_bindings[95]->getString());
+                }
+#endif
                 last_subnet->addPool(last_pool);
             }
 
@@ -1021,16 +1134,6 @@ public:
             dhcp4o6_subnet = s.str();
         }
 
-        // Create binding for DDNS replace client name mode.
-        MySqlBindingPtr ddns_rcn_mode_binding;
-        auto ddns_rcn_mode = subnet->getDdnsReplaceClientNameMode(Network::Inheritance::NONE);
-        if (!ddns_rcn_mode.unspecified()) {
-            ddns_rcn_mode_binding = MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>
-                                                                         (ddns_rcn_mode.get()));
-        } else {
-            ddns_rcn_mode_binding = MySqlBinding::createNull();
-        }
-
         // Create binding with shared network name if the subnet belongs to a
         // shared network.
         MySqlBindingPtr shared_network_binding;
@@ -1089,7 +1192,7 @@ public:
             MySqlBinding::condCreateBool(subnet->getDdnsSendUpdates(Network::Inheritance::NONE)),
             MySqlBinding::condCreateBool(subnet->getDdnsOverrideNoUpdate(Network::Inheritance::NONE)),
             MySqlBinding::condCreateBool(subnet->getDdnsOverrideClientUpdate(Network::Inheritance::NONE)),
-            ddns_rcn_mode_binding,
+            createBinding(subnet->getDdnsReplaceClientNameMode(Network::Inheritance::NONE)),
             MySqlBinding::condCreateString(subnet->getDdnsGeneratedPrefix(Network::Inheritance::NONE)),
             MySqlBinding::condCreateString(subnet->getDdnsQualifyingSuffix(Network::Inheritance::NONE)),
             MySqlBinding::condCreateBool(subnet->getReservationsInSubnet(Network::Inheritance::NONE)),
@@ -1102,6 +1205,15 @@ public:
             condCreateInteger<uint32_t>(subnet->getDdnsTtl(Network::Inheritance::NONE)),
             condCreateInteger<uint32_t>(subnet->getDdnsTtlMin(Network::Inheritance::NONE)),
             condCreateInteger<uint32_t>(subnet->getDdnsTtlMax(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(subnet->getDdnsUpdateOnRenew(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateString(subnet->getDdnsConflictResolutionMode(Network::Inheritance::NONE)),
+#if 0 // Need 4243
+            MySqlBinding::condCreateString(subnet->getDdnsReverseZone(Network::Inheritance::NONE)),
+#else
+            MySqlBinding::createNull(),
+#endif
+            MySqlBinding::condCreateString(subnet->getHostnameCharSet(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateString(subnet->getHostnameCharReplacement(Network::Inheritance::NONE)),
         };
 
         MySqlTransaction transaction(conn_);
@@ -1178,6 +1290,24 @@ public:
             createInputClientClassesBinding(pool->getClientClasses()),
             createInputClientClassesBinding(pool->getAdditionalClasses()),
             createInputContextBinding(pool),
+            MySqlBinding::condCreateBool(pool->getDdnsSendUpdates()),
+            MySqlBinding::condCreateBool(pool->getDdnsOverrideNoUpdate()),
+            MySqlBinding::condCreateBool(pool->getDdnsOverrideClientUpdate()),
+            createBinding(pool->getDdnsReplaceClientNameMode()),
+            MySqlBinding::condCreateString(pool->getDdnsGeneratedPrefix()),
+            MySqlBinding::condCreateString(pool->getDdnsQualifyingSuffix()),
+            MySqlBinding::condCreateFloat(pool->getDdnsTtlPercent()),
+            condCreateInteger<uint32_t>(pool->getDdnsTtl()),
+            condCreateInteger<uint32_t>(pool->getDdnsTtlMin()),
+            condCreateInteger<uint32_t>(pool->getDdnsTtlMax()),
+            MySqlBinding::condCreateBool(pool->getDdnsUpdateOnRenew()),
+            MySqlBinding::condCreateString(pool->getDdnsConflictResolutionMode()),
+#if 0 // Need 4243
+            MySqlBinding::condCreateString(pool->getDdnsReverseZone(Network::Inheritance::NONE)),
+#else
+            MySqlBinding::createNull(),
+#endif
+            /// @todo TKM need to add hostname_char_set and replacement...
             MySqlBinding::createTimestamp(subnet->getModificationTime())
         };
 
@@ -1305,59 +1435,64 @@ public:
         // line counting and indexing match.
         // The server tag must be the last field.
         MySqlBindingCollection out__bindings = {
-            MySqlBinding::createInteger<uint64_t>(), // id
-            MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // name
-            MySqlBinding::createString(CLIENT_CLASS_BUF_LENGTH), // client_class
-            MySqlBinding::createString(INTERFACE_BUF_LENGTH), // interface
-            MySqlBinding::createInteger<uint8_t>(), // match_client_id
-            MySqlBinding::createTimestamp(), // modification_ts
-            MySqlBinding::createInteger<uint32_t>(), // rebind_timer
-            MySqlBinding::createString(RELAY_BUF_LENGTH), // relay
-            MySqlBinding::createInteger<uint32_t>(), // renew_timer
-            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // evaluate_additional_classes
-            MySqlBinding::createInteger<uint8_t>(), // reservations_global
-            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // user_context
-            MySqlBinding::createInteger<uint32_t>(), // valid_lifetime
-            MySqlBinding::createInteger<uint64_t>(), // option: option_id
-            MySqlBinding::createInteger<uint8_t>(), // option: code
-            MySqlBinding::createBlob(OPTION_VALUE_BUF_LENGTH), // option: value
-            MySqlBinding::createString(FORMATTED_OPTION_VALUE_BUF_LENGTH), // option: formatted_value
-            MySqlBinding::createString(OPTION_SPACE_BUF_LENGTH), // option: space
-            MySqlBinding::createInteger<uint8_t>(), // option: persistent
-            MySqlBinding::createInteger<uint8_t>(), // option: cancelled
-            MySqlBinding::createInteger<uint32_t>(), // option: dhcp4_subnet_id
-            MySqlBinding::createInteger<uint8_t>(), // option: scope_id
-            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // option: user_context
-            MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // option: shared_network_name
-            MySqlBinding::createInteger<uint64_t>(), // option: pool_id
-            MySqlBinding::createTimestamp(), // option: modification_ts
-            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // option: client_classes
-            MySqlBinding::createInteger<uint8_t>(), // calculate_tee_times
-            MySqlBinding::createInteger<float>(), // t1_percent
-            MySqlBinding::createInteger<float>(), // t2_percent
-            MySqlBinding::createInteger<uint8_t>(), // authoritative
-            MySqlBinding::createString(BOOT_FILE_NAME_BUF_LENGTH), // boot_file_name
-            MySqlBinding::createInteger<uint32_t>(), // next_server
-            MySqlBinding::createString(SERVER_HOSTNAME_BUF_LENGTH), // server_hostname
-            MySqlBinding::createInteger<uint32_t>(), // min_valid_lifetime
-            MySqlBinding::createInteger<uint32_t>(), // max_valid_lifetime
-            MySqlBinding::createInteger<uint8_t>(), // ddns_send_updates
-            MySqlBinding::createInteger<uint8_t>(), // ddns_override_no_update
-            MySqlBinding::createInteger<uint8_t>(), // ddns_override_client_update
-            MySqlBinding::createInteger<uint8_t>(), // ddns_replace_client_name
-            MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // ddns_generated_prefix
-            MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // ddns_qualifying_suffix
-            MySqlBinding::createInteger<uint8_t>(), // reservations_in_subnet
-            MySqlBinding::createInteger<uint8_t>(), // reservations_out_of_pool
-            MySqlBinding::createInteger<float>(), // cache_threshold
-            MySqlBinding::createInteger<uint32_t>(), // cache_max_age
-            MySqlBinding::createInteger<uint32_t>(), // offer lifetime
-            MySqlBinding::createString(ALLOCATOR_TYPE_BUF_LENGTH), // allocator
-            MySqlBinding::createInteger<float>(), // ddns_ttl_percent
-            MySqlBinding::createInteger<uint32_t>(), // ddns_ttl
-            MySqlBinding::createInteger<uint32_t>(), // ddns_ttl_min
-            MySqlBinding::createInteger<uint32_t>(), // ddns_ttl_max
-            MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag
+            MySqlBinding::createInteger<uint64_t>(), // id 0
+            MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // name 1
+            MySqlBinding::createString(CLIENT_CLASS_BUF_LENGTH), // client_class 2
+            MySqlBinding::createString(INTERFACE_BUF_LENGTH), // interface 3
+            MySqlBinding::createInteger<uint8_t>(), // match_client_id 4
+            MySqlBinding::createTimestamp(), // modification_ts 5
+            MySqlBinding::createInteger<uint32_t>(), // rebind_timer 6
+            MySqlBinding::createString(RELAY_BUF_LENGTH), // relay 7
+            MySqlBinding::createInteger<uint32_t>(), // renew_timer 8
+            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // evaluate_additional_classes 9
+            MySqlBinding::createInteger<uint8_t>(), // reservations_global 10
+            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // user_context 11
+            MySqlBinding::createInteger<uint32_t>(), // valid_lifetime 12
+            MySqlBinding::createInteger<uint64_t>(), // option: option_id 13
+            MySqlBinding::createInteger<uint8_t>(), // option: code 14
+            MySqlBinding::createBlob(OPTION_VALUE_BUF_LENGTH), // option: value 15
+            MySqlBinding::createString(FORMATTED_OPTION_VALUE_BUF_LENGTH), // option: formatted_value 16
+            MySqlBinding::createString(OPTION_SPACE_BUF_LENGTH), // option: space 17
+            MySqlBinding::createInteger<uint8_t>(), // option: persistent 18
+            MySqlBinding::createInteger<uint8_t>(), // option: cancelled 19
+            MySqlBinding::createInteger<uint32_t>(), // option: dhcp4_subnet_id 20
+            MySqlBinding::createInteger<uint8_t>(), // option: scope_id 21
+            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // option: user_context 22
+            MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // option: shared_network_name 23
+            MySqlBinding::createInteger<uint64_t>(), // option: pool_id 24
+            MySqlBinding::createTimestamp(), // option: modification_ts 25
+            MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // option: client_classes 26
+            MySqlBinding::createInteger<uint8_t>(), // calculate_tee_times 27
+            MySqlBinding::createInteger<float>(), // t1_percent 28
+            MySqlBinding::createInteger<float>(), // t2_percent 29
+            MySqlBinding::createInteger<uint8_t>(), // authoritative 30
+            MySqlBinding::createString(BOOT_FILE_NAME_BUF_LENGTH), // boot_file_name 31
+            MySqlBinding::createInteger<uint32_t>(), // next_server 32
+            MySqlBinding::createString(SERVER_HOSTNAME_BUF_LENGTH), // server_hostname 33
+            MySqlBinding::createInteger<uint32_t>(), // min_valid_lifetime 34
+            MySqlBinding::createInteger<uint32_t>(), // max_valid_lifetime 35
+            MySqlBinding::createInteger<uint8_t>(), // ddns_send_updates 36
+            MySqlBinding::createInteger<uint8_t>(), // ddns_override_no_update 37
+            MySqlBinding::createInteger<uint8_t>(), // ddns_override_client_update 38
+            MySqlBinding::createInteger<uint8_t>(), // ddns_replace_client_name 39
+            MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // ddns_generated_prefix 40
+            MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // ddns_qualifying_suffix 41
+            MySqlBinding::createInteger<uint8_t>(), // reservations_in_subnet 42
+            MySqlBinding::createInteger<uint8_t>(), // reservations_out_of_pool 43
+            MySqlBinding::createInteger<float>(), // cache_threshold 44
+            MySqlBinding::createInteger<uint32_t>(), // cache_max_age 45
+            MySqlBinding::createInteger<uint32_t>(), // offer lifetime 46
+            MySqlBinding::createString(ALLOCATOR_TYPE_BUF_LENGTH), // allocator 47
+            MySqlBinding::createInteger<float>(), // ddns_ttl_percent 48
+            MySqlBinding::createInteger<uint32_t>(), // ddns_ttl 49
+            MySqlBinding::createInteger<uint32_t>(), // ddns_ttl_min 50
+            MySqlBinding::createInteger<uint32_t>(), // ddns_ttl_max 51
+            MySqlBinding::createInteger<uint8_t>(),  // ddns_update_on_renew  52
+            MySqlBinding::createString(DDNS_CR_MODE_LENGTH), // ddns_conflict_resolution_mode 53
+            MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // ddns_reverse_zone 54
+            MySqlBinding::createString(HOSTNAME_CHAR_SET_LENGTH), // hostname_char_set 55
+            MySqlBinding::createString(HOSTNAME_CHAR_REPLACMENT_LENGTH), //  hostname_char_replacement  56
+            MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag 57
         };
 
         uint64_t last_network_id = 0;
@@ -1578,7 +1713,33 @@ public:
                     last_network->setDdnsTtlMax(out_bindings[51]->getInteger<uint32_t>());
                 }
 
-                // server_tag at 52.
+                // ddns_update_on_renew at 52
+                if (!out_bindings[52]->amNull()) {
+                    last_network->setDdnsUpdateOnRenew(out_bindings[52]->getBool());
+                }
+
+                // ddns_update_conflict_resolution_mode at 53
+                if (!out_bindings[53]->amNull()) {
+                    last_network->setDdnsConflictResolutionMode(out_bindings[53]->getString());
+                }
+
+#if 0   // need #4243 merged first
+                // 54 ddns_reverse_zone
+                if (!out_bindings[54]->amNull()) {
+                    last_network->setDdnsReverseZone(out_bindings[54]->getString());
+                }
+#endif
+                // 55 hostname_char_set
+                if (!out_bindings[55]->amNull()) {
+                    last_network->setHostnameCharSet(out_bindings[55]->getString());
+                }
+
+                // 56 hostname_char_set
+                if (!out_bindings[56]->amNull()) {
+                    last_network->setHostnameCharReplacement(out_bindings[56]->getString());
+                }
+
+                // server_tag at 57.
 
                 // Add the shared network.
                 auto ret = shared_networks.push_back(last_network);
@@ -1592,9 +1753,9 @@ public:
             }
 
             // Check for new server tags.
-            if (!out_bindings[52]->amNull() &&
-                (last_tag != out_bindings[52]->getString())) {
-                last_tag = out_bindings[52]->getString();
+            if (!out_bindings[57]->amNull() &&
+                (last_tag != out_bindings[57]->getString())) {
+                last_tag = out_bindings[57]->getString();
                 if (!last_tag.empty() && !last_network->hasServerTag(ServerTag(last_tag))) {
                     last_network->setServerTag(last_tag);
                 }
@@ -1706,16 +1867,6 @@ public:
                       " (unassigned) is unsupported at the moment");
         }
 
-        // Create binding for DDNS replace client name mode.
-        MySqlBindingPtr ddns_rcn_mode_binding;
-        auto ddns_rcn_mode = shared_network->getDdnsReplaceClientNameMode(Network::Inheritance::NONE);
-        if (!ddns_rcn_mode.unspecified()) {
-            ddns_rcn_mode_binding = MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>
-                                                                         (ddns_rcn_mode.get()));
-        } else {
-            ddns_rcn_mode_binding = MySqlBinding::createNull();
-        }
-
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(shared_network->getName()),
             createInputClientClassesBinding(shared_network->getClientClasses()),
@@ -1741,7 +1892,7 @@ public:
             MySqlBinding::condCreateBool(shared_network->getDdnsSendUpdates(Network::Inheritance::NONE)),
             MySqlBinding::condCreateBool(shared_network->getDdnsOverrideNoUpdate(Network::Inheritance::NONE)),
             MySqlBinding::condCreateBool(shared_network->getDdnsOverrideClientUpdate(Network::Inheritance::NONE)),
-            ddns_rcn_mode_binding,
+            createBinding(shared_network->getDdnsReplaceClientNameMode(Network::Inheritance::NONE)),
             MySqlBinding::condCreateString(shared_network->getDdnsGeneratedPrefix(Network::Inheritance::NONE)),
             MySqlBinding::condCreateString(shared_network->getDdnsQualifyingSuffix(Network::Inheritance::NONE)),
             MySqlBinding::condCreateBool(shared_network->getReservationsInSubnet(Network::Inheritance::NONE)),
@@ -1753,7 +1904,16 @@ public:
             MySqlBinding::condCreateFloat(shared_network->getDdnsTtlPercent(Network::Inheritance::NONE)),
             condCreateInteger<uint32_t>(shared_network->getDdnsTtl(Network::Inheritance::NONE)),
             condCreateInteger<uint32_t>(shared_network->getDdnsTtlMin(Network::Inheritance::NONE)),
-            condCreateInteger<uint32_t>(shared_network->getDdnsTtlMax(Network::Inheritance::NONE))
+            condCreateInteger<uint32_t>(shared_network->getDdnsTtlMax(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateBool(shared_network->getDdnsUpdateOnRenew(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateString(shared_network->getDdnsConflictResolutionMode(Network::Inheritance::NONE)),
+#if 0 // Need 4243
+            MySqlBinding::condCreateString(shared_network->getDdnsReverseZone(Network::Inheritance::NONE)),
+#else
+            MySqlBinding::createNull(),
+#endif
+            MySqlBinding::condCreateString(shared_network->getHostnameCharSet(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateString(shared_network->getHostnameCharReplacement(Network::Inheritance::NONE)),
         };
 
         MySqlTransaction transaction(conn_);
@@ -3306,10 +3466,15 @@ TaggedStatementArray tagged_statements = { {
       "  ddns_ttl_percent,"
       "  ddns_ttl,"
       "  ddns_ttl_min,"
-      "  ddns_ttl_max"
+      "  ddns_ttl_max,"
+      "  ddns_update_on_renew,"
+      "  ddns_conflict_resolution_mode,"
+      "  ddns_reverse_zone,"
+      "  hostname_char_set,"
+      "  hostname_char_replacement "
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
       " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-      " ?, ?, ?, ?)" },
+      " ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the subnet with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4_SERVER,
@@ -3360,10 +3525,15 @@ TaggedStatementArray tagged_statements = { {
       "  ddns_ttl_percent,"
       "  ddns_ttl,"
       "  ddns_ttl_min,"
-      "  ddns_ttl_max"
+      "  ddns_ttl_max,"
+      "  ddns_update_on_renew,"
+      "  ddns_conflict_resolution_mode,"
+      "  ddns_reverse_zone,"
+      "  hostname_char_set,"
+      "  hostname_char_replacement"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
       " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-      " ?, ?, ?, ?)" },
+      " ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the shared network with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4_SERVER,
@@ -3479,7 +3649,12 @@ TaggedStatementArray tagged_statements = { {
       "  ddns_ttl_percent = ?,"
       "  ddns_ttl = ?,"
       "  ddns_ttl_min = ?,"
-      "  ddns_ttl_max = ? "
+      "  ddns_ttl_max = ?, "
+      "  ddns_update_on_renew = ?, "
+      "  ddns_conflict_resolution_mode = ?,"
+      "  ddns_reverse_zone = ?,"
+      "  hostname_char_set = ?,"
+      "  hostname_char_replacement = ? "
       "WHERE subnet_id = ? OR subnet_prefix = ?" },
 
     // Update existing shared network.
@@ -3521,7 +3696,12 @@ TaggedStatementArray tagged_statements = { {
       "  ddns_ttl_percent = ?,"
       "  ddns_ttl = ?,"
       "  ddns_ttl_min = ?,"
-      "  ddns_ttl_max = ? "
+      "  ddns_ttl_max = ?,"
+      "  ddns_update_on_renew = ?, "
+      "  ddns_conflict_resolution_mode = ?,"
+      "  ddns_reverse_zone = ?,"
+      "  hostname_char_set = ?,"
+      "  hostname_char_replacement = ? "
       "WHERE name = ?" },
 
     // Update existing option definition.

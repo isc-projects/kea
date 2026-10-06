@@ -292,7 +292,6 @@ public:
         ddns_conflict_resolution_mode_ = ddns_conflict_resolution_mode;
     }
 
-
     /// @brief Returns ddns-ttl-percent
     util::Optional<double>
     getDdnsTtlPercent() const {

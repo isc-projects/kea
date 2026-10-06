@@ -581,8 +581,11 @@ public:
             }
             // Failure: check for the special case of WHERE returning NULL.
             if (mysql_errno(mysql_) == ER_BAD_NULL_ERROR) {
-                isc_throw(NullKeyError, "Database bad NULL error");
+                isc_throw(NullKeyError, "Database bad NULL error, statement <"
+                          << text_statements_[static_cast<int>(index)]
+                          << ">, reason: " << mysql_error(mysql_));
             }
+
             checkError(status, index, "unable to execute");
         }
     }

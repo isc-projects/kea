@@ -1255,6 +1255,7 @@ mysql_upgrade_34_to_35_test() {
 mysql_upgrade_35_to_36_test() {
     # check missing ddns fields were added to dhcp4_shared_network
     table="dhcp4_shared_network"
+    check_table_column ddns_update_on_renew ${table}
     check_table_column ddns_conflict_resolution_mode ${table}
     check_table_column ddns_reverse_zone ${table}
     check_table_column hostname_char_set ${table}
@@ -1262,6 +1263,7 @@ mysql_upgrade_35_to_36_test() {
 
     # check missing ddns fields were added to dhcp6_shared_network
     table="dhcp6_shared_network"
+    check_table_column ddns_update_on_renew ${table}
     check_table_column ddns_conflict_resolution_mode ${table}
     check_table_column ddns_reverse_zone ${table}
     check_table_column hostname_char_set ${table}
@@ -1269,6 +1271,7 @@ mysql_upgrade_35_to_36_test() {
 
     # check missing ddns fields were added to dhcp4_subnet
     table="dhcp4_subnet"
+    check_table_column ddns_update_on_renew ${table}
     check_table_column ddns_conflict_resolution_mode ${table}
     check_table_column ddns_reverse_zone ${table}
     check_table_column hostname_char_set ${table}
@@ -1276,6 +1279,7 @@ mysql_upgrade_35_to_36_test() {
 
     # check missing ddns fields were added to
     table="dhcp6_subnet"
+    check_table_column ddns_update_on_renew ${table}
     check_table_column ddns_conflict_resolution_mode ${table}
     check_table_column ddns_reverse_zone ${table}
     check_table_column hostname_char_set ${table}

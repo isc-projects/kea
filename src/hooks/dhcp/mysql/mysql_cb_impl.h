@@ -185,6 +185,15 @@ public:
                                                  const db::MySqlBindingPtr& min_binding,
                                                  const db::MySqlBindingPtr& max_binding);
 
+    /// @brief Creates MySQL binding from an optional @c D2ClientConfig
+    /// ::ReplaceClientNameMode
+    ///
+    /// @param ddns_rcn_mode Optional mode from which the binding should be created.
+    /// @return Pointer to a null binding if the mode is "unspecified" or
+    /// a pointer to a binding representing uint8_t value for the mode.
+    static db::MySqlBindingPtr createBinding(const util::Optional<D2ClientConfig
+                                             ::ReplaceClientNameMode>& ddns_rcn_mode);
+
     /// @brief Returns server tag associated with the particular selector.
     ///
     /// This method expects that there is exactly one server tag associated with

@@ -1145,5 +1145,18 @@ MySqlConfigBackendImpl::clientClassesFromBinding(const MySqlBindingPtr& binding,
     }
 }
 
+db::MySqlBindingPtr
+MySqlConfigBackendImpl::createBinding(const util::Optional<D2ClientConfig
+                                      ::ReplaceClientNameMode>& ddns_rcn_mode) {
+    // Create binding for DDNS replace client name mode.
+    MySqlBindingPtr binding;
+    if (!ddns_rcn_mode.unspecified()) {
+        return (MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>
+                                                     (ddns_rcn_mode.get())));
+    }
+
+    return (MySqlBinding::createNull());
+}
+
 } // end of namespace isc::dhcp
 } // end of namespace isc
