@@ -419,7 +419,9 @@ public:
             MySqlBinding::createInteger<uint8_t>(), // pool:ddns_update_on_renew 118
             MySqlBinding::createString(DDNS_CR_MODE_LENGTH), // pool:ddns_conflict_resolution_mode 119
             MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // pool:ddns_reverse_zone 120
-            MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag 121
+            MySqlBinding::createString(HOSTNAME_CHAR_SET_LENGTH), // pool:hostname_char_set 121
+            MySqlBinding::createString(HOSTNAME_CHAR_REPLACMENT_LENGTH), // pool:hostname_char_replacement 122
+            MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag 123
         };
 
         uint64_t last_pool_id = 0;
@@ -708,7 +710,7 @@ public:
                     last_subnet->setHostnameCharReplacement(out_bindings[107]->getString());
                 }
 
-                // server_tag (121 / last)
+                // server_tag (123 / last)
 
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.insert(last_subnet);
@@ -722,9 +724,9 @@ public:
             }
 
             // Check for new server tags.
-            if (!out_bindings[121]->amNull() &&
-                (last_tag != out_bindings[121]->getString())) {
-                last_tag = out_bindings[121]->getString();
+            if (!out_bindings[123]->amNull() &&
+                (last_tag != out_bindings[123]->getString())) {
+                last_tag = out_bindings[123]->getString();
                 if (!last_tag.empty() && !last_subnet->hasServerTag(ServerTag(last_tag))) {
                     last_subnet->setServerTag(last_tag);
                 }
@@ -833,6 +835,16 @@ public:
                     last_pool->setDdnsReverseZone(out_bindings[120]->getString());
                 }
 #endif
+                // 121 hostname_char_set
+                if (!out_bindings[121]->amNull()) {
+                    last_pool->setHostnameCharSet(out_bindings[121]->getString());
+                }
+
+                // 122 hostname_char_set
+                if (!out_bindings[122]->amNull()) {
+                    last_pool->setHostnameCharReplacement(out_bindings[122]->getString());
+                }
+
                 last_subnet->addPool(last_pool);
             }
 
@@ -1532,10 +1544,12 @@ public:
             MySqlBinding::condCreateBool(pool->getDdnsUpdateOnRenew()),
             MySqlBinding::condCreateString(pool->getDdnsConflictResolutionMode()),
 #if 0 // Need 4243
-            MySqlBinding::condCreateString(pool->getDdnsReverseZone(Network::Inheritance::NONE)),
+            MySqlBinding::condCreateString(pool->getDdnsReverseZone()),
 #else
             MySqlBinding::createNull(),
 #endif
+            MySqlBinding::condCreateString(pool->getHostnameCharSet()),
+            MySqlBinding::condCreateString(pool->getHostnameCharReplacement()),
             MySqlBinding::createTimestamp(subnet->getModificationTime())
         };
 

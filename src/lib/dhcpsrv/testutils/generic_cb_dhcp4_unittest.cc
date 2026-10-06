@@ -157,6 +157,27 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
 
     Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.10"),
                              IOAddress("192.0.2.20")));
+    // Set all pool params in pool1.
+    pool1->allowClientClass("guard1");
+    pool1->addAdditionalClass("extra1");
+    pool1->setContext(user_context);
+    pool1->setDdnsSendUpdates(false);
+    pool1->setDdnsTtl(700);
+    pool1->setDdnsOverrideNoUpdate(false);
+    pool1->setDdnsOverrideClientUpdate(false);
+    pool1->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_WHEN_PRESENT);
+    pool1->setDdnsGeneratedPrefix("pool_prefix");
+    pool1->setDdnsQualifyingSuffix("pool_suffix.com");
+    pool1->setDdnsTtlPercent(0.75);
+    pool1->setDdnsTtlMin(10);
+    pool1->setDdnsTtlMax(200);
+    pool1->setDdnsUpdateOnRenew(false);
+    pool1->setDdnsConflictResolutionMode("no-check-with-dhcid");
+#if 0  // WAITING for #4243
+    subnet->setDdnsReverseZone("pool.backward.com.");
+#endif
+    pool1->setHostnameCharSet("[^P-Zb-z0-9.-]");
+    pool1->setHostnameCharReplacement("y");
     subnet->addPool(pool1);
 
     Pool4Ptr pool2(new Pool4(IOAddress("192.0.2.50"),
@@ -178,28 +199,6 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
 
     pool1.reset(new Pool4(IOAddress("10.0.0.10"),
                           IOAddress("10.0.0.20")));
-    // Set all pool params in pool1.
-    pool1->allowClientClass("guard1");
-    pool1->addAdditionalClass("extra1");
-    pool1->setContext(user_context);
-    pool1->setDdnsSendUpdates(false);
-    pool1->setDdnsTtl(700);
-    pool1->setDdnsOverrideNoUpdate(false);
-    pool1->setDdnsOverrideClientUpdate(false);
-    pool1->setDdnsReplaceClientNameMode(D2ClientConfig::RCM_WHEN_PRESENT);
-    pool1->setDdnsGeneratedPrefix("pool_prefix");
-    pool1->setDdnsQualifyingSuffix("pool_suffix.com");
-    pool1->setDdnsTtlPercent(0.75);
-    pool1->setDdnsTtlMin(10);
-    pool1->setDdnsTtlMax(200);
-    pool1->setDdnsUpdateOnRenew(false);
-    pool1->setDdnsConflictResolutionMode("no-check-with-dhcid");
-#if 0  // WAITING for #4243
-    subnet->setDdnsReverseZone("pool.backward.com.");
-#endif
-    /// @todo TKM add hostname_char...
-    //pool1->setHostnameCharSet("[^P-Zb-z0-9.-]");
-    //pool1->setHostnameCharReplacement("y");
     subnet->addPool(pool1);
 
     pool1->getCfgOption()->add(*test_options_[3], test_options_[3]->space_name_);

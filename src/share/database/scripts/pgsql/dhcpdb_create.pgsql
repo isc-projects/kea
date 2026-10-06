@@ -7852,7 +7852,9 @@ ALTER TABLE dhcp4_pool
     ADD COLUMN ddns_ttl_min BIGINT DEFAULT NULL,
     ADD COLUMN ddns_ttl_max BIGINT DEFAULT NULL,
     ADD COLUMN ddns_ttl_percent FLOAT DEFAULT NULL,
-    ADD COLUMN ddns_reverse_zone VARCHAR(255) DEFAULT NULL;
+    ADD COLUMN ddns_reverse_zone VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN hostname_char_set VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN hostname_char_replacement VARCHAR(255) DEFAULT NULL;
 
 ALTER TABLE dhcp6_pool
     ADD COLUMN ddns_send_updates BOOLEAN DEFAULT NULL,
@@ -7867,7 +7869,9 @@ ALTER TABLE dhcp6_pool
     ADD COLUMN ddns_ttl_min BIGINT DEFAULT NULL,
     ADD COLUMN ddns_ttl_max BIGINT DEFAULT NULL,
     ADD COLUMN ddns_ttl_percent FLOAT DEFAULT NULL,
-    ADD COLUMN ddns_reverse_zone VARCHAR(255) DEFAULT NULL;
+    ADD COLUMN ddns_reverse_zone VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN hostname_char_set VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN hostname_char_replacement VARCHAR(255) DEFAULT NULL;
 
 -- Update the schema version number.
 UPDATE schema_version

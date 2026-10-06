@@ -172,9 +172,8 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
 #if 0  // WAITING for #4243
     subnet->setDdnsReverseZone("pool.backward.com.");
 #endif
-    /// @todo TKM add hostname_char...
-    //pool1->setHostnameCharSet("[^P-Zb-z0-9.-]");
-    //pool1->setHostnameCharReplacement("y");
+    pool1->setHostnameCharSet("[^P-Zb-z0-9.-]");
+    pool1->setHostnameCharReplacement("y");
     subnet->addPool(pool1);
 
     Pool6Ptr pool2(new Pool6(Lease::TYPE_NA,

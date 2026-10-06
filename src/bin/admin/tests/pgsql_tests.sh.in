@@ -1295,6 +1295,8 @@ pgsql_upgrade_35_to_36_test() {
     check_table_column ddns_ttl_max ${table}
     check_table_column ddns_ttl_percent ${table}
     check_table_column ddns_reverse_zone ${table}
+    check_table_column hostname_char_set ${table}
+    check_table_column hostname_char_replacement ${table}
 
     # check missing ddns fields were added to dhcp6_pool
     table="dhcp6_pool"
@@ -1311,6 +1313,8 @@ pgsql_upgrade_35_to_36_test() {
     check_table_column ddns_ttl_max ${table}
     check_table_column ddns_ttl_percent ${table}
     check_table_column ddns_reverse_zone ${table}
+    check_table_column hostname_char_set ${table}
+    check_table_column hostname_char_replacement ${table}
 }
 
 pgsql_upgrade_test() {

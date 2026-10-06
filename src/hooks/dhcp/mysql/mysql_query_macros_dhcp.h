@@ -146,6 +146,8 @@ namespace {
     "  p.ddns_update_on_renew, " \
     "  p.ddns_conflict_resolution_mode, " \
     "  p.ddns_reverse_zone, " \
+    "  p.hostname_char_set, " \
+    "  p.hostname_char_replacement, " \
     "  srv.tag " \
     "FROM dhcp4_subnet AS s " \
     server_join \
@@ -304,6 +306,8 @@ namespace {
     "  p.ddns_update_on_renew, " \
     "  p.ddns_conflict_resolution_mode, " \
     "  p.ddns_reverse_zone, " \
+    "  p.hostname_char_set, " \
+    "  p.hostname_char_replacement, " \
     "  srv.tag " \
     "FROM dhcp6_subnet AS s " \
     server_join \
@@ -937,8 +941,10 @@ namespace {
     "  ddns_update_on_renew, " \
     "  ddns_conflict_resolution_mode, " \
     "  ddns_reverse_zone, " \
+    "  hostname_char_set, " \
+    "  hostname_char_replacement, " \
     "  modification_ts" \
-    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 #endif
 
 #ifndef MYSQL_INSERT_PD_POOL
