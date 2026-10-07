@@ -544,7 +544,7 @@ public:
                      last_subnet->setDdnsConflictResolutionMode(worker.getString(79));
                 }
 
-#if 0 // Waiting on #4323
+#if 0 // Waiting on #2169
                 // ddns_reverse_zone at 80.
                 if (!worker.isColumnNull(80)) {
                     last_subnet->setDdnsReverseZone(worker.getString(80));
@@ -681,7 +681,7 @@ public:
                      last_pool->setDdnsConflictResolutionMode(worker.getString(94));
                 }
 
-#if 0 // waiting for #4323
+#if 0 // waiting for #2169
                 // pool ddns_reverse_zone at 95.
                 if (!worker.isColumnNull(95)) {
                      last_pool->setDdnsReverseZone(worker.getString(95));
@@ -1073,7 +1073,7 @@ public:
         in_bindings.addOptional(subnet->getDdnsTtlMax(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getDdnsUpdateOnRenew(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getDdnsConflictResolutionMode(Network::Inheritance::NONE));
-#if 0 // Waiting for #4323
+#if 0 // Waiting for #2169
         in_bindings.addOptional(subnet->getDdnsReverseZone(Network::Inheritance::NONE));
 #else
         in_bindings.addNull();
@@ -1188,7 +1188,7 @@ public:
         in_bindings.addOptional(pool->getDdnsTtlMax());
         in_bindings.addOptional(pool->getDdnsUpdateOnRenew());
         in_bindings.addOptional(pool->getDdnsConflictResolutionMode());
-#if 0 // Waiting for #4323
+#if 0 // Waiting for #2169
         in_bindings.addOptional(pool->getDdnsReverseZone());
 #else
         in_bindings.addNull();
@@ -1537,7 +1537,7 @@ public:
                      last_network->setDdnsConflictResolutionMode(worker.getString(53));
                 }
 
-#if 0 // Waiting on #4323
+#if 0 // Waiting on #2169
                 // ddns_reverse_zone at 54.
                 if (!worker.isColumnNull(54)) {
                     last_network->setDdnsReverseZone(worker.getString(54));
@@ -1727,7 +1727,7 @@ public:
         in_bindings.addOptional(shared_network->getDdnsTtlMax(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getDdnsUpdateOnRenew(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getDdnsConflictResolutionMode(Network::Inheritance::NONE));
-#if 0 // Waiting for #4323
+#if 0 // Waiting for #2169
         in_bindings.addOptional(shared_network->getDdnsReverseZone(Network::Inheritance::NONE));
 #else
         in_bindings.addNull();

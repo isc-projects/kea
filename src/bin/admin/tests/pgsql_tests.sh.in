@@ -1250,71 +1250,71 @@ pgsql_upgrade_33_to_34_test() {
 pgsql_upgrade_35_to_36_test() {
     # check missing ddns fields were added to dhcp4_shared_network
     table="dhcp4_shared_network"
-    check_table_column ddns_update_on_renew ${table}
-    check_table_column ddns_conflict_resolution_mode ${table}
-    check_table_column ddns_reverse_zone ${table}
-    check_table_column hostname_char_set ${table}
-    check_table_column hostname_char_replacement ${table}
+    check_table_column ddns_update_on_renew "${table}"
+    check_table_column ddns_conflict_resolution_mode "${table}"
+    check_table_column ddns_reverse_zone "${table}"
+    check_table_column hostname_char_set "${table}"
+    check_table_column hostname_char_replacement "${table}"
 
     # check missing ddns fields were added to dhcp6_shared_network
     table="dhcp6_shared_network"
-    check_table_column ddns_update_on_renew ${table}
-    check_table_column ddns_conflict_resolution_mode ${table}
-    check_table_column ddns_reverse_zone ${table}
-    check_table_column hostname_char_set ${table}
-    check_table_column hostname_char_replacement ${table}
+    check_table_column ddns_update_on_renew "${table}"
+    check_table_column ddns_conflict_resolution_mode "${table}"
+    check_table_column ddns_reverse_zone "${table}"
+    check_table_column hostname_char_set "${table}"
+    check_table_column hostname_char_replacement "${table}"
 
     # check missing ddns fields were added to dhcp4_subnet
     table="dhcp4_subnet"
-    check_table_column ddns_update_on_renew ${table}
-    check_table_column ddns_conflict_resolution_mode ${table}
-    check_table_column ddns_reverse_zone ${table}
-    check_table_column hostname_char_set ${table}
-    check_table_column hostname_char_replacement ${table}
+    check_table_column ddns_update_on_renew "${table}"
+    check_table_column ddns_conflict_resolution_mode "${table}"
+    check_table_column ddns_reverse_zone "${table}"
+    check_table_column hostname_char_set "${table}"
+    check_table_column hostname_char_replacement "${table}"
 
     # check missing ddns fields were added to
     table="dhcp6_subnet"
-    check_table_column ddns_update_on_renew ${table}
-    check_table_column ddns_conflict_resolution_mode ${table}
-    check_table_column ddns_reverse_zone ${table}
-    check_table_column hostname_char_set ${table}
-    check_table_column hostname_char_replacement ${table}
+    check_table_column ddns_update_on_renew "${table}"
+    check_table_column ddns_conflict_resolution_mode "${table}"
+    check_table_column ddns_reverse_zone "${table}"
+    check_table_column hostname_char_set "${table}"
+    check_table_column hostname_char_replacement "${table}"
 
     # check missing ddns fields were added to dhcp4_pool
     table="dhcp4_pool"
-    check_table_column ddns_send_updates ${table}
-    check_table_column ddns_override_no_update ${table}
-    check_table_column ddns_override_client_update ${table}
-    check_table_column ddns_replace_client_name ${table}
-    check_table_column ddns_generated_prefix ${table}
-    check_table_column ddns_qualifying_suffix ${table}
-    check_table_column ddns_update_on_renew ${table}
-    check_table_column ddns_conflict_resolution_mode ${table}
-    check_table_column ddns_ttl ${table}
-    check_table_column ddns_ttl_min ${table}
-    check_table_column ddns_ttl_max ${table}
-    check_table_column ddns_ttl_percent ${table}
-    check_table_column ddns_reverse_zone ${table}
-    check_table_column hostname_char_set ${table}
-    check_table_column hostname_char_replacement ${table}
+    check_table_column ddns_send_updates "${table}"
+    check_table_column ddns_override_no_update "${table}"
+    check_table_column ddns_override_client_update "${table}"
+    check_table_column ddns_replace_client_name "${table}"
+    check_table_column ddns_generated_prefix "${table}"
+    check_table_column ddns_qualifying_suffix "${table}"
+    check_table_column ddns_update_on_renew "${table}"
+    check_table_column ddns_conflict_resolution_mode "${table}"
+    check_table_column ddns_ttl "${table}"
+    check_table_column ddns_ttl_min "${table}"
+    check_table_column ddns_ttl_max "${table}"
+    check_table_column ddns_ttl_percent "${table}"
+    check_table_column ddns_reverse_zone "${table}"
+    check_table_column hostname_char_set "${table}"
+    check_table_column hostname_char_replacement "${table}"
 
     # check missing ddns fields were added to dhcp6_pool
     table="dhcp6_pool"
-    check_table_column ddns_send_updates ${table}
-    check_table_column ddns_override_no_update ${table}
-    check_table_column ddns_override_client_update ${table}
-    check_table_column ddns_replace_client_name ${table}
-    check_table_column ddns_generated_prefix ${table}
-    check_table_column ddns_qualifying_suffix ${table}
-    check_table_column ddns_update_on_renew ${table}
-    check_table_column ddns_conflict_resolution_mode ${table}
-    check_table_column ddns_ttl ${table}
-    check_table_column ddns_ttl_min ${table}
-    check_table_column ddns_ttl_max ${table}
-    check_table_column ddns_ttl_percent ${table}
-    check_table_column ddns_reverse_zone ${table}
-    check_table_column hostname_char_set ${table}
-    check_table_column hostname_char_replacement ${table}
+    check_table_column ddns_send_updates "${table}"
+    check_table_column ddns_override_no_update "${table}"
+    check_table_column ddns_override_client_update "${table}"
+    check_table_column ddns_replace_client_name "${table}"
+    check_table_column ddns_generated_prefix "${table}"
+    check_table_column ddns_qualifying_suffix "${table}"
+    check_table_column ddns_update_on_renew "${table}"
+    check_table_column ddns_conflict_resolution_mode "${table}"
+    check_table_column ddns_ttl "${table}"
+    check_table_column ddns_ttl_min "${table}"
+    check_table_column ddns_ttl_max "${table}"
+    check_table_column ddns_ttl_percent "${table}"
+    check_table_column ddns_reverse_zone "${table}"
+    check_table_column hostname_char_set "${table}"
+    check_table_column hostname_char_replacement "${table}"
 }
 
 pgsql_upgrade_test() {
