@@ -534,7 +534,35 @@ public:
                     last_subnet->setDdnsTtlMax(worker.getInt(77));
                 }
 
-                // server_tag at 78.
+                // ddns_update_on_renew at 78.
+                if (!worker.isColumnNull(78)) {
+                     last_subnet->setDdnsUpdateOnRenew(worker.getBool(78));
+                }
+
+                // ddns_conflict_resolution_mode at 79.
+                if (!worker.isColumnNull(79)) {
+                     last_subnet->setDdnsConflictResolutionMode(worker.getString(79));
+                }
+
+#if 0 // Waiting on #4323
+                // ddns_reverse_zone at 80.
+                if (!worker.isColumnNull(80)) {
+                    last_subnet->setDdnsReverseZone(worker.getString(80));
+                }
+#endif
+                // hostname_char_set at 81.
+                if (!worker.isColumnNull(81)) {
+                    last_subnet->setHostnameCharSet(worker.getString(81));
+                }
+
+                // hostname_char_replacment at 82.
+                if (!worker.isColumnNull(82)) {
+                    last_subnet->setHostnameCharReplacement(worker.getString(82));
+                }
+
+                // more pool fields 83-97 done below.
+
+                // server_tag at 98.
 
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.insert(last_subnet);
@@ -547,9 +575,9 @@ public:
                 }
             }
 
-            // Check for new server tags at 78.
-            if (!worker.isColumnNull(78)) {
-                std::string new_tag = worker.getString(78);
+            // Check for new server tags at 98.
+            if (!worker.isColumnNull(98)) {
+                std::string new_tag = worker.getString(98);
                 if (last_tag != new_tag) {
                     if (!new_tag.empty() && !last_subnet->hasServerTag(ServerTag(new_tag))) {
                         last_subnet->setServerTag(new_tag);
@@ -589,6 +617,84 @@ public:
                     if (user_context) {
                         last_pool->setContext(user_context);
                     }
+                }
+
+                // pool ddns_send_updates at 83.
+                if (!worker.isColumnNull(83)) {
+                    last_pool->setDdnsSendUpdates(worker.getBool(83));
+                }
+
+                // pool ddns_override_no_update at 84.
+                if (!worker.isColumnNull(84)) {
+                    last_pool->setDdnsOverrideNoUpdate(worker.getBool(84));
+                }
+
+                // pool ddns_override_client_update at 85.
+                if (!worker.isColumnNull(85)) {
+                     last_pool->setDdnsOverrideClientUpdate(worker.getBool(85));
+                }
+
+                // pool ddns_replace_client_name_mode at 86
+                if (!worker.isColumnNull(86)) {
+                     last_pool->setDdnsReplaceClientNameMode(static_cast<D2ClientConfig::
+                                                            ReplaceClientNameMode>
+                                                            (worker.getSmallInt(86)));
+                }
+
+                // pool ddns_generated_prefix at 87.
+                if (!worker.isColumnNull(87)) {
+                     last_pool->setDdnsGeneratedPrefix(worker.getString(87));
+                }
+
+                // pool ddns_qualifying_suffix at 88.
+                if (!worker.isColumnNull(88)) {
+                     last_pool->setDdnsQualifyingSuffix(worker.getString(88));
+                }
+
+                // pool ddns_ttl_percent at 89.
+                if (!worker.isColumnNull(89)) {
+                     last_pool->setDdnsTtlPercent(worker.getDouble(89));
+                }
+
+                // pool ddns_ttl at 90.
+                if (!worker.isColumnNull(90)) {
+                     last_pool->setDdnsTtl(worker.getInt(90));
+                }
+
+                // pool ddns_ttl_min at 91.
+                if (!worker.isColumnNull(91)) {
+                     last_pool->setDdnsTtlMin(worker.getInt(91));
+                }
+
+                // pool ddns_ttl_max at 92.
+                if (!worker.isColumnNull(92)) {
+                     last_pool->setDdnsTtlMax(worker.getInt(92));
+                }
+
+                // pool ddns_update_on_renew at 93.
+                if (!worker.isColumnNull(93)) {
+                     last_pool->setDdnsUpdateOnRenew(worker.getBool(93));
+                }
+
+                // pool ddns_conflict_resolution_mode at 94.
+                if (!worker.isColumnNull(94)) {
+                     last_pool->setDdnsConflictResolutionMode(worker.getString(94));
+                }
+
+#if 0 // waiting for #4323
+                // pool ddns_reverse_zone at 95.
+                if (!worker.isColumnNull(95)) {
+                     last_pool->setDdnsReverseZone(worker.getString(95));
+                }
+#endif
+                // pool hostname_char_set at 96.
+                if (!worker.isColumnNull(96)) {
+                     last_pool->setHostnameCharSet(worker.getString(96));
+                }
+
+                // pool hostname_char_replacement at 97.
+                if (!worker.isColumnNull(97)) {
+                     last_pool->setHostnameCharReplacement(worker.getString(97));
                 }
 
                 last_subnet->addPool(last_pool);
@@ -965,6 +1071,15 @@ public:
         in_bindings.addOptional(subnet->getDdnsTtl(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getDdnsTtlMin(Network::Inheritance::NONE));
         in_bindings.addOptional(subnet->getDdnsTtlMax(Network::Inheritance::NONE));
+        in_bindings.addOptional(subnet->getDdnsUpdateOnRenew(Network::Inheritance::NONE));
+        in_bindings.addOptional(subnet->getDdnsConflictResolutionMode(Network::Inheritance::NONE));
+#if 0 // Waiting for #4323
+        in_bindings.addOptional(subnet->getDdnsReverseZone(Network::Inheritance::NONE));
+#else
+        in_bindings.addNull();
+#endif
+        in_bindings.addOptional(subnet->getHostnameCharSet(Network::Inheritance::NONE));
+        in_bindings.addOptional(subnet->getHostnameCharReplacement(Network::Inheritance::NONE));
 
         // Start transaction.
         PgSqlTransaction transaction(conn_);
@@ -1060,6 +1175,26 @@ public:
         addClientClassesBinding(in_bindings, pool->getClientClasses());
         addAdditionalClassesBinding(in_bindings, pool);
         in_bindings.add(pool->getContext());
+        in_bindings.addOptional(pool->getDdnsSendUpdates());
+        in_bindings.addOptional(pool->getDdnsOverrideNoUpdate());
+        in_bindings.addOptional(pool->getDdnsOverrideClientUpdate());
+        addDdnsReplaceClientNameMode(in_bindings,
+                                     pool->getDdnsReplaceClientNameMode());
+        in_bindings.addOptional(pool->getDdnsGeneratedPrefix());
+        in_bindings.addOptional(pool->getDdnsQualifyingSuffix());
+        in_bindings.addOptional(pool->getDdnsTtlPercent());
+        in_bindings.addOptional(pool->getDdnsTtl());
+        in_bindings.addOptional(pool->getDdnsTtlMin());
+        in_bindings.addOptional(pool->getDdnsTtlMax());
+        in_bindings.addOptional(pool->getDdnsUpdateOnRenew());
+        in_bindings.addOptional(pool->getDdnsConflictResolutionMode());
+#if 0 // Waiting for #4323
+        in_bindings.addOptional(pool->getDdnsReverseZone());
+#else
+        in_bindings.addNull();
+#endif
+        in_bindings.addOptional(pool->getHostnameCharSet());
+        in_bindings.addOptional(pool->getHostnameCharReplacement());
         in_bindings.addTimestamp(subnet->getModificationTime());
 
         // Attempt to INSERT the pool.
@@ -1392,7 +1527,33 @@ public:
                     last_network->setDdnsTtlMax(worker.getInt(51));
                 }
 
-                // server_tag at 52.
+                // ddns_update_on_renew at 52.
+                if (!worker.isColumnNull(52)) {
+                     last_network->setDdnsUpdateOnRenew(worker.getBool(52));
+                }
+
+                // ddns_conflict_resolution_mode at 53.
+                if (!worker.isColumnNull(53)) {
+                     last_network->setDdnsConflictResolutionMode(worker.getString(53));
+                }
+
+#if 0 // Waiting on #4323
+                // ddns_reverse_zone at 54.
+                if (!worker.isColumnNull(54)) {
+                    last_network->setDdnsReverseZone(worker.getString(54));
+                }
+#endif
+                // hostname_char_set at 55.
+                if (!worker.isColumnNull(55)) {
+                    last_network->setHostnameCharSet(worker.getString(55));
+                }
+
+                // hostname_char_replacment at 56.
+                if (!worker.isColumnNull(56)) {
+                    last_network->setHostnameCharReplacement(worker.getString(56));
+                }
+
+                // server_tag at 57.
 
                 // Add the shared network.
                 auto ret = shared_networks.push_back(last_network);
@@ -1406,8 +1567,8 @@ public:
             }
 
             // Check for new server tags.
-            if (!worker.isColumnNull(52)) {
-                std::string new_tag = worker.getString(52);
+            if (!worker.isColumnNull(57)) {
+                std::string new_tag = worker.getString(57);
                 if (last_tag != new_tag) {
                     if (!new_tag.empty() && !last_network->hasServerTag(ServerTag(new_tag))) {
                         last_network->setServerTag(new_tag);
@@ -1564,6 +1725,15 @@ public:
         in_bindings.addOptional(shared_network->getDdnsTtl(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getDdnsTtlMin(Network::Inheritance::NONE));
         in_bindings.addOptional(shared_network->getDdnsTtlMax(Network::Inheritance::NONE));
+        in_bindings.addOptional(shared_network->getDdnsUpdateOnRenew(Network::Inheritance::NONE));
+        in_bindings.addOptional(shared_network->getDdnsConflictResolutionMode(Network::Inheritance::NONE));
+#if 0 // Waiting for #4323
+        in_bindings.addOptional(shared_network->getDdnsReverseZone(Network::Inheritance::NONE));
+#else
+        in_bindings.addNull();
+#endif
+        in_bindings.addOptional(shared_network->getHostnameCharSet(Network::Inheritance::NONE));
+        in_bindings.addOptional(shared_network->getHostnameCharReplacement(Network::Inheritance::NONE));
 
         // Start transaction.
         PgSqlTransaction transaction(conn_);
@@ -3402,7 +3572,7 @@ TaggedStatementArray tagged_statements = { {
     // Insert a subnet.
     {
         // PgSqlConfigBackendDHCPv4Impl::INSERT_SUBNET4,
-        42,
+        47,
         {
             OID_INT8,       //  1 subnet_id,
             OID_VARCHAR,    //  2 subnet_prefix
@@ -3446,6 +3616,11 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       // 40 ddns_ttl
             OID_INT8,       // 41 ddns_ttl_min
             OID_INT8,       // 42 ddns_ttl_max
+            OID_BOOL,       // 43 ddns_update_on_renew
+            OID_VARCHAR,    // 44 ddns_conflict_resolution_mode
+            OID_VARCHAR,    // 45 ddns_reverse_zone
+            OID_VARCHAR,    // 46 hostname_char_set
+            OID_VARCHAR,    // 47 hostname_char_replacement
         },
         "INSERT_SUBNET4",
         "INSERT INTO dhcp4_subnet("
@@ -3490,13 +3665,18 @@ TaggedStatementArray tagged_statements = { {
         "  ddns_ttl_percent,"
         "  ddns_ttl,"
         "  ddns_ttl_min,"
-        "  ddns_ttl_max"
+        "  ddns_ttl_max,"
+        "  ddns_update_on_renew,"
+        "  ddns_conflict_resolution_mode,"
+        "  ddns_reverse_zone,"
+        "  hostname_char_set,"
+        "  hostname_char_replacement "
         ") VALUES ("
             "$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, "
             "cast($11 as inet), $12, $13, $14, $15, $16, $17, $18, cast($19 as json), $20, "
             "$21, $22, $23, cast($24 as float), cast($25 as float), $26, $27, $28, $29, $30, "
             "$31, $32, $33, $34, cast($35 as float), $36, $37, $38, "
-            "cast($39 as float), $40, $41, $42"
+            "cast($39 as float), $40, $41, $42, $43, $44, $45, $46, $47"
         ")"
     },
 
@@ -3516,7 +3696,7 @@ TaggedStatementArray tagged_statements = { {
     // Insert pool for a subnet.
     {
         // PgSqlConfigBackendDHCPv4Impl::INSERT_POOL4,
-        7,
+        22,
         {
             OID_TEXT,       // 1 start_address - cast as inet
             OID_TEXT,       // 2 end_address - cast as inet
@@ -3524,7 +3704,22 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       // 4 client_classes
             OID_TEXT,       // 5 evaluate_additional_classes
             OID_TEXT,       // 6 user_context - cast as json
-            OID_TIMESTAMP   // 7 modification_ts
+            OID_BOOL,       // 7 ddns_send_updates
+            OID_BOOL,       // 8 ddns_override_no_update
+            OID_BOOL,       // 9 ddns_override_client_update
+            OID_INT8,       // 10 ddns_replace_client_name,
+            OID_VARCHAR,    // 11 ddns_generated_prefix
+            OID_VARCHAR,    // 12 ddns_qualifying_suffix
+            OID_TEXT,       // 13 ddns_ttl_percent - cast as float
+            OID_INT8,       // 14 ddns_ttl
+            OID_INT8,       // 15 ddns_ttl_min
+            OID_INT8,       // 16 ddns_ttl_max
+            OID_BOOL,       // 17 ddns_update_on_renew
+            OID_VARCHAR,    // 18 ddns_conflict_resolution_mode
+            OID_VARCHAR,    // 19 ddns_reverse_zone
+            OID_VARCHAR,    // 20 hostname_char_set
+            OID_VARCHAR,    // 21 hostname_char_replacement
+            OID_TIMESTAMP,  // 22 modification_ts
         },
         "INSERT_POOL4",
         PGSQL_INSERT_POOL(dhcp4)
@@ -3533,7 +3728,7 @@ TaggedStatementArray tagged_statements = { {
     // Insert a shared network.
     {
         // PgSqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4,
-        37,
+        42,
         {
             OID_VARCHAR,    //  1 name,
             OID_TEXT,       //  2 client_classes,
@@ -3571,7 +3766,12 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       // 34 ddns_ttl_percent - cast as float
             OID_INT8,       // 35 ddns_ttl
             OID_INT8,       // 36 ddns_ttl_min
-            OID_INT8        // 37 ddns_ttl_max
+            OID_INT8,       // 37 ddns_ttl_max
+            OID_BOOL,       // 38 ddns_update_on_renew
+            OID_VARCHAR,    // 39 ddns_conflict_resolution_mode
+            OID_VARCHAR,    // 40 ddns_reverse_zone
+            OID_VARCHAR,    // 41 hostname_char_set
+            OID_VARCHAR,    // 42 hostname_char_replacement
         },
         "INSERT_SHARED_NETWORK4",
         "INSERT INTO dhcp4_shared_network("
@@ -3611,13 +3811,18 @@ TaggedStatementArray tagged_statements = { {
         "  ddns_ttl_percent,"
         "  ddns_ttl,"
         "  ddns_ttl_min,"
-        "  ddns_ttl_max"
+        "  ddns_ttl_max,"
+        "  ddns_update_on_renew,"
+        "  ddns_conflict_resolution_mode,"
+        "  ddns_reverse_zone,"
+        "  hostname_char_set,"
+        "  hostname_char_replacement "
         ") VALUES ("
             "$1, $2, $3, $4, $5, $6, $7, $8, $9, $10,"
             "cast($11 as json), $12, $13, $14, $15, "
             "cast($16 as float), cast($17 as float), $18, $19, cast($20 as inet), "
             "$21, $22, $23, $24, $25, $26, $27, $28, $29, cast($30 as float), $31, $32, $33, "
-            "cast($34 as float), $35, $36, $37"
+            "cast($34 as float), $35, $36, $37, $38, $39, $40, $41, $42"
         ")"
     },
 
@@ -3822,7 +4027,7 @@ TaggedStatementArray tagged_statements = { {
     // Update existing subnet.
     {
         // PgSqlConfigBackendDHCPv4Impl::UPDATE_SUBNET4,
-        44,
+        49,
         {
             OID_INT8,       //  1 subnet_id,
             OID_VARCHAR,    //  2 subnet_prefix
@@ -3866,8 +4071,13 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       // 40 ddns_ttl
             OID_INT8,       // 41 ddns_ttl_min
             OID_INT8,       // 42 ddns_ttl_max
-            OID_INT8,       // 43 subnet_id (of subnet to update)
-            OID_VARCHAR,    // 44 subnet_prefix (of subnet to update)
+            OID_BOOL,       // 43 ddns_update_on_renew
+            OID_VARCHAR,    // 44 ddns_conflict_resolution_mode
+            OID_VARCHAR,    // 45 ddns_reverse_zone
+            OID_VARCHAR,    // 46 hostname_char_set
+            OID_VARCHAR,    // 47 hostname_char_replacement
+            OID_INT8,       // 48 subnet_id (of subnet to update)
+            OID_VARCHAR,    // 49 subnet_prefix (of subnet to update)
         },
         "UPDATE_SUBNET4,",
         "UPDATE dhcp4_subnet SET"
@@ -3912,14 +4122,19 @@ TaggedStatementArray tagged_statements = { {
         "  ddns_ttl_percent = cast($39 as float),"
         "  ddns_ttl = $40,"
         "  ddns_ttl_min = $41,"
-        "  ddns_ttl_max = $42 "
-        "WHERE subnet_id = $43 OR subnet_prefix = $44"
+        "  ddns_ttl_max = $42, "
+        "  ddns_update_on_renew = $43, "
+        "  ddns_conflict_resolution_mode = $44, "
+        "  ddns_reverse_zone = $45, "
+        "  hostname_char_set = $46, "
+        "  hostname_char_replacement = $47 "
+        "WHERE subnet_id = $48 OR subnet_prefix = $49"
     },
 
     // Update existing shared network.
     {
         // PgSqlConfigBackendDHCPv4Impl::UPDATE_SHARED_NETWORK4,
-        38,
+        43,
         {
             OID_VARCHAR,    //  1 name,
             OID_TEXT,       //  2 client_classes,
@@ -3958,7 +4173,12 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       // 35 ddns_ttl
             OID_INT8,       // 36 ddns_ttl_min
             OID_INT8,       // 37 ddns_ttl_max
-            OID_VARCHAR,    // 38 name (of network to update)
+            OID_BOOL,       // 38 ddns_update_on_renew
+            OID_VARCHAR,    // 39 ddns_conflict_resolution_mode
+            OID_VARCHAR,    // 40 ddns_reverse_zone
+            OID_VARCHAR,    // 41 hostname_char_set
+            OID_VARCHAR,    // 42 hostname_char_replacement
+            OID_VARCHAR,    // 43 name (of network to update)
         },
         "UPDATE_SHARED_NETWORK4",
         "UPDATE dhcp4_shared_network SET"
@@ -3998,8 +4218,13 @@ TaggedStatementArray tagged_statements = { {
         "  ddns_ttl_percent = cast($34 as float),"
         "  ddns_ttl = $35,"
         "  ddns_ttl_min = $36,"
-        "  ddns_ttl_max = $37 "
-        "WHERE name = $38"
+        "  ddns_ttl_max = $37,"
+        "  ddns_update_on_renew = $38,"
+        "  ddns_conflict_resolution_mode = $39,"
+        "  ddns_reverse_zone = $40,"
+        "  hostname_char_set = $41,"
+        "  hostname_char_replacement = $42 "
+        "WHERE name = $43"
     },
 
     // Update existing option definition.

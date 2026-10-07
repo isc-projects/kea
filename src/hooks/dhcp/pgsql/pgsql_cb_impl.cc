@@ -1075,7 +1075,14 @@ PgSqlConfigBackendImpl::getPort() const {
 void
 PgSqlConfigBackendImpl::addDdnsReplaceClientNameBinding(PsqlBindArray& bindings,
                                                         const NetworkPtr& network) {
-    auto ddns_rcn_mode = network->getDdnsReplaceClientNameMode(Network::Inheritance::NONE);
+    auto const&  ddns_rcn_mode = network->getDdnsReplaceClientNameMode(Network::Inheritance::NONE);
+    addDdnsReplaceClientNameMode(bindings, ddns_rcn_mode);
+}
+
+void
+PgSqlConfigBackendImpl::addDdnsReplaceClientNameMode(
+    PsqlBindArray& bindings,
+    const util::Optional<D2ClientConfig::ReplaceClientNameMode>& ddns_rcn_mode) {
     if (!ddns_rcn_mode.unspecified()) {
         bindings.add(static_cast<uint8_t>(ddns_rcn_mode.get()));
     } else {

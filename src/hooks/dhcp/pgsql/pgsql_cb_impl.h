@@ -565,6 +565,18 @@ public:
     void addDdnsReplaceClientNameBinding(db::PsqlBindArray& bindings,
                                          const NetworkPtr& network);
 
+    /// @brief Adds ddns-replace-client-name mode to a bind array.
+    ///
+    /// If value of ddns-replace-client-name mode has been specified
+    /// it is added to the binding, otherwise a null is added to the binding.
+    ///
+    /// @param bindings PsqlBindArray to which the mode should be added.
+    /// @param network Pointer to shared network or subnet for which mode binding
+    /// should be created.
+    void addDdnsReplaceClientNameMode(db::PsqlBindArray& bindings,
+                                      const util::Optional<D2ClientConfig
+                                      ::ReplaceClientNameMode>& ddns_rcn_mode);
+
     /// @brief Adds network relays addresses to a bind array.
     ///
     /// Creates an Element tree of relay addresses add adds that to the end
