@@ -249,8 +249,8 @@
         // only controls part of the reverse zone, and someone
         // (possibly an upstream ISP) has delegated some records
         // to another zone that you control, possibly via CNAME.
-        // It may be specified at the global, shared-network and
-        // subnet levels. The default value is an empty string
+        // It may be specified at the global, shared-network, subnet
+        // and levels. The default value is an empty string
         // which ultimately instructs kea-dhcp-ddns to use
         // "ip6.arpa."
         "ddns-reverse-zone": "backward.com.",

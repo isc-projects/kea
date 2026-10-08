@@ -252,7 +252,7 @@ const char *invalid_msgs[] =
      " \"lease-length\" : 1300, "
      " \"use-conflict-resolution\": \"bogus\""
      "}",
-    // Malformed reverse-zone
+    // Malformed reverse-zone.
      "{"
      " \"change-type\" : 0 , "
      " \"forward-change\" : true , "

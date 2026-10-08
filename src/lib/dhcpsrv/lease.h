@@ -297,6 +297,12 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     bool updateUserContextISC(const std::string elem_name,
                               data::ConstElementPtr new_values);
 
+    /// Gets an entry from the ISC map in the lease's user-context
+    ///
+    /// @param elem_name ISC element name to get.
+    /// @return Pointer to the found element or an empty pointer.
+    data::ConstElementPtr getFromUserContextISC(const std::string elem_name) const;
+
     /// Remove an entry the ISC map in the lease's user-context
     ///
     /// Removes the named element from the "ISC" map if it exits.

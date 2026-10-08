@@ -795,6 +795,20 @@ Lease::updateUserContextISC(const std::string elem_name,
     return(changed);
 }
 
+ConstElementPtr
+Lease::getFromUserContextISC(const std::string elem_name) const {
+    ConstElementPtr elem;
+    auto ctx = getContext();
+    if (ctx) {
+        auto isc = getContext()->find("ISC");
+        if (isc && (isc->getType() == Element::map)) {
+            elem = isc->find(elem_name);
+        }
+    }
+
+    return (elem);
+}
+
 bool
 Lease::deleteFromUserContextISC(const std::string elem_name) {
     // Get a mutable copy of the lease's current user context.
@@ -814,26 +828,28 @@ Lease::deleteFromUserContextISC(const std::string elem_name) {
     ElementPtr mutable_user_context = copy(user_context, 0);
     ElementPtr mutable_isc = copy(mutable_user_context->get("ISC"), 0);
     mutable_isc->remove(elem_name);
-    mutable_user_context->set("ISC", mutable_isc);
+    if (mutable_isc->size()) {
+        mutable_user_context->set("ISC", mutable_isc);
+    } else {
+        // ISC is now empty, remove it.
+        mutable_user_context->remove("ISC");
+        if (!mutable_user_context->size()) {
+            // Context is now empty, discard it.
+            mutable_user_context.reset();
+        }
+    }
 
-    /// @todo If this leaves ISC empty AND there's nothing else
-    /// in user-context, should we delete the user-context?
-
+    // Update user-context.
     setContext(mutable_user_context);
-    return(true);
+
+    return (true);
 }
 
 std::string
 Lease::getDdnsReverseZone() const {
-    auto ctx = getContext();
-    if (ctx) {
-        auto isc = getContext()->find("ISC");
-        if (isc && (isc->getType() == Element::map)) {
-            auto rev_zone = isc->find("ddns-reverse-zone");
-            if (rev_zone) {
-                return (rev_zone->stringValue());
-            }
-        }
+    auto rev_zone = getFromUserContextISC("ddns-reverse-zone");
+    if (rev_zone) {
+        return (rev_zone->stringValue());
     }
 
     return ("");

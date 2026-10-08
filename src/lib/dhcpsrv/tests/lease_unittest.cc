@@ -1467,4 +1467,82 @@ TEST(Lease6Test, ddnsReverseZone) {
     ASSERT_TRUE(lease.getDdnsReverseZone().empty());
 }
 
+// Verifies lease user_context operations: update, get, and delete.
+// These functions are common to lease4 and lease6.
+TEST(LeaseTest, manipulateLeaseUserContext) {
+    Lease4 lease;
+
+    // New lease, context should not exist.
+    ASSERT_FALSE(lease.getContext());
+
+    // Attempting a get should return an empty element.
+    auto elem = lease.getFromUserContextISC("bogus");
+    ASSERT_FALSE(elem);
+
+    // Attempting a delete should neither throw nor create the context.
+    ASSERT_NO_THROW(lease.deleteFromUserContextISC("bogus"));
+    ASSERT_FALSE(lease.getContext());
+
+    // Add an element to the ISC member of the context.
+    lease.updateUserContextISC("first", Element::create("one"));
+
+    // Verify that the member exists.
+    elem = lease.getFromUserContextISC("first");
+    ASSERT_TRUE(elem);
+    EXPECT_EQ("one", elem->stringValue());
+
+    // Delete a non-existent member. Should neither throw nor alter the context.
+    ASSERT_NO_THROW(lease.deleteFromUserContextISC("bogus"));
+
+    // Verify the original member still exists.
+    elem = lease.getFromUserContextISC("first");
+    ASSERT_TRUE(elem);
+    EXPECT_EQ("one", elem->stringValue());
+
+    // Delete the only member. Context should no longer exist.
+    ASSERT_NO_THROW(lease.deleteFromUserContextISC("first"));
+    auto ctx = lease.getContext();
+    ASSERT_FALSE(ctx);
+
+    // Create a new user-context with a top-level entry (i.e.
+    // oustide "ISC" map.
+    ElementPtr input_ctx = Element::createMap();
+    input_ctx->set("not-ISC", Element::create("stuff"));
+    lease.setContext(input_ctx);
+
+    // Verify it.
+    ctx = lease.getContext();
+    ASSERT_TRUE(ctx->find("not-ISC"));
+
+    // Attempting to delete an ISC element should be harmless.
+    ASSERT_NO_THROW(lease.deleteFromUserContextISC("bogus"));
+
+    // Not-ISC should still be there.
+    ctx = lease.getContext();
+    ASSERT_TRUE(ctx->find("not-ISC"));
+
+    // Add an element to the ISC member of the context.
+    lease.updateUserContextISC("first", Element::create("one"));
+
+    // Verify ISC map was added.
+    ctx = lease.getContext();
+    ASSERT_TRUE(ctx->find("not-ISC"));
+    ASSERT_TRUE(ctx->find("ISC"));
+
+    // Verify that it's new member exists.
+    elem = lease.getFromUserContextISC("first");
+    ASSERT_TRUE(elem);
+    EXPECT_EQ("one", elem->stringValue());
+
+    // Delete the ISC member.
+    ASSERT_NO_THROW(lease.deleteFromUserContextISC("first"));
+
+    // Context should still exist but ISC map and member should not.
+    ctx = lease.getContext();
+    ASSERT_TRUE(ctx);
+    ASSERT_TRUE(ctx->find("not-ISC"));
+    ASSERT_FALSE(ctx->find("ISC"));
+    ASSERT_FALSE(lease.getFromUserContextISC("first"));
+}
+
 } // end of anonymous namespace

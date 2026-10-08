@@ -294,7 +294,7 @@ public:
     ///   input:  192.168.1.15, in-addr.arpa
     ///  output:  15.1.168.192.in-addr.arpa.
     ///
-    /// @param ioaddr is the IPv4 IOaddress to convert
+    /// @param ioaddr is the IPv4 IOAddress to convert
     ///
     /// @param reverse_zone string containing the top-level zone to put
     ///        the PTR record in, typically "in-addr.arpa"
