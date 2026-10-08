@@ -530,8 +530,8 @@ TEST_F(QueueMgrUDPTest, nestedNCRs) {
     io_service_->runOne();
     io_service_->runOne();
 
-    // Verify that there are three NCRs on the queue.
-    EXPECT_EQ(3U, queue_mgr_->getQueueSize());
+    // Verify that there are four NCRs on the queue.
+    EXPECT_EQ(4U, queue_mgr_->getQueueSize());
 
     // Verify queued NCRs are as expected.
     next_ncr = first_ncr;
@@ -547,7 +547,7 @@ TEST_F(QueueMgrUDPTest, nestedNCRs) {
 
     // Verify stats are correct.
     StatMap stats_ncr = {
-        { "ncr-received", 3},
+        { "ncr-received", 4},
         { "ncr-invalid", 0},
         { "ncr-error", 0},
         { "queue-mgr-queue-full", 0}
