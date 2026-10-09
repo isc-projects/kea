@@ -280,7 +280,7 @@ public:
     ///
     /// @param orig_str string which may contain characters that require
     /// escaping.
-    /// @param characters list of characters which require escaping.
+    /// @param separator delimiter character that should be escaped.
     ///
     /// The escaped characters will use the following format:
     ///
@@ -295,7 +295,7 @@ public:
     ///
     /// @return A copy of the original string with special characters escaped.
     static std::string escapeCharacters(const std::string& orig_str,
-                                        const std::string& characters);
+                                        const char separator);
 
     /// @brief Returns a copy of a string with special characters unescaped
     ///

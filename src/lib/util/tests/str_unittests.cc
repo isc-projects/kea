@@ -12,6 +12,8 @@
 
 #include <cstdint>
 #include <exception>
+#include <iomanip>
+#include <list>
 #include <sstream>
 #include <string>
 #include <unordered_set>
@@ -524,6 +526,15 @@ TEST_F(StringUtilTest, vectorIsPrintable) {
     // Add a control character (not printable).
     content.push_back('\a');
     EXPECT_FALSE(isPrintable(content));
+}
+
+// Verifies the byteToHex tool.
+TEST_F(StringUtilTest, byteToHex) {
+    for (unsigned i = 0; i < 256; i++) {
+        std::ostringstream ss;
+        ss << std::hex << std::setw(2) << std::setfill('0') << i;
+        EXPECT_EQ(ss.str(), byteToHex(i));
+    }
 }
 
 }  // namespace
