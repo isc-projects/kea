@@ -1,3 +1,9 @@
+2405.	[bug]		razvan
+	Corrected MLM_MYSQL_FETCH_FAILURE to 1 so MySQL
+	selectQuery and host lookups detect mysql_stmt_fetch
+	errors instead of silently ignoring them.
+	(Gitlab #4837,#4658)
+
 Kea 3.0.4 (stable) released on July 29, 2026
 
 2404.	[bug]		fdupont
