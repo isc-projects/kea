@@ -123,7 +123,6 @@ PIP_COMPILE = find_program('pip-compile', required: false)
 PLANTUML = find_program('plantuml', required: false)
 PYTHON = find_program('python3', 'python', required: true)
 SPHINX = find_program('sphinx-build', 'sphinx-build-3', required: false)
-SUDO = find_program('sudo', required: false)
 XMLLINT = find_program('xmllint', required: false)
 
 CD_AND_RUN = find_program(TOP_SOURCE_DIR / 'scripts/cd-and-run.sh')
@@ -133,13 +132,16 @@ KEA_MSG_COMPILER = disabler()
 
 #### sudo
 
-PASSWORDLESS_SUDO_SET_UP = false
-if SUDO.found()
-    result = run_command(SUDO, '-k', check: false)
-    if result.returncode() == 0
-        result = run_command(SUDO, '-n', 'true', check: false)
+if TESTS_OPT.enabled()
+    PASSWORDLESS_SUDO_SET_UP = false
+    SUDO = find_program('sudo', required: false)
+    if SUDO.found()
+        result = run_command(SUDO, '-k', check: false)
         if result.returncode() == 0
-            PASSWORDLESS_SUDO_SET_UP = true
+            result = run_command(SUDO, '-n', 'true', check: false)
+            if result.returncode() == 0
+                PASSWORDLESS_SUDO_SET_UP = true
+            endif
         endif
     endif
 endif
