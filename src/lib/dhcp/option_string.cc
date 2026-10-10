@@ -76,7 +76,9 @@ OptionString::pack(isc::util::OutputBuffer& buf, bool check) const {
     packHeader(buf, check);
     // Pack data.
     const OptionBuffer& data = getData();
-    buf.writeData(&data[0], data.size());
+    if (!data.empty()) {
+        buf.writeData(&data[0], data.size());
+    }
 
     // That's it. We don't pack any sub-options here, because this option
     // must not contain sub-options.

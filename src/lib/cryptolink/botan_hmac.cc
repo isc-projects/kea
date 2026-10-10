@@ -114,7 +114,6 @@ public:
     void sign(isc::util::OutputBuffer& result, size_t len) {
         try {
             Botan::secure_vector<Botan::byte> b_result(hmac_->final());
-
             if (len > b_result.size()) {
                 len = b_result.size();
             }
@@ -130,11 +129,10 @@ public:
     void sign(void* result, size_t len) {
         try {
             Botan::secure_vector<Botan::byte> b_result(hmac_->final());
-            size_t output_size = getOutputLength();
-            if (output_size > len) {
-                output_size = len;
+            if (len > b_result.size()) {
+                len = b_result.size();
             }
-            std::memcpy(result, &b_result[0], output_size);
+            std::memcpy(result, &b_result[0], len);
         } catch (const Botan::Exception& exc) {
             isc_throw(LibraryError, "Botan error: " << exc.what());
         }

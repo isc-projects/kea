@@ -1069,9 +1069,9 @@ CommandOptions::validate() {
     check((!getMacListFile().empty() && base_.size() > 0),
           "Can't use -b with -M option");
     check((getWaitForElapsedTime() == -1 && getIncreaseElapsedTime() != -1),
-	  "Option -y can't be used without -Y");
+          "Option -y can't be used without -Y");
     check((getWaitForElapsedTime() != -1 && getIncreaseElapsedTime() == -1),
-	  "Option -Y can't be used without -y");
+          "Option -Y can't be used without -y");
     auto nthreads = std::thread::hardware_concurrency();
     if (nthreads == 1 && isSingleThreaded() == false) {
         std::cout << "WARNING: Currently system can run only 1 thread in parallel." << std::endl

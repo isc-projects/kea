@@ -346,19 +346,24 @@ void Option::addOption(OptionPtr opt) {
 }
 
 uint8_t Option::getUint8() const {
-    if (data_.size() < sizeof(uint8_t) ) {
-        isc_throw(OutOfRange, "Attempt to read uint8 from option " << type_
-                  << " that has size " << data_.size());
+    if (data_.empty()) {
+        isc_throw(OutOfRange, "empty data");
     }
     return (data_[0]);
 }
 
 uint16_t Option::getUint16() const {
+    if (data_.empty()) {
+        isc_throw(OutOfRange, "empty data");
+    }
     // readUint16() checks and throws OutOfRange if data_ is too small.
     return (readUint16(&data_[0], data_.size()));
 }
 
 uint32_t Option::getUint32() const {
+    if (data_.empty()) {
+        isc_throw(OutOfRange, "empty data");
+    }
     // readUint32() checks and throws OutOfRange if data_ is too small.
     return (readUint32(&data_[0], data_.size()));
 }

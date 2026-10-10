@@ -169,7 +169,7 @@ MySqlBinding::condCreateIPv4Address(const Optional<IOAddress>& value) {
 MySqlBindingPtr
 MySqlBinding::createTimestamp(const boost::posix_time::ptime& timestamp) {
     MySqlBindingPtr binding(new MySqlBinding(MySqlBindingTraits<ptime>::column_type,
-                                   MySqlBindingTraits<ptime>::length));
+                                             MySqlBindingTraits<ptime>::length));
     binding->setTimestampValue(timestamp);
     return (binding);
 }

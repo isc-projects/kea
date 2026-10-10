@@ -345,6 +345,7 @@ Exchange::open() {
             // Send request message.
             buffer_ = sent_->getBuffer();
             size_ = buffer_.size();
+            // Note from a message the buffer can't be empty.
 
             LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                       RADIUS_EXCHANGE_SEND_NEW)
@@ -442,19 +443,18 @@ Exchange::open() {
         // Send request message.
         buffer_ = sent_->getBuffer();
         size_ = buffer_.size();
+        // Note from a message the buffer can't be empty.
 
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_EXCHANGE_SEND_RETRY)
             .arg(identifier_)
             .arg(buffer_.size())
             .arg(retries_);
 
-        socket_->asyncSend(&buffer_[0],
-                                buffer_.size(),
-                                ep_.get(),
-                                std::bind(&Exchange::sentHandler,
-                                          shared_from_this(),
-                                          ph::_1,   // error_code.
-                                          ph::_2)); // size.
+        socket_->asyncSend(&buffer_[0], buffer_.size(), ep_.get(),
+                           std::bind(&Exchange::sentHandler,
+                                     shared_from_this(),
+                                     ph::_1,   // error_code.
+                                     ph::_2)); // size.
         return;
     } catch (const Exception& exc) {
         LOG_ERROR(radius_logger, RADIUS_EXCHANGE_OPEN_FAILED)
@@ -627,7 +627,7 @@ Exchange::receivedHandler(ExchangePtr ex,
         .arg(exchangeRCtoText(ex->rc_));
 
     // If bad then retry, if not including reject it is done.
-    if ((ex->rc_ != OK_RC) && ( ex->rc_ != REJECT_RC)) {
+    if ((ex->rc_ != OK_RC) && (ex->rc_ != REJECT_RC)) {
         ex->io_service_->post(std::bind(&Exchange::openNext, ex));
     } else {
         ex->logReplyMessages();

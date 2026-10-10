@@ -664,6 +664,14 @@ TEST_F(MessageTest, badEncode) {
         EXPECT_THROW_MSG(message->encode(), InvalidOperation, "empty secret");
     }
     {
+        SCOPED_TRACE("empty auth");
+        MessagePtr message(new Message(PW_ACCESS_REJECT, AUTH_HDR_LEN,
+                                       {}, "secret",
+                                       AttributesPtr()));
+        ASSERT_TRUE(message);
+        EXPECT_THROW_MSG(message->encode(), BadValue, "Bad auth");
+    }
+    {
         SCOPED_TRACE("too large");
         AttributesPtr attrs(new Attributes());
         string msg = "too too too too too too too too too too  too too ";
@@ -694,7 +702,7 @@ TEST_F(MessageTest, badEncode) {
                                        attrs));
         ASSERT_TRUE(message);
         EXPECT_THROW_MSG(message->encode(), Unexpected,
-                         "Can't encode User-Password");
+                         "can't encode User-Password");
     }
 }
 

@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
+#include <exceptions/isc_assert.h>
 
 #include <dns/exceptions.h>
 #include <dns/rdata.h>
@@ -180,6 +181,8 @@ int compareCharStrings(const detail::CharString& self,
     const size_t self_len = self[0];
     const size_t other_len = other[0];
     const size_t cmp_len = std::min(self_len, other_len);
+    isc_throw_assert(self_len == self.size() - 1);
+    isc_throw_assert(other_len == other.size() - 1);
     if (cmp_len == 0) {
         if (self_len < other_len) {
             return (-1);

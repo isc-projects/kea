@@ -275,6 +275,8 @@ public:
         uint16_t getCode() const;
 
         /// \brief Return the option data of this pseudo RR.
+        ///
+        /// \note: must not be called when the option data is empty.
         const uint8_t* getData() const;
 
         /// \brief Return the length of the option data of this

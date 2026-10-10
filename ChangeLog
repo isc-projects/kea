@@ -1,3 +1,12 @@
+2408.	[bug]		razvan
+	Fixed bugs related to out of bound container access which can
+	cause Kea to crash if -D_GLIBCXX_ASSERTIONS flag is used at
+	compilation time. This affected perfdhcp, host_cache hook
+	library, kea-dhcp4, kea-dhcp6, kea-dhcp-ddns and kea-netconf.
+	Thank you to Joseph Bisch (joseph.bisch@gmail.com) for reporting
+	this issue.
+	(Gitlab #4839,#4708)
+
 2407.	[bug]		razvan
 	Fix a bug which was causing the kea-dhcp6 server to crash if
 	processing truncated relay messages.

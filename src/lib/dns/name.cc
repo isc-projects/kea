@@ -124,8 +124,7 @@ typedef enum {
 template<class Iterator, class Offsets, class Data>
 void
 stringParse(Iterator s, Iterator send, bool downcase, Offsets& offsets,
-            Data& ndata)
-{
+            Data& ndata) {
     const Iterator orig_s(s);
     //
     // Initialize things to make the compiler happy; they're not required.
@@ -484,6 +483,7 @@ Name::Name(InputBuffer& buffer, bool downcase) {
     }
 
     labelcount_ = offsets.size();
+    isc_throw_assert(labelcount_ > 0 && labelcount_ <= Name::MAX_LABELS);
     length_ = nused;
     offsets_.assign(offsets.begin(), offsets.end());
     buffer.setPosition(pos_begin + cused);

@@ -315,7 +315,9 @@ Translator::decode64(string const& input) {
     decodeBase64(input, binary);
     string result;
     result.resize(binary.size());
-    memcpy(&result[0], &binary[0], result.size());
+    if (!result.empty()) {
+        memcpy(&result[0], &binary[0], result.size());
+    }
     return (result);
 }
 
@@ -323,7 +325,9 @@ string
 Translator::encode64(string const& input) {
     vector<uint8_t> binary;
     binary.resize(input.size());
-    memcpy(&binary[0], input.c_str(), binary.size());
+    if (!binary.empty()) {
+        memcpy(&binary[0], input.c_str(), binary.size());
+    }
     return (encodeBase64(binary));
 }
 

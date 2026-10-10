@@ -90,6 +90,8 @@ std::string charStringDataToString(const CharStringData& char_string);
 /// \param self The CharString field to compare
 /// \param other The CharString field to compare to
 ///
+/// \note Both parameters must be empty or valid CharString values.
+///
 /// \return -1 if \c self would be sorted before \c other
 ///          1 if \c self would be sorted after \c other
 ///          0 if \c self and \c other are equal
