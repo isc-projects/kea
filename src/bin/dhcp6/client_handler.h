@@ -35,7 +35,7 @@ inline ContinuationPtr makeContinuation(Continuation&& cont) {
 
 /// @brief Client race avoidance RAII handler.
 class ClientHandler : public boost::noncopyable {
-private:
+public:
 
     /// Class (aka static) types, methods and members.
 
@@ -49,11 +49,19 @@ private:
         /// @throw if the query is null or has empty client ID.
         Client(Pkt6Ptr query, DuidPtr client_id);
 
-        /// @brief The query being processed.
-        Pkt6Ptr query_;
+        /// @note No longer keep the query, instead cache some properties.
 
         /// @brief Cached binary client ID.
         std::vector<uint8_t> duid_;
+
+        /// @brief Cached message type.
+        uint8_t msg_type_;
+
+        /// @brief Cached transaction ID.
+        uint32_t transid_;
+
+        /// @brief Cached relayed flag.
+        bool relayed_;
 
         /// @brief The ID of the thread processing the query.
         std::thread::id thread_;
@@ -74,6 +82,7 @@ private:
     /// @brief The type of shared pointers to clients.
     typedef boost::shared_ptr<Client> ClientPtr;
 
+private:
     /// @brief The type of the client container.
     typedef boost::multi_index_container<
 
