@@ -1,6 +1,6 @@
-#line 1 "netconf_lexer.cc"
+#line 2 "netconf_lexer.cc"
 
-#line 3 "netconf_lexer.cc"
+#line 4 "netconf_lexer.cc"
 
 #define  YY_INT_ALIGNED short int
 
@@ -1519,7 +1519,7 @@ using isc::netconf::NetconfParser;
 
 /* To avoid the call to exit... oops! */
 #define YY_FATAL_ERROR(msg) isc::netconf::ParserContext::fatal(msg)
-#line 1522 "netconf_lexer.cc"
+#line 1523 "netconf_lexer.cc"
 /* noyywrap disables automatic rewinding for the next file to parse. Since we
    always parse only a single string, there's no need to do any wraps. And
    using yywrap requires linking with -lfl, which provides the default yywrap
@@ -1545,8 +1545,8 @@ using isc::netconf::NetconfParser;
    by moving it ahead by yyleng bytes. yyleng specifies the length of the
    currently matched token. */
 #define YY_USER_ACTION  driver.loc_.columns(yyleng);
-#line 1548 "netconf_lexer.cc"
 #line 1549 "netconf_lexer.cc"
+#line 1550 "netconf_lexer.cc"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -1860,7 +1860,7 @@ YY_DECL
     }
 
 
-#line 1863 "netconf_lexer.cc"
+#line 1864 "netconf_lexer.cc"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -2539,7 +2539,7 @@ YY_RULE_SETUP
 #line 586 "netconf_lexer.ll"
 {
     /* Bad string with a forbidden control character inside */
-    std::string raw(yytext+1);
+    std::string raw(yytext+1, yyleng-1);
     size_t len = raw.size() - 1;
     size_t pos = 0;
     for (; pos < len; ++pos) {
@@ -2549,7 +2549,7 @@ YY_RULE_SETUP
         }
     }
     driver.error(driver.loc_,
-                 "Invalid control in " + std::string(yytext),
+                 "Invalid control in " + std::string(yytext, yyleng),
                  pos + 1);
 }
 	YY_BREAK
@@ -2559,7 +2559,7 @@ YY_RULE_SETUP
 #line 602 "netconf_lexer.ll"
 {
     /* Bad string with a bad escape inside */
-    std::string raw(yytext+1);
+    std::string raw(yytext+1, yyleng-1);
     size_t len = raw.size() - 1;
     size_t pos = 0;
     bool found = false;
@@ -2602,7 +2602,7 @@ YY_RULE_SETUP
         trailer = "...";
     }
     driver.error(driver.loc_,
-                 "Bad escape in " + std::string(yytext) + trailer,
+                 "Bad escape in " + std::string(yytext, yyleng) + trailer,
                  pos);
 }
 	YY_BREAK
@@ -2767,7 +2767,7 @@ YY_RULE_SETUP
 #line 752 "netconf_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 2770 "netconf_lexer.cc"
+#line 2771 "netconf_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{

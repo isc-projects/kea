@@ -11,6 +11,7 @@
 #include <netconf/netconf_log.h>
 #include <netconf/netconf_parser.h>
 #include <netconf/parser_context.h>
+#include <util/str.h>
 
 #include <fstream>
 #include <limits>
@@ -74,23 +75,24 @@ ParserContext::error(const isc::netconf::location& loc,
                      string const& what,
                      size_t pos)
 {
+    std::string escaped = util::str::escapeNulls(what);
     if (pos == 0) {
-        isc_throw(ParseError, loc << ": " << what);
+        isc_throw(ParseError, loc << ": " << escaped);
     } else {
-        isc_throw(ParseError, loc << " (near " << pos << "): " << what);
+        isc_throw(ParseError, loc << " (near " << pos << "): " << escaped);
     }
 }
 
 void
 ParserContext::error(string const& what)
 {
-    isc_throw(ParseError, what);
+    isc_throw(ParseError, util::str::escapeNulls(what));
 }
 
 void
 ParserContext::fatal(string const& what)
 {
-    isc_throw(ParseError, what);
+    isc_throw(ParseError, util::str::escapeNulls(what));
 }
 
 isc::data::Element::Position

@@ -12,6 +12,7 @@
 #include <exceptions/exceptions.h>
 #include <cc/dhcp_config_error.h>
 #include <cc/data.h>
+#include <util/str.h>
 #include <fstream>
 #include <sstream>
 #include <limits>
@@ -20,8 +21,7 @@ namespace isc {
 namespace agent {
 
 ParserContext::ParserContext()
-  : sfile_(0), ctx_(NO_KEYWORDS), trace_scanning_(false), trace_parsing_(false)
-{
+  : sfile_(0), ctx_(NO_KEYWORDS), trace_scanning_(false), trace_parsing_(false) {
 }
 
 ParserContext::~ParserContext()
@@ -29,8 +29,7 @@ ParserContext::~ParserContext()
 }
 
 isc::data::ElementPtr
-ParserContext::parseString(const std::string& str, ParserType parser_type)
-{
+ParserContext::parseString(const std::string& str, ParserType parser_type) {
     scanStringBegin(str, parser_type);
     return (parseCommon());
 }
@@ -72,30 +71,27 @@ ParserContext::parseCommon() {
 void
 ParserContext::error(const isc::agent::location& loc,
                      const std::string& what,
-                     size_t pos)
-{
+                     size_t pos) {
+    std::string escaped = util::str::escapeNulls(what);
     if (pos == 0) {
-        isc_throw(ParseError, loc << ": " << what);
+        isc_throw(ParseError, loc << ": " << escaped);
     } else {
-        isc_throw(ParseError, loc << " (near " << pos << "): " << what);
+        isc_throw(ParseError, loc << " (near " << pos << "): " << escaped);
     }
 }
 
 void
-ParserContext::error(const std::string& what)
-{
-    isc_throw(ParseError, what);
+ParserContext::error(const std::string& what) {
+    isc_throw(ParseError, util::str::escapeNulls(what));
 }
 
 void
-ParserContext::fatal(const std::string& what)
-{
-    isc_throw(ParseError, what);
+ParserContext::fatal(const std::string& what) {
+    isc_throw(ParseError, util::str::escapeNulls(what));
 }
 
 isc::data::Element::Position
-ParserContext::loc2pos(isc::agent::location& loc)
-{
+ParserContext::loc2pos(isc::agent::location& loc) {
     const std::string& file = *loc.begin.filename;
     const uint32_t line = loc.begin.line;
     const uint32_t pos = loc.begin.column;
@@ -105,8 +101,7 @@ ParserContext::loc2pos(isc::agent::location& loc)
 void
 ParserContext::require(const std::string& name,
                        isc::data::Element::Position open_loc,
-                       isc::data::Element::Position close_loc)
-{
+                       isc::data::Element::Position close_loc) {
     ConstElementPtr value = stack_.back()->get(name);
     if (!value) {
         isc_throw(ParseError,
@@ -119,8 +114,7 @@ ParserContext::require(const std::string& name,
 
 void
 ParserContext::unique(const std::string& name,
-                      isc::data::Element::Position loc)
-{
+                      isc::data::Element::Position loc) {
     ConstElementPtr value = stack_.back()->get(name);
     if (value) {
         if (ctx_ != NO_KEYWORDS) {
@@ -136,15 +130,13 @@ ParserContext::unique(const std::string& name,
 }
 
 void
-ParserContext::enter(const LexerContext& ctx)
-{
+ParserContext::enter(const LexerContext& ctx) {
     cstack_.push_back(ctx_);
     ctx_ = ctx;
 }
 
 void
-ParserContext::leave()
-{
+ParserContext::leave() {
     if (cstack_.empty()) {
         fatal("unbalanced syntactic context");
     }
@@ -153,8 +145,7 @@ ParserContext::leave()
 }
 
 const std::string
-ParserContext::contextName()
-{
+ParserContext::contextName() {
     switch (ctx_) {
     case NO_KEYWORDS:
         return ("__no keywords__");

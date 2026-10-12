@@ -311,6 +311,16 @@ std::string dumpDouble(double val, size_t precision = 5);
 /// @return two hex digit string.
 const std::string& byteToHex(uint8_t byte);
 
+/// @brief Escape null characters.
+///
+/// To be used to avoid an embedded null character to hide everything
+/// after it when the string is converted to a C-style string, e.g.
+/// in exceptions.
+///
+/// @param str string to escape.
+std::string
+escapeNulls(std::string str);
+
 }  // namespace str
 }  // namespace util
 }  // namespace isc
