@@ -667,6 +667,7 @@ TEST(GssTsigCfgTest, configure) {
         "\"retry-interval\": 240,\n"
         "\"tkey-lifetime\": 7200,\n"
         "\"tkey-protocol\": \"UDP\",\n"
+        "\"exchange-timeout\": 2000,\n"
         "\"servers\": [\n"
         " {\n"
         "  \"domain-names\": [ ],\n"
@@ -679,7 +680,8 @@ TEST(GssTsigCfgTest, configure) {
         "  \"rekey-interval\": 64800,\n"
         "  \"retry-interval\": 2880,\n"
         "  \"tkey-lifetime\": 86400,\n"
-        "  \"tkey-protocol\": \"UDP\"\n"
+        "  \"tkey-protocol\": \"UDP\",\n"
+        "  \"exchange-timeout\": 4000\n"
         " },{\n"
         "  \"id\": \"bar\",\n"
         "  \"ip-address\": \"192.0.2.2\",\n"
@@ -713,6 +715,7 @@ TEST(GssTsigCfgTest, configure) {
     EXPECT_EQ(2880, server->getRetryInterval());
     EXPECT_EQ(86400, server->getKeyLifetime());
     EXPECT_EQ(IOFetch::UDP, server->getKeyProto());
+    EXPECT_EQ(4000, server->getExchangeTimeout());
 
     ASSERT_NO_THROW(server = servers.at(1));
     ASSERT_TRUE(server);
@@ -728,6 +731,7 @@ TEST(GssTsigCfgTest, configure) {
     EXPECT_EQ(240, server->getRetryInterval());
     EXPECT_EQ(7200, server->getKeyLifetime());
     EXPECT_EQ(IOFetch::UDP, server->getKeyProto());
+    EXPECT_EQ(2000, server->getExchangeTimeout());
 }
 
 /// @brief Check configure requires a map.
@@ -830,6 +834,13 @@ TEST(GssTsigCfgTest, configureUnexpectedType) {
     ASSERT_NO_THROW(json = Element::fromJSON(config));
     ASSERT_TRUE(json);
     expected = "gss_tsig 'tkey-protocol' parameter is not a string";
+    expected += location;
+    EXPECT_THROW_MSG(cfg.configure(json), BadValue, expected);
+
+    config = "{ \"exchange-timeout\": false }";
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_TRUE(json);
+    expected = "gss_tsig 'exchange-timeout' parameter is not an integer";
     expected += location;
     EXPECT_THROW_MSG(cfg.configure(json), BadValue, expected);
 
@@ -949,6 +960,13 @@ TEST(GssTsigCfgTest, configureUnexpectedType) {
     expected += location;
     EXPECT_THROW_MSG(cfg.configure(json), BadValue, expected);
 
+    config = prefix + " \"exchange-timeout\": false } ] }";
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_TRUE(json);
+    expected = "gss_tsig server 'exchange-timeout' parameter is not an integer";
+    expected += location;
+    EXPECT_THROW_MSG(cfg.configure(json), BadValue, expected);
+
     config = prefix + " \"user-context\": [ ] } ] }";
     ASSERT_NO_THROW(json = Element::fromJSON(config));
     ASSERT_TRUE(json);
@@ -1054,6 +1072,20 @@ TEST(GssTsigCfgTest, configureBadParameter) {
     ASSERT_NO_THROW(json = Element::fromJSON(config));
     ASSERT_TRUE(json);
     expected = "'tkey-protocol' parameter must be UDP or TCP (<string>:1:129)";
+    EXPECT_THROW_MSG(cfg.configure(json), BadValue, expected);
+
+    config = prefix + " \"exchange-timeout\": -1 } ] }";
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_TRUE(json);
+    expected = "'exchange-timeout' parameter is out of range ";
+    expected += "[0..4294967295] (<string>:1:132)";
+    EXPECT_THROW_MSG(cfg.configure(json), BadValue, expected);
+
+    config = prefix + " \"exchange-timeout\": 4294967296 } ] }";
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_TRUE(json);
+    expected = "'exchange-timeout' parameter is out of range ";
+    expected += "[0..4294967295] (<string>:1:132)";
     EXPECT_THROW_MSG(cfg.configure(json), BadValue, expected);
 
     config = "{ \"servers\": [ { \"id\": \"\" } ] }";

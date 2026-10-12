@@ -296,6 +296,7 @@ const SimpleKeywords GssTsigCfg::GLOBAL_PARAMETERS = {
     { "retry-interval",     Element::integer },
     { "tkey-protocol",      Element::string },
     { "fallback",           Element::boolean },
+    { "exchange-timeout",   Element::integer },
     { "servers",            Element::list },
     { "user-context",       Element::map },
     { "comment",            Element::string }
@@ -697,7 +698,7 @@ GssTsigCfg::configure(ConstElementPtr params) {
             srv->setFallback(fallback->boolValue());
         }
 
-        ConstElementPtr tkey_timeout = params->get("exchange-timeout");
+        ConstElementPtr tkey_timeout = map->get("exchange-timeout");
         if (!tkey_timeout) {
             tkey_timeout = global_tkey_timeout;
         }
