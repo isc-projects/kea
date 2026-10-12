@@ -144,8 +144,7 @@ protected:
 public:
     typedef std::function<void(const isc::dhcp::ClientClass&)> ClassAdderFunc;
 
-    /// @brief Fetches the element for either 'evaluate-additional-classes' or deprecated
-    /// 'require-client-classes'
+    /// @brief Fetches the element for 'evaluate-additional-classes'
     ///
     /// @param params configuration element tree to search.
     /// @param adder_func function to add class names to an object's additional class list.
@@ -153,8 +152,7 @@ public:
     static void getAdditionalClassesElem(data::ConstElementPtr params,
                                          ClassAdderFunc adder_func);
 
-    /// @brief Fetches the element for either 'client-classes' or deprecated
-    /// 'client-class'
+    /// @brief Fetches the element for 'client-classes'
     ///
     /// @param params configuration element tree to search.
     /// @param adder_func function to add class names to an object's client class list.

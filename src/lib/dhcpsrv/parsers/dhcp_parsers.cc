@@ -519,15 +519,6 @@ PoolParser::parse(PoolStoragePtr pools,
         }
     }
 
-    // Client-class.
-    ConstElementPtr client_class = pool_structure->get("client-class");
-    if (client_class) {
-        string cclass = client_class->stringValue();
-        if (!cclass.empty()) {
-            pool->allowClientClass(cclass);
-        }
-    }
-
     // Setup client class list.
     BaseNetworkParser::getClientClassesElem(pool_structure,
                                             std::bind(&Pool::allowClientClass,
@@ -896,14 +887,6 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
         }
     }
 
-    // Try setting up client class.
-    if (params->contains("client-class")) {
-        string client_class = getString(params, "client-class");
-        if (!client_class.empty()) {
-            subnet4->allowClientClass(client_class);
-        }
-    }
-
     // Setup client class list.
     getClientClassesElem(params, std::bind(&Network::allowClientClass,
                                            boost::dynamic_pointer_cast<Network>(subnet4), ph::_1));
@@ -956,7 +939,7 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
         }
     }
 
-    /// client-class processing is now generic and handled in the common
+    /// client-classes processing is now generic and handled in the common
     /// code (see isc::data::SubnetConfigParser::createSubnet)
 
     // Here globally defined options were merged to the subnet specific
@@ -1129,11 +1112,6 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool,
         user_context_ = user_context;
     }
 
-    ConstElementPtr client_class = pd_pool->get("client-class");
-    if (client_class) {
-        client_class_ = client_class;
-    }
-
     // Check the pool parameters. It will throw an exception if any
     // of the required parameters are invalid.
     try {
@@ -1179,13 +1157,6 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool,
 
     if (user_context_) {
         pool_->setContext(user_context_);
-    }
-
-    if (client_class_) {
-        string cclass = client_class_->stringValue();
-        if (!cclass.empty()) {
-            pool_->allowClientClass(cclass);
-        }
     }
 
     // Setup client class list.
@@ -1417,14 +1388,6 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
         subnet6->setIface(iface);
     }
 
-    // Try setting up client class.
-    if (params->contains("client-class")) {
-        string client_class = getString(params, "client-class");
-        if (!client_class.empty()) {
-            subnet6->allowClientClass(client_class);
-        }
-    }
-
     // Setup client class list.
     getClientClassesElem(params, std::bind(&Network::allowClientClass,
                                            boost::dynamic_pointer_cast<Network>(subnet6), ph::_1));
@@ -1433,7 +1396,7 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
     getAdditionalClassesElem(params, std::bind(&Network::addAdditionalClass,
                                                boost::dynamic_pointer_cast<Network>(subnet6), ph::_1));
 
-    /// client-class processing is now generic and handled in the common
+    /// client-classes processing is now generic and handled in the common
     /// code (see isc::data::SubnetConfigParser::createSubnet)
 
     // Parse t1-percent and t2-percent

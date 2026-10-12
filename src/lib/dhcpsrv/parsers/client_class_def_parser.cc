@@ -193,20 +193,8 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
         }
     }
 
-    // Let's try to parse the only-in-additional-list/only-if-required flag
-    auto required_elem = class_def_cfg->get("only-if-required");
+    // Let's try to parse the only-in-additional-list flag
     auto additional_elem = class_def_cfg->get("only-in-additional-list");
-    if (required_elem) {
-        if (!additional_elem) {
-            LOG_WARN(dhcpsrv_logger, DHCPSRV_ONLY_IF_REQUIRED_DEPRECATED);
-            additional_elem = required_elem;
-        } else {
-            isc_throw(isc::dhcp::DhcpConfigError,
-                      "cannot specify both 'only-if-required' and "
-                      "'only-in-additional-list'. Use only the latter.");
-        }
-    }
-
     bool additional = false;
     if (additional_elem) {
         if (additional_elem->getType() == Element::boolean) {
@@ -352,7 +340,6 @@ ClientClassDefParser::checkParametersSupported(const ConstElementPtr& class_def_
                                                       "test",
                                                       "option-data",
                                                       "user-context",
-                                                      "only-if-required",   // deprecated
                                                       "only-in-additional-list",
                                                       "valid-lifetime",
                                                       "min-valid-lifetime",

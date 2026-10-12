@@ -2224,50 +2224,6 @@ TEST_F(ClientClassDefParserTest, offerLftInvalid) {
                      " (<string>:3:23)");
 }
 
-TEST_F(ClientClassDefParserTest, deprecatedOnlyIfRequired) {
-    // Valid entry using only-if-required.
-    std::string cfg_text =
-       R"^({
-            "name": "foo",
-            "only-if-required": true
-        })^";
-
-    ClientClassDefPtr cclass;
-    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
-
-    // Class should exist.
-    ASSERT_TRUE(cclass);
-    EXPECT_EQ("foo", cclass->getName());
-    ASSERT_TRUE(cclass->getAdditional());
-
-    // Valid entry using only-in-additional-list.
-    cfg_text =
-       R"^({
-            "name": "foo",
-            "only-in-additional-list": true
-        })^";
-
-    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
-
-    // Class should exist.
-    ASSERT_TRUE(cclass);
-    EXPECT_EQ("foo", cclass->getName());
-    ASSERT_TRUE(cclass->getAdditional());
-
-    // Invalid entry specifies both parameters.
-    std::string cfg_text2 =
-       R"^({
-            "name": "foo",
-            "only-if-required": true,
-            "only-in-additional-list": true
-        })^";
-
-    ASSERT_THROW_MSG(cclass = parseClientClassDef(cfg_text2, AF_INET),
-                     DhcpConfigError,
-                     "cannot specify both 'only-if-required' and "
-                     "'only-in-additional-list'. Use only the latter.");
-}
-
 // Verifies that the parser detects use of life time parameters
 // in classes that also set `only-in-additinal-list' true.
 TEST_F(ClientClassDefParserTest, addtionalWithLifetimes4) {

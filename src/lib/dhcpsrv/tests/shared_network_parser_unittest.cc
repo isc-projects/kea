@@ -268,7 +268,7 @@ public:
                 "    \"allocator\": \"iterative\","
                 "    \"authoritative\": true,"
                 "    \"boot-file-name\": \"/dev/null\","
-                "    \"client-class\": \"srv1\","
+                "    \"client-classes\": [ \"srv1\" ],"
                 "    \"interface\": \"eth1961\","
                 "    \"match-client-id\": true,"
                 "    \"name\": \"bird\","
@@ -323,7 +323,7 @@ public:
                 "            \"next-server\": \"\","
                 "            \"server-hostname\": \"\","
                 "            \"boot-file-name\": \"\","
-                "            \"client-class\": \"\","
+                "            \"client-classes\": [ ],"
                 "            \"evaluate-additional-classes\": []\n,"
                 "            \"reservations-global\": false,"
                 "            \"reservations-in-subnet\": true,"
@@ -352,7 +352,7 @@ public:
                 "            \"next-server\": \"\","
                 "            \"server-hostname\": \"\","
                 "            \"boot-file-name\": \"\","
-                "            \"client-class\": \"\","
+                "            \"client-classes\": [ ],"
                 "            \"evaluate-additional-classes\": []\n,"
                 "            \"reservations-global\": false,"
                 "            \"reservations-in-subnet\": true,"
@@ -512,7 +512,9 @@ TEST_F(SharedNetwork4ParserTest, clientClassMatchClientIdAuthoritative) {
 
     config_element->set("authoritative", Element::create(true));
     config_element->set("match-client-id", Element::create(false));
-    config_element->set("client-class", Element::create("alpha"));
+    ElementPtr classes = Element::createList();
+    classes->add(Element::create("alpha"));
+    config_element->set("client-classes", classes);
 
     // Parse configuration specified above.
     SharedNetwork4Parser parser;
@@ -698,7 +700,7 @@ public:
     /// @return Valid shared network configuration.
     virtual std::string getWorkingConfig() const {
             std::string config = "{"
-                "    \"client-class\": \"srv1\","
+                "    \"client-classes\": [ \"srv1\" ],"
                 + std::string(use_iface_id_ ? "\"interface-id\": " : "\"interface\": ") +
                 "\"eth1961\","
                 "    \"name\": \"bird\","
@@ -755,7 +757,7 @@ public:
                 "            \"valid-lifetime\": 400,"
                 "            \"min-valid-lifetime\": 300,"
                 "            \"max-valid-lifetime\": 500,"
-                "            \"client-class\": \"\","
+                "            \"client-classes\": [ ],"
                 "            \"evaluate-additional-classes\": []\n,"
                 "            \"reservations-global\": false,"
                 "            \"reservations-in-subnet\": true,"
@@ -774,7 +776,7 @@ public:
                 "            \"rebind-timer\": 20,"
                 "            \"preferred-lifetime\": 30,"
                 "            \"valid-lifetime\": 40,"
-                "            \"client-class\": \"\","
+                "            \"client-classes\": [ ],"
                 "            \"evaluate-additional-classes\": []\n,"
                 "            \"reservations-global\": false,"
                 "            \"reservations-in-subnet\": true,"
@@ -1012,7 +1014,9 @@ TEST_F(SharedNetwork6ParserTest, clientClass) {
     std::string config = getWorkingConfig();
     ElementPtr config_element = Element::fromJSON(config);
 
-    config_element->set("client-class", Element::create("alpha"));
+    ElementPtr classes = Element::createList();
+    classes->add(Element::create("alpha"));
+    config_element->set("client-classes", classes);
 
     // Parse configuration specified above.
     SharedNetwork6Parser parser;
@@ -1194,178 +1198,6 @@ TEST_F(SharedNetwork6ParserTest, parseFLQAllocatorPD) {
     ASSERT_NO_THROW(network = parser.parse(config_element));
     ASSERT_TRUE(network);
     EXPECT_EQ("flq", network->getPdAllocatorType().get());
-}
-
-// Verify that deprecated require-client-classes is handled properly
-// by v4 parser.
-TEST_F(SharedNetwork4ParserTest, deprecatedRequireClientClasses) {
-    // Valid entry.
-    std::string config =
-       R"^({
-            "name": "foo",
-            "require-client-classes": [ "one", "two" ]
-        })^";
-
-    ElementPtr config_element = Element::fromJSON(config);
-
-    // Parse configuration specified above.
-    SharedNetwork4Parser parser;
-    SharedNetwork4Ptr network;
-
-    ASSERT_NO_THROW(network = parser.parse(config_element));
-    ASSERT_TRUE(network);
-
-    const auto cclasses = network->getAdditionalClasses();
-    EXPECT_EQ(cclasses.size(), 2U);
-    auto cclass = cclasses.begin();
-    EXPECT_EQ(*cclass, "one");
-    ++cclass;
-    EXPECT_EQ(*cclass, "two");
-
-    // Invalid entry specifies both parameters.
-    config =
-       R"^({
-            "name": "foo",
-            "require-client-classes": [ "one", "two" ],
-            "evaluate-additional-classes": [ "one", "two" ]
-        })^";
-
-    config_element = Element::fromJSON(config);
-
-    // Should throw a complaint.
-    ASSERT_THROW_MSG(parser.parse(config_element),
-                     DhcpConfigError,
-                     "cannot specify both 'require-client-classes' and"
-                     " 'evaluate-additional-classes'. Use only the latter."
-                     " (<string>:1:2)");
-}
-
-// Verify that deprecated require-client-classes is handled properly
-// by v6 parser.
-TEST_F(SharedNetwork6ParserTest, deprecatedRequireClientClasses) {
-    // Valid entry.
-    std::string config =
-       R"^({
-            "name": "foo",
-            "require-client-classes": [ "one", "two" ]
-       })^";
-
-    ElementPtr config_element = Element::fromJSON(config);
-
-    // Parse configuration specified above.
-    SharedNetwork6Parser parser;
-    SharedNetwork6Ptr network;
-
-    ASSERT_NO_THROW(network = parser.parse(config_element));
-    ASSERT_TRUE(network);
-
-    const auto cclasses = network->getAdditionalClasses();
-    EXPECT_EQ(cclasses.size(), 2U);
-    auto cclass = cclasses.begin();
-    EXPECT_EQ(*cclass, "one");
-    ++cclass;
-    EXPECT_EQ(*cclass, "two");
-
-    // Invalid entry specifies both parameters.
-    config =
-       R"^({
-            "name": "foo",
-            "require-client-classes": [ "one", "two" ],
-            "evaluate-additional-classes": [ "one", "two" ]
-        })^";
-
-    config_element = Element::fromJSON(config);
-
-    // Should throw a complaint.
-    ASSERT_THROW_MSG(parser.parse(config_element),
-                     DhcpConfigError,
-                     "cannot specify both 'require-client-classes' and"
-                     " 'evaluate-additional-classes'. Use only the latter."
-                     " (<string>:1:2)");
-}
-
-// Verify that deprecated client-class is handled properly
-// by v4 parser.
-TEST_F(SharedNetwork4ParserTest, deprecatedClientClass) {
-    // Valid entry.
-    std::string config =
-       R"^({
-            "name": "foo",
-            "client-class": "one"
-        })^";
-
-    ElementPtr config_element = Element::fromJSON(config);
-
-    // Parse configuration specified above.
-    SharedNetwork4Parser parser;
-    SharedNetwork4Ptr network;
-
-    ASSERT_NO_THROW(network = parser.parse(config_element));
-    ASSERT_TRUE(network);
-
-    const auto cclasses = network->getClientClasses();
-    EXPECT_EQ(cclasses.size(), 1U);
-    auto cclass = cclasses.begin();
-    EXPECT_EQ(*cclass, "one");
-
-    // Invalid entry specifies both parameters.
-    config =
-       R"^({
-            "name": "foo",
-            "client-class": "one",
-            "client-classes": [ "one", "two" ]
-        })^";
-
-    config_element = Element::fromJSON(config);
-
-    // Should throw a complaint.
-    ASSERT_THROW_MSG(parser.parse(config_element),
-                     DhcpConfigError,
-                     "cannot specify both 'client-class' and"
-                     " 'client-classes'. Use only the latter."
-                     " (<string>:1:2)");
-}
-
-// Verify that deprecated client-class is handled properly
-// by v6 parser.
-TEST_F(SharedNetwork6ParserTest, deprecatedClientClass) {
-    // Valid entry.
-    std::string config =
-       R"^({
-            "name": "foo",
-            "client-class": "one"
-        })^";
-
-    ElementPtr config_element = Element::fromJSON(config);
-
-    // Parse configuration specified above.
-    SharedNetwork6Parser parser;
-    SharedNetwork6Ptr network;
-
-    ASSERT_NO_THROW(network = parser.parse(config_element));
-    ASSERT_TRUE(network);
-
-    const auto cclasses = network->getClientClasses();
-    EXPECT_EQ(cclasses.size(), 1U);
-    auto cclass = cclasses.begin();
-    EXPECT_EQ(*cclass, "one");
-
-    // Invalid entry specifies both parameters.
-    config =
-       R"^({
-            "name": "foo",
-            "client-class": "one",
-            "client-classes": [ "one", "two" ]
-        })^";
-
-    config_element = Element::fromJSON(config);
-
-    // Should throw a complaint.
-    ASSERT_THROW_MSG(parser.parse(config_element),
-                     DhcpConfigError,
-                     "cannot specify both 'client-class' and"
-                     " 'client-classes'. Use only the latter."
-                     " (<string>:1:2)");
 }
 
 // Verifies valid permutations of ddns-ttl-percent, ddns-ttl,
