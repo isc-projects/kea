@@ -528,9 +528,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                   | subnet
                   | interface
                   | id
-                  | client_class
                   | network_client_classes
-                  | require_client_classes
                   | evaluate_additional_classes
                   | reservations
                   | reservations_global
@@ -584,11 +582,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      interface ::= "interface" ":" STRING
 
-     client_class ::= "client-class" ":" STRING
-
      network_client_classes ::= "client-classes" ":" list_strings
-
-     require_client_classes ::= "require-client-classes" ":" list_strings
 
      evaluate_additional_classes ::= "evaluate-additional-classes" ":" list_strings
 
@@ -630,9 +624,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                          | reservations_global
                          | reservations_in_subnet
                          | reservations_out_of_pool
-                         | client_class
                          | network_client_classes
-                         | require_client_classes
                          | evaluate_additional_classes
                          | valid_lifetime
                          | min_valid_lifetime
@@ -785,9 +777,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
      pool_param ::= pool_entry
                | pool_id
                | option_data_list
-               | client_class
                | network_client_classes
-               | require_client_classes
                | evaluate_additional_classes
                | ddns_send_updates
                | ddns_override_no_update
@@ -901,7 +891,6 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
      client_class_param ::= client_class_name
                        | client_class_test
                        | client_class_template_test
-                       | only_if_required
                        | only_in_additional_list
                        | option_def_list
                        | option_data_list
@@ -921,8 +910,6 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
      client_class_test ::= "test" ":" STRING
 
      client_class_template_test ::= "template-test" ":" STRING
-
-     only_if_required ::= "only-if-required" ":" BOOLEAN
 
      only_in_additional_list ::= "only-in-additional-list" ":" BOOLEAN
 
