@@ -187,13 +187,10 @@ using namespace std;
   EXTENDED_INFO_CHECKS "extended-info-checks"
 
   CLIENT_CLASSES "client-classes"
-  REQUIRE_CLIENT_CLASSES "require-client-classes"
   EVALUATE_ADDITIONAL_CLASSES "evaluate-additional-classes"
   TEST "test"
   TEMPLATE_TEST "template-test"
-  ONLY_IF_REQUIRED "only-if-required"
   ONLY_IN_ADDITIONAL_LIST "only-in-additional-list"
-  CLIENT_CLASS "client-class"
   POOL_ID "pool-id"
 
   RESERVATIONS "reservations"
@@ -1711,9 +1708,7 @@ subnet6_param: preferred_lifetime
              | interface_id
              | id
              | rapid_commit
-             | client_class
              | network_client_classes
-             | require_client_classes
              | evaluate_additional_classes
              | reservations
              | reservations_global
@@ -1777,32 +1772,11 @@ interface_id: INTERFACE_ID {
     ctx.leave();
 };
 
-client_class: CLIENT_CLASS {
-    ctx.unique("client-class", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr cls(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("client-class", cls);
-    ctx.leave();
-};
-
 // Used by shared-network,subnet, pool, and pd_pool
 network_client_classes: CLIENT_CLASSES {
     ctx.unique("client-classes", ctx.loc2pos(@1));
     ElementPtr c(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("client-classes", c);
-    ctx.stack_.push_back(c);
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON list_strings {
-    ctx.stack_.pop_back();
-    ctx.leave();
-};
-
-// Deprecated.
-require_client_classes: REQUIRE_CLIENT_CLASSES {
-    ctx.unique("require-client-classes", ctx.loc2pos(@1));
-    ElementPtr c(new ListElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("require-client-classes", c);
     ctx.stack_.push_back(c);
     ctx.enter(ctx.NO_KEYWORD);
 } COLON list_strings {
@@ -1903,9 +1877,7 @@ shared_network_param: name
                     | reservations_global
                     | reservations_in_subnet
                     | reservations_out_of_pool
-                    | client_class
                     | network_client_classes
-                    | require_client_classes
                     | evaluate_additional_classes
                     | preferred_lifetime
                     | min_preferred_lifetime
@@ -2275,9 +2247,7 @@ pool_params: pool_param
 pool_param: pool_entry
           | pool_id
           | option_data_list
-          | client_class
           | network_client_classes
-          | require_client_classes
           | evaluate_additional_classes
           | ddns_send_updates
           | ddns_override_no_update
@@ -2429,9 +2399,7 @@ pd_pool_param: pd_prefix
              | pd_delegated_len
              | pool_id
              | option_data_list
-             | client_class
              | network_client_classes
-             | require_client_classes
              | evaluate_additional_classes
              | excluded_prefix
              | excluded_prefix_len
@@ -2691,7 +2659,6 @@ not_empty_client_class_params: client_class_param
 client_class_param: client_class_name
                   | client_class_test
                   | client_class_template_test
-                  | only_if_required
                   | only_in_additional_list
                   | option_data_list
                   | user_context
@@ -2723,13 +2690,6 @@ client_class_template_test: TEMPLATE_TEST {
     ElementPtr template_test(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("template-test", template_test);
     ctx.leave();
-};
-
-// Deprecated
-only_if_required: ONLY_IF_REQUIRED COLON BOOLEAN {
-    ctx.unique("only-if-required", ctx.loc2pos(@1));
-    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("only-if-required", b);
 };
 
 only_in_additional_list: ONLY_IN_ADDITIONAL_LIST COLON BOOLEAN {

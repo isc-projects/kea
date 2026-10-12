@@ -3867,7 +3867,7 @@ TEST_F(Dhcpv4SrvTest, classGlobalPersistency) {
     EXPECT_NE(0, opt->getUint8());
 }
 
-// Checks if the client-class field is indeed used for subnet selection.
+// Checks if the client-classes list is indeed used for subnet selection.
 // Note that packet classification is already checked in Dhcpv4SrvTest
 // .*Classification above.
 TEST_F(Dhcpv4SrvTest, clientClassify) {
@@ -3888,11 +3888,11 @@ TEST_F(Dhcpv4SrvTest, clientClassify) {
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
-        "    \"client-class\": \"foo\", "
+        "    \"client-classes\": [ \"foo\" ], "
         "    \"id\": 1, "
         "    \"subnet\": \"192.0.2.0/24\" }, "
         "{   \"pools\": [ { \"pool\": \"192.0.3.1 - 192.0.3.100\" } ],"
-        "    \"client-class\": \"xyzzy\", "
+        "    \"client-classes\": [ \"xyzzy\" ], "
         "    \"id\": 2, "
         "    \"subnet\": \"192.0.3.0/24\" } "
         "],"
@@ -3930,7 +3930,7 @@ TEST_F(Dhcpv4SrvTest, clientClassify) {
     EXPECT_FALSE(drop);
 }
 
-// Checks if the client-class field is indeed used for pool selection.
+// Checks if the client-class list is indeed used for pool selection.
 TEST_F(Dhcpv4SrvTest, clientPoolClassify) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
@@ -3947,9 +3947,9 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassify) {
         "\"subnet4\": [ "
         "{   \"pools\": [ { "
         "      \"pool\": \"192.0.2.1 - 192.0.2.100\", "
-        "      \"client-class\": \"foo\" }, "
+        "      \"client-classes\": [ \"foo\" ] }, "
         "    { \"pool\": \"192.0.3.1 - 192.0.3.100\", "
-        "      \"client-class\": \"xyzzy\" } ], "
+        "      \"client-classes\": [ \"xyzzy\" ] } ], "
         "    \"id\": 1, "
         "    \"subnet\": \"192.0.0.0/16\" } "
         "],"
@@ -4014,9 +4014,9 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassifyKnown) {
         "\"subnet4\": [ "
         "{   \"pools\": [ { "
         "      \"pool\": \"192.0.2.1 - 192.0.2.100\", "
-        "      \"client-class\": \"KNOWN\" }, "
+        "      \"client-classes\": [ \"KNOWN\" ] }, "
         "    { \"pool\": \"192.0.3.1 - 192.0.3.100\", "
-        "      \"client-class\": \"UNKNOWN\" } ], "
+        "      \"client-classes\": [ \"UNKNOWN\" ] } ], "
         "    \"id\": 1, "
         "    \"subnet\": \"192.0.0.0/16\" } "
         "],"
@@ -4066,9 +4066,9 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassifyUnknown) {
         "\"subnet4\": [ "
         "{   \"pools\": [ { "
         "      \"pool\": \"192.0.2.1 - 192.0.2.100\", "
-        "      \"client-class\": \"UNKNOWN\" }, "
+        "      \"client-classes\": [ \"UNKNOWN\" ] }, "
         "    { \"pool\": \"192.0.3.1 - 192.0.3.100\", "
-        "      \"client-class\": \"KNOWN\" } ], "
+        "      \"client-classes\": [ \"KNOWN\" ] } ], "
         "    \"id\": 1, "
         "    \"subnet\": \"192.0.0.0/16\", "
         "    \"reservations\": [ { "
@@ -4482,7 +4482,7 @@ TEST_F(Dhcpv4SrvTest, relayOverrideAndClientClass) {
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.2 - 192.0.2.100\" } ],"
-        "    \"client-class\": \"foo\", "
+        "    \"client-classes\": [ \"foo\" ], "
         "    \"relay\": { "
         "        \"ip-addresses\": [ \"192.0.5.1\" ]"
         "    },"
@@ -4555,7 +4555,7 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
         "    \"id\": 2, "
         "    \"subnet\": \"192.0.3.0/24\" }, "
         "{   \"pools\": [ { \"pool\": \"192.0.4.1 - 192.0.4.100\" } ],"
-        "    \"client-class\": \"foo\", "
+        "    \"client-classes\": [ \"foo\" ], "
         "    \"id\": 3, "
         "    \"subnet\": \"192.0.4.0/24\" } "
         "],"
@@ -4686,7 +4686,7 @@ TEST_F(Dhcpv4SrvTest, relayIgnoreLinkSelect) {
                     "    \"id\": 2, "
                     "    \"subnet\": \"192.0.3.0/24\" }, "
                     "{   \"pools\": [ { \"pool\": \"192.0.4.1 - 192.0.4.100\" } ],"
-                    "    \"client-class\": \"foo\", "
+                    "    \"client-classes\": [ \"foo\" ], "
                     "    \"id\": 3, "
                     "    \"subnet\": \"192.0.4.0/24\" } "
                     "],"
@@ -4818,7 +4818,7 @@ TEST_F(Dhcpv4SrvTest, subnetSelect) {
         "    \"id\": 2, "
         "    \"subnet\": \"192.0.3.0/24\" }, "
         "{   \"pools\": [ { \"pool\": \"192.0.4.1 - 192.0.4.100\" } ],"
-        "    \"client-class\": \"foo\", "
+        "    \"client-classes\": [ \"foo\" ], "
         "    \"id\": 3, "
         "    \"subnet\": \"192.0.4.0/24\" } "
         "],"

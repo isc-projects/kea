@@ -1447,17 +1447,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
-\"require-client-classes\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::SUBNET4:
-    case isc::dhcp::Parser4Context::POOLS:
-    case isc::dhcp::Parser4Context::SHARED_NETWORK:
-        return isc::dhcp::Dhcp4Parser::make_REQUIRE_CLIENT_CLASSES(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("require-client-classes", driver.loc_);
-    }
-}
-
 \"evaluate-additional-classes\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
@@ -1466,18 +1455,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp4Parser::make_EVALUATE_ADDITIONAL_CLASSES(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("evaluate-additional-classes", driver.loc_);
-    }
-}
-
-\"client-class\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::SUBNET4:
-    case isc::dhcp::Parser4Context::POOLS:
-    case isc::dhcp::Parser4Context::SHARED_NETWORK:
-    case isc::dhcp::Parser4Context::CLIENT_CLASSES:
-        return isc::dhcp::Dhcp4Parser::make_CLIENT_CLASS(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("client-class", driver.loc_);
     }
 }
 
@@ -1496,15 +1473,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp4Parser::make_TEMPLATE_TEST(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("template-test", driver.loc_);
-    }
-}
-
-\"only-if-required\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::CLIENT_CLASSES:
-        return isc::dhcp::Dhcp4Parser::make_ONLY_IF_REQUIRED(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("only-if-required", driver.loc_);
     }
 }
 

@@ -251,13 +251,13 @@ const char* CONFIGS[] = {
         "    \"interface\": \"eth1\","
         "    \"pools\": [ "
         "        { \"pool\": \"2001:db8:1:1::/64\","
-        "          \"client-class\": \"server1_and_telephones\" },"
+        "          \"client-classes\": [ \"server1_and_telephones\" ] },"
         "        { \"pool\": \"2001:db8:1:2::/64\","
-        "          \"client-class\": \"server1_and_computers\" },"
+        "          \"client-classes\": [ \"server1_and_computers\" ] },"
         "        { \"pool\": \"2001:db8:1:3::/64\","
-        "          \"client-class\": \"server2_and_telephones\" },"
+        "          \"client-classes\": [ \"server2_and_telephones\" ] },"
         "        { \"pool\": \"2001:db8:1:4::/64\","
-        "          \"client-class\": \"server2_and_computers\" } ]"
+        "          \"client-classes\": [ \"server2_and_computers\" ] } ]"
         " } ],"
         "\"valid-lifetime\": 4000 }",
 
@@ -313,16 +313,16 @@ const char* CONFIGS[] = {
         "    \"pd-pools\": [ "
         "        { \"prefix\": \"2001:db8:1::\","
         "          \"prefix-len\": 48, \"delegated-len\": 64,"
-        "          \"client-class\": \"server1_and_telephones\" },"
+        "          \"client-classes\": [ \"server1_and_telephones\" ] },"
         "        { \"prefix\": \"2001:db8:2::\","
         "          \"prefix-len\": 48, \"delegated-len\": 64,"
-        "          \"client-class\": \"server1_and_computers\" },"
+        "          \"client-classes\": [ \"server1_and_computers\" ] },"
         "        { \"prefix\": \"2001:db8:3::\","
         "          \"prefix-len\": 48, \"delegated-len\": 64,"
-        "          \"client-class\": \"server2_and_telephones\" },"
+        "          \"client-classes\": [ \"server2_and_telephones\" ] },"
         "        { \"prefix\": \"2001:db8:4::\","
         "          \"prefix-len\": 48, \"delegated-len\": 64,"
-        "          \"client-class\": \"server2_and_computers\" } ]"
+        "          \"client-classes\": [ \"server2_and_computers\" ] } ]"
         " } ],"
         "\"valid-lifetime\": 4000 }",
 
@@ -435,7 +435,7 @@ const char* CONFIGS[] = {
     "    \"subnet\": \"2001:db8:1::/48\", "
     "    \"interface\": \"eth1\","
     "    \"id\": 1,"
-    "    \"client-class\": \"first\""
+    "    \"client-classes\": [ \"first\" ]"
     "},"
     "{"
     "    \"pools\": [ { \"pool\": \"2001:db8:2::/64\" } ], "
@@ -1461,7 +1461,7 @@ TEST_F(ClassifyTest, classNeverSend) {
     EXPECT_FALSE(response->getOption(2345));
 }
 
-// Checks if the client-class field is indeed used for subnet selection.
+// Checks if the client-class list is indeed used for subnet selection.
 // Note that packet classification is already checked in ClassifyTest
 // .*Classification above.
 TEST_F(ClassifyTest, clientClassifySubnet) {
@@ -1487,12 +1487,12 @@ TEST_F(ClassifyTest, clientClassifySubnet) {
         " {  \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
-        "    \"client-class\": \"foo\" "
+        "    \"client-classes\": [ \"foo\" ] "
         " }, "
         " {  \"pools\": [ { \"pool\": \"2001:db8:2::/64\" } ],"
         "    \"id\": 2, "
         "    \"subnet\": \"2001:db8:2::/48\", "
-        "    \"client-class\": \"xyzzy\" "
+        "    \"client-classes\": [ \"xyzzy\" ] "
         " } "
         "],"
         "\"valid-lifetime\": 4000 }";
@@ -1522,7 +1522,7 @@ TEST_F(ClassifyTest, clientClassifySubnet) {
     EXPECT_FALSE(drop);
 }
 
-// Checks if the client-class field is indeed used for pool selection.
+// Checks if the client-class list is indeed used for pool selection.
 TEST_F(ClassifyTest, clientClassifyPool) {
     IfaceMgrTestConfig test_config(true);
     // This test configures 2 pools.
@@ -1549,11 +1549,11 @@ TEST_F(ClassifyTest, clientClassifyPool) {
         " {  \"pools\": [ "
         "    { "
         "       \"pool\": \"2001:db8:1::/64\", "
-        "       \"client-class\": \"foo\" "
+        "       \"client-classes\": [ \"foo\" ] "
         "    }, "
         "    { "
         "       \"pool\": \"2001:db8:2::/64\", "
-        "       \"client-class\": \"xyzzy\" "
+        "       \"client-classes\": [ \"xyzzy\" ] "
         "    } "
         "   ], "
         "   \"id\": 1, "
@@ -1639,11 +1639,11 @@ TEST_F(ClassifyTest, clientClassifyPoolKnown) {
         " {  \"pools\": [ "
         "    { "
         "       \"pool\": \"2001:db8:1::/64\", "
-        "       \"client-class\": \"KNOWN\" "
+        "       \"client-classes\": [ \"KNOWN\" ] "
         "    }, "
         "    { "
         "       \"pool\": \"2001:db8:2::/64\", "
-        "       \"client-class\": \"UNKNOWN\" "
+        "       \"client-classes\": [ \"UNKNOWN\" ] "
         "    } "
         "   ], "
         "   \"id\": 1, "
@@ -1792,7 +1792,7 @@ TEST_F(ClassifyTest, relayOverrideAndClientClass) {
         " {  \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
         "    \"id\": 1, "
         "    \"subnet\": \"2001:db8:1::/48\", "
-        "    \"client-class\": \"foo\", "
+        "    \"client-classes\": [ \"foo\" ], "
         "    \"relay\": { "
         "        \"ip-addresses\": [ \"2001:db8:3::1\" ]"
         "    }"
