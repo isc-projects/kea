@@ -1856,7 +1856,7 @@ private:
     uint8_t type_;
 
     /// @brief IAID.
-    uint8_t iaid_;
+    uint32_t iaid_;
 
     /// @brief Object holding reservation being sent to the database.
     IPv6Resrv resv_;
