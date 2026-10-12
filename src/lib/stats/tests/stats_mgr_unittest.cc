@@ -759,6 +759,7 @@ TEST_F(StatsMgrTest, commandGlobalGetAll) {
     StatsMgr::instance().setValue("gamma", dur1234);
     StatsMgr::instance().setValue("delta", "Lorem ipsum");
     StatsMgr::instance().setValue("subnet", static_cast<int64_t>(5678));
+    StatsMgr::instance().setValue("subnet[1]", static_cast<int64_t>(6789));
 
     // Now get them. They're used to generate expected output
     ConstElementPtr rep_alpha = StatsMgr::instance().get("alpha");
@@ -766,12 +767,14 @@ TEST_F(StatsMgrTest, commandGlobalGetAll) {
     ConstElementPtr rep_gamma = StatsMgr::instance().get("gamma");
     ConstElementPtr rep_delta = StatsMgr::instance().get("delta");
     ConstElementPtr rep_subnet = StatsMgr::instance().get("subnet");
+    ConstElementPtr rep_subnet1 = StatsMgr::instance().get("subnet[1]");
 
     ASSERT_TRUE(rep_alpha);
     ASSERT_TRUE(rep_beta);
     ASSERT_TRUE(rep_gamma);
     ASSERT_TRUE(rep_delta);
     ASSERT_TRUE(rep_subnet);
+    ASSERT_TRUE(rep_subnet1);
 
     std::string exp_str_alpha = "[ [ 1234, \"" +
         isc::util::clockToText(StatsMgr::instance().getObservation("alpha")
@@ -785,6 +788,9 @@ TEST_F(StatsMgrTest, commandGlobalGetAll) {
     std::string exp_str_delta = "[ [ \"Lorem ipsum\", \"" +
         isc::util::clockToText(StatsMgr::instance().getObservation("delta")
                                    ->getString().second) + "\" ] ]";
+    std::string exp_str_subnet = "[ [ 5678, \"" +
+        isc::util::clockToText(StatsMgr::instance().getObservation("subnet")
+                                   ->getInteger().second) + "\" ] ]";
 
     // Check that all of them can be reported at once
     ConstElementPtr rsp = StatsMgr::instance().statisticGlobalGetAllHandler(
@@ -797,18 +803,20 @@ TEST_F(StatsMgrTest, commandGlobalGetAll) {
 
     // Verifying this is a bit more involved, as we don't know whether the
     // order would be preserved or not.
-    EXPECT_EQ(4U, rep_all->size());
+    EXPECT_EQ(5U, rep_all->size());
     ASSERT_TRUE(rep_all->get("alpha"));
     ASSERT_TRUE(rep_all->get("beta"));
     ASSERT_TRUE(rep_all->get("delta"));
     ASSERT_TRUE(rep_all->get("gamma"));
-    ASSERT_FALSE(rep_all->get("subnet"));
+    ASSERT_TRUE(rep_all->get("subnet"));
+    ASSERT_FALSE(rep_all->get("subnet[1]"));
     EXPECT_FALSE(rep_all->get("epsilon"));
 
     EXPECT_EQ(exp_str_alpha, rep_all->get("alpha")->str());
     EXPECT_EQ(exp_str_beta, rep_all->get("beta")->str());
     EXPECT_EQ(exp_str_gamma, rep_all->get("gamma")->str());
     EXPECT_EQ(exp_str_delta, rep_all->get("delta")->str());
+    EXPECT_EQ(exp_str_subnet, rep_all->get("subnet")->str());
 }
 
 // Test checks if statistic-reset handler is able to reset specified statistic.

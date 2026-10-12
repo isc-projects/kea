@@ -84,7 +84,7 @@ StatContext::getAllGlobal() const {
     for (auto const& s : stats_) {
         // ... and add each of them to the map omitting
         // subnet statistics.
-        if (s.first.find("subnet") != 0) {
+        if (s.first.find("subnet[") != 0) {
             map->set(s.first, s.second->getJSON());
         }
     }
