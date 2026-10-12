@@ -84,11 +84,18 @@ TEST(HWAddrTest, operators) {
     EXPECT_TRUE(*hw1 != *hw2);
     EXPECT_TRUE(*hw1 != *hw3);
 
-    EXPECT_FALSE(*hw1 == *hw5);
-    EXPECT_FALSE(*hw4 == *hw5);
+    EXPECT_FALSE(hw1->equals(*hw5));
+    EXPECT_FALSE(hw5->equals(*hw1));
 
-    EXPECT_TRUE(*hw1 != *hw5);
-    EXPECT_TRUE(*hw4 != *hw5);
+    EXPECT_TRUE(hw1->equals(*hw5, false));
+    EXPECT_TRUE(hw5->equals(*hw1, false));
+
+    // The hardware type is ignored by operators.
+    EXPECT_TRUE(*hw1 == *hw5);
+    EXPECT_TRUE(*hw4 == *hw5);
+
+    EXPECT_FALSE(*hw1 != *hw5);
+    EXPECT_FALSE(*hw4 != *hw5);
 }
 
 // Checks that toText() method produces appropriate text representation
