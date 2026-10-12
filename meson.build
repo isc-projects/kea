@@ -10,7 +10,7 @@
 # information regarding copyright ownership.
 
 # Require meson >= 0.64.0 for preserve_path arg in install_data.
-# Require meson >= 1.1.0 for meson.options file.
+# Require meson >= 1.3.0 for compiler.has_define().
 # bug_report is not yet supported by meson, its value will be
 # 'kea-dev@lists.isc.org'
 
@@ -18,7 +18,7 @@ project(
     'kea',
     'cpp',
     version: '3.0.4-git',
-    meson_version: '>=1.1.0',
+    meson_version: '>=1.3.0',
     license: 'MPL-2.0',
     license_files: ['COPYING'],
     default_options: [
@@ -277,9 +277,11 @@ if netconf_opt.allowed()
         netconf_deps = netconf_deps + {dep: dependency(dep, required: false)}
         if not netconf_deps[dep].found()
             # Try adding lib to it. yang and yang-cpp define the wrong pkg-config.
-            netconf_deps = netconf_deps + {
-                dep: dependency('lib' + dep, required: false),
-            }
+            netconf_deps = (
+                netconf_deps + {
+                                dep: dependency('lib' + dep, required: false),
+                            }
+            )
         endif
 
         if not netconf_deps[dep].found()
@@ -336,6 +338,20 @@ elif CRYPTO_DEP.name() == openssl.name()
         required: true,
     )
     message('Using OpenSSL.')
+    if cpp.has_function(
+        'SSL_get1_peer_certificate',
+        prefix: '#include <openssl/ssl.h>',
+        dependencies: openssl,
+    )
+        conf_data.set('HAVE_NEW_SSL_API', true)
+    endif
+    if cpp.has_function(
+        'OpenSSL_version',
+        prefix: '#include <openssl/crypto.h>',
+        dependencies: openssl,
+    )
+        conf_data.set('HAVE_OPENSSL_VERSION', true)
+    endif
 else
     error('Dependency not found: neither Botan nor OpenSSL.')
 endif
@@ -474,6 +490,13 @@ if CRYPTO_DEP.name() == openssl.name()
     if result1.returncode() != 0 or result2.returncode() != 0
         error('Boost TLS support broken.')
     endif
+    result = cpp.links(
+        fs.read('compiler-checks/const-openssl-x509-name.cc'),
+        name: 'CONST_OPENSSL_X509_NAME',
+        dependencies: [boost_dep, CRYPTO_DEP, threads_dep],
+        werror: true,
+    )
+    conf_data.set('CONST_OPENSSL_X509_NAME', result)
 endif
 
 if CRYPTO_DEP.name() == botan.name()
@@ -567,7 +590,10 @@ if POSTGRESQL_DEP.found()
 endif
 
 # For Solaris.
-conf_data.set('HAVE_SYS_FILIO_H', cpp.has_header('sys/filio.h', required: false))
+conf_data.set(
+    'HAVE_SYS_FILIO_H',
+    cpp.has_header('sys/filio.h', required: false),
+)
 
 if valgrind.found()
     conf_data.set(

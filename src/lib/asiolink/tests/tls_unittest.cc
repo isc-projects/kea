@@ -962,6 +962,8 @@ TEST_F(TLSTest, serverNotConfigured) {
     exps.addError("sslv3 alert handshake failure (SSL routines, CONNECT_CR_CERT)");
     exps.addError("sslv3 alert handshake failure (SSL routines, ssl3_read_bytes)");
     exps.addError("ssl/tls alert handshake failure (SSL routines)");
+    exps.addError("ssl/tls alert handshake failure");
+    exps.addError("tls alert handshake failure (SSL routines)");
     exps.checkAsync("client", client_cb);
     if (Expecteds::displayErrMsg()) {
         if (timeout) {
@@ -1651,6 +1653,8 @@ TEST_F(TLSTest, serverNotConfiguredCloseonError) {
     exps.addError("sslv3 alert handshake failure (SSL routines, CONNECT_CR_SRVR_HELLO)");
     exps.addError("sslv3 alert handshake failure (SSL routines, ssl3_read_bytes)");
     exps.addError("ssl/tls alert handshake failure (SSL routines)");
+    exps.addError("ssl/tls alert handshake failure");
+    exps.addError("tls alert handshake failure (SSL routines)");
     // Recent LibreSSL error.
     exps.addError("sslv3 alert handshake failure (SSL routines, CONNECT_CR_CERT)");
     exps.checkAsync("client", client_cb);
