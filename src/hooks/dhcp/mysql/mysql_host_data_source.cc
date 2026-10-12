@@ -618,8 +618,7 @@ public:
         // Convert user_context to string as well.
         std::string user_context;
         if (user_context_null_ == MLM_FALSE) {
-            user_context_[user_context_length_] = '\0';
-            user_context.assign(user_context_);
+            user_context.assign(user_context_, user_context_length_);
         }
 
         // Set next server value (siaddr) if non NULL value returned.
@@ -945,10 +944,7 @@ private:
             // Convert it to string object for easier comparison.
             std::string space;
             if (space_null_ == MLM_FALSE) {
-                // Typically, the string values returned by the database are not
-                // NULL terminated.
-                space_[space_length_] = '\0';
-                space.assign(space_);
+                space.assign(space_, space_length_);
             }
 
             // If empty or null space provided, use a default top level space.
@@ -960,15 +956,13 @@ private:
             // Convert formatted_value to string as well.
             std::string formatted_value;
             if (formatted_value_null_ == MLM_FALSE) {
-                formatted_value_[formatted_value_length_] = '\0';
-                formatted_value.assign(formatted_value_);
+                formatted_value.assign(formatted_value_, formatted_value_length_);
             }
 
             // Convert user_context to string as well.
             std::string user_context;
             if (user_context_null_ == MLM_FALSE) {
-                user_context_[user_context_length_] = '\0';
-                user_context.assign(user_context_);
+                user_context.assign(user_context_, user_context_length_);
             }
 
             // Options are held in a binary or textual format in the database.
