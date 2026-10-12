@@ -2350,7 +2350,9 @@ used to process those and other options not listed in the table below.
    +--------------------+------+----------------------------------------------------------------------+
    | relay-id           | 12   | Identifies the relay                                                 |
    +--------------------+------+----------------------------------------------------------------------+
-   | relay-port         | 19   | If sent by the relay, Kea sends back its responses to this port.     |
+   | relay-port         | 19   | Zero-length sub-option (see RFC 8357). If sent by the relay, Kea     |
+   |                    |      | sends back its responses to the port the relay used as its source    |
+   |                    |      | port.                                                                |
    +--------------------+------+----------------------------------------------------------------------+
 
 All other RAI sub-options (including those not listed here) can be used in client classification to

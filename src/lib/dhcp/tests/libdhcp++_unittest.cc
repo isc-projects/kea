@@ -2128,6 +2128,63 @@ TEST_F(LibDhcpTest, unpackEmptyOption4) {
     EXPECT_TRUE(option_empty->getEncapsulatedSpace().empty());
 }
 
+// This test verifies that the zero-length relay-port RAI sub-option
+// (code 19), defined in RFC 8357, is parsed correctly. It used to be
+// defined as uint16 which caused packets carrying a compliant
+// "19 00" sub-option to be dropped with an "OptionInt 19 truncated"
+// error.
+TEST_F(LibDhcpTest, unpackOptions4RelayPortZeroLength) {
+    // Create the buffer holding an RAI option with a zero-length
+    // relay-port sub-option.
+    OptionBuffer buf = {
+        DHO_DHCP_AGENT_OPTIONS, // option code = 82
+        2,                      // option length = 2
+        RAI_OPTION_RELAY_PORT,  // sub-option code = 19
+        0                       // sub-option length = 0 (RFC 8357)
+    };
+
+    // Parse options.
+    OptionCollection options;
+    list<uint16_t> deferred;
+    ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, DHCP4_OPTION_SPACE,
+                                            options, deferred, false));
+
+    // There should be one option: the RAI.
+    ASSERT_EQ(1U, options.size());
+    OptionPtr rai_opt = options.begin()->second;
+    ASSERT_TRUE(rai_opt);
+    EXPECT_EQ(DHO_DHCP_AGENT_OPTIONS, rai_opt->getType());
+
+    // The relay-port sub-option should be present and carry no data.
+    OptionPtr relay_port = rai_opt->getOption(RAI_OPTION_RELAY_PORT);
+    ASSERT_TRUE(relay_port);
+    EXPECT_EQ(RAI_OPTION_RELAY_PORT, relay_port->getType());
+    EXPECT_EQ(2U, relay_port->len());
+    EXPECT_TRUE(relay_port->getData().empty());
+
+    // Nothing should be deferred for unpacking.
+    EXPECT_TRUE(deferred.empty());
+
+    // Even a malformed relay-port sub-option carrying data must not
+    // cause the whole packet to be dropped. The payload is ignored.
+    OptionBuffer buf_with_data = {
+        DHO_DHCP_AGENT_OPTIONS, // option code = 82
+        4,                      // option length = 4
+        RAI_OPTION_RELAY_PORT,  // sub-option code = 19
+        2,                      // sub-option length = 2 (not RFC compliant)
+        0x30, 0x39              // ignored payload
+    };
+
+    OptionCollection options2;
+    list<uint16_t> deferred2;
+    ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf_with_data, DHCP4_OPTION_SPACE,
+                                            options2, deferred2, false));
+    ASSERT_EQ(1U, options2.size());
+    OptionPtr relay_port2 = options2.begin()->second->getOption(RAI_OPTION_RELAY_PORT);
+    ASSERT_TRUE(relay_port2);
+    EXPECT_TRUE(relay_port2->getData().empty());
+}
+
 // This test verifies that the following option structure can be parsed:
 // - option (option space 'foobar')
 //   - sub option (option space 'foo')
