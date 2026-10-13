@@ -1371,7 +1371,11 @@ LeaseMgr::updateStatsOnAdd(const Lease6Ptr& lease) {
 
 void 
 LeaseMgr::bumpStat(const std::string& stat, SubnetID& subnet_id, PoolPtr pool, int value) {
-    StatsMgr::instance().addValue(stat, static_cast<int64_t>(value));
+    // @note: there are no such global stats for "assigned-addresses", "assigned-nas" and
+    // "assigned-pds". They have been added by #3239 in Kea 3.1.2.
+    if (stat != "assigned-addresses" && stat != "assigned-nas") {
+        StatsMgr::instance().addValue(stat, static_cast<int64_t>(value));
+    }
     StatsMgr::instance().addValue(StatsMgr::generateName("subnet", subnet_id, stat),
                                   static_cast<int64_t>(value));
     if (pool) {
@@ -1383,7 +1387,14 @@ LeaseMgr::bumpStat(const std::string& stat, SubnetID& subnet_id, PoolPtr pool, i
 
 void 
 LeaseMgr::bumpStatPrefix(const std::string& stat, SubnetID& subnet_id, PoolPtr pool, int value) {
-    StatsMgr::instance().addValue(stat, static_cast<int64_t>(value));
+    // @note: there are no such global stats for "assigned-addresses", "assigned-nas" and
+    // "assigned-pds". They have been added by #3239 in Kea 3.1.2.
+    // @note: all calls to @ref bumpStatPrefix are called with "assigned-pds" so the next line
+    // can be removed, but maybe some other tickets are backported to 3.0.x which will call
+    // this function with other stat name. better to keep it.
+    if (stat != "assigned-pds") {
+        StatsMgr::instance().addValue(stat, static_cast<int64_t>(value));
+    }
     StatsMgr::instance().addValue(StatsMgr::generateName("subnet", subnet_id, stat),
                                   static_cast<int64_t>(value));
     if (pool) {
