@@ -22,11 +22,12 @@ OptionVendor::OptionVendor(Option::Universe u, const uint32_t vendor_id)
 }
 
 OptionVendor::OptionVendor(Option::Universe u, OptionBufferConstIter begin,
-                           OptionBufferConstIter end)
+                           OptionBufferConstIter end,
+                           size_t rec_level /* = 0 */)
     : Option(u, u == Option::V4?
              static_cast<uint16_t>(DHO_VIVSO_SUBOPTIONS) :
              static_cast<uint16_t>(D6O_VENDOR_OPTS)), vendor_id_(0) {
-    unpack(begin, end);
+    unpack(begin, end, rec_level);
 }
 
 OptionPtr
@@ -58,6 +59,12 @@ void OptionVendor::pack(isc::util::OutputBuffer& buf, bool check) const {
 
 void OptionVendor::unpack(OptionBufferConstIter begin,
                           OptionBufferConstIter end) {
+    unpack(begin, end, 0);
+}
+
+void OptionVendor::unpack(OptionBufferConstIter begin,
+                          OptionBufferConstIter end,
+                          size_t rec_level) {
     // We throw SkipRemainingOptionsError so callers can
     // abandon further unpacking, if desired.
     if (static_cast<size_t>(distance(begin, end)) < sizeof(uint32_t)) {
@@ -71,7 +78,8 @@ void OptionVendor::unpack(OptionBufferConstIter begin,
     OptionBuffer vendor_buffer(begin + 4, end);
 
     if (universe_ == Option::V6) {
-        LibDHCP::unpackVendorOptions6(vendor_id_, vendor_buffer, options_);
+        LibDHCP::unpackVendorOptions6(vendor_id_, vendor_buffer, options_,
+                                      rec_level);
     } else {
         LibDHCP::unpackVendorOptions4(vendor_id_, vendor_buffer, options_);
     }
