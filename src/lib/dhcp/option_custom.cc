@@ -38,11 +38,12 @@ OptionCustom::OptionCustom(const OptionDefinition& def,
 OptionCustom::OptionCustom(const OptionDefinition& def,
                            Universe u,
                            OptionBufferConstIter first,
-                           OptionBufferConstIter last)
+                           OptionBufferConstIter last,
+                           size_t rec_level)
     : Option(u, def.getCode(), first, last),
       definition_(def) {
     setEncapsulatedSpace(def.getEncapsulatedSpace());
-    createBuffers(getData());
+    createBuffers(getData(), rec_level);
 }
 
 OptionPtr
@@ -285,7 +286,7 @@ OptionCustom::bufferLength(const OptionDataType data_type, bool in_array,
 }
 
 void
-OptionCustom::createBuffers(const OptionBuffer& data_buf) {
+OptionCustom::createBuffers(const OptionBuffer& data_buf, size_t rec_level) {
     // Check that the option definition is correct as we are going
     // to use it to split the data_ buffer into set of sub buffers.
     definition_.validate();
@@ -335,7 +336,7 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
 
         // Unpack suboptions if any.
         else if (data != data_buf.end() && !getEncapsulatedSpace().empty()) {
-            unpackOptions(OptionBuffer(data, data_buf.end()));
+            unpackOptions(OptionBuffer(data, data_buf.end()), rec_level);
         }
 
     } else if (data_type != OPT_EMPTY_TYPE) {
@@ -390,13 +391,13 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
 
             // Unpack suboptions if any.
             if (data != data_buf.end() && !getEncapsulatedSpace().empty()) {
-                unpackOptions(OptionBuffer(data, data_buf.end()));
+                unpackOptions(OptionBuffer(data, data_buf.end()), rec_level);
             }
         }
     } else {
         // Unpack suboptions if any.
         if (data != data_buf.end() && !getEncapsulatedSpace().empty()) {
-            unpackOptions(OptionBuffer(data, data_buf.end()));
+            unpackOptions(OptionBuffer(data, data_buf.end()), rec_level);
         }
     }
     // If everything went ok we can replace old buffer set with new ones.

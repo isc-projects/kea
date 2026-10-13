@@ -152,7 +152,7 @@ void Option::unpack(OptionBufferConstIter begin,
 }
 
 void
-Option::unpackOptions(const OptionBuffer& buf) {
+Option::unpackOptions(const OptionBuffer& buf, size_t rec_level /* = 0 */) {
     list<uint16_t> deferred;
     switch (universe_) {
     case V4:
@@ -161,7 +161,8 @@ Option::unpackOptions(const OptionBuffer& buf) {
                                 getType() == DHO_VENDOR_ENCAPSULATED_OPTIONS);
         return;
     case V6:
-        LibDHCP::unpackOptions6(buf, getEncapsulatedSpace(), options_);
+        LibDHCP::unpackOptions6(buf, getEncapsulatedSpace(), options_,
+                                0, 0, rec_level);
         return;
     default:
         isc_throw(isc::BadValue, "Invalid universe type " << universe_);

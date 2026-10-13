@@ -187,7 +187,8 @@ OptionDefinition::optionFactory(Option::Universe u,
                                 uint16_t type,
                                 OptionBufferConstIter begin,
                                 OptionBufferConstIter end,
-                                bool convenient_notation) const {
+                                bool convenient_notation,
+                                size_t rec_level) const {
 
     try {
         // Some of the options are represented by the specialized classes derived
@@ -196,7 +197,9 @@ OptionDefinition::optionFactory(Option::Universe u,
         // type to be returned. Therefore, we first check that if we are dealing
         // with such an option. If the instance is returned we just exit at this
         // point. If not, we will search for a generic option type to return.
-        OptionPtr option = factorySpecialFormatOption(u, begin, end, convenient_notation);
+        OptionPtr option = factorySpecialFormatOption(u, begin, end,
+                                                      convenient_notation,
+                                                      rec_level);
         if (option) {
             return (option);
         }
@@ -206,7 +209,8 @@ OptionDefinition::optionFactory(Option::Universe u,
             if (getEncapsulatedSpace().empty()) {
                 return (factoryEmpty(u, type));
             } else {
-                return (OptionPtr(new OptionCustom(*this, u, begin, end)));
+                return (OptionPtr(new OptionCustom(*this, u, begin, end,
+                                                   rec_level)));
             }
 
         case OPT_BINARY_TYPE:
@@ -219,37 +223,37 @@ OptionDefinition::optionFactory(Option::Universe u,
             return (array_type_ ?
                     factoryIntegerArray<uint8_t>(u, type, begin, end) :
                     factoryInteger<uint8_t>(u, type, getEncapsulatedSpace(),
-                                            begin, end));
+                                            begin, end, rec_level));
 
         case OPT_INT8_TYPE:
             return (array_type_ ?
                     factoryIntegerArray<int8_t>(u, type, begin, end) :
                     factoryInteger<int8_t>(u, type, getEncapsulatedSpace(),
-                                           begin, end));
+                                           begin, end, rec_level));
 
         case OPT_UINT16_TYPE:
             return (array_type_ ?
                     factoryIntegerArray<uint16_t>(u, type, begin, end) :
                     factoryInteger<uint16_t>(u, type, getEncapsulatedSpace(),
-                                             begin, end));
+                                             begin, end, rec_level));
 
         case OPT_INT16_TYPE:
             return (array_type_ ?
                     factoryIntegerArray<uint16_t>(u, type, begin, end) :
                     factoryInteger<int16_t>(u, type, getEncapsulatedSpace(),
-                                            begin, end));
+                                            begin, end, rec_level));
 
         case OPT_UINT32_TYPE:
             return (array_type_ ?
                     factoryIntegerArray<uint32_t>(u, type, begin, end) :
                     factoryInteger<uint32_t>(u, type, getEncapsulatedSpace(),
-                                             begin, end));
+                                             begin, end, rec_level));
 
         case OPT_INT32_TYPE:
             return (array_type_ ?
                     factoryIntegerArray<uint32_t>(u, type, begin, end) :
                     factoryInteger<int32_t>(u, type, getEncapsulatedSpace(),
-                                            begin, end));
+                                            begin, end, rec_level));
 
         case OPT_IPV4_ADDRESS_TYPE:
             // If definition specifies that an option is an array
@@ -285,7 +289,7 @@ OptionDefinition::optionFactory(Option::Universe u,
             // Do nothing. We will return generic option a few lines down.
             ;
         }
-        return (OptionPtr(new OptionCustom(*this, u, begin, end)));
+        return (OptionPtr(new OptionCustom(*this, u, begin, end, rec_level)));
     } catch (const SkipThisOptionError&) {
         // We need to throw this one as is.
         throw;
@@ -771,41 +775,45 @@ OptionDefinition::factoryGeneric(Option::Universe u, uint16_t type,
 OptionPtr
 OptionDefinition::factoryIA6(uint16_t type,
                              OptionBufferConstIter begin,
-                             OptionBufferConstIter end) {
+                             OptionBufferConstIter end,
+                             size_t rec_level) {
     if (static_cast<size_t>(std::distance(begin, end)) < Option6IA::OPTION6_IA_LEN) {
         isc_throw(isc::OutOfRange, "input option buffer has invalid size,"
                   << " expected at least " << Option6IA::OPTION6_IA_LEN
                   << " bytes");
     }
-    boost::shared_ptr<Option6IA> option(new Option6IA(type, begin, end));
+    boost::shared_ptr<Option6IA> option(new Option6IA(type, begin, end, rec_level));
     return (option);
 }
 
 OptionPtr
 OptionDefinition::factoryIAAddr6(uint16_t type,
                                  OptionBufferConstIter begin,
-                                 OptionBufferConstIter end) {
+                                 OptionBufferConstIter end,
+                                 size_t rec_level) {
     if (static_cast<size_t>(std::distance(begin, end)) < Option6IAAddr::OPTION6_IAADDR_LEN) {
         isc_throw(isc::OutOfRange,
                   "input option buffer has invalid size, expected at least "
                   << Option6IAAddr::OPTION6_IAADDR_LEN << " bytes");
     }
     boost::shared_ptr<Option6IAAddr> option(new Option6IAAddr(type, begin,
-                                                              end));
+                                                              end, rec_level));
     return (option);
 }
 
 OptionPtr
 OptionDefinition::factoryIAPrefix6(uint16_t type,
-                                 OptionBufferConstIter begin,
-                                 OptionBufferConstIter end) {
+                                   OptionBufferConstIter begin,
+                                   OptionBufferConstIter end,
+                                   size_t rec_level) {
     if (static_cast<size_t>(std::distance(begin, end)) < Option6IAPrefix::OPTION6_IAPREFIX_LEN) {
         isc_throw(isc::OutOfRange,
                   "input option buffer has invalid size, expected at least "
                   << Option6IAPrefix::OPTION6_IAPREFIX_LEN << " bytes");
     }
     boost::shared_ptr<Option6IAPrefix> option(new Option6IAPrefix(type, begin,
-                                                                  end));
+                                                                  end,
+                                                                  rec_level));
     return (option);
 }
 
@@ -872,21 +880,22 @@ OptionPtr
 OptionDefinition::factorySpecialFormatOption(Option::Universe u,
                                              OptionBufferConstIter begin,
                                              OptionBufferConstIter end,
-                                             bool convenient_notation) const {
+                                             bool convenient_notation,
+                                             size_t rec_level) const {
     if ((u == Option::V6) && haveSpace(DHCP6_OPTION_SPACE)) {
         switch (getCode()) {
         case D6O_IA_NA:
         case D6O_IA_PD:
             // Record of 3 uint32, no array.
-            return (factoryIA6(getCode(), begin, end));
+            return (factoryIA6(getCode(), begin, end, rec_level));
 
         case D6O_IAADDR:
             // Record of an IPv6 address followed by 2 uint32, no array.
-            return (factoryIAAddr6(getCode(), begin, end));
+            return (factoryIAAddr6(getCode(), begin, end, rec_level));
 
         case D6O_IAPREFIX:
             // Record of 2 uint32, one uint8 and an IPv6 address, no array.
-            return (factoryIAPrefix6(getCode(), begin, end));
+            return (factoryIAPrefix6(getCode(), begin, end, rec_level));
 
         case D6O_CLIENT_FQDN:
             // Record of one uint8 and one FQDN, no array.

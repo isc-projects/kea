@@ -437,6 +437,7 @@ public:
     ///                            as a string formatted in user-friendly, convenient way.
     ///                            The flag is propagated to the option constructor, so that
     ///                            the data could be parsed properly. Defaults to false.
+    /// @param rec_level recursion level.
     ///
     /// @return instance of the DHCP option.
     /// @throw InvalidOptionValue if data for the option is invalid.
@@ -444,7 +445,8 @@ public:
                             uint16_t type,
                             OptionBufferConstIter begin,
                             OptionBufferConstIter end,
-                            bool convenient_notation = false) const;
+                            bool convenient_notation = false,
+                            size_t rec_level = 0) const;
 
     /// @brief Option factory.
     ///
@@ -541,36 +543,42 @@ public:
     /// @param type option type.
     /// @param begin iterator pointing to the beginning of the buffer.
     /// @param end iterator pointing to the end of the buffer.
+    /// @param rec_level recursion level.
     ///
     /// @throw isc::OutOfRange if provided option buffer is too short or
     /// too long. Expected size is 12 bytes.
     static OptionPtr factoryIA6(uint16_t type,
                                 OptionBufferConstIter begin,
-                                OptionBufferConstIter end);
+                                OptionBufferConstIter end,
+                                size_t rec_level = 0);
 
     /// @brief Factory for IAADDR-type of option.
     ///
     /// @param type option type.
     /// @param begin iterator pointing to the beginning of the buffer.
     /// @param end iterator pointing to the end of the buffer.
+    /// @param rec_level recursion level.
     ///
     /// @throw isc::OutOfRange if provided option buffer is too short or
     /// too long. Expected size is 24 bytes.
     static OptionPtr factoryIAAddr6(uint16_t type,
                                     OptionBufferConstIter begin,
-                                    OptionBufferConstIter end);
+                                    OptionBufferConstIter end,
+                                    size_t rec_level = 0);
 
     /// @brief Factory for IAPREFIX-type of option.
     ///
     /// @param type option type.
     /// @param begin iterator pointing to the beginning of the buffer.
     /// @param end iterator pointing to the end of the buffer.
+    /// @param rec_level recursion level.
     ///
     /// @throw isc::OutOfRange if provided option buffer is too short.
     /// Expected minimum size is 25 bytes.
     static OptionPtr factoryIAPrefix6(uint16_t type,
                                       OptionBufferConstIter begin,
-                                      OptionBufferConstIter end);
+                                      OptionBufferConstIter end,
+                                      size_t rec_level = 0);
 
     /// @brief Factory to create option with tuple list.
     ///
@@ -614,6 +622,7 @@ public:
     /// encapsulated option space are sub options of this option.
     /// @param begin iterator pointing to the beginning of the buffer.
     /// @param end iterator pointing to the end of the buffer.
+    /// @param rec_level recursion level.
     /// @tparam T type of the data field (must be one of the uintX_t or intX_t).
     ///
     /// @throw isc::OutOfRange if provided option buffer length is invalid.
@@ -621,10 +630,11 @@ public:
     static OptionPtr factoryInteger(Option::Universe u, uint16_t type,
                                     const std::string& encapsulated_space,
                                     OptionBufferConstIter begin,
-                                    OptionBufferConstIter end) {
-        OptionPtr option(new OptionInt<T>(u, type, 0));
+                                    OptionBufferConstIter end,
+                                    size_t rec_level = 0) {
+        boost::shared_ptr<OptionInt<T> > option(new OptionInt<T>(u, type, 0));
         option->setEncapsulatedSpace(encapsulated_space);
-        option->unpack(begin, end);
+        option->unpack(begin, end, rec_level);
         return (option);
     }
 
@@ -680,6 +690,7 @@ private:
     ///                            as a string formatted in user-friendly, convenient way.
     ///                            The flag is propagated to the option constructor, so that
     ///                            the data could be parsed properly. Defaults to false.
+    /// @param rec_level recursion level.
     ///
     /// @return An instance of the option having special format or NULL if
     /// such an option can't be created because an option with the given
@@ -687,7 +698,8 @@ private:
     OptionPtr factorySpecialFormatOption(Option::Universe u,
                                          OptionBufferConstIter begin,
                                          OptionBufferConstIter end,
-                                         bool convenient_notation = false) const;
+                                         bool convenient_notation = false,
+                                         size_t rec_level = 0) const;
 
     /// @brief Check if specified type matches option definition type.
     ///
