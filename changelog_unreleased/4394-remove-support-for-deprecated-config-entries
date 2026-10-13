@@ -1,0 +1,8 @@
+[func]		fdupont
+	Removed support for deprecated config entries for DHCPv4
+	and DHCPv6 servers:
+	 - "control-socket" (root level)
+	 - "only-if-required" (class level)
+	 - "require-client-classes" (network, subnet, pool levels)
+	 - "client-class" (network, subnet, pool levels)
+	(Gitlab #4394)
