@@ -544,7 +544,7 @@ PktFilterBPF::receive(Iface& iface, const SocketInfo& socket_info) {
     pkt->setRemoteHWAddr(dummy_pkt->getRemoteHWAddr());
 
     // Set time the packet was stored in the buffer.
-#if (defined(HAVE_BPF_HDR_TSTAMP_TIMEVAL))
+#ifdef HAVE_BPF_HDR_TSTAMP_TIMEVAL
     pkt->addPktEvent(PktEvent::SOCKET_RECEIVED, bpfh.bh_tstamp);
 #else
     // Some platforms, most notably macOS and OpenBSD, use a non-standard

@@ -1,0 +1,4 @@
+[build]		fdupont, sjl
+	Improved portability to OpenBSD from patches
+	submitted by Stuart Lamble.
+	(Gitlab #4785, #4786)
