@@ -17,8 +17,6 @@
 
 #include <cctype>
 #include <cerrno>
-#include <climits>
-#include <cstdint>
 #include <cstdlib>
 #include <string>
 #include <netconf/parser_context.h>
@@ -759,7 +757,7 @@ null {
 
 (?i:null) driver.error (driver.loc_, "JSON null reserved keyword is lower case only");
 
-<*>.   driver.error (driver.loc_, "Invalid character: " + std::string(yytext));
+<*>.   driver.error (driver.loc_, "Invalid character: " + std::string(yytext, yyleng));
 
 <<EOF>> {
     if (driver.states_.empty()) {

@@ -16,8 +16,6 @@
 #ifndef __clang_analyzer__
 
 #include <cerrno>
-#include <climits>
-#include <cstdint>
 #include <cstdlib>
 #include <string>
 #include <eval/eval_context.h>
