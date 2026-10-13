@@ -800,9 +800,9 @@ Lease::getFromUserContextISC(const std::string elem_name) const {
     ConstElementPtr elem;
     auto ctx = getContext();
     if (ctx) {
-        auto isc = getContext()->find("ISC");
+        auto isc = getContext()->get("ISC");
         if (isc && (isc->getType() == Element::map)) {
-            elem = isc->find(elem_name);
+            elem = isc->get(elem_name);
         }
     }
 
@@ -815,7 +815,7 @@ Lease::deleteFromUserContextISC(const std::string elem_name) {
     ConstElementPtr user_context = getContext();
     // If there's no context or it does not contain "ISC", we're done.
     if (!user_context || (user_context->getType() != Element::map) || 
-       !user_context->contains("ISC")) {
+        !user_context->contains("ISC")) {
         return (false);
     }
 
