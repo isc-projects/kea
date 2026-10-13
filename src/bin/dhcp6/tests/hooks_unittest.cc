@@ -2570,7 +2570,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRequestPrefix) {
     resetCalloutBuffers();
 
     // The requested prefix is just a hint.
-    client.requestPrefix(0x5577, 64, IOAddress("4000::1"));
+    client.requestPrefix(0x5577, 64, IOAddress("4000::"));
 
     ASSERT_NO_THROW(client.doRequest());
 
@@ -2925,7 +2925,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRenewPrefix) {
     resetCalloutBuffers();
 
     // The renewed prefix is just a hint.
-    client.requestPrefix(0x5577, 64, IOAddress("4000::1"));
+    client.requestPrefix(0x5577, 64, IOAddress("4000::"));
 
     ASSERT_NO_THROW(client.doRenew());
 
@@ -3286,7 +3286,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebindPrefix) {
     resetCalloutBuffers();
 
     // The rebound prefix is just a hint.
-    client.requestPrefix(0x5577, 64, IOAddress("4000::1"));
+    client.requestPrefix(0x5577, 64, IOAddress("4000::"));
 
     ASSERT_NO_THROW(client.doRebind());
 

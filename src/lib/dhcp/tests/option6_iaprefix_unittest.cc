@@ -38,8 +38,11 @@ public:
     /// @brief creates on-wire representation of IAPREFIX option
     ///
     /// buf_ field is set up to have IAPREFIX with preferred=1000,
-    /// valid=3000000000 and prefix being 2001:db8:1:0:afaf:0:dead:beef/77
-    void setExampleBuffer() {
+    /// valid=3000000000 and prefix being 2001:db8:1:0:afa8::/77.
+    ///
+    /// @param invalid_prefix Flag which indicates if the buffer
+    /// should contain invalid prefix 2001:db8:1:0:afaf:0:dead:beef/77.
+    void setExampleBuffer(bool invalid_prefix = false) {
         for (int i = 0; i < 255; i++) {
             buf_[i] = 0;
         }
@@ -63,11 +66,16 @@ public:
         buf_[13] = 0x00;
         buf_[14] = 0x01;
         buf_[17] = 0xaf;
-        buf_[18] = 0xaf;
-        buf_[21] = 0xde;
-        buf_[22] = 0xad;
-        buf_[23] = 0xbe;
-        buf_[24] = 0xef; // 2001:db8:1:0:afaf:0:dead:beef
+
+        if (invalid_prefix) {
+            buf_[18] = 0xaf;
+            buf_[21] = 0xde;
+            buf_[22] = 0xad;
+            buf_[23] = 0xbe;
+            buf_[24] = 0xef; // 2001:db8:1:0:afaf:0:dead:beef
+        } else {
+            buf_[18] = 0xa8; // 2001:db8:1:0:afa8::
+        }
     }
 
 
@@ -143,10 +151,6 @@ TEST_F(Option6IAPrefixTest, parseShort) {
     // set to zero.
     checkOption(*opt, D6O_IAPREFIX, 77, IOAddress("2001:db8:1:0:afa8::"));
 
-    // Set non-significant bits in the reference buffer to 0, so as the buffer
-    // can be directly compared with the option buffer.
-    buf_[18] = 0xa8;
-    buf_.insert(buf_.begin() + 19, 5, 0);
     checkOutputBuffer(D6O_IAPREFIX);
 
     // Check that option can be disposed safely
@@ -156,7 +160,7 @@ TEST_F(Option6IAPrefixTest, parseShort) {
 // Tests if a received option holding prefix of 128 bits is parsed correctly.
 TEST_F(Option6IAPrefixTest, parseLong) {
 
-    setExampleBuffer();
+    setExampleBuffer(true);
     // Set prefix length to the maximal value.
     buf_[8] = 128;
 
@@ -205,6 +209,34 @@ TEST_F(Option6IAPrefixTest, parseZero) {
     EXPECT_NO_THROW(opt.reset());
 }
 
+// Tests if a received option holding an invalid prefix is parsed correctly
+// and extra bits in prefix are discarded.
+TEST_F(Option6IAPrefixTest, parseInvalidPrefixNoThrow) {
+
+    setExampleBuffer(true);
+
+    // Create an option (unpack content)
+    boost::scoped_ptr<Option6IAPrefix> opt;
+    ASSERT_NO_THROW(opt.reset(new Option6IAPrefix(D6O_IAPREFIX, buf_.begin(),
+                                                  buf_.begin() + 25)));
+    ASSERT_TRUE(opt);
+    // The unpack function uses mask and drops the extra bits.
+    EXPECT_EQ(opt->getAddress().toText(), "2001:db8:1:0:afa8::");
+
+    // Pack this option
+    opt->pack(out_buf_);
+    EXPECT_EQ(29U, out_buf_.getLength());
+
+    checkOption(*opt, D6O_IAPREFIX, 77,
+                IOAddress("2001:db8:1:0:afa8::"));
+
+    setExampleBuffer();
+
+    checkOutputBuffer(D6O_IAPREFIX);
+
+    // Check that option can be disposed safely
+    EXPECT_NO_THROW(opt.reset());
+}
 
 // Checks whether a new option can be built correctly
 TEST_F(Option6IAPrefixTest, build) {
@@ -213,11 +245,11 @@ TEST_F(Option6IAPrefixTest, build) {
     setExampleBuffer();
 
     ASSERT_NO_THROW(opt.reset(new Option6IAPrefix(12345,
-                    IOAddress("2001:db8:1:0:afaf:0:dead:beef"), 77,
+                    IOAddress("2001:db8:1:0:afa8::"), 77,
                                                   1000, 3000000000u)));
     ASSERT_TRUE(opt);
 
-    checkOption(*opt, 12345, 77, IOAddress("2001:db8:1:0:afaf:0:dead:beef"));
+    checkOption(*opt, 12345, 77, IOAddress("2001:db8:1:0:afa8::"));
 
     // Check if we can build it properly
     EXPECT_NO_THROW(opt->pack(out_buf_));
@@ -226,6 +258,17 @@ TEST_F(Option6IAPrefixTest, build) {
 
     // Check that option can be disposed safely
     EXPECT_NO_THROW(opt.reset());
+}
+
+// This test verifies that invalid prefix length is not accepted.
+TEST_F(Option6IAPrefixTest, constructorInvalidPrefixLength) {
+    boost::scoped_ptr<Option6IAPrefix> opt;
+    setExampleBuffer();
+
+    ASSERT_THROW(opt.reset(new Option6IAPrefix(12345,
+                 IOAddress("2001:db8:1:0:afaf:0:dead:beef"), 77,
+                                               1000, 3000000000u)), BadValue);
+    ASSERT_FALSE(opt);
 }
 
 // Checks negative cases

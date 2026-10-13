@@ -108,6 +108,13 @@ IPv6Resrv::set(const Type& type, const asiolink::IOAddress& prefix,
         isc_throw(isc::BadValue, "invalid prefix length '"
                   << static_cast<int>(prefix_len)
                   << "' for reserved IPv6 address, expected 128");
+    } else if ((type == TYPE_PD) && (prefix_len != 128)) {
+        IOAddress first_address = firstAddrInPrefix(prefix, prefix_len);
+        if (first_address != prefix) {
+            isc_throw(BadValue, "Prefix address: " << prefix
+                      << " exceeds prefix/prefix-len pair: " << first_address
+                      << "/" << static_cast<uint32_t>(prefix_len));
+        }
     }
 
     type_ = type;

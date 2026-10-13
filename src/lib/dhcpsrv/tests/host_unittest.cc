@@ -87,6 +87,12 @@ TEST(IPv6ResrvTest, constructiorInvalidPrefixLength) {
     EXPECT_THROW_MSG(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                IOAddress("2001:db8:1::"), 64),
                      isc::BadValue, expected);
+    // Check for extra specified bits in prefix.
+    expected = "Prefix address: 2001:db8:1:: exceeds "
+            "prefix/prefix-len pair: 2001:db8::/32";
+    EXPECT_THROW_MSG(IPv6Resrv(IPv6Resrv::TYPE_PD,
+                               IOAddress("2001:db8:1::"), 32),
+                     isc::BadValue, expected);
 }
 
 // This test verifies that it is possible to modify prefix and its
@@ -116,6 +122,12 @@ TEST(IPv6ResrvTest, setPrefix) {
     expected = "invalid prefix length '129' for new IPv6 reservation";
     EXPECT_THROW_MSG(resrv.set(IPv6Resrv::TYPE_PD,
                                IOAddress("2001:db8:1::"), 129),
+                     isc::BadValue, expected);
+    // Check for extra specified bits in prefix.
+    expected = "Prefix address: 2001:db8:1:: exceeds "
+            "prefix/prefix-len pair: 2001:db8::/32";
+    EXPECT_THROW_MSG(resrv.set(IPv6Resrv::TYPE_PD,
+                               IOAddress("2001:db8:1::"), 32),
                      isc::BadValue, expected);
 }
 

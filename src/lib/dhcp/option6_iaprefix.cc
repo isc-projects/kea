@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <asiolink/addr_utilities.h>
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
@@ -35,6 +36,12 @@ Option6IAPrefix::Option6IAPrefix(uint16_t type, const isc::asiolink::IOAddress& 
         isc_throw(BadValue, static_cast<unsigned>(prefix_len)
                   << " is not a valid prefix length. "
                   << "Allowed range is 0..128");
+    }
+    IOAddress first_address = firstAddrInPrefix(addr_, prefix_len_);
+    if (first_address != addr_) {
+        isc_throw(BadValue, "Prefix address: " << addr_
+            << " exceeds prefix/prefix-len pair: " << first_address
+            << "/" << static_cast<uint32_t>(prefix_len_));
     }
 }
 

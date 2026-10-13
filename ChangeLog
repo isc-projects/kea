@@ -1,3 +1,9 @@
+2406.	[bug]		razvan
+	Do not allow invalid prefix/prefix-length pair for IPv6 PD
+	leases. Thank you to Qifan Zhang from Palo Alto Networks for
+	reporting the issue.
+	(Gitlab #4856,#4518)
+
 2405.	[bug]		razvan
 	Corrected MLM_MYSQL_FETCH_FAILURE to 1 so MySQL
 	selectQuery and host lookups detect mysql_stmt_fetch
