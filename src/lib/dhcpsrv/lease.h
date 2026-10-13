@@ -66,19 +66,19 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     //@{
     ///
     /// @brief A lease in the default state.
-    static const uint32_t STATE_DEFAULT;
+    static constexpr uint32_t STATE_DEFAULT = 0;
 
     /// @brief Declined lease.
-    static const uint32_t STATE_DECLINED;
+    static constexpr uint32_t STATE_DECLINED = 1;
 
     /// @brief Expired and reclaimed lease.
-    static const uint32_t STATE_EXPIRED_RECLAIMED;
+    static constexpr uint32_t STATE_EXPIRED_RECLAIMED = 2;
 
     /// @brief Released lease held in the database for lease affinity.
-    static const uint32_t STATE_RELEASED;
+    static constexpr uint32_t STATE_RELEASED = 3;
 
     /// @brief Registered self-generated lease.
-    static const uint32_t STATE_REGISTERED;
+    static constexpr uint32_t STATE_REGISTERED = 4;
 
     /// @brief Returns name(s) of the basic lease state(s).
     ///

@@ -1052,6 +1052,62 @@ public:
     /// @return Always 0.
     virtual size_t byRemoteId6size() const;
 
+
+    /// @brief Update in-memoery stats when adding a v4 lease.
+    ///
+    /// @param lease Added lease.
+    static void updateStatsOnAdd(const Lease4Ptr& lease);
+
+    /// @brief Update in-memory stats when adding a V6 lease.
+    ///
+    /// @param lease Added lease.
+    static void updateStatsOnAdd(const Lease6Ptr& lease);
+
+    /// @brief Update in-memory stats when updating a v4 lease.
+    ///
+    /// @param existing Lease data before update.
+    /// @param lease Lease data after update.
+    static void updateStatsOnUpdate(const Lease4Ptr& existing,
+                                    const Lease4Ptr& lease);
+
+    /// @brief Update in-memory stats when updating a v6 lease.
+    ///
+    /// @param existing Lease data before update.
+    /// @param lease Lease data after update.
+    static void updateStatsOnUpdate(const Lease6Ptr& existing,
+                                    const Lease6Ptr& lease);
+
+    /// @brief Update in-memory stats when deleting a v4 lease.
+    ///
+    /// @param lease Deleted lease.
+    static void updateStatsOnDelete(const Lease4Ptr& lease);
+
+    /// @brief Update in-memory stats when deleting a v6 lease.
+    ///
+    /// @param lease Deleted lease.
+    static void updateStatsOnDelete(const Lease6Ptr& lease);
+
+    /// @brief Helper function that adds a value to an address stat's global,
+    /// subnet, and pool level values.
+    ///
+    /// @param stat base name of the statistic e.g. "assigned-addresses", "assigned-nas"
+    /// @param subnet_id id of desired subnet
+    /// @param pool pointer to the pool (if one) within the subnet, if empty
+    /// pool level is skipped.
+    /// @param value signed value to add to the statistic
+    static void bumpStat(const std::string& stat, SubnetID& subnet_id,
+                         PoolPtr pool, int value);
+
+    /// @brief Helper function that adds a value to a prefix stat's global,
+    /// subnet, and pool level values.
+    ///
+    /// @param stat base name of the statistic e.g. "assigned-pds"
+    /// @param subnet_id id of desired subnet
+    /// @param pool pointer to the pool (if one) within the subnet, if empty
+    /// pool level is skipped.
+    /// @param value signed value to add to the statistic
+    static void bumpStatPrefix(const std::string& stat, SubnetID&
+                               subnet_id, PoolPtr pool, int value);
 protected:
 
     /// Extended information / Bulk Lease Query shared interface.
