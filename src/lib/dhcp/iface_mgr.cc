@@ -135,7 +135,7 @@ Iface::getPlainMac() const {
     for (unsigned i = 0; i < mac_len_; i++) {
         tmp.width(2);
         tmp << static_cast<int>(mac_[i]);
-        if (i < mac_len_-1) {
+        if (i < mac_len_ - 1) {
             tmp << ":";
         }
     }
@@ -519,30 +519,30 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
         // allowed
         if (iface->flag_loopback_ && !allow_loopback_) {
             IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
-                            "must not open socket on the loopback"
-                            " interface " << iface->getName());
+                           "must not open socket on the loopback"
+                           " interface " << iface->getName());
             continue;
         }
 
         if (!iface->flag_up_) {
             IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
-                            "the interface " << iface->getName()
-                            << " is down");
+                           "the interface " << iface->getName()
+                           << " is down");
             continue;
         }
 
         if (!iface->flag_running_) {
             IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
-                            "the interface " << iface->getName()
-                            << " is not running");
+                           "the interface " << iface->getName()
+                           << " is not running");
             continue;
         }
 
         IOAddress out_address("0.0.0.0");
         if (!iface->getAddress4(out_address)) {
             IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
-                            "the interface " << iface->getName()
-                            << " has no usable IPv4 addresses configured");
+                           "the interface " << iface->getName()
+                           << " has no usable IPv4 addresses configured");
             continue;
         }
 
@@ -1204,11 +1204,14 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
 
     // We only check external sockets if select detected an event.
     if (result > 0) {
-        // Check for receiver thread read errors.
-        if (dhcp_receiver_->isReady(WatchedThread::ERROR)) {
-            string msg = dhcp_receiver_->getLastError();
-            dhcp_receiver_->clearReady(WatchedThread::ERROR);
-            isc_throw(SocketReadError, msg);
+        {
+            std::lock_guard<std::mutex> lk(receiver_mutex_);
+            // Check for receiver thread read errors.
+            if (dhcp_receiver_->isReady(WatchedThread::ERROR)) {
+                string msg = dhcp_receiver_->getLastError();
+                dhcp_receiver_->clearReady(WatchedThread::ERROR);
+                isc_throw(SocketReadError, msg);
+            }
         }
 
         // Let's find out which external socket has the data
@@ -1244,6 +1247,7 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
     }
 
     // If we're here it should only be because there are DHCP packets waiting.
+    std::lock_guard<std::mutex> lk(receiver_mutex_);
     Pkt4Ptr pkt = getPacketQueue4()->dequeuePacket();
     if (!pkt) {
         dhcp_receiver_->clearReady(WatchedThread::READY);
@@ -1594,11 +1598,14 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 
     // We only check external sockets if select detected an event.
     if (result > 0) {
-        // Check for receiver thread read errors.
-        if (dhcp_receiver_->isReady(WatchedThread::ERROR)) {
-            string msg = dhcp_receiver_->getLastError();
-            dhcp_receiver_->clearReady(WatchedThread::ERROR);
-            isc_throw(SocketReadError, msg);
+        {
+            std::lock_guard<std::mutex> lk(receiver_mutex_);
+            // Check for receiver thread read errors.
+            if (dhcp_receiver_->isReady(WatchedThread::ERROR)) {
+                string msg = dhcp_receiver_->getLastError();
+                dhcp_receiver_->clearReady(WatchedThread::ERROR);
+                isc_throw(SocketReadError, msg);
+            }
         }
 
         // Let's find out which external socket has the data
@@ -1634,6 +1641,7 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     }
 
     // If we're here it should only be because there are DHCP packets waiting.
+    std::lock_guard<std::mutex> lk(receiver_mutex_);
     Pkt6Ptr pkt = getPacketQueue6()->dequeuePacket();
     if (!pkt) {
         dhcp_receiver_->clearReady(WatchedThread::READY);
@@ -1690,8 +1698,11 @@ IfaceMgr::receiveDHCP4Packets() {
         } else if (result < 0) {
             // This thread should not get signals?
             if (errno != EINTR) {
-                // Signal the error to receive4.
-                dhcp_receiver_->setError(strerror(errno));
+                {
+                    std::lock_guard<std::mutex> lk(receiver_mutex_);
+                    // Signal the error to receive4.
+                    dhcp_receiver_->setError(strerror(errno));
+                }
                 // We need to sleep in case of the error condition to
                 // prevent the thread from tight looping when result
                 // gets negative.
@@ -1763,8 +1774,11 @@ IfaceMgr::receiveDHCP6Packets() {
         } else if (result < 0) {
             // This thread should not get signals?
             if (errno != EINTR) {
-                // Signal the error to receive6.
-                dhcp_receiver_->setError(strerror(errno));
+                {
+                    std::lock_guard<std::mutex> lk(receiver_mutex_);
+                    // Signal the error to receive6.
+                    dhcp_receiver_->setError(strerror(errno));
+                }
                 // We need to sleep in case of the error condition to
                 // prevent the thread from tight looping when result
                 // gets negative.
@@ -1794,6 +1808,7 @@ IfaceMgr::receiveDHCP4Packet(Iface& iface, const SocketInfo& socket_info) {
 
     int result = ioctl(socket_info.sockfd_, FIONREAD, &len);
     if (result < 0) {
+        std::lock_guard<std::mutex> lk(receiver_mutex_);
         // Signal the error to receive4.
         dhcp_receiver_->setError(strerror(errno));
         return;
@@ -1808,12 +1823,15 @@ IfaceMgr::receiveDHCP4Packet(Iface& iface, const SocketInfo& socket_info) {
     try {
         pkt = packet_filter_->receive(iface, socket_info);
     } catch (const std::exception& ex) {
+        std::lock_guard<std::mutex> lk(receiver_mutex_);
         dhcp_receiver_->setError(strerror(errno));
     } catch (...) {
+        std::lock_guard<std::mutex> lk(receiver_mutex_);
         dhcp_receiver_->setError("packet filter receive() failed");
     }
 
     if (pkt) {
+        std::lock_guard<std::mutex> lk(receiver_mutex_);
         getPacketQueue4()->enqueuePacket(pkt, socket_info);
         dhcp_receiver_->markReady(WatchedThread::READY);
     }
@@ -1825,6 +1843,7 @@ IfaceMgr::receiveDHCP6Packet(const SocketInfo& socket_info) {
 
     int result = ioctl(socket_info.sockfd_, FIONREAD, &len);
     if (result < 0) {
+        std::lock_guard<std::mutex> lk(receiver_mutex_);
         // Signal the error to receive6.
         dhcp_receiver_->setError(strerror(errno));
         return;
@@ -1839,12 +1858,15 @@ IfaceMgr::receiveDHCP6Packet(const SocketInfo& socket_info) {
     try {
         pkt = packet_filter6_->receive(socket_info);
     } catch (const std::exception& ex) {
+        std::lock_guard<std::mutex> lk(receiver_mutex_);
         dhcp_receiver_->setError(ex.what());
     } catch (...) {
+        std::lock_guard<std::mutex> lk(receiver_mutex_);
         dhcp_receiver_->setError("packet filter receive() failed");
     }
 
     if (pkt) {
+        std::lock_guard<std::mutex> lk(receiver_mutex_);
         getPacketQueue6()->enqueuePacket(pkt, socket_info);
         dhcp_receiver_->markReady(WatchedThread::READY);
     }
@@ -1889,10 +1911,10 @@ IfaceMgr::getSocket(const isc::dhcp::Pkt6Ptr& pkt) {
             // If we want to send something to link-local and the socket is
             // bound to link-local or we want to send to global and the socket
             // is bound to global, then use it as candidate
-            if ( (pkt->getRemoteAddr().isV6LinkLocal() &&
-                s->addr_.isV6LinkLocal()) ||
-                 (!pkt->getRemoteAddr().isV6LinkLocal() &&
-                  !s->addr_.isV6LinkLocal()) ) {
+            if ((pkt->getRemoteAddr().isV6LinkLocal() &&
+                 s->addr_.isV6LinkLocal()) ||
+                (!pkt->getRemoteAddr().isV6LinkLocal() &&
+                 !s->addr_.isV6LinkLocal())) {
                 candidate = s;
             }
         }
