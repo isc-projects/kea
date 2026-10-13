@@ -120,3 +120,6 @@
 
 /* Const OpenSSL X509_NAME and X509_NAME_ENTRY pointers */
 #mesondefine CONST_OPENSSL_X509_NAME
+
+/* Is struct bpf_hdr.bh_tstamp struct timeval, or needs special handling */
+#mesondefine HAVE_BPF_HDR_TSTAMP_TIMEVAL

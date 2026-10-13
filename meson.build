@@ -568,6 +568,19 @@ endif
 
 #### Other checks.
 
+# Some operating systems (eg, macOS, OpenBSD) use a different type for
+# struct bpf_hdr.bh_tstamp.
+result = cpp.compiles('''
+    #include <sys/types.h>
+    #include <sys/time.h>
+    #include <net/bpf.h>
+    void test() {
+        struct bpf_hdr hdr;
+        struct timeval *tv = &hdr.bh_tstamp;
+    }
+''', name: 'struct bpf_hdr.bh_tstamp is struct timeval')
+conf_data.set('HAVE_BPF_HDR_TSTAMP_TIMEVAL', result)
+
 if POSTGRESQL_DEP.found()
     version = POSTGRESQL_DEP.version()
     conf_data.set(

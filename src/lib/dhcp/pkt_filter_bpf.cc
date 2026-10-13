@@ -544,16 +544,17 @@ PktFilterBPF::receive(Iface& iface, const SocketInfo& socket_info) {
     pkt->setRemoteHWAddr(dummy_pkt->getRemoteHWAddr());
 
     // Set time the packet was stored in the buffer.
-#if (defined(BPF_TIMEVAL)) && (BPF_TIMEVAL == timeval32)
-    // Convert to ptime directly to avoid timeval vs
-    // timeval32 definitons under MacOS.
+#if (defined(HAVE_BPF_HDR_TSTAMP_TIMEVAL))
+    pkt->addPktEvent(PktEvent::SOCKET_RECEIVED, bpfh.bh_tstamp);
+#else
+    // Some platforms, most notably macOS and OpenBSD, use a non-standard
+    // struct for bpf_hdr.bh_tstamp. Convert to ptime directly to avoid having
+    // to handle all possible cases.
     time_t time_t_secs = bpfh.bh_tstamp.tv_sec;
     ptime timestamp = from_time_t(time_t_secs);
     time_duration usecs(0, 0, 0, bpfh.bh_tstamp.tv_usec);
     timestamp += usecs;
     pkt->addPktEvent(PktEvent::SOCKET_RECEIVED, timestamp);
-#else
-    pkt->addPktEvent(PktEvent::SOCKET_RECEIVED, bpfh.bh_tstamp);
 #endif
 
     // Set time packet was read from the buffer.
