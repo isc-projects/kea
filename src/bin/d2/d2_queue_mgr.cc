@@ -45,9 +45,30 @@ D2QueueMgr::operator()(const dhcp_ddns::NameChangeListener::Result result,
         // state as well as our queue size.
         switch (result) {
         case dhcp_ddns::NameChangeListener::SUCCESS:
-            // Receive was successful, attempt to queue the request.
-            if (getQueueSize() < getMaxQueueSize()) {
-                // There's room on the queue, add to the end
+        {
+            // Receive was successful, attempt to queue the request(s).
+            // If it is a chain, so how many there are.
+            size_t chain_length = 0;
+            auto tmp = ncr;
+            while (tmp) {
+                ++chain_length;
+                tmp = tmp->getNextNcr();
+            }
+
+            if ((getQueueSize() + chain_length) > getMaxQueueSize()) {
+                // Won't fit in the queue, stop the listener.
+                // Note that we can move straight to a STOPPED state as there
+                // is no receive in progress.
+                LOG_ERROR(dhcp_to_d2_logger, DHCP_DDNS_QUEUE_MGR_QUEUE_FULL)
+                        .arg(max_queue_size_);
+                StatsMgr::instance().addValue("queue-mgr-queue-full", static_cast<int64_t>(1));
+                stopListening(STOPPED_QUEUE_FULL);
+                break;
+            }
+
+            bool nested = false;
+            do {
+                // Add the NCR to the queue.
                 enqueue(ncr);
 
                 // Log that we got the request
@@ -55,18 +76,17 @@ D2QueueMgr::operator()(const dhcp_ddns::NameChangeListener::Result result,
                           isc::log::DBGLVL_TRACE_DETAIL_DATA,
                           DHCP_DDNS_QUEUE_MGR_QUEUE_RECEIVE)
                           .arg(ncr->getRequestId());
-                return;
-            }
 
-            // Queue is full, stop the listener.
-            // Note that we can move straight to a STOPPED state as there
-            // is no receive in progress.
-            LOG_ERROR(dhcp_to_d2_logger, DHCP_DDNS_QUEUE_MGR_QUEUE_FULL)
-                      .arg(max_queue_size_);
-            StatsMgr::instance().addValue("queue-mgr-queue-full", static_cast<int64_t>(1));
-            stopListening(STOPPED_QUEUE_FULL);
+                if (nested) {
+                    StatsMgr::instance().addValue("ncr-received", static_cast<int64_t>(1));
+                }
+
+                ncr = ncr->getNextNcr();
+                nested = !!ncr;
+            } while (ncr);
+
             break;
-
+        }
         case dhcp_ddns::NameChangeListener::STOPPED:
             if (mgr_state_ == STOPPING) {
                 // This is confirmation that the listener has stopped and its

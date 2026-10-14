@@ -263,11 +263,10 @@ operator<<(std::ostream& os, const D2Dhcid& dhcid) {
 /**************************** NameChangeRequest ******************************/
 
 NameChangeRequest::NameChangeRequest()
-    : change_type_(CHG_ADD), forward_change_(false),
-    reverse_change_(false), fqdn_(""), ip_io_address_("0.0.0.0"),
-    dhcid_(), lease_expires_on_(), lease_length_(0),
-    conflict_resolution_mode_(CHECK_WITH_DHCID),
-    status_(ST_NEW) {
+    : change_type_(CHG_ADD), forward_change_(false), reverse_change_(false),
+      fqdn_(""), ip_io_address_("0.0.0.0"), dhcid_(), lease_length_(0),
+      conflict_resolution_mode_(CHECK_WITH_DHCID), status_(ST_NEW),
+      next_ncr_(NameChangeRequestPtr()) {
 }
 
 NameChangeRequest::NameChangeRequest(const NameChangeType change_type,
@@ -282,7 +281,7 @@ NameChangeRequest::NameChangeRequest(const NameChangeType change_type,
     dhcid_(dhcid), lease_expires_on_(lease_expires_on),
     lease_length_(lease_length),
     conflict_resolution_mode_(conflict_resolution_mode),
-    status_(ST_NEW) {
+    status_(ST_NEW), next_ncr_(NameChangeRequestPtr()) {
 
     // User setter to validate fqdn.
     setFqdn(fqdn);
@@ -374,6 +373,12 @@ NameChangeRequest::fromJSON(const std::string& json) {
                   "Malformed NameChangeRequest JSON: " << ex.what());
     }
 
+    // Everything is valid, return the new instance.
+    return (fromJSON(elements));
+}
+
+NameChangeRequestPtr
+NameChangeRequest::fromJSON(isc::data::ConstElementPtr elements) {
     // Get a map of the Elements, keyed by element name.
     ElementMap element_map = elements->mapValue();
     isc::data::ConstElementPtr element;
@@ -426,6 +431,12 @@ NameChangeRequest::fromJSON(const std::string& json) {
         }
     }
 
+    found = element_map.find("next-ncr");
+    if (found != element_map.end()) {
+        auto next_ncr = fromJSON(found->second);
+        ncr->setNextNcr(next_ncr);
+    }
+
     // All members were in the Element set and were correct lexically. Now
     // validate the overall content semantically.  This will throw an
     // NcrMessageError if anything is amiss.
@@ -436,7 +447,7 @@ NameChangeRequest::fromJSON(const std::string& json) {
 }
 
 std::string
-NameChangeRequest::toJSON() const  {
+NameChangeRequest::toJSON() const {
     // Create a JSON string of this request's contents.  Note that this method
     // does NOT use the isc::data library as generating the output is straight
     // forward.
@@ -453,8 +464,13 @@ NameChangeRequest::toJSON() const  {
         << "\"lease-expires-on\":\""  << getLeaseExpiresOnStr() << "\","
         << "\"lease-length\":" << getLeaseLength() << ","
         << "\"conflict-resolution-mode\":"
-        << "\"" <<ConflictResolutionModeToString(getConflictResolutionMode()) << "\""
-        << "}";
+        << "\"" << ConflictResolutionModeToString(getConflictResolutionMode()) << "\"";
+
+    if (next_ncr_) {
+        stream << ",\"next-ncr\":" << next_ncr_->toJSON();
+    }
+
+    stream  << "}";
 
     return (stream.str());
 }
@@ -733,6 +749,10 @@ NameChangeRequest::toText() const {
            << "Conflict Resolution Mode: "
            << ConflictResolutionModeToString(getConflictResolutionMode())
            << std::endl;
+
+    if (next_ncr_) {
+        stream << "Next NCR:" << std::endl << next_ncr_->toText();
+    }
 
     return (stream.str());
 }

@@ -65,6 +65,8 @@ extern const isc::log::MessageID DHCPSRV_EVAL_RESULT;
 extern const isc::log::MessageID DHCPSRV_FORENSIC_BACKENDS_REGISTERED;
 extern const isc::log::MessageID DHCPSRV_FORENSIC_BACKEND_DEREGISTER;
 extern const isc::log::MessageID DHCPSRV_FORENSIC_BACKEND_REGISTER;
+extern const isc::log::MessageID DHCPSRV_GENERATE_NCR4_FAILED;
+extern const isc::log::MessageID DHCPSRV_GENERATE_NCR6_FAILED;
 extern const isc::log::MessageID DHCPSRV_HOOK_LEASE4_RECOVER_SKIP;
 extern const isc::log::MessageID DHCPSRV_HOOK_LEASE4_RENEW_SKIP;
 extern const isc::log::MessageID DHCPSRV_HOOK_LEASE4_SELECT_SKIP;
@@ -177,6 +179,7 @@ extern const isc::log::MessageID DHCPSRV_TIMERMGR_STOP_TIMER;
 extern const isc::log::MessageID DHCPSRV_TIMERMGR_UNREGISTER_ALL_TIMERS;
 extern const isc::log::MessageID DHCPSRV_TIMERMGR_UNREGISTER_TIMER;
 extern const isc::log::MessageID DHCPSRV_UNKNOWN_DB;
+extern const isc::log::MessageID LEGAL_LOG_PATH_SECURITY_WARNING;
 
 } // namespace dhcp
 } // namespace isc

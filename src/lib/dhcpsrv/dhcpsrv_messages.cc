@@ -64,6 +64,8 @@ extern const isc::log::MessageID DHCPSRV_EVAL_RESULT = "DHCPSRV_EVAL_RESULT";
 extern const isc::log::MessageID DHCPSRV_FORENSIC_BACKENDS_REGISTERED = "DHCPSRV_FORENSIC_BACKENDS_REGISTERED";
 extern const isc::log::MessageID DHCPSRV_FORENSIC_BACKEND_DEREGISTER = "DHCPSRV_FORENSIC_BACKEND_DEREGISTER";
 extern const isc::log::MessageID DHCPSRV_FORENSIC_BACKEND_REGISTER = "DHCPSRV_FORENSIC_BACKEND_REGISTER";
+extern const isc::log::MessageID DHCPSRV_GENERATE_NCR4_FAILED = "DHCPSRV_GENERATE_NCR4_FAILED";
+extern const isc::log::MessageID DHCPSRV_GENERATE_NCR6_FAILED = "DHCPSRV_GENERATE_NCR6_FAILED";
 extern const isc::log::MessageID DHCPSRV_HOOK_LEASE4_RECOVER_SKIP = "DHCPSRV_HOOK_LEASE4_RECOVER_SKIP";
 extern const isc::log::MessageID DHCPSRV_HOOK_LEASE4_RENEW_SKIP = "DHCPSRV_HOOK_LEASE4_RENEW_SKIP";
 extern const isc::log::MessageID DHCPSRV_HOOK_LEASE4_SELECT_SKIP = "DHCPSRV_HOOK_LEASE4_SELECT_SKIP";
@@ -176,6 +178,7 @@ extern const isc::log::MessageID DHCPSRV_TIMERMGR_STOP_TIMER = "DHCPSRV_TIMERMGR
 extern const isc::log::MessageID DHCPSRV_TIMERMGR_UNREGISTER_ALL_TIMERS = "DHCPSRV_TIMERMGR_UNREGISTER_ALL_TIMERS";
 extern const isc::log::MessageID DHCPSRV_TIMERMGR_UNREGISTER_TIMER = "DHCPSRV_TIMERMGR_UNREGISTER_TIMER";
 extern const isc::log::MessageID DHCPSRV_UNKNOWN_DB = "DHCPSRV_UNKNOWN_DB";
+extern const isc::log::MessageID LEGAL_LOG_PATH_SECURITY_WARNING = "LEGAL_LOG_PATH_SECURITY_WARNING";
 
 } // namespace dhcp
 } // namespace isc
@@ -240,6 +243,8 @@ const char* values[] = {
     "DHCPSRV_FORENSIC_BACKENDS_REGISTERED", "the following forensic backend types are available: %1",
     "DHCPSRV_FORENSIC_BACKEND_DEREGISTER", "deregistered forensic backend type: %1",
     "DHCPSRV_FORENSIC_BACKEND_REGISTER", "registered forensic backend type: %1",
+    "DHCPSRV_GENERATE_NCR4_FAILED", "%1: generating %2 name change request failed for lease %3: %4",
+    "DHCPSRV_GENERATE_NCR6_FAILED", "%1: generating %2 name change request failed for lease %3: %4",
     "DHCPSRV_HOOK_LEASE4_RECOVER_SKIP", "DHCPv4 lease %1 was not recovered from the declined state because a callout set the skip status.",
     "DHCPSRV_HOOK_LEASE4_RENEW_SKIP", "DHCPv4 lease was not renewed because a callout set the skip flag.",
     "DHCPSRV_HOOK_LEASE4_SELECT_SKIP", "Lease4 creation was skipped, because of callout skip flag.",
@@ -352,6 +357,7 @@ const char* values[] = {
     "DHCPSRV_TIMERMGR_UNREGISTER_ALL_TIMERS", "unregistering all timers",
     "DHCPSRV_TIMERMGR_UNREGISTER_TIMER", "unregistering timer: %1",
     "DHCPSRV_UNKNOWN_DB", "unknown database type: %1",
+    "LEGAL_LOG_PATH_SECURITY_WARNING", "Forensic log path specified is NOT SECURE: %1",
     NULL
 };
 
