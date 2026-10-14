@@ -241,6 +241,22 @@ DdnsParams::getTtlMax() const {
     return (subnet_->getDdnsTtlMax());
 }
 
+std::string
+DdnsParams::getReverseZone() const {
+    if (!subnet_) {
+        return ("");
+    }
+
+    if (pool_) {
+        auto optional = pool_->getDdnsReverseZone();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
+    }
+
+    return (subnet_->getDdnsReverseZone().get());
+}
+
 PoolPtr
 DdnsParams::setPoolFromAddress(const asiolink::IOAddress& address) {
     if (!subnet_) {

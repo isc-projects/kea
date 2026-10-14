@@ -673,12 +673,11 @@ public:
                     last_subnet->setDdnsConflictResolutionMode(out_bindings[79]->getString());
                 }
 
-#if 0   // need #2169 merged first
                 // 80 ddns_reverse_zone
                 if (!out_bindings[80]->amNull()) {
                     last_subnet->setDdnsReverseZone(out_bindings[80]->getString());
                 }
-#endif
+
                 // 81 hostname_char_set
                 if (!out_bindings[81]->amNull()) {
                     last_subnet->setHostnameCharSet(out_bindings[81]->getString());
@@ -803,12 +802,10 @@ public:
                     last_pool->setDdnsConflictResolutionMode(out_bindings[94]->getString());
                 }
 
-#if 0   // need #2169 merged first
                 // ddns_reverse_zone at 95
                 if (!out_bindings[95]->amNull()) {
                     last_pool->setDdnsReverseZone(out_bindings[95]->getString());
                 }
-#endif
 
                 // 96 hostname_char_set
                 if (!out_bindings[96]->amNull()) {
@@ -1220,11 +1217,7 @@ public:
             condCreateInteger<uint32_t>(subnet->getDdnsTtlMax(Network::Inheritance::NONE)),
             MySqlBinding::condCreateBool(subnet->getDdnsUpdateOnRenew(Network::Inheritance::NONE)),
             MySqlBinding::condCreateString(subnet->getDdnsConflictResolutionMode(Network::Inheritance::NONE)),
-#if 0 // Waiting on #2169
             MySqlBinding::condCreateString(subnet->getDdnsReverseZone(Network::Inheritance::NONE)),
-#else
-            MySqlBinding::createNull(),
-#endif
             MySqlBinding::condCreateString(subnet->getHostnameCharSet(Network::Inheritance::NONE)),
             MySqlBinding::condCreateString(subnet->getHostnameCharReplacement(Network::Inheritance::NONE)),
         };
@@ -1315,11 +1308,7 @@ public:
             condCreateInteger<uint32_t>(pool->getDdnsTtlMax()),
             MySqlBinding::condCreateBool(pool->getDdnsUpdateOnRenew()),
             MySqlBinding::condCreateString(pool->getDdnsConflictResolutionMode()),
-#if 0 // Waiting on #2169
             MySqlBinding::condCreateString(pool->getDdnsReverseZone()),
-#else
-            MySqlBinding::createNull(),
-#endif
             MySqlBinding::condCreateString(pool->getHostnameCharSet()),
             MySqlBinding::condCreateString(pool->getHostnameCharReplacement()),
             MySqlBinding::createTimestamp(subnet->getModificationTime())
@@ -1737,12 +1726,11 @@ public:
                     last_network->setDdnsConflictResolutionMode(out_bindings[53]->getString());
                 }
 
-#if 0   // need #2169 merged first
                 // 54 ddns_reverse_zone
                 if (!out_bindings[54]->amNull()) {
                     last_network->setDdnsReverseZone(out_bindings[54]->getString());
                 }
-#endif
+
                 // 55 hostname_char_set
                 if (!out_bindings[55]->amNull()) {
                     last_network->setHostnameCharSet(out_bindings[55]->getString());
@@ -1921,11 +1909,7 @@ public:
             condCreateInteger<uint32_t>(shared_network->getDdnsTtlMax(Network::Inheritance::NONE)),
             MySqlBinding::condCreateBool(shared_network->getDdnsUpdateOnRenew(Network::Inheritance::NONE)),
             MySqlBinding::condCreateString(shared_network->getDdnsConflictResolutionMode(Network::Inheritance::NONE)),
-#if 0 // Waiting on #2169
             MySqlBinding::condCreateString(shared_network->getDdnsReverseZone(Network::Inheritance::NONE)),
-#else
-            MySqlBinding::createNull(),
-#endif
             MySqlBinding::condCreateString(shared_network->getHostnameCharSet(Network::Inheritance::NONE)),
             MySqlBinding::condCreateString(shared_network->getHostnameCharReplacement(Network::Inheritance::NONE)),
         };

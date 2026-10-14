@@ -144,9 +144,7 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
     subnet->setDdnsTtlMax(100);
     subnet->setDdnsUpdateOnRenew(true);
     subnet->setDdnsConflictResolutionMode("no-check-with-dhcid");
-#if 0  // WAITING for #4243
     subnet->setDdnsReverseZone("backward.com.");
-#endif
     subnet->setHostnameCharSet("[^B-Zb-z0-9.-]");
     subnet->setHostnameCharReplacement("z");
 
@@ -169,9 +167,7 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
     pool1->setDdnsTtlMax(200);
     pool1->setDdnsUpdateOnRenew(false);
     pool1->setDdnsConflictResolutionMode("no-check-with-dhcid");
-#if 0  // WAITING for #4243
     subnet->setDdnsReverseZone("pool.backward.com.");
-#endif
     pool1->setHostnameCharSet("[^P-Zb-z0-9.-]");
     pool1->setHostnameCharReplacement("y");
     subnet->addPool(pool1);
@@ -308,9 +304,7 @@ GenericConfigBackendDHCPv6Test::initTestSharedNetworks() {
     shared_network->setDdnsTtlMax(800);
     shared_network->setDdnsUpdateOnRenew(true);
     shared_network->setDdnsConflictResolutionMode("no-check-with-dhcid");
-#if 0  // WAITING for #4243
     shared_network->setDdnsReverseZone("backward.com.");
-#endif
     shared_network->setHostnameCharSet("[^C-Zb-z0-9.-]");
     shared_network->setHostnameCharReplacement("w");
 
