@@ -1,0 +1,4 @@
+[func]		tmark
+	DDNS behavioral parameters are now supported at the
+	pool level in Mysql and Postgresql config back ends.
+	(Gitlab #4828)
