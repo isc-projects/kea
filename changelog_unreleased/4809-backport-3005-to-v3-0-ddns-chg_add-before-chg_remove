@@ -4,4 +4,4 @@
 	message to kea-dhcp-ddns.  This ensures that
 	kea-dhcp-ddns processes them in the order they
 	were received.
-	(Gitlab #4809, #3005)
+	(Gitlab #4809,#3005)

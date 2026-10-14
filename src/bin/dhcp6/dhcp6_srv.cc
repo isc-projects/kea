@@ -2555,7 +2555,6 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
         LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL, DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST)
             .arg(answer->getLabel())
             .arg(add_ncr->toText());
-
         /// @todo Currently we create NCR with the first IPv6 address that
         /// is carried in one of the IA_NAs. In the future, the NCR API should
         /// be extended to map multiple IPv6 addresses to a single FQDN.

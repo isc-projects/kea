@@ -178,7 +178,6 @@ extern const isc::log::MessageID DHCPSRV_TIMERMGR_STOP_TIMER = "DHCPSRV_TIMERMGR
 extern const isc::log::MessageID DHCPSRV_TIMERMGR_UNREGISTER_ALL_TIMERS = "DHCPSRV_TIMERMGR_UNREGISTER_ALL_TIMERS";
 extern const isc::log::MessageID DHCPSRV_TIMERMGR_UNREGISTER_TIMER = "DHCPSRV_TIMERMGR_UNREGISTER_TIMER";
 extern const isc::log::MessageID DHCPSRV_UNKNOWN_DB = "DHCPSRV_UNKNOWN_DB";
-extern const isc::log::MessageID LEGAL_LOG_PATH_SECURITY_WARNING = "LEGAL_LOG_PATH_SECURITY_WARNING";
 
 } // namespace dhcp
 } // namespace isc
@@ -357,7 +356,6 @@ const char* values[] = {
     "DHCPSRV_TIMERMGR_UNREGISTER_ALL_TIMERS", "unregistering all timers",
     "DHCPSRV_TIMERMGR_UNREGISTER_TIMER", "unregistering timer: %1",
     "DHCPSRV_UNKNOWN_DB", "unknown database type: %1",
-    "LEGAL_LOG_PATH_SECURITY_WARNING", "Forensic log path specified is NOT SECURE: %1",
     NULL
 };
 

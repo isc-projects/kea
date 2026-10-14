@@ -179,7 +179,6 @@ extern const isc::log::MessageID DHCPSRV_TIMERMGR_STOP_TIMER;
 extern const isc::log::MessageID DHCPSRV_TIMERMGR_UNREGISTER_ALL_TIMERS;
 extern const isc::log::MessageID DHCPSRV_TIMERMGR_UNREGISTER_TIMER;
 extern const isc::log::MessageID DHCPSRV_UNKNOWN_DB;
-extern const isc::log::MessageID LEGAL_LOG_PATH_SECURITY_WARNING;
 
 } // namespace dhcp
 } // namespace isc

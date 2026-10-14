@@ -1401,6 +1401,7 @@ TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsUpdateOnRenew) {
             ASSERT_NO_THROW(srv_->createNameChangeRequests(scenario.new_lease_,
                                                            scenario.old_lease_,
                                                            *getDdnsParams()));
+
             if ((scenario.remove_ + scenario.add_) == 2) {
                 // Verify queue count is correct.
                 ASSERT_EQ(1U, d2_mgr_.getQueueSize());
@@ -1661,7 +1662,7 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
 
     checkResponse(reply, DHCPACK, 1234);
 
-    // There should be two nested NameChangeRequests. Verify that they are valid.
+    // There should be two NameChangeRequests. Verify that they are valid.
     ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNestedNameChangeRequest(0, isc::dhcp_ddns::CHG_REMOVE, true, true,
                                   reply->getYiaddr().toText(),
@@ -1991,6 +1992,7 @@ TEST_F(NameDhcpv4SrvTest, fqdnReservation) {
     {
         SCOPED_TRACE("Verify the correctness of the CHG_ADD NCR for the "
                      "foobar.fake-suffix.isc.org");
+
         verifyNestedNameChangeRequest(1, isc::dhcp_ddns::CHG_ADD, true, true,
                                       resp->getYiaddr().toText(),
                                       "foobar.fake-suffix.isc.org.",
@@ -2090,8 +2092,8 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservation) {
     // and the one that adds a new entry for the new hostname.
     ASSERT_EQ(1U, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     {
-         SCOPED_TRACE("Verify the correctness of the CHG_REMOVE NCR for the "
-                      "unique-host.example.com");
+        SCOPED_TRACE("Verify the correctness of the CHG_REMOVE NCR for the "
+                     "unique-host.example.com");
 
         verifyNestedNameChangeRequest(0, isc::dhcp_ddns::CHG_REMOVE, true, true,
                                       resp->getYiaddr().toText(),
@@ -2099,11 +2101,11 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservation) {
                                       "000001B6547DCC62E44C4D1A42D0A05B149EA1168"
                                       "01A9481A98E3A876A9E0D261F8326",
                                       subnet_->getValid());
-     }
+    }
 
-     {
-         SCOPED_TRACE("Verify the correctness of the CHG_ADD NCR for the "
-                      "foobar.fake-suffix.isc.org");
+    {
+        SCOPED_TRACE("Verify the correctness of the CHG_ADD NCR for the "
+                     "foobar.fake-suffix.isc.org");
 
         verifyNestedNameChangeRequest(1, isc::dhcp_ddns::CHG_ADD, true, true,
                                       resp->getYiaddr().toText(),
@@ -3030,7 +3032,7 @@ TEST_F(NameDhcpv4SrvTest, withOfferLifetime) {
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("client-name.example.com.", lease->hostname_);
 
-    // Verify assigned states did not incremented again.
+    // Verify assigned states did not increment again.
     checkSubnetStat(subnet->getID(), "total-addresses", 1);
     checkSubnetStat(subnet->getID(), "cumulative-assigned-addresses", 1);
     checkSubnetStat(subnet->getID(), "assigned-addresses", 1);
@@ -3350,6 +3352,5 @@ TEST_F(NameDhcpv4SrvTest, fqdnScrubbedEmpty) {
     // Hostname should not be in the response.
     ASSERT_FALSE(resp->getOption(DHO_FQDN));
 }
-
 
 } // end of anonymous namespace

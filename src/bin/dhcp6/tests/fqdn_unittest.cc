@@ -742,7 +742,6 @@ public:
         EXPECT_EQ(exp_cr_mode, ncr->getConflictResolutionMode());
     }
 
-
     /// @brief Updates inherited subnet and pool members
     ///
     /// Hack added to set subnet_ and pool_ members that are buried into lower
@@ -1003,7 +1002,6 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             0, 500);
-
 }
 
 // Verify that conflict resolution is turned off when the
@@ -1206,6 +1204,7 @@ TEST_F(FqdnDhcpv6SrvTest, processTwoRequestsDiffFqdn) {
     // remove the existing entries, one to add new entries.
     testProcessMessage(DHCPV6_REQUEST, "otherhost.example.com",
                        "otherhost.example.com.");
+
     // Should have 1 NCR, a remove with a nested add.
     ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNestedNameChangeRequest(0, isc::dhcp_ddns::CHG_REMOVE, true, true,
@@ -1410,6 +1409,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewFqdnFlags) {
              instance().getLease6(Lease::TYPE_NA,
                                   IOAddress("2001:db8:1:1::dead:beef"));
     ASSERT_TRUE(lease_);
+
     // Should have 1 NCR, a remove with a nested add.
     ASSERT_EQ(1U, d2_mgr_.getQueueSize());
     verifyNestedNameChangeRequest(0, isc::dhcp_ddns::CHG_REMOVE, true, false,
@@ -1431,6 +1431,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewFqdnFlags) {
     // should have a dual direction remove NCR but NO add NCR.
     testProcessMessage(DHCPV6_RENEW, "myhost.example.com",
                        "myhost.example.com.", Option6ClientFqdn::FLAG_N);
+
     // We should only have the removal NCR.
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
@@ -2288,12 +2289,12 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
             ASSERT_TRUE(new_lease);
 
             if ((scenario.remove_ + scenario.add_) == 2) {
-                 // Verify NCR content
+                // Verify NCR content
                 verifyNestedNameChangeRequest(0, isc::dhcp_ddns::CHG_REMOVE, true, true,
                                               old_lease->addr_.toText(), "",
                                               old_lease->valid_lft_,
                                               old_lease->hostname_);
-                 // Verify NCR content
+                // Verify NCR content
                 verifyNestedNameChangeRequest(1, isc::dhcp_ddns::CHG_ADD, true, true,
                                               new_lease->addr_.toText(), "",
                                               new_lease->valid_lft_,
@@ -2307,7 +2308,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
 
                 // If we expect a remove, check it.
                 if (scenario.remove_ > 0) {
-                   // Verify NCR content
+                    // Verify NCR content
                     verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
                                             old_lease->addr_.toText(), "",
                                             0, old_lease->valid_lft_,
