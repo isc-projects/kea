@@ -86,6 +86,15 @@ Pkt4::pack() {
 
     try {
         size_t hw_len = hwaddr_->hwaddr_.size();
+        size_t hw_offset = 0;
+
+        if (hwaddr_->htype_ == HTYPE_INFINIBAND && hw_len == HWAddr::INFINIBAND_HWADDR_LEN) {
+            // According to RFC4390, hlen MUST be zero and chaddr zeroed out.
+            // However, at least dhclient can't handle that and fails.
+            // Instead, return the last 8 bytes, which contain the actual unique hw part.
+            hw_len = 8;
+            hw_offset = HWAddr::INFINIBAND_HWADDR_LEN - 8;
+        }
 
         buffer_out_.writeUint8(op_);
         buffer_out_.writeUint8(hwaddr_->htype_);
@@ -103,7 +112,7 @@ Pkt4::pack() {
         if ((hw_len > 0) && (hw_len <= MAX_CHADDR_LEN)) {
             // write up to 16 bytes of the hardware address (CHADDR field is 16
             // bytes long in DHCPv4 message).
-            buffer_out_.writeData(&hwaddr_->hwaddr_[0],
+            buffer_out_.writeData(&hwaddr_->hwaddr_[hw_offset],
                                  (hw_len < MAX_CHADDR_LEN ?
                                   hw_len : MAX_CHADDR_LEN) );
             hw_len = MAX_CHADDR_LEN - hw_len;
@@ -505,13 +514,7 @@ void
 Pkt4::setHWAddrMember(const uint8_t htype, const uint8_t hlen,
                       const std::vector<uint8_t>& mac_addr,
                       HWAddrPtr& hw_addr) {
-    /// @todo Rewrite this once support for client-identifier option
-    /// is implemented (ticket 1228?)
-    if (hlen > MAX_CHADDR_LEN) {
-        isc_throw(OutOfRange, "Hardware address (len=" << static_cast<uint32_t>(hlen)
-                  << ") too long. Max " << MAX_CHADDR_LEN << " supported.");
-
-    } else if (mac_addr.empty() && (hlen > 0) ) {
+    if (mac_addr.empty() && (hlen > 0) ) {
         isc_throw(OutOfRange, "Invalid HW Address specified");
     }
 
