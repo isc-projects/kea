@@ -34,7 +34,7 @@ PktFilterIfaceSocketTest::openSocketCommon(Iface& /* iface */, const isc::asioli
                                            const uint16_t) {
     int pipe_fds[2];
     if (pipe(pipe_fds) < 0) {
-        isc_throw(Unexpected, "failed to open test pipe");
+        isc_throw(Unexpected, "failed to open test pipe: " << strerror(errno));
     }
     if (fcntl(pipe_fds[0], F_SETFL, O_NONBLOCK) < 0) {
         close(pipe_fds[0]);
