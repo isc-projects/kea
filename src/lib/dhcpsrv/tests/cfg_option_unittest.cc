@@ -144,6 +144,20 @@ TEST(OptionDescriptorTest, allowedForClientClassesTest) {
 class CfgOptionTest : public LogContentTest {
 public:
 
+    /// @brief Constructor.
+    ///
+    /// Removes runtime option definitions.
+    CfgOptionTest() {
+        LibDHCP::clearRuntimeOptionDefs();
+    }
+
+    /// @brief Destructor.
+    ///
+    /// Removes runtime option definitions.
+    virtual ~CfgOptionTest() {
+        LibDHCP::clearRuntimeOptionDefs();
+    }
+
     /// @brief Generates encapsulated options and adds them to CfgOption
     ///
     /// This method generates the following options:
@@ -645,9 +659,10 @@ TEST_F(CfgOptionTest, mergeInvalid) {
 // in createDescriptorOption():
 // 1. standard option
 // 2. vendor option
-// 3. user-defined, unformatted option
-// 4. user-defined, formatted option
-// 5. undefined, unformatted option
+// 3. runtime option
+// 4. user-defined, unformatted option
+// 5. user-defined, formatted option
+// 6. undefined, unformatted option
 TEST_F(CfgOptionTest, createDescriptorOptionValid) {
     // First we'll create our "known" user definitions
     CfgOptionDefPtr defs(new CfgOptionDef());
@@ -694,6 +709,24 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
     ASSERT_TRUE(opaddrs);
     Option4AddrLst::AddressContainer exp_addresses = { IOAddress("192.0.2.1"), IOAddress("192.0.2.2") };
     EXPECT_EQ(exp_addresses, opaddrs->getAddresses());
+
+    // Was missing in #4802: runtime option.
+    OptionDefinitionPtr opt_def(new OptionDefinition("my-option", 1,
+                                                     "my-space", "string"));
+    OptionDefSpaceContainer rt_defs;
+    rt_defs.addItem(opt_def);
+    LibDHCP::setRuntimeOptionDefs(rt_defs);
+    LibDHCP::commitRuntimeOptionDefs();
+
+    space = "my-space";
+    option.reset(new Option(Option::V4, 1, OptionBuffer(6, 0x77)));
+    desc.reset(new OptionDescriptor(option, false, false));
+
+    ASSERT_NO_THROW(updated = CfgOption::createDescriptorOption(defs, space, *desc));
+    ASSERT_TRUE(updated);
+    OptionStringPtr ropstr = boost::dynamic_pointer_cast<OptionString>(desc->option_);
+    ASSERT_TRUE(ropstr);
+    EXPECT_EQ("wwwwww", ropstr->getValue());
 
     // Now, a user defined uint8 option
     space = "isc";

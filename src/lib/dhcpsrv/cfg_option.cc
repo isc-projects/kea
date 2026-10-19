@@ -232,6 +232,12 @@ CfgOption::createDescriptorOption(CfgOptionDefPtr cfg_def, const std::string& sp
         }
     }
 
+    // Check if this is an option specified by a user before so
+    // in runtime option definitions in LibDHCP.
+    if (!def) {
+        def = LibDHCP::getRuntimeOptionDef(space, code);
+    }
+
     // Still haven't found the definition, so look for custom
     // definition in the given set of configured definitions
     if (!def) {
