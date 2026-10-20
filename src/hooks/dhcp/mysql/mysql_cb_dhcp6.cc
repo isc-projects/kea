@@ -405,7 +405,7 @@ public:
             MySqlBinding::createString(DDNS_CR_MODE_LENGTH), // ddns_conflict_resolution_mode 104
             MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // ddns_reverse_zone 105
             MySqlBinding::createString(HOSTNAME_CHAR_SET_LENGTH), // hostname_char_set 106
-            MySqlBinding::createString(HOSTNAME_CHAR_REPLACMENT_LENGTH), //  hostname_char_replacement 107
+            MySqlBinding::createString(HOSTNAME_CHAR_REPLACEMENT_LENGTH), //  hostname_char_replacement 107
             MySqlBinding::createInteger<uint8_t>(), // pool:ddns_send_updates 108
             MySqlBinding::createInteger<uint8_t>(), // pool:ddns_override_no_update 109
             MySqlBinding::createInteger<uint8_t>(), // pool:ddns_override_client_update 110
@@ -420,7 +420,7 @@ public:
             MySqlBinding::createString(DDNS_CR_MODE_LENGTH), // pool:ddns_conflict_resolution_mode 119
             MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // pool:ddns_reverse_zone 120
             MySqlBinding::createString(HOSTNAME_CHAR_SET_LENGTH), // pool:hostname_char_set 121
-            MySqlBinding::createString(HOSTNAME_CHAR_REPLACMENT_LENGTH), // pool:hostname_char_replacement 122
+            MySqlBinding::createString(HOSTNAME_CHAR_REPLACEMENT_LENGTH), // pool:hostname_char_replacement 122
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag 123
         };
 
@@ -1793,7 +1793,7 @@ public:
             MySqlBinding::createString(DDNS_CR_MODE_LENGTH), // ddns_conflict_resolution_mode 54
             MySqlBinding::createString(DNS_NAME_BUF_LENGTH), // ddns_reverse_zone 55
             MySqlBinding::createString(HOSTNAME_CHAR_SET_LENGTH), // hostname_char_set 56
-            MySqlBinding::createString(HOSTNAME_CHAR_REPLACMENT_LENGTH), //  hostname_char_replacement  57
+            MySqlBinding::createString(HOSTNAME_CHAR_REPLACEMENT_LENGTH), //  hostname_char_replacement  57
             MySqlBinding::createString(SERVER_TAG_BUF_LENGTH) // server_tag 58
         };
 

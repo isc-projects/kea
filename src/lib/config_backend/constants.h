@@ -86,7 +86,7 @@ constexpr unsigned long DDNS_CR_MODE_LENGTH = 255;
 
 constexpr unsigned long HOSTNAME_CHAR_SET_LENGTH = 255;
 
-constexpr unsigned long HOSTNAME_CHAR_REPLACMENT_LENGTH = 255;
+constexpr unsigned long HOSTNAME_CHAR_REPLACEMENT_LENGTH = 255;
 
 //*}
 
