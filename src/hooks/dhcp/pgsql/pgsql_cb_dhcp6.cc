@@ -582,7 +582,7 @@ public:
                 }
             }
 
-            // Pool is between 15 and 19 with extra between 79 and 81
+            // Pool columns are 15 to 19, 79 to 81, and 108 to 122
 
             // If the row contains information about the pool and it
             // appears to be new pool entry (checked by comparing pool

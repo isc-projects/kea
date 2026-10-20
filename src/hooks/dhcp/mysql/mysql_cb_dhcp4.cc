@@ -688,7 +688,7 @@ public:
                     last_subnet->setHostnameCharReplacement(out_bindings[82]->getString());
                 }
 
-                // server_tag at 97.
+                // server_tag at 98.
 
                 // Subnet ready. Add it to the list.
                 auto ret = subnets.insert(last_subnet);

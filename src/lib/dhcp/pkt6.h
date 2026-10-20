@@ -478,7 +478,6 @@ public:
     HWAddrPtr getCachedHWAddr() const;
 
     /// @brief Sets the cached hardware address
-    /// @return cached hardware address structure
     void setCachedHWAddr(const HWAddrPtr& addr);
 
 protected:

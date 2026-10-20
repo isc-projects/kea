@@ -261,7 +261,7 @@ public:
 
     /// @brief Sets new ddns-reverse-zone
     ///
-    /// @param ddns_qualifying_suffix New value to use.
+    /// @param ddns_reverse_zone New value to use.
     void setDdnsReverseZone(const util::Optional<std::string>& ddns_reverse_zone) {
         ddns_reverse_zone_ = ddns_reverse_zone;
     }
