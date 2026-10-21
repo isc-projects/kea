@@ -550,7 +550,7 @@ public:
                     last_subnet->setHostnameCharSet(worker.getString(106));
                 }
 
-                // hostname_char_replacment at 107.
+                // hostname_char_replacement at 107.
                 if (!worker.isColumnNull(107)) {
                     last_subnet->setHostnameCharReplacement(worker.getString(107));
                 }
@@ -1770,7 +1770,7 @@ public:
                     last_network->setHostnameCharSet(worker.getString(56));
                 }
 
-                // hostname_char_replacment at 57.
+                // hostname_char_replacement at 57.
                 if (!worker.isColumnNull(57)) {
                     last_network->setHostnameCharReplacement(worker.getString(57));
                 }

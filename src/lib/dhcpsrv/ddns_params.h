@@ -88,7 +88,7 @@ public:
     /// @brief Returns a regular expression string sanitizer
     ///
     /// If the value returned by getHostnameCharSet() is not empty, then it is
-    /// used in conjunction the value returned by getHostnameCharReplacment()
+    /// used in conjunction the value returned by getHostnameCharReplacement()
     /// (which may be empty) to create and return a StringSanitizer instance.
     /// Otherwise it will return an empty pointer.
     ///
