@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <cryptolink/crypto_rng.h>
 #include <d2srv/d2_log.h>
 #include <dns/messagerenderer.h>
 #include <dns/opcode.h>
@@ -308,7 +309,9 @@ void
 TKeyExchangeImpl::createTKeyRequest(const GssApiBufferPtr& outtoken) {
     // Create a TKEY request.
     msg_.reset(new Message(Message::RENDER));
-    // QID is added by IOFetch using the cryptolink::generateQid.
+    // Set a random QID before rendering: IOFetch sends a pre-rendered
+    // packet as is and does not rewrite its QID.
+    msg_->setQid(isc::cryptolink::generateQid());
     msg_->setOpcode(Opcode::QUERY());
     msg_->setRcode(Rcode::NOERROR());
     msg_->setHeaderFlag(Message::HEADERFLAG_QR, false);
