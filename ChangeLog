@@ -1,3 +1,72 @@
+Kea 3.0.5 (stable) released on October 28, 2026
+
+2420.	[build]		andrei
+	The library version numbers have been bumped up for the Kea 3.0.5
+	stable release.
+	(Gitlab #4862)
+
+2419.	[bug]		fdupont
+	Made lexical analyzers more robust with null characters
+	in input, e.g. in server or agent configuration files.
+	(Gitlab #4834,#4739)
+
+2418.	[build]		fdupont
+	Added OpenSSL 4.0.x support.
+	(Gitlab #4835,#4673)
+
+2417.	[bug]		tmark
+	Improved handling of special characters
+	in values written to memfile lease database.
+	(Gitlab #4838,#4393)
+
+2416.	[bug]		tmark
+	Related name change requests (NCRs), are now
+	sent by kea-dhcp4 and kea-dhcp6 in a single
+	message to kea-dhcp-ddns.  This ensures that
+	kea-dhcp-ddns processes them in the order they
+	were received.
+	(Gitlab #4809,#3005)
+
+2415.	[bug]		tmark
+	Modified kea-dhcp-ddns to avoid starting a
+	transaction for a request if there is already
+	a transaction for the request's FQDN or ip address.
+	Prior to this it used the DHCID to guard against
+	concurrent work.
+	(Gitlab #4808,#4585)
+
+2414.	[bug]		fdupont
+	Fixed an issue in debug-level logging of dropped packets
+	that could cause the server to crash under heavy load.
+	Applies to both kea-dhcp4 and kea-dhcp6.
+	(Gitlab #4843,#4719)
+
+2413.	[func]		tmark
+	Modified kea-dhcp4 and kea-dhcp6 to avoid
+	scheduling unnecessary DDNS entry removals
+	when renewing leases.
+	(Gitlab #4807, #4794)
+
+2412.	[bug]		tmark
+	API commands provided by the lease-cmds hook
+	library now update in-memory statistics.
+	(Gitlab #4850,#4176)
+
+2411.	[bug]		fdupont
+	The "exchange-timeout" parameter of GSS-TSIG hook library
+	configuration is no longer ignored.
+	(Gitlab #4851,#4265)
+
+2410.	[bug]		fdupont
+	Limited recursive unpacking of DHCPv6 vendor options.
+	(Gitlab #4857,#4692)
+
+2409.	[bug]		fdupont
+	Limited recursive unpacking of DHCPv6 options.
+	Thank you to Qifan Zhang from Palo Alto Networks for
+	reporting the issue.
+	(Gitlab #4854,#4565)
+
 2408.	[bug]		razvan
 	Fixed bugs related to out of bound container access which can
 	cause Kea to crash if -D_GLIBCXX_ASSERTIONS flag is used at
