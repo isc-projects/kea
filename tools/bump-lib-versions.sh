@@ -165,9 +165,18 @@ fi
 
 author=$(git config user.email | cut -d '@' -f 1)
 branch=$(git branch --show-current)
-gitlab_id=$(printf '%s' "${branch}" | cut -d '-' -f 1)
+if test -z "${branch}"; then
+  dash_v=$(echo "${new_release_tag}" | sed 's/\./-/g')
+  gitlab_id='TODO'
+  hash=$(git rev-parse --short HEAD)
+  branch="${hash}--bump-up-library-versions-for-the-${dash_v}-release"
+else
+  gitlab_id=$(printf '%s' "${branch}" | cut -d '-' -f 1)
+fi
+file="./changelog_unreleased/${branch}"
 echo "\
 [build]		${author}
 	The library version numbers have been bumped up for the Kea ${major}.${middle}.${minor}
 	${release} release.
-	(Gitlab #${gitlab_id})" > "./changelog_unreleased/${branch}"
+	(Gitlab #${gitlab_id})" > "${file}"
+git add "${file}"
