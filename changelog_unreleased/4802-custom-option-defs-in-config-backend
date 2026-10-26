@@ -1,7 +1,0 @@
-[bug]		fdupont
-	Fixed the creation of option data by the config
-	backend using a user option definition added in
-	configuration or before current config backend
-	update. Previously this failed with a warning
-	message saying there was a definition mismatch.
-	(Gitlab #4802)

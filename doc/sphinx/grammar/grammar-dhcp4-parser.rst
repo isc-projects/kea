@@ -139,6 +139,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                  | ddns_replace_client_name
                  | ddns_generated_prefix
                  | ddns_qualifying_suffix
+                 | ddns_reverse_zone
                  | ddns_update_on_renew
                  | ddns_use_conflict_resolution
                  | ddns_conflict_resolution_mode
@@ -213,6 +214,8 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
      ddns_generated_prefix ::= "ddns-generated-prefix" ":" STRING
 
      ddns_qualifying_suffix ::= "ddns-qualifying-suffix" ":" STRING
+
+     ddns_reverse_zone ::= "ddns-reverse-zone" ":" STRING
 
      ddns_update_on_renew ::= "ddns-update-on-renew" ":" BOOLEAN
 
@@ -556,6 +559,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                   | ddns_replace_client_name
                   | ddns_generated_prefix
                   | ddns_qualifying_suffix
+                  | ddns_reverse_zone
                   | ddns_update_on_renew
                   | ddns_use_conflict_resolution
                   | ddns_conflict_resolution_mode
@@ -647,6 +651,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                          | ddns_replace_client_name
                          | ddns_generated_prefix
                          | ddns_qualifying_suffix
+                         | ddns_reverse_zone
                          | ddns_update_on_renew
                          | ddns_use_conflict_resolution
                          | ddns_conflict_resolution_mode
@@ -790,6 +795,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                | ddns_replace_client_name
                | ddns_generated_prefix
                | ddns_qualifying_suffix
+               | ddns_reverse_zone
                | ddns_update_on_renew
                | ddns_conflict_resolution_mode
                | ddns_ttl_percent

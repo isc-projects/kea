@@ -1,3 +1,42 @@
+Kea 3.3.3 (development) released on October 28, 2026
+
+2572.	[bug]		fdupont
+	Fixed the creation of option data by the config
+	backend using a user option definition added in
+	configuration or before current config backend
+	update. Previously this failed with a warning
+	message saying there was a definition mismatch.
+	(Gitlab #4802)
+
+2571.	[func]		tmark
+	DDNS behavioral parameters are now supported at the
+	pool level in Mysql and Postgresql config back ends.
+	(Gitlab #4828)
+
+2570.	[func]		sesse, tmark
+	Added ddns-reverse-zone parameter to kea-dhcp4 and
+	kea-dhcp6. This allows the user to supply the value
+	to be sent to kea-dhcp-ddns, for the reverse domain in
+	PTR records. Prior to this kea-dhcp-ddns always used
+	"in-addr.arpa." for V4 and "ip6.arpa." for V6. Thanks to
+	Steinar H. Gunderson for requesting this feature and for
+	submitting the patch from which this change was made.
+	(Gitlab #2169)
+
+2569.	[func]		tmark
+	kea-dhcp6 will now emit the hardware address on most
+	log statements that include packet details. The value
+	logged is dictated by the kea-dhcp6 "mac-sources"
+	configuration parameter. Prior to this it always
+	emitted "[no hwaddr info]".
+	(Gitlab #4243)
+
+2568.	[doc]		tmark
+	Added discussion of lease user-context when
+	updating leases to the lease-cmds hook library
+	section of the ARM.
+	(Gitlab #4818)
+
 Kea 3.3.2 (development) released on September 30, 2026
 
 2567.	[bug]		erichu

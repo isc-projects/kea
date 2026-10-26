@@ -3050,6 +3050,17 @@ kea4/all-keys.json
             // shared-network, and subnet levels.
             "ddns-qualifying-suffix": "",
 
+            // The base zone for the reverse DNS entry, if enabled.
+            // This is useful for cases where you or the DHCP server
+            // only controls part of the reverse zone, and someone
+            // (possibly an upstream ISP) has delegated some records
+            // to another zone that you control, possibly via CNAME.
+            // It may be specified at the global, shared-network, subnet
+            // and pool levels. The default value is an empty string
+            // which ultimately instructs kea-dhcp-ddns to use
+            // "in-addr.arpa."
+            "ddns-reverse-zone": "backward.com.",
+
             // Enumeration specifying whether the server should honor
             // the hostname or Client FQDN sent by the client or replace
             // this name. The acceptable values are: "never" (use the
@@ -3669,6 +3680,9 @@ kea4/all-keys.json
                     "ddns-qualifying-suffix": "",
 
                     // Shared-network level value. See description at the global level.
+                    "ddns-reverse-zone": "snetwork.backward.com.",
+
+                    // Shared-network level value. See description at the global level.
                     "ddns-replace-client-name": "never",
 
                     // Shared-network level value. See description at the global level.
@@ -3823,6 +3837,9 @@ kea4/all-keys.json
                             "ddns-qualifying-suffix": "",
 
                             // Subnet-level value. See description at the global level.
+                            "ddns-reverse-zone": "subnet.backward.com.",
+
+                            // Subnet-level value. See description at the global level.
                             "ddns-replace-client-name": "never",
 
                             // Subnet-level value. See description at the global level.
@@ -3949,6 +3966,9 @@ kea4/all-keys.json
 
                                     // Pool-level value. See description at the global level.
                                     "ddns-qualifying-suffix": "pool.example.com.",
+
+                                    // Pool-level value. See description at the global level.
+                                    "ddns-reverse-zone": "pool.backward.com.",
 
                                     // Pool-level value. See description at the global level.
                                     "ddns-replace-client-name": "always",
@@ -11350,6 +11370,17 @@ kea6/all-keys.json
             // shared-network, and subnet levels.
             "ddns-qualifying-suffix": "",
 
+            // The base zone for the reverse DNS entry, if enabled.
+            // This is useful for cases where you or the DHCP server
+            // only controls part of the reverse zone, and someone
+            // (possibly an upstream ISP) has delegated some records
+            // to another zone that you control, possibly via CNAME.
+            // It may be specified at the global, shared-network, subnet
+            // and pool levels. The default value is an empty string
+            // which ultimately instructs kea-dhcp-ddns to use
+            // "ip6.arpa."
+            "ddns-reverse-zone": "backward.com.",
+
             // Enumeration specifying whether the server should honor
             // the hostname or Client FQDN sent by the client or replace
             // this name. The acceptable values are: "never" (use the
@@ -11961,6 +11992,9 @@ kea6/all-keys.json
                     "ddns-qualifying-suffix": "",
 
                     // Shared-network level value. See description at the global level.
+                    "ddns-reverse-zone": "snetwork.backward.com.",
+
+                    // Shared-network level value. See description at the global level.
                     "ddns-replace-client-name": "never",
 
                     // Shared-network level value. See description at the global level.
@@ -12105,6 +12139,9 @@ kea6/all-keys.json
 
                             // Subnet-level value. See description at the global level.
                             "ddns-qualifying-suffix": "",
+
+                            // Subnet-level value. See description at the global level.
+                            "ddns-reverse-zone": "subnet.backward.com.",
 
                             // Subnet-level value. See description at the global level.
                             "ddns-replace-client-name": "never",
@@ -12277,6 +12314,9 @@ kea6/all-keys.json
 
                                     // Pool-level value. See description at the global level.
                                     "ddns-qualifying-suffix": "pool.example.com.",
+
+                                    // Pool-level value. See description at the global level.
+                                    "ddns-reverse-zone": "pool.backward.com.",
 
                                     // Pool-level value. See description at the global level.
                                     "ddns-replace-client-name": "always",

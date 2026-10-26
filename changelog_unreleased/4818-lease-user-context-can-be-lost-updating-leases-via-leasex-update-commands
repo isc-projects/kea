@@ -1,5 +1,0 @@
-[doc]		tmark
-	Added discussion of lease user-context when
-	updating leases to the lease-cmds hook library
-	section of the ARM.
-	(Gitlab #4818)
