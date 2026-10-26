@@ -85,7 +85,7 @@ public:
     /// socket should join All_DHCP_Relay_Agents_and_servers multicast
     /// group.
     ///
-    /// @return A structure describing a primary and fallback socket.
+    /// @return A structure describing a socket.
     virtual SocketInfo openSocket(Iface& iface,
                                   const isc::asiolink::IOAddress& addr,
                                   const uint16_t port,

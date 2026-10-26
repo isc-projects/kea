@@ -227,18 +227,29 @@ PktFilterBPF::openSocket(Iface& iface,
                          const isc::asiolink::IOAddress& addr,
                          const uint16_t port, const bool,
                          const bool) {
+    int fallback = -1;
+    int sock = -1;
+    // Close sockets on error before throwing.
+    auto cleanup = [&] () {
+        if (fallback >= 0) {
+            close(fallback);
+        }
+        if (sock >= 0) {
+            close(sock);
+        }
+    };
+
     // Open fallback socket first. If it fails, it will give us an indication
     // that there is another service (perhaps DHCP server) running.
     // The function will throw an exception and effectively cease opening
     // the BPF device below.
-    int fallback = openFallbackSocket(addr, port);
+    fallback = openFallbackSocket(addr, port);
 
     // Fallback has opened, so let's open the BPF device that we will be
     // using for receiving and sending packets. The BPF device is opened
     // by opening a file /dev/bpf%d where %d is a number. There may be
     // devices already open so we will try them one by one and open the
     // one that is not busy.
-    int sock = -1;
     for (unsigned int bpf_dev = 0;
          bpf_dev < MAX_BPF_OPEN_ATTEMPTS && (sock < 0);
          ++bpf_dev) {
@@ -252,7 +263,7 @@ PktFilterBPF::openSocket(Iface& iface,
             }
             // All other errors are fatal, so close the fallback socket
             // and throw.
-            close(fallback);
+            cleanup();
             isc_throw(SocketConfigError,
                       "Failed to open BPF device " << s.str());
         }
@@ -260,8 +271,7 @@ PktFilterBPF::openSocket(Iface& iface,
 
     // Set the close-on-exec flag.
     if (fcntl(sock, F_SETFD, FD_CLOEXEC) < 0) {
-        close(fallback);
-        close(sock);
+        cleanup();
         isc_throw(SocketConfigError, "Failed to set close-on-exec flag"
                   << " on BPF device with interface " << iface.getName());
     }
@@ -275,8 +285,7 @@ PktFilterBPF::openSocket(Iface& iface,
                  std::min(static_cast<int>(IFNAMSIZ),
                           static_cast<int>(iface.getName().length())));
     if (ioctl(sock, BIOCSETIF, &iface_data) < 0) {
-        close(fallback);
-        close(sock);
+        cleanup();
         isc_throw(SocketConfigError, "Failed to associate BPF device "
                   " with interface " << iface.getName());
     }
@@ -285,8 +294,7 @@ PktFilterBPF::openSocket(Iface& iface,
     // must check this version against the current version in use.
     struct bpf_version ver;
     if (ioctl(sock, BIOCVERSION, &ver) < 0) {
-        close(fallback);
-        close(sock);
+        cleanup();
         isc_throw(SocketConfigError, "Failed to obtain the BPF version"
                   " number from the kernel");
     }
@@ -294,8 +302,7 @@ PktFilterBPF::openSocket(Iface& iface,
     // runs must be at least the current version in use.
     if ((ver.bv_major != BPF_MAJOR_VERSION) ||
         (ver.bv_minor < BPF_MINOR_VERSION)) {
-        close(fallback);
-        close(sock);
+        cleanup();
         isc_throw(SocketConfigError, "Invalid BPF version: "
                   << ver.bv_major << "." << ver.bv_minor
                   << " Expected at least version:"
@@ -307,13 +314,13 @@ PktFilterBPF::openSocket(Iface& iface,
     // allocate the buffer of this size for packet reads.
     unsigned int buf_len = 0;
     if (ioctl(sock, BIOCGBLEN, &buf_len) < 0) {
-        close(fallback);
-        close(sock);
+        cleanup();
         isc_throw(SocketConfigError, "Unable to obtain the required"
                   " buffer length for reads from BPF device");
     }
 
     if (buf_len < sizeof(bpf_hdr)) {
+        cleanup();
         isc_throw(SocketConfigError, "read buffer length returned by the"
                   " kernel for the BPF device associated with the interface"
                   << iface.getName() << " is lower than the BPF header"
@@ -348,8 +355,7 @@ PktFilterBPF::openSocket(Iface& iface,
 
     // Actually set the filter program for the device.
     if (ioctl(sock, BIOCSETF, &prog) < 0) {
-        close(fallback);
-        close(sock);
+        cleanup();
         isc_throw(SocketConfigError, "Failed to install BPF filter"
                   " program");
     }
@@ -360,8 +366,7 @@ PktFilterBPF::openSocket(Iface& iface,
     // read hangs.
     int flag = 1;
     if (ioctl(sock, BIOCIMMEDIATE, &flag) < 0) {
-        close(fallback);
-        close(sock);
+        cleanup();
         isc_throw(SocketConfigError, "Failed to set promiscuous mode for"
                   " BPF device");
     }
@@ -372,8 +377,7 @@ PktFilterBPF::openSocket(Iface& iface,
         iface.resizeReadBuffer(buf_len);
 
     } catch (...) {
-        close(fallback);
-        close(sock);
+        cleanup();
         throw;
     }
 
@@ -404,10 +408,12 @@ PktFilterBPF::receive(Iface& iface, const SocketInfo& socket_info) {
     // optimizations would include an asynchronous read from the fallback socket
     // when the DHCP server is idle.
     int datalen;
-    do {
-        datalen = recv(socket_info.fallbackfd_, iface.getReadBuffer(),
-                       iface.getReadBufferSize(), 0);
-    } while (datalen > 0);
+    if (socket_info.fallbackfd_ >= 0) {
+        do {
+            datalen = recv(socket_info.fallbackfd_, iface.getReadBuffer(),
+                           iface.getReadBufferSize(), 0);
+        } while (datalen > 0);
+    }
 
     datalen = read(socket_info.sockfd_, iface.getReadBuffer(),
                    iface.getReadBufferSize());

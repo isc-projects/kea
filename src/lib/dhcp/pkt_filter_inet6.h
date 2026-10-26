@@ -42,7 +42,7 @@ public:
     /// socket should join All_DHCP_Relay_Agents_and_servers multicast
     /// group.
     ///
-    /// @return A structure describing a primary and fallback socket.
+    /// @return A structure describing a socket.
     /// @throw isc::dhcp::SocketConfigError if error occurred when opening
     /// or configuring a socket.
     virtual SocketInfo openSocket(Iface& iface,

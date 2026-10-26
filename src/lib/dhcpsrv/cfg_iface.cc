@@ -381,7 +381,7 @@ CfgIface::outboundTypeToText() const {
     case USE_ROUTING:
         return ("use-routing");
     default:
-        isc_throw(Unexpected, "unsupported outbound-type " << socket_type_);
+        isc_throw(Unexpected, "unsupported outbound-type " << outbound_iface_);
     }
 
 }

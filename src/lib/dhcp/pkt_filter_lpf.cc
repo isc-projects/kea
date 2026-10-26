@@ -152,23 +152,34 @@ PktFilterLPF::openSocket(Iface& iface,
                          const isc::asiolink::IOAddress& addr,
                          const uint16_t port, const bool,
                          const bool) {
+    int fallback = -1;
+    int sock = -1;
+    // Close sockets on error before throwing.
+    auto cleanup = [&] () {
+        if (fallback >= 0) {
+            close(fallback);
+        }
+        if (sock >= 0) {
+            close(sock);
+        }
+    };
+
     // Open fallback socket first. If it fails, it will give us an indication
     // that there is another service (perhaps DHCP server) running.
     // The function will throw an exception and effectively cease opening
     // raw socket below.
-    int fallback = openFallbackSocket(addr, port);
+    fallback = openFallbackSocket(addr, port);
 
     // The fallback is open, so we are good to open primary socket.
-    int sock = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+    sock = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (sock < 0) {
-        close(fallback);
+        cleanup();
         isc_throw(SocketConfigError, "Failed to create raw LPF socket");
     }
 
     // Set the close-on-exec flag.
     if (fcntl(sock, F_SETFD, FD_CLOEXEC) < 0) {
-        close(sock);
-        close(fallback);
+        cleanup();
         isc_throw(SocketConfigError, "Failed to set close-on-exec flag"
                   << " on the socket " << sock);
     }
@@ -177,6 +188,7 @@ PktFilterLPF::openSocket(Iface& iface,
     // Enable ancillary data to detect VLAN tagged packets.
     if (setsockopt(sock, SOL_PACKET, PACKET_AUXDATA, &enable, sizeof(enable))) {
         const char* errmsg = strerror(errno);
+        cleanup();
         isc_throw(SocketConfigError, "Could not enable PACKET_AUXDATA for " << addr.toText()
                   << ", error: " << errmsg);
     }
@@ -184,6 +196,7 @@ PktFilterLPF::openSocket(Iface& iface,
 #ifdef SO_TIMESTAMP
     if (setsockopt(sock, SOL_SOCKET, SO_TIMESTAMP, &enable, sizeof(enable))) {
         const char* errmsg = strerror(errno);
+        cleanup();
         isc_throw(SocketConfigError, "Could not enable SO_TIMESTAMP for " << addr.toText()
                   << ", error: " << errmsg);
     }
@@ -200,8 +213,7 @@ PktFilterLPF::openSocket(Iface& iface,
     // interested in.
     if (bind(sock, reinterpret_cast<const struct sockaddr*>(&sa),
              sizeof(sa)) < 0) {
-        close(sock);
-        close(fallback);
+        cleanup();
         isc_throw(SocketConfigError, "Failed to bind LPF socket '" << sock
                   << "' to interface '" << iface.getName() << "'");
     }
@@ -211,8 +223,7 @@ PktFilterLPF::openSocket(Iface& iface,
         // Get the error message immediately after the bind because the
         // invocation to close() below would override the errno.
         char* errmsg = strerror(errno);
-        close(sock);
-        close(fallback);
+        cleanup();
         isc_throw(SocketConfigError, "failed to set SO_NONBLOCK option on the"
                   " LPF socket '" << sock << "' to interface '"
                   << iface.getName() << "', reason: " << errmsg);
@@ -228,8 +239,7 @@ PktFilterLPF::openSocket(Iface& iface,
     // Apply the filter.
     if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &zero_filter_program,
                    sizeof(zero_filter_program)) < 0) {
-        close(sock);
-        close(fallback);
+        cleanup();
         isc_throw(SocketConfigError, "Failed to install zero packet filtering program"
                   << " on the socket " << sock);
     }
@@ -262,8 +272,7 @@ PktFilterLPF::openSocket(Iface& iface,
     // Apply the filter.
     if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &filter_program,
                    sizeof(filter_program)) < 0) {
-        close(sock);
-        close(fallback);
+        cleanup();
         isc_throw(SocketConfigError, "Failed to install packet filtering program"
                   << " on the socket " << sock);
     }
@@ -289,9 +298,11 @@ PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
     // optimizations would include an asynchronous read from the fallback socket
     // when the DHCP server is idle.
     int datalen;
-    do {
-        datalen = recv(socket_info.fallbackfd_, raw_buf, sizeof(raw_buf), 0);
-    } while (datalen > 0);
+    if (socket_info.fallbackfd_ >= 0) {
+        do {
+            datalen = recv(socket_info.fallbackfd_, raw_buf, sizeof(raw_buf), 0);
+        } while (datalen > 0);
+    }
 
 #ifndef SO_TIMESTAMP
     // Now that we finished getting data from the fallback socket, we

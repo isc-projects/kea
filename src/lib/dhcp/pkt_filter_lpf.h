@@ -40,7 +40,7 @@ public:
     /// @return True if SO_TIMESTAMP is defined.
     virtual bool isSocketReceivedTimeSupported() const;
 
-    /// @brief Open primary and fallback socket.
+    /// @brief Open primary and fallback sockets.
     ///
     /// @param iface Interface descriptor.
     /// @param addr Address on the interface to be used to send packets.
@@ -48,7 +48,7 @@ public:
     /// @param receive_bcast Configure socket to receive broadcast messages
     /// @param send_bcast Configure socket to send broadcast messages.
     ///
-    /// @return A structure describing a primary and fallback socket.
+    /// @return A structure describing primary and fallback sockets.
     virtual SocketInfo openSocket(Iface& iface,
                                   const isc::asiolink::IOAddress& addr,
                                   const uint16_t port,

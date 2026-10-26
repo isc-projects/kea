@@ -69,7 +69,7 @@ public:
     /// @return True if it is supported.
     virtual bool isSocketReceivedTimeSupported() const = 0;
 
-    /// @brief Open primary and fallback socket.
+    /// @brief Open primary and fallback sockets.
     ///
     /// A method implementation in the derived class may open one or two
     /// sockets:
@@ -87,7 +87,7 @@ public:
     /// @param receive_bcast Configure socket to receive broadcast messages
     /// @param send_bcast configure socket to send broadcast messages.
     ///
-    /// @return A structure describing a primary and fallback socket.
+    /// @return A structure describing primary and fallback sockets.
     virtual SocketInfo openSocket(Iface& iface,
                                   const isc::asiolink::IOAddress& addr,
                                   const uint16_t port,
