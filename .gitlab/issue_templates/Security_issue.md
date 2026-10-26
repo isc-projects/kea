@@ -1,9 +1,9 @@
 <!--
-If you found the problem using generative AI tools and you have verified it to 
+If you found the problem using generative AI tools and you have verified it to
 be true yourself: write the report yourself and explain the problem as you
 have learned it. This makes sure the AI-generated inaccuracies and invented
 issues are filtered out early before they waste more people's time.  Even if you
-write the report yourself, you must make sure to reveal the fact that 
+write the report yourself, you must make sure to reveal the fact that
 a large-language model was used in your report.
 
 As we take security reports seriously, we investigate each report with
@@ -64,9 +64,9 @@ The server is supposed to send back packet A with address B assigned.
 
 ### Impact
 <!--
-How can this bug be exploited in an attack situation? 
-What network access or privliges does the attacker have to have? 
-Please refer to https://kea.readthedocs.io/en/latest/arm/security.html for our guidelines on how to deploy Kea responsibly. Failure to follow the guidelines is not a software fault. 
+How can this bug be exploited in an attack situation?
+What network access or privileges does the attacker have to have?
+Please refer to https://kea.readthedocs.io/en/latest/arm/security.html for our guidelines on how to deploy Kea responsibly. Failure to follow the guidelines is not a software fault.
 Please explain the impact on the Kea server, dhcp clients, or the network.
 -->
 
@@ -87,8 +87,8 @@ Make sure you anonymize your config files (at the very least make sure you obfus
 -->
 
 ### Confidentiality
-We will follow up by posting any questions on the GitLab issue you have created here. GitLab will notify you via email, and you can reply to the email and your responses will be posted here for us to see. As long as the issue is marked as Confidential, nobody but ISC staff (the maintainers of the project) and you (the reporter) will be able to view the issue. 
-ISC will remove the confidentiality flag after the vulnerability is fully disclosed, normally not until some time after publication of a patched version. Alternatively, if we determine this bug is not a significant security risk, we may remove the confidentiality flag earlier - but please do not remove it yourself. 
+We will follow up by posting any questions on the GitLab issue you have created here. GitLab will notify you via email, and you can reply to the email and your responses will be posted here for us to see. As long as the issue is marked as Confidential, nobody but ISC staff (the maintainers of the project) and you (the reporter) will be able to view the issue.
+ISC will remove the confidentiality flag after the vulnerability is fully disclosed, normally not until some time after publication of a patched version. Alternatively, if we determine this bug is not a significant security risk, we may remove the confidentiality flag earlier - but please do not remove it yourself.
 
 Please refrain from sharing the information with any other parties, and in particular, please do not post on any public message boards until we determine the severity of any vulnerability and have announced a fix or workaround.
 

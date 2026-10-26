@@ -21,7 +21,7 @@ using namespace isc::dhcp_ddns;
 
 namespace {
 
-/// @brief Construcs a name change request using lease information.
+/// @brief Constructs a name change request using lease information.
 ///
 /// @param chg_type type of change to create CHG_ADD or CHG_REMOVE
 /// @param lease Pointer to a lease for which NCR should be sent.

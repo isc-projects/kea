@@ -96,7 +96,7 @@ D2UpdateMgr::checkFinishedTransactions() {
 void D2UpdateMgr::pickNextJob() {
     // Start at the front of the queue, looking for the first request for
     // which no transaction is working the same FQDN or ip address. If a
-    // request is currently ineligible we levae it on the queue, and try
+    // request is currently ineligible we leave it on the queue, and try
     // the next one. If it is eligible wee remove it from the queue and
     // make a transaction for it. If the transaction creation fails try
     // the next request in the queue.

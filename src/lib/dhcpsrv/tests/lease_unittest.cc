@@ -1505,7 +1505,7 @@ TEST(LeaseTest, manipulateLeaseUserContext) {
     ASSERT_FALSE(ctx);
 
     // Create a new user-context with a top-level entry (i.e.
-    // oustide "ISC" map.
+    // outside "ISC" map.
     ElementPtr input_ctx = Element::createMap();
     input_ctx->set("not-ISC", Element::create("stuff"));
     lease.setContext(input_ctx);

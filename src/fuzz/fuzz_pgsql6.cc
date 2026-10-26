@@ -63,7 +63,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     }
     tags.insert(tag);
 
-    // Preparer DatabaseConnection parameter map
+    // Prepare DatabaseConnection parameter map
     DatabaseConnection::ParameterMap params;
     std::string dbname = fdp.ConsumeRandomLengthString(32);
     if (dbname.empty()) {
