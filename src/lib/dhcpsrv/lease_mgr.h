@@ -262,7 +262,6 @@ typedef boost::shared_ptr<SflqPoolInfo> SflqPoolInfoPtr;
 typedef std::vector<SflqPoolInfoPtr> SflqPoolInfoCollection;
 typedef boost::shared_ptr<SflqPoolInfoCollection> SflqPoolInfoCollectionPtr;
 
-
 /// @brief Abstract Lease Manager
 ///
 /// This is an abstract API for lease database backends. It provides unified

@@ -69,7 +69,7 @@ public:
     /// @brief Check if the service state is disabled by user.
     ///
     /// @return True if the service state is disabled by user, false otherwise.
-    bool disabledByUser() {
+    bool disabledByUser() const {
         if (!globally_disabled_) {
             return (false);
         }
@@ -86,7 +86,7 @@ public:
     ///
     /// @return True if the service state is disabled by database connection,
     /// false otherwise.
-    bool disabledByDbConnection() {
+    bool disabledByDbConnection() const {
         if (!globally_disabled_) {
             return (false);
         }
@@ -103,7 +103,7 @@ public:
     ///
     /// @return True if the service state is disabled by local commands,
     /// false otherwise.
-    bool disabledByLocalCommand() {
+    bool disabledByLocalCommand() const {
         if (!globally_disabled_) {
             return (false);
         }
@@ -120,7 +120,7 @@ public:
     ///
     /// @return True if the service state is disabled by remote commands,
     /// false otherwise.
-    bool disabledByRemoteCommand() {
+    bool disabledByRemoteCommand() const {
         if (!globally_disabled_) {
             return (false);
         }
@@ -305,25 +305,25 @@ NetworkState::enableService(unsigned int origin) {
 }
 
 bool
-NetworkState::disabledByUser() {
+NetworkState::disabledByUser() const {
     MultiThreadingLock lock(*mutex_);
     return (impl_->disabledByUser());
 }
 
 bool
-NetworkState::disabledByDbConnection() {
+NetworkState::disabledByDbConnection() const {
     MultiThreadingLock lock(*mutex_);
     return (impl_->disabledByDbConnection());
 }
 
 bool
-NetworkState::disabledByLocalCommand() {
+NetworkState::disabledByLocalCommand() const {
     MultiThreadingLock lock(*mutex_);
     return (impl_->disabledByLocalCommand());
 }
 
 bool
-NetworkState::disabledByRemoteCommand() {
+NetworkState::disabledByRemoteCommand() const {
     MultiThreadingLock lock(*mutex_);
     return (impl_->disabledByRemoteCommand());
 }

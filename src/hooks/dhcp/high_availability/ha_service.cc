@@ -542,7 +542,7 @@ HAService::downStateHandler() {
         postNextEvent(NOP_EVT);
     }
 
-    if (!network_state_->disabledByDbConnection()) {
+    if (!isDHCPServiceDisabled()) {
         verboseTransition(HA_WAITING_ST);
         runModel(NOP_EVT);
     }
@@ -1733,6 +1733,7 @@ HAService::shouldSendLeaseUpdates(const HAConfig::PeerConfigPtr& peer_config) co
     case HA_LOAD_BALANCING_ST:
     case HA_PARTNER_IN_MAINTENANCE_ST:
         return (true);
+
     case HA_DOWN_ST:
         return (false);
 

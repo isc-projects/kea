@@ -6165,8 +6165,6 @@ TEST_F(HAServiceTest, downStateTransitionLoadBalancingPrimary) {
         EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::DB_CONNECTION));
 
         // Run the heartbeat.
-        service.postNextEvent(HAService::NOP_EVT);
-
         service.runModel(HAService::NOP_EVT);
 
         EXPECT_EQ(HA_DOWN_ST, service.getCurrState());
@@ -6190,8 +6188,41 @@ TEST_F(HAServiceTest, downStateTransitionLoadBalancingPrimary) {
     }
 }
 
-// This test checks no transition change in secondary when primary switched to HA_DOWN_ST in load balancing mode.
-TEST_F(HAServiceTest, downStateTransitionLoadBalancingSecondary) {
+// This test checks no transitions change to HA_DOWN_ST in load balancing mode.
+TEST_F(HAServiceTest, downStateNoTransitionLoadBalancingPrimary) {
+    std::vector<int> state_list = {
+        HA_BACKUP_ST,
+        HA_IN_MAINTENANCE_ST,
+        HA_PASSIVE_BACKUP_ST,
+        HA_READY_ST,
+        HA_TERMINATED_ST,
+        HA_WAITING_ST,
+        HA_DOWN_ST
+    };
+    for (auto state : state_list) {
+        // Create HA configuration for 3 servers. This server is
+        // server 1.
+        HAConfigPtr config_storage = createValidConfiguration();
+
+        TestHAService service(1, io_service_, network_state_, config_storage);
+        std::cout << "testing: " << service.getStateLabel(state) << std::endl;
+
+        // Transition the server to the desired state.
+        EXPECT_NO_THROW(service.transition(state, HAService::NOP_EVT));
+
+        EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::DB_CONNECTION));
+
+        // Run the heartbeat.
+        service.runModel(HAService::NOP_EVT);
+
+        EXPECT_EQ(state, service.getCurrState());
+
+        EXPECT_NO_THROW(service.network_state_->enableService(NetworkState::DB_CONNECTION));
+    }
+}
+
+// This test checks no transition change in primary when secondary switched to HA_DOWN_ST in load balancing mode.
+TEST_F(HAServiceTest, downStateNoTransitionLoadBalancingSecondary) {
     std::vector<int> state_list = {
         HA_BACKUP_ST,
         HA_IN_MAINTENANCE_ST,
@@ -6222,8 +6253,6 @@ TEST_F(HAServiceTest, downStateTransitionLoadBalancingSecondary) {
         service.communication_state_->setPartnerState("down");
 
         // Run the heartbeat.
-        service.postNextEvent(HAService::NOP_EVT);
-
         service.runModel(HAService::NOP_EVT);
 
         EXPECT_EQ(state, service.getCurrState());
@@ -6257,8 +6286,6 @@ TEST_F(HAServiceTest, downStateTransitionHotStandbyPrimary) {
         EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::DB_CONNECTION));
 
         // Run the heartbeat.
-        service.postNextEvent(HAService::NOP_EVT);
-
         service.runModel(HAService::NOP_EVT);
 
         EXPECT_EQ(HA_DOWN_ST, service.getCurrState());
@@ -6282,8 +6309,41 @@ TEST_F(HAServiceTest, downStateTransitionHotStandbyPrimary) {
     }
 }
 
-// This test checks no transition change in standby when primary switched to HA_DOWN_ST in hot standby mode.
-TEST_F(HAServiceTest, downStateTransitionHotStandbyStandby) {
+// This test checks no transitions change to HA_DOWN_ST in hot standby mode.
+TEST_F(HAServiceTest, downStateNoTransitionHotStandbyPrimary) {
+    std::vector<int> state_list = {
+        HA_BACKUP_ST,
+        HA_IN_MAINTENANCE_ST,
+        HA_PASSIVE_BACKUP_ST,
+        HA_READY_ST,
+        HA_TERMINATED_ST,
+        HA_WAITING_ST,
+        HA_DOWN_ST
+    };
+    for (auto state : state_list) {
+        // Create HA configuration for 3 servers. This server is
+        // server 1.
+        HAConfigPtr config_storage = createValidConfiguration(HAConfig::HOT_STANDBY);
+
+        TestHAService service(1, io_service_, network_state_, config_storage);
+        std::cout << "testing: " << service.getStateLabel(state) << std::endl;
+
+        // Transition the server to the desired state.
+        EXPECT_NO_THROW(service.transition(state, HAService::NOP_EVT));
+
+        EXPECT_NO_THROW(service.network_state_->disableService(NetworkState::DB_CONNECTION));
+
+        // Run the heartbeat.
+        service.runModel(HAService::NOP_EVT);
+
+        EXPECT_EQ(state, service.getCurrState());
+
+        EXPECT_NO_THROW(service.network_state_->enableService(NetworkState::DB_CONNECTION));
+    }
+}
+
+// This test checks no transition change in primary when secondary switched to HA_DOWN_ST in hot standby mode.
+TEST_F(HAServiceTest, downStateNoTransitionHotStandbyStandby) {
     std::vector<int> state_list = {
         HA_BACKUP_ST,
         HA_IN_MAINTENANCE_ST,
@@ -6314,8 +6374,6 @@ TEST_F(HAServiceTest, downStateTransitionHotStandbyStandby) {
         service.communication_state_->setPartnerState("down");
 
         // Run the heartbeat.
-        service.postNextEvent(HAService::NOP_EVT);
-
         service.runModel(HAService::NOP_EVT);
 
         EXPECT_EQ(state, service.getCurrState());

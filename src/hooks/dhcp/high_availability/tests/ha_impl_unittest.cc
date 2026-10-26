@@ -2853,6 +2853,22 @@ TEST_F(HAImplTest, haHeartbeat) {
     ASSERT_TRUE(response);
 
     checkAnswer(response, CONTROL_RESULT_SUCCESS, "HA peer status returned.");
+
+    ConstElementPtr arguments = response->get("arguments");
+    ASSERT_TRUE(arguments);
+    boost::const_pointer_cast<Element>(arguments)->set("date-time", Element::create("ignored"));
+
+    std::string expected = "{"
+    "  \"arguments\": {"
+    "    \"date-time\": \"ignored\","
+    "    \"scopes\": [ ],"
+    "    \"state\": \"waiting\","
+    "    \"unsent-update-count\": 0"
+    "  },"
+    "  \"result\": 0,"
+    "  \"text\": \"HA peer status returned.\""
+    "}";
+    expectEqWithDiff(Element::fromJSON(expected), response);
 }
 
 // Test ha-heartbeat command handler with a specified server name which is in down state.
@@ -2886,6 +2902,22 @@ TEST_F(HAImplTest, haHeartbeatDownState) {
     ASSERT_TRUE(response);
 
     checkAnswer(response, CONTROL_RESULT_SUCCESS, "HA peer status returned.");
+
+    ConstElementPtr arguments = response->get("arguments");
+    ASSERT_TRUE(arguments);
+    boost::const_pointer_cast<Element>(arguments)->set("date-time", Element::create("ignored"));
+
+    std::string expected = "{"
+    "  \"arguments\": {"
+    "    \"date-time\": \"ignored\","
+    "    \"scopes\": [ ],"
+    "    \"state\": \"waiting\","
+    "    \"unsent-update-count\": 0"
+    "  },"
+    "  \"result\": 0,"
+    "  \"text\": \"HA peer status returned.\""
+    "}";
+    expectEqWithDiff(Element::fromJSON(expected), response);
 }
 
 // Test ha-heartbeat command handler without a specified server name.
@@ -2915,6 +2947,22 @@ TEST_F(HAImplTest, haHeartbeatNoServerName) {
     ASSERT_TRUE(response);
 
     checkAnswer(response, CONTROL_RESULT_SUCCESS, "HA peer status returned.");
+
+    ConstElementPtr arguments = response->get("arguments");
+    ASSERT_TRUE(arguments);
+    boost::const_pointer_cast<Element>(arguments)->set("date-time", Element::create("ignored"));
+
+    std::string expected = "{"
+    "  \"arguments\": {"
+    "    \"date-time\": \"ignored\","
+    "    \"scopes\": [ ],"
+    "    \"state\": \"waiting\","
+    "    \"unsent-update-count\": 0"
+    "  },"
+    "  \"result\": 0,"
+    "  \"text\": \"HA peer status returned.\""
+    "}";
+    expectEqWithDiff(Element::fromJSON(expected), response);
 }
 
 // Test ha-heartbeat command handler with a wrong server name.

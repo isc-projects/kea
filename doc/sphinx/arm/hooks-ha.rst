@@ -438,8 +438,8 @@ The following is the list of all possible server states:
    it can no longer process DHCP traffic. This can be caused by multiple factors,
    including the connection loss to the database lease storage. In this state the
    server responds to :isccmd:`ha-heartbeat` commands, but does not handle lease
-   update commands. The server trasitions to ``waiting`` state as soon as it
-   determines that is can start processing DHCP traffic.
+   update commands. The server transitions to ``waiting`` state as soon as it
+   determines that it can start processing DHCP traffic.
 
 -  ``partner-down`` - an active server transitions to this state after detecting
    that its partner (another active server) is offline. The server does not
@@ -739,7 +739,7 @@ respect to HA:
    setup. It must match one of the servers specified within the ``peers`` list.
 
 -  ``mode`` - specifies an HA mode of operation. The currently supported modes
-   are ``load-balancing``, ``hot-standby`` and ``passive-backu``. In the
+   are ``load-balancing``, ``hot-standby`` and ``passive-backup``. In the
    ``load-balancing`` setup configuration, this value must be set to
    ``load-balancing``.
 

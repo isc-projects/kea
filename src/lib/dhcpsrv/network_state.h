@@ -128,25 +128,25 @@ public:
     /// @brief Check if the service state is disabled by user.
     ///
     /// @return True if the service state is disabled by user, false otherwise.
-    bool disabledByUser();
+    bool disabledByUser() const;
 
     /// @brief Check if the service state is disabled by database connection.
     ///
     /// @return True if the service state is disabled by database connection,
     /// false otherwise.
-    bool disabledByDbConnection();
+    bool disabledByDbConnection() const;
 
     /// @brief Check if the service state is disabled by local commands.
     ///
     /// @return True if the service state is disabled by local commands,
     /// false otherwise.
-    bool disabledByLocalCommand();
+    bool disabledByLocalCommand() const;
 
     /// @brief Check if the service state is disabled by remote commands.
     ///
     /// @return True if the service state is disabled by remote commands,
     /// false otherwise.
-    bool disabledByRemoteCommand();
+    bool disabledByRemoteCommand() const;
 
     /// @brief Reset internal counters for database connection.
     ///
