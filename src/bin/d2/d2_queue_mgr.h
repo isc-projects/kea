@@ -14,17 +14,48 @@
 #include <dhcp_ddns/ncr_msg.h>
 #include <exceptions/exceptions.h>
 
-#include <cstdint>
-#include <deque>
-
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/indexed_by.hpp>
+#include <boost/multi_index/member.hpp>
+#include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/random_access_index.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <cstdint>
 
 namespace isc {
 namespace d2 {
 
-/// @brief Defines a queue of requests.
-/// @todo This may be replaced with an actual class in the future.
-typedef std::deque<dhcp_ddns::NameChangeRequestPtr> RequestQueue;
+
+/// @brief Tag for insertion order index.
+struct VectorTag { };
+
+/// @brief Tag for index by DHCID
+struct DhcidTag { };
+
+/// @brief A multi index container holding NameChangeTransaction pointers.
+///
+/// The transactions in the container may be accessed using different indexes:
+/// - by FQDN or lease address
+typedef boost::multi_index_container<
+    // It holds pointers to NameChangeTransactions.
+    dhcp_ddns::NameChangeRequestPtr,
+    boost::multi_index::indexed_by<
+        // Index by insertion order
+        boost::multi_index::random_access<
+            boost::multi_index::tag<VectorTag>
+        >,
+
+        // Index by DHCID
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<DhcidTag>,
+            boost::multi_index::const_mem_fun<dhcp_ddns::NameChangeRequest, const dhcp_ddns::D2Dhcid&,
+                                              &dhcp_ddns::NameChangeRequest::getDhcid>
+        >
+    >
+> NcrQueue;
 
 /// @brief Thrown if the queue manager encounters a general error.
 class D2QueueMgrError : public isc::Exception {
@@ -323,10 +354,21 @@ public:
     /// @throw D2QueueMgrQueueEmpty if there are no entries in the queue.
     void dequeue();
 
+    /// @brief Fetches the last entry in the queue for a given DHCID.
+    ///
+    /// @param dhcid DHCID to look for.
+    /// @return matching NameChangeRequest or an empty pointer.
+    const dhcp_ddns::NameChangeRequestPtr
+    findLast(const dhcp_ddns::D2Dhcid& dhcid) const;
+
     /// @brief Adds a request to the end of the queue.
     ///
     /// @param ncr pointer to the NameChangeRequest to add to the queue.
-    void enqueue(dhcp_ddns::NameChangeRequestPtr& ncr);
+    /// @param suppress_duplicates if true, the ncr will not be added to the queue
+    /// if its content is the same as the new ncr. Defaults to false.
+    /// @return True if the request is added to the queue, false otherwise.
+    bool enqueue(dhcp_ddns::NameChangeRequestPtr& ncr,
+                 bool suppress_duplicates = false);
 
     /// @brief Removes all entries from the queue.
     void clearQueue();
@@ -345,7 +387,7 @@ public:
     size_t max_queue_size_;
 
     /// @brief Queue of received NameChangeRequests.
-    RequestQueue ncr_queue_;
+    NcrQueue ncr_queue_;
 
     /// @brief Listener instance from which requests are received.
     boost::shared_ptr<dhcp_ddns::NameChangeListener> listener_;

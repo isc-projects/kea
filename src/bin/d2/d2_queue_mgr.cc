@@ -11,6 +11,8 @@
 #include <stats/stats_mgr.h>
 
 using namespace isc::stats;
+using namespace isc::dhcp_ddns;
+using namespace boost::multi_index;
 
 namespace isc {
 namespace d2 {
@@ -33,8 +35,8 @@ D2QueueMgr::~D2QueueMgr() {
 }
 
 void
-D2QueueMgr::operator()(const dhcp_ddns::NameChangeListener::Result result,
-                       dhcp_ddns::NameChangeRequestPtr& ncr) {
+D2QueueMgr::operator()(const NameChangeListener::Result result,
+                       NameChangeRequestPtr& ncr) {
     try {
         // Note that error conditions must be handled here without throwing
         // exceptions. Remember this is the application level "link" in the
@@ -44,7 +46,7 @@ D2QueueMgr::operator()(const dhcp_ddns::NameChangeListener::Result result,
         // the appropriate stopped state.  Upper layer(s) must monitor our
         // state as well as our queue size.
         switch (result) {
-        case dhcp_ddns::NameChangeListener::SUCCESS:
+        case NameChangeListener::SUCCESS:
         {
             // Receive was successful, attempt to queue the request(s).
             // If it is a chain, so how many there are.
@@ -68,8 +70,8 @@ D2QueueMgr::operator()(const dhcp_ddns::NameChangeListener::Result result,
 
             bool nested = false;
             do {
-                // Add the NCR to the queue.
-                enqueue(ncr);
+                // Add the NCR to the queue. Suppres duplicate ADDs.
+                enqueue(ncr, (ncr->getChangeType() == CHG_ADD));
 
                 // Log that we got the request
                 LOG_DEBUG(dhcp_to_d2_logger,
@@ -87,7 +89,7 @@ D2QueueMgr::operator()(const dhcp_ddns::NameChangeListener::Result result,
 
             break;
         }
-        case dhcp_ddns::NameChangeListener::STOPPED:
+        case NameChangeListener::STOPPED:
             if (mgr_state_ == STOPPING) {
                 // This is confirmation that the listener has stopped and its
                 // callback will not be called again, unless its restarted.
@@ -122,7 +124,7 @@ D2QueueMgr::operator()(const dhcp_ddns::NameChangeListener::Result result,
 void
 D2QueueMgr::initUDPListener(const isc::asiolink::IOAddress& ip_address,
                             const uint32_t port,
-                            const dhcp_ddns::NameChangeFormat format,
+                            const NameChangeFormat format,
                             const bool reuse_address) {
 
     if (listener_) {
@@ -132,7 +134,7 @@ D2QueueMgr::initUDPListener(const isc::asiolink::IOAddress& ip_address,
 
     // Instantiate a UDP listener and set state to INITTED.
     // Note UDP listener constructor does not throw.
-    listener_.reset(new dhcp_ddns::NameChangeUDPListener(ip_address, port, format,
+    listener_.reset(new NameChangeUDPListener(ip_address, port, format,
                                                          shared_from_this(), reuse_address));
     mgr_state_ = INITTED;
 }
@@ -213,52 +215,78 @@ D2QueueMgr::removeListener() {
     mgr_state_ = NOT_INITTED;
 }
 
-const dhcp_ddns::NameChangeRequestPtr&
+const NameChangeRequestPtr&
 D2QueueMgr::peek() const {
-    if (getQueueSize() ==  0) {
-        isc_throw(D2QueueMgrQueueEmpty,
-                  "D2QueueMgr peek attempted on an empty queue");
-    }
-
-    return (ncr_queue_.front());
+    return (peekAt(0));
 }
 
-const dhcp_ddns::NameChangeRequestPtr&
+const NameChangeRequestPtr&
 D2QueueMgr::peekAt(const size_t index) const {
-    if (index >= getQueueSize()) {
-        isc_throw(D2QueueMgrInvalidIndex,
-                  "D2QueueMgr peek beyond end of queue attempted"
-                  << " index: " << index << " queue size: " << getQueueSize());
+    if (index >= ncr_queue_.size()) {
+        isc_throw(D2QueueMgrInvalidIndex, "D2QueueMgr::peekAt index " << index
+                       << " out of range, size " << ncr_queue_.size());
     }
 
-    return (ncr_queue_.at(index));
-}
-
-void
-D2QueueMgr::dequeueAt(const size_t index) {
-    if (index >= getQueueSize()) {
-        isc_throw(D2QueueMgrInvalidIndex,
-                  "D2QueueMgr dequeue beyond end of queue attempted"
-                  << " index: " << index << " queue size: " << getQueueSize());
-    }
-
-    RequestQueue::iterator pos = ncr_queue_.begin() + index;
-    ncr_queue_.erase(pos);
+    return (ncr_queue_[index]);
 }
 
 void
 D2QueueMgr::dequeue() {
-    if (getQueueSize() ==  0) {
-        isc_throw(D2QueueMgrQueueEmpty,
-                  "D2QueueMgr dequeue attempted on an empty queue");
-    }
-
-    ncr_queue_.pop_front();
+    dequeueAt(0);
 }
 
 void
-D2QueueMgr::enqueue(dhcp_ddns::NameChangeRequestPtr& ncr) {
-    ncr_queue_.push_back(ncr);
+D2QueueMgr::dequeueAt(const size_t index) {
+    if (index >= ncr_queue_.size()) {
+        isc_throw(D2QueueMgrInvalidIndex, "D2QueueMgr::dequeue index " << index
+                  << " out of range, size " << ncr_queue_.size());
+    }
+
+    auto& idx = ncr_queue_.get<0>();
+    idx.erase(idx.begin() + index);
+}
+
+const NameChangeRequestPtr
+D2QueueMgr::findLast(const D2Dhcid& new_dhcid) const {
+    NameChangeRequestPtr found_ncr;
+
+    // Get all entries for the dhcid
+    auto& key_index = ncr_queue_.get<1>();
+    auto range = key_index.equal_range(new_dhcid);
+
+    if (range.first != range.second) {
+        // Get the last entry using the sequence index
+        auto& seq_index = ncr_queue_.get<0>();
+        found_ncr = *std::prev(seq_index.end());
+    }
+
+    return (found_ncr);
+}
+
+bool
+D2QueueMgr::enqueue(NameChangeRequestPtr& new_ncr,
+                    bool suppress_duplicates /* = false */) {
+    if (!new_ncr) {
+        isc_throw(D2QueueMgrError, "D2QueueMgr::enqueue new_ncr cannot be null");
+    }
+
+    if (suppress_duplicates) {
+        auto last_ncr = findLast(new_ncr->getDhcid());
+        /// @todo TKM current comparison includes lease time. We might want
+        /// to exclude that from the comparison.
+        if (last_ncr && (*last_ncr == *new_ncr)) {
+            std::cout << "**** SUPPRESS DUPLICATE: " << last_ncr->toText();
+            return (false);
+        }
+    }
+
+    auto ret = ncr_queue_.push_back(new_ncr);
+    if (ret.second == false) {
+        isc_throw(D2QueueMgrError, "D2QueueMgr::enqueue cannot add NCR: "
+                  << new_ncr->toText());
+        }
+
+    return (true);
 }
 
 void

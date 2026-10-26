@@ -136,8 +136,8 @@ TEST(D2QueueMgrBasicTest, basicQueue) {
     EXPECT_EQ(0U, queue_mgr->getQueueSize());
 
     // Verify that peek and dequeue both throw when queue is empty.
-    EXPECT_THROW(queue_mgr->peek(), D2QueueMgrQueueEmpty);
-    EXPECT_THROW(queue_mgr->dequeue(), D2QueueMgrQueueEmpty);
+    EXPECT_THROW(queue_mgr->peek(), D2QueueMgrInvalidIndex);
+    EXPECT_THROW(queue_mgr->dequeue(), D2QueueMgrInvalidIndex);
 
     // Vector to keep track of the NCRs we que.
     std::vector<NameChangeRequestPtr>ref_msgs;
@@ -554,6 +554,41 @@ TEST_F(QueueMgrUDPTest, nestedNCRs) {
     };
 
     checkStats(stats_ncr);
+}
+
+/// @brief Tests QueueMgr's duplicate suppression scheme.
+TEST(D2QueueMgrBasicTest, duplicateSuppression) {
+    asiolink::IOServicePtr io_service(new isc::asiolink::IOService());
+
+    // Construct the manager.
+    D2QueueMgrPtr queue_mgr;
+    ASSERT_NO_THROW(queue_mgr.reset(new D2QueueMgr(io_service, VALID_MSG_CNT)));
+
+    // Vector to keep track of the NCRs we queue.
+    std::vector<NameChangeRequestPtr>ref_msgs;
+    NameChangeRequestPtr ncr;
+
+    // Iterate over the list of requests and add each to the queue.
+    bool queued;
+    for (size_t i = 0; i < VALID_MSG_CNT; i++) {
+        // Create the ncr and add to our reference list.
+        ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
+        ref_msgs.push_back(ncr);
+
+        // Verify that the request can be added to the queue and queue
+        // size increments accordingly.
+        EXPECT_NO_THROW(queued = queue_mgr->enqueue(ncr, true));
+        EXPECT_TRUE(queued);
+        EXPECT_EQ(i + 1, queue_mgr->getQueueSize());
+    }
+
+    // All valid msgs have the same DHCID, queueing the last again one should fail.
+    EXPECT_NO_THROW(queued = queue_mgr->enqueue(ref_msgs[VALID_MSG_CNT - 1], true));
+    EXPECT_FALSE(queued);
+
+    // Trying to queue the first one again should succeed.
+    EXPECT_NO_THROW(queued = queue_mgr->enqueue(ref_msgs[0], true));
+    EXPECT_TRUE(queued);
 }
 
 } // end of anonymous namespace
