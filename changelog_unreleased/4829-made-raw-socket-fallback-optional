@@ -1,0 +1,6 @@
+[func]		fdupont
+	Added a new interface configuration parameter
+	"use-fallbacks" which can disable the use of
+	fallbacks with DHCPv4 raw sockets and allow
+	another DHCPv4 server running on the same system.
+	(Gitlab #4829)

@@ -1197,7 +1197,7 @@ same address and port because:
    unicast traffic for this address and port: without this the kernel
    emits ICMP unreachables because it can't find where to deliver
    incoming packets.
-   
+
 So by design these fallbacks make impossible to run another DHCPv4 server
 on the same system. To lift this Kea 3.3.4 introduced the new parameter
 ``use-fallbacks`` which defaults to ``true`` but can be set to ``false``
