@@ -262,6 +262,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"use-fallbacks\" {
+    switch(driver.ctx_) {
+    case Parser4Context::INTERFACES_CONFIG:
+        return isc::dhcp::Dhcp4Parser::make_USE_FALLBACKS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("use-fallbacks", driver.loc_);
+    }
+}
+
 \"outbound-interface\" {
     switch(driver.ctx_) {
     case Parser4Context::INTERFACES_CONFIG:

@@ -65,6 +65,7 @@ using namespace std;
   DHCP_SOCKET_TYPE "dhcp-socket-type"
   RAW "raw"
   UDP "udp"
+  USE_FALLBACKS "use-fallbacks"
   OUTBOUND_INTERFACE "outbound-interface"
   SAME_AS_INBOUND "same-as-inbound"
   USE_ROUTING "use-routing"
@@ -932,6 +933,7 @@ interfaces_config_params: interfaces_config_param
 
 interfaces_config_param: interfaces_list
                        | dhcp_socket_type
+                       | use_fallbacks
                        | outbound_interface
                        | re_detect
                        | service_sockets_require_all
@@ -973,6 +975,12 @@ dhcp_socket_type: DHCP_SOCKET_TYPE {
 socket_type: RAW { $$ = ElementPtr(new StringElement("raw", ctx.loc2pos(@1))); }
            | UDP { $$ = ElementPtr(new StringElement("udp", ctx.loc2pos(@1))); }
            ;
+
+use_fallbacks: USE_FALLBACKS COLON BOOLEAN {
+    ctx.unique("use-fallbacks", ctx.loc2pos(@1));
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("use-fallbacks", b);
+};
 
 outbound_interface: OUTBOUND_INTERFACE {
     ctx.unique("outbound-interface", ctx.loc2pos(@1));

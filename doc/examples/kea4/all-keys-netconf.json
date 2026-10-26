@@ -599,7 +599,7 @@
             // "raw" sockets to listen to DHCP traffic. The "raw"
             // sockets are useful when direct DHCP traffic is being
             // received.
-            "dhcp-socket-type": "udp",
+            "dhcp-socket-type": "raw",
 
             // Specifies a list of interfaces on which the Kea DHCPv4
             // server should listen to DHCP requests.

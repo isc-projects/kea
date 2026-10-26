@@ -1187,6 +1187,22 @@ as follows:
        ...
    }
 
+Each raw socket is associated with a fallback, a UDP socket bound to the
+same address and port because:
+
+-  it detects the existence of another server conflicting with this
+   address and port, including another instance of Kea.
+
+-  it instructs the kernel that there is an application receiving the
+   unicast traffic for this address and port: without this the kernel
+   emits ICMP unreachables because it can't find where to deliver
+   incoming packets.
+   
+So by design these fallbacks make impossible to run another DHCPv4 server
+on the same system. To lift this Kea 3.3.4 introduced the new parameter
+``use-fallbacks`` which defaults to ``true`` but can be set to ``false``
+to disable the use of fallbacks.
+
 Interfaces are re-detected at each reconfiguration. This behavior can be
 disabled by setting the ``re-detect`` value to ``false``, for instance:
 
