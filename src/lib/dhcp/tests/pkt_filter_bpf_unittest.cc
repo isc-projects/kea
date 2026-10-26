@@ -85,6 +85,35 @@ TEST_F(RootPktFilterBPFTest, openSocket) {
     ASSERT_GE(sock_info_.fallbackfd_, 0);
 }
 
+// All tests below require root privileges to execute successfully. If they
+// are run as non-root they will be skipped via SKIP_IF(notRoot()).
+
+// This test verifies that the raw AF_PACKET family socket can
+// be opened and bound to the specific interface (no fallback variant).
+TEST_F(RootPktFilterBPFTest, openSocketNoFallback) {
+    SKIP_IF(notRoot());
+
+    // Create object representing loopback interface.
+    Iface iface(ifname_, ifindex_);
+    iface.flag_loopback_ = true;
+    // Set loopback address.
+    IOAddress addr("127.0.0.1");
+
+    // Set use fallbacks to false.
+    PktFilter::use_fallbacks_ = false;
+
+    // Try to open socket.
+    PktFilterBPF pkt_filter;
+    ASSERT_NO_THROW(
+        sock_info_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
+    );
+
+    // Check that the primary socket has been opened.
+    ASSERT_GE(sock_info_.sockfd_, 0);
+    // Check that the fallback socket has not been opened.
+    ASSERT_LT(sock_info_.fallbackfd_, 0);
+}
+
 // This test verifies correctness of sending DHCP packet through the BPF
 // device attached to local loopback interface. Note that this is not exactly
 // the same as sending over the hardware interface (e.g. ethernet) because the

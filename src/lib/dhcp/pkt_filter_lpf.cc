@@ -168,7 +168,9 @@ PktFilterLPF::openSocket(Iface& iface,
     // that there is another service (perhaps DHCP server) running.
     // The function will throw an exception and effectively cease opening
     // raw socket below.
-    fallback = openFallbackSocket(addr, port);
+    if (PktFilter::use_fallbacks_) {
+        fallback = openFallbackSocket(addr, port);
+    }
 
     // The fallback is open, so we are good to open primary socket.
     sock = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));

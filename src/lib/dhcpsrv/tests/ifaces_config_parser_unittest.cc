@@ -40,10 +40,12 @@ void
 IfacesConfigParserTest::SetUp() {
     CfgMgr::instance().clear();
     IfaceMgr::instance().setTestMode(true);
+    PktFilter::use_fallbacks_ = true;
 }
 
 void
 IfacesConfigParserTest::TearDown() {
+    PktFilter::use_fallbacks_ = true;
     CfgMgr::instance().clear();
     IfaceMgr::instance().setTestMode(false);
     IfaceMgr::instance().clearIfaces();
@@ -387,6 +389,57 @@ TEST_F(IfacesConfigParserTest, serviceSocketRetryWaitTimeWithoutMaxRetries) {
 
     // Check it can be unparsed.
     runToElementTest<CfgIface>(expected_config, *cfg_iface);
+}
+
+// Tests that use-fallbacks is parsed properly.
+TEST_F(IfacesConfigParserTest, useFallbacks) {
+    CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+
+    // For DHCPv6 we don't accept this at all.
+    IfacesConfigParser parser6(AF_INET6, false);
+
+    std::string config = "{ \"interfaces\": [ ],"
+        " \"use-fallbacks\": true,"
+        " \"re-detect\": false }";
+    ElementPtr config_element = Element::fromJSON(config);
+    EXPECT_THROW(parser6.parse(cfg_iface, config_element), DhcpConfigError);
+
+    IfacesConfigParser parser4(AF_INET, false);
+
+    // Require raw socket.
+    config = "{ \"interfaces\": [ ],"
+        " \"dhcp-socket-type\": \"udp\","
+        " \"use-fallbacks\": true,"
+        " \"re-detect\": false }";
+    config_element = Element::fromJSON(config);
+    EXPECT_THROW(parser4.parse(cfg_iface, config_element), DhcpConfigError);
+
+    // Accept only a boolean.
+    config = "{ \"interfaces\": [ ],"
+        " \"dhcp-socket-type\": \"raw\","
+        " \"use-fallbacks\": 1,"
+        " \"re-detect\": false }";
+    config_element = Element::fromJSON(config);
+    EXPECT_THROW(parser4.parse(cfg_iface, config_element), DhcpConfigError);
+
+    // Accept false.
+    config = "{ \"interfaces\": [ ],"
+        " \"dhcp-socket-type\": \"raw\","
+        " \"use-fallbacks\": false,"
+        " \"re-detect\": false }";
+    config_element = Element::fromJSON(config);
+    ASSERT_TRUE(PktFilter::use_fallbacks_);
+    ASSERT_NO_THROW(parser4.parse(cfg_iface, config_element));
+    EXPECT_FALSE(PktFilter::use_fallbacks_);
+
+    // Accept true.
+    config = "{ \"interfaces\": [ ],"
+        " \"dhcp-socket-type\": \"raw\","
+        " \"use-fallbacks\": true,"
+        " \"re-detect\": false }";
+    config_element = Element::fromJSON(config);
+    ASSERT_NO_THROW(parser4.parse(cfg_iface, config_element));
+    EXPECT_TRUE(PktFilter::use_fallbacks_);
 }
 
 } // end of anonymous namespace

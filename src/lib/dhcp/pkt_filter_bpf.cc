@@ -243,7 +243,9 @@ PktFilterBPF::openSocket(Iface& iface,
     // that there is another service (perhaps DHCP server) running.
     // The function will throw an exception and effectively cease opening
     // the BPF device below.
-    fallback = openFallbackSocket(addr, port);
+    if (PktFilter::use_fallbacks_) {
+        fallback = openFallbackSocket(addr, port);
+    }
 
     // Fallback has opened, so let's open the BPF device that we will be
     // using for receiving and sending packets. The BPF device is opened

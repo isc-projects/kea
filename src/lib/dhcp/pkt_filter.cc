@@ -14,6 +14,9 @@
 namespace isc {
 namespace dhcp {
 
+bool
+PktFilter::use_fallbacks_ = true;
+
 int
 PktFilter::openFallbackSocket(const isc::asiolink::IOAddress& addr,
                               const uint16_t port) {

@@ -619,6 +619,11 @@ CfgIface::toElement() const {
         result->set("service-sockets-retry-wait-time", Element::create(static_cast<int>(service_sockets_retry_wait_time_)));
     }
 
+    // Set use-fallbacks when disabled.
+    if (!PktFilter::use_fallbacks_) {
+        result->set("use-fallbacks", Element::create(PktFilter::use_fallbacks_));
+    }
+
     return (result);
 }
 

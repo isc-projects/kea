@@ -38,7 +38,7 @@ IfacesConfigParser::IfacesConfigParser(const uint16_t protocol, bool test_mode)
 
 void
 IfacesConfigParser::parse(const CfgIfacePtr& cfg,
-                          const isc::data::ConstElementPtr& ifaces_config) {
+                          const ConstElementPtr& ifaces_config) {
 
     // Check for re-detect before calling parseInterfacesList()
     bool re_detect = getBoolean(ifaces_config, "re-detect");
@@ -49,6 +49,7 @@ IfacesConfigParser::parse(const CfgIfacePtr& cfg,
     }
 
     bool socket_type_specified = false;
+    bool use_fallbacks = false;
     for (auto const& element : ifaces_config->mapValue()) {
         try {
             if (element.first == "re-detect") {
@@ -98,6 +99,16 @@ IfacesConfigParser::parse(const CfgIfacePtr& cfg,
                 continue;
             }
 
+            if (element.first == "use-fallbacks") {
+                if (protocol_ == AF_INET) {
+                    use_fallbacks = true;
+                    continue;
+                } else {
+                    isc_throw(DhcpConfigError,
+                              "use-fallbacks is not supported in DHCPv6");
+                }
+            }
+
             if (element.first == "user-context") {
                 cfg->setContext(element.second);
                 continue;
@@ -114,6 +125,13 @@ IfacesConfigParser::parse(const CfgIfacePtr& cfg,
             isc_throw(DhcpConfigError, ex.what() << " ("
                       << element.second->getPosition() << ")");
         }
+    }
+
+    if (use_fallbacks) {
+        if (cfg->getSocketType() != CfgIface::SocketType::SOCKET_RAW) {
+            isc_throw(DhcpConfigError, "use-fallbacks requires a raw socket");
+        }
+        PktFilter::use_fallbacks_ = getBoolean(ifaces_config, "use-fallbacks");
     }
 
     // User hasn't specified the socket type. Log that we are using

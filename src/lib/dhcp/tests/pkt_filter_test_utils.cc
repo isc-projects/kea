@@ -25,6 +25,8 @@ PktFilterTest::PktFilterTest(const uint16_t port)
     loInit();
     // Initialize test_message_.
     initTestMessage();
+    // Set use fallbacks.
+    PktFilter::use_fallbacks_ = true;
 }
 
 PktFilterTest::~PktFilterTest() {
@@ -33,12 +35,13 @@ PktFilterTest::~PktFilterTest() {
     if (sock_info_.sockfd_ >= 0) {
         close(sock_info_.sockfd_);
     }
-    if (sock_info_.fallbackfd_ >=0) {
+    if (sock_info_.fallbackfd_ >= 0) {
         close(sock_info_.fallbackfd_);
     }
     if (send_msg_sock_ >= 0) {
         close(send_msg_sock_);
     }
+    PktFilter::use_fallbacks_ = true;
 }
 
 void

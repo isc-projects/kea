@@ -90,10 +90,12 @@ CfgIfaceTest::SetUp() {
     io_service_.reset(new asiolink::IOService());
     TimerMgr::instance()->setIOService(io_service_);
     IfaceMgr::instance().setDetectCallback(std::bind(&IfaceMgr::checkDetectIfaces, &IfaceMgr::instance(), ph::_1));
+    PktFilter::use_fallbacks_ = true;
 }
 
 void
 CfgIfaceTest::TearDown() {
+    PktFilter::use_fallbacks_ = true;
     IfaceMgr::instance().setDetectCallback(std::bind(&IfaceMgr::checkDetectIfaces, &IfaceMgr::instance(), ph::_1));
     // Remove all timers.
     TimerMgr::instance()->unregisterTimers();
@@ -1782,5 +1784,28 @@ TEST(CfgIfaceNoStubTest, useSocketType) {
         InvalidSocketType);
 }
 #endif
+
+// This test verifies that the use fallbacks can be unparsed.
+TEST(CfgIfaceNoStubTest, useFallbacks) {
+    CfgIface cfg;
+    // Default socket type is raw.
+    EXPECT_EQ("raw", cfg.socketTypeToText());
+
+    // Check unparse
+    std::string expected = "{\n"
+        " \"interfaces\": [ ],\n"
+        " \"re-detect\": false }";
+    runToElementTest<CfgIface>(expected, cfg);
+
+    // Disable use fallbacks
+    PktFilter::use_fallbacks_ = false;
+
+    // Recheck unparse
+    expected = "{\n"
+        " \"interfaces\": [ ],\n"
+        " \"re-detect\": false,\n"
+        " \"use-fallbacks\": false }";
+    runToElementTest<CfgIface>(expected, cfg);
+}
 
 } // end of anonymous namespace

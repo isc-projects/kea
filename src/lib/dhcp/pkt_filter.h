@@ -113,6 +113,9 @@ public:
     virtual int send(const Iface& iface, uint16_t sockfd,
                      const Pkt4Ptr& pkt) = 0;
 
+    /// @brief Use fallbacks.
+    static bool use_fallbacks_;
+
 protected:
 
     /// @brief Default implementation to open a fallback socket.
