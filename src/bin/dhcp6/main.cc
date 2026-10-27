@@ -274,6 +274,10 @@ main(int argc, char* argv[]) {
             LOG_WARN(dhcp6_logger, DHCP6_SECURITY_CHECKS_DISABLED);
         }
 
+        if (Daemon::getShutdownOnFailure()) {
+            LOG_WARN(dhcp6_logger, DHCP6_SHUTDOWN_ON_FATAL_ERROR);
+        }
+
         if (Daemon::getCBRepairMode()) {
             LOG_WARN(dhcp6_logger, DHCP6_CB_REPAIR_MODE_ENABLED);
         }

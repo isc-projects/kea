@@ -176,6 +176,7 @@ extern const isc::log::MessageID DHCP6_ROOT_USER_SECURITY_WARNING = "DHCP6_ROOT_
 extern const isc::log::MessageID DHCP6_SECURITY_CHECKS_DISABLED = "DHCP6_SECURITY_CHECKS_DISABLED";
 extern const isc::log::MessageID DHCP6_SERVER_FAILED = "DHCP6_SERVER_FAILED";
 extern const isc::log::MessageID DHCP6_SHUTDOWN = "DHCP6_SHUTDOWN";
+extern const isc::log::MessageID DHCP6_SHUTDOWN_ON_FATAL_ERROR = "DHCP6_SHUTDOWN_ON_FATAL_ERROR";
 extern const isc::log::MessageID DHCP6_SHUTDOWN_REQUEST = "DHCP6_SHUTDOWN_REQUEST";
 extern const isc::log::MessageID DHCP6_SRV_CONSTRUCT_ERROR = "DHCP6_SRV_CONSTRUCT_ERROR";
 extern const isc::log::MessageID DHCP6_SRV_D2STOP_ERROR = "DHCP6_SRV_D2STOP_ERROR";
@@ -365,6 +366,7 @@ const char* values[] = {
     "DHCP6_SECURITY_CHECKS_DISABLED", "Invoked with command line option -X, Security checks are disabled!!",
     "DHCP6_SERVER_FAILED", "server failed: %1",
     "DHCP6_SHUTDOWN", "server shutdown",
+    "DHCP6_SHUTDOWN_ON_FATAL_ERROR", "Invoked with command line option -F, Exit on critical error",
     "DHCP6_SHUTDOWN_REQUEST", "shutdown of server requested",
     "DHCP6_SRV_CONSTRUCT_ERROR", "error creating Dhcpv6Srv object, reason: %1",
     "DHCP6_SRV_D2STOP_ERROR", "error stopping IO with DHCP_DDNS during shutdown: %1",

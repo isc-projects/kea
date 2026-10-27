@@ -1,0 +1,4 @@
+[func]		fdupont
+	DHCPv4 and DHCPv6 server now log the presence of the
+	"-F" flag (exit on critical error) on their command line.
+	(Gitlab #4689)

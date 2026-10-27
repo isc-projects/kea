@@ -177,6 +177,7 @@ extern const isc::log::MessageID DHCP6_ROOT_USER_SECURITY_WARNING;
 extern const isc::log::MessageID DHCP6_SECURITY_CHECKS_DISABLED;
 extern const isc::log::MessageID DHCP6_SERVER_FAILED;
 extern const isc::log::MessageID DHCP6_SHUTDOWN;
+extern const isc::log::MessageID DHCP6_SHUTDOWN_ON_FATAL_ERROR;
 extern const isc::log::MessageID DHCP6_SHUTDOWN_REQUEST;
 extern const isc::log::MessageID DHCP6_SRV_CONSTRUCT_ERROR;
 extern const isc::log::MessageID DHCP6_SRV_D2STOP_ERROR;

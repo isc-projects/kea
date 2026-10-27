@@ -178,6 +178,7 @@ extern const isc::log::MessageID DHCP4_SERVER_INITIATED_DECLINE_ADD_FAILED;
 extern const isc::log::MessageID DHCP4_SERVER_INITIATED_DECLINE_RESOURCE_BUSY;
 extern const isc::log::MessageID DHCP4_SERVER_INITIATED_DECLINE_UPDATE_FAILED;
 extern const isc::log::MessageID DHCP4_SHUTDOWN;
+extern const isc::log::MessageID DHCP4_SHUTDOWN_ON_FATAL_ERROR;
 extern const isc::log::MessageID DHCP4_SHUTDOWN_REQUEST;
 extern const isc::log::MessageID DHCP4_SRV_CONSTRUCT_ERROR;
 extern const isc::log::MessageID DHCP4_SRV_D2STOP_ERROR;

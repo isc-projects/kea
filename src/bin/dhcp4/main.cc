@@ -274,6 +274,10 @@ main(int argc, char* argv[]) {
             LOG_WARN(dhcp4_logger, DHCP4_SECURITY_CHECKS_DISABLED);
         }
 
+        if (Daemon::getShutdownOnFailure()) {
+            LOG_WARN(dhcp4_logger, DHCP4_SHUTDOWN_ON_FATAL_ERROR);
+        }
+
         if (Daemon::getCBRepairMode()) {
             LOG_WARN(dhcp4_logger, DHCP4_CB_REPAIR_MODE_ENABLED);
         }
