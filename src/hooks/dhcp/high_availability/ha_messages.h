@@ -32,6 +32,7 @@ extern const isc::log::MessageID HA_CONFIG_LEASE_SYNCING_DISABLED_REMINDER;
 extern const isc::log::MessageID HA_CONFIG_LEASE_UPDATES_AND_SYNCING_DIFFER;
 extern const isc::log::MessageID HA_CONFIG_LEASE_UPDATES_DISABLED;
 extern const isc::log::MessageID HA_CONFIG_LEASE_UPDATES_DISABLED_REMINDER;
+extern const isc::log::MessageID HA_CONFIG_NO_RESTRICT_COMMANDS;
 extern const isc::log::MessageID HA_CONFIG_SYSTEM_MT_UNSUPPORTED;
 extern const isc::log::MessageID HA_CONTINUE_HANDLER_FAILED;
 extern const isc::log::MessageID HA_DEINIT_OK;

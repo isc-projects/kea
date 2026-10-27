@@ -20,6 +20,7 @@
 
 using namespace isc::data;
 using namespace isc::http;
+using namespace isc::util::file;
 
 namespace {
 
@@ -272,7 +273,11 @@ HAConfigParser::parseOne(const HAConfigMapperPtr& config_storage,
     rel_config->setRequireClientCerts(getBoolean(config, "require-client-certs"));
 
     // Get 'restrict-commands'.
-    rel_config->setRestrictCommands(getBoolean(config, "restrict-commands"));
+    bool restrict_commands = getBoolean(config, "restrict-commands");
+    rel_config->setRestrictCommands(restrict_commands);
+    if (!restrict_commands && PathChecker::shouldEnforceSecurity()) {
+        LOG_WARN(ha_logger, HA_CONFIG_NO_RESTRICT_COMMANDS);
+    }
 
     // Peers configuration parsing.
     auto const& peers_vec = peers->listValue();

@@ -31,6 +31,7 @@ extern const isc::log::MessageID HA_CONFIG_LEASE_SYNCING_DISABLED_REMINDER = "HA
 extern const isc::log::MessageID HA_CONFIG_LEASE_UPDATES_AND_SYNCING_DIFFER = "HA_CONFIG_LEASE_UPDATES_AND_SYNCING_DIFFER";
 extern const isc::log::MessageID HA_CONFIG_LEASE_UPDATES_DISABLED = "HA_CONFIG_LEASE_UPDATES_DISABLED";
 extern const isc::log::MessageID HA_CONFIG_LEASE_UPDATES_DISABLED_REMINDER = "HA_CONFIG_LEASE_UPDATES_DISABLED_REMINDER";
+extern const isc::log::MessageID HA_CONFIG_NO_RESTRICT_COMMANDS = "HA_CONFIG_NO_RESTRICT_COMMANDS";
 extern const isc::log::MessageID HA_CONFIG_SYSTEM_MT_UNSUPPORTED = "HA_CONFIG_SYSTEM_MT_UNSUPPORTED";
 extern const isc::log::MessageID HA_CONTINUE_HANDLER_FAILED = "HA_CONTINUE_HANDLER_FAILED";
 extern const isc::log::MessageID HA_DEINIT_OK = "HA_DEINIT_OK";
@@ -164,6 +165,7 @@ const char* values[] = {
     "HA_CONFIG_LEASE_UPDATES_AND_SYNCING_DIFFER", "%1: unusual configuration where \"send-lease-updates\": %2 and \"sync-leases\": %3",
     "HA_CONFIG_LEASE_UPDATES_DISABLED", "%1: lease updates will not be generated",
     "HA_CONFIG_LEASE_UPDATES_DISABLED_REMINDER", "%1: lease updates are administratively disabled and will not be generated while in %2 state",
+    "HA_CONFIG_NO_RESTRICT_COMMANDS", "commands are not restricted",
     "HA_CONFIG_SYSTEM_MT_UNSUPPORTED", "%1: HA multi-threading has been disabled, auto-detection of thread support reports 0",
     "HA_CONTINUE_HANDLER_FAILED", "ha-continue command failed: %1",
     "HA_DEINIT_OK", "unloading High Availability hooks library successful",

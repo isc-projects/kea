@@ -1,0 +1,5 @@
+[func]		fdupont
+	Added a warning when security is enforced but the HA
+	hook library is configured with "restrict-commands"
+	parameter set to "false".
+	(Gitlab #4758)
