@@ -45,6 +45,8 @@ src/hooks/d2/gss_tsig/gss_tsig_messages.cc
 src/hooks/d2/gss_tsig/gss_tsig_messages.h
 src/hooks/dhcp/bootp/bootp_messages.cc
 src/hooks/dhcp/bootp/bootp_messages.h
+src/hooks/dhcp/cb_cmds/cb_cmds_messages.cc
+src/hooks/dhcp/cb_cmds/cb_cmds_messages.h
 src/hooks/dhcp/class_cmds/class_cmds_messages.cc
 src/hooks/dhcp/class_cmds/class_cmds_messages.h
 src/hooks/dhcp/ddns_tuning/ddns_tuning_messages.cc
@@ -89,6 +91,8 @@ src/hooks/dhcp/ping_check/ping_check_messages.cc
 src/hooks/dhcp/ping_check/ping_check_messages.h
 src/hooks/dhcp/radius/radius_messages.cc
 src/hooks/dhcp/radius/radius_messages.h
+src/hooks/dhcp/rbac/rbac_messages.cc
+src/hooks/dhcp/rbac/rbac_messages.h
 src/hooks/dhcp/run_script/run_script_messages.cc
 src/hooks/dhcp/run_script/run_script_messages.h
 src/hooks/dhcp/stat_cmds/stat_cmds_messages.cc
@@ -97,10 +101,6 @@ src/hooks/dhcp/subnet_cmds/subnet_cmds_messages.cc
 src/hooks/dhcp/subnet_cmds/subnet_cmds_messages.h
 src/hooks/dhcp/user_chk/user_chk_messages.cc
 src/hooks/dhcp/user_chk/user_chk_messages.h
-src/hooks/dhcp/rbac/rbac_messages.cc
-src/hooks/dhcp/rbac/rbac_messages.h
-src/hooks/dhcp/cb_cmds/cb_cmds_messages.cc
-src/hooks/dhcp/cb_cmds/cb_cmds_messages.h
 src/lib/asiodns/asiodns_messages.cc
 src/lib/asiodns/asiodns_messages.h
 src/lib/config/config_messages.cc

@@ -947,6 +947,7 @@ INPUT                  = ../../src/bin/d2 \
                          ../../src/bin/perfdhcp \
                          ../../src/hooks/d2/gss_tsig \
                          ../../src/hooks/dhcp/bootp \
+                         ../../src/hooks/dhcp/cb_cmds \
                          ../../src/hooks/dhcp/class_cmds \
                          ../../src/hooks/dhcp/ddns_tuning \
                          ../../src/hooks/dhcp/flex_id \
@@ -961,12 +962,11 @@ INPUT                  = ../../src/bin/d2 \
                          ../../src/hooks/dhcp/perfmon \
                          ../../src/hooks/dhcp/ping_check \
                          ../../src/hooks/dhcp/radius \
+                         ../../src/hooks/dhcp/rbac \
                          ../../src/hooks/dhcp/run_script \
                          ../../src/hooks/dhcp/stat_cmds \
                          ../../src/hooks/dhcp/subnet_cmds \
                          ../../src/hooks/dhcp/user_chk \
-                         ../../src/hooks/dhcp/rbac \
-                         ../../src/hooks/dhcp/cb_cmds \
                          ../../src/lib/asiodns \
                          ../../src/lib/asiolink \
                          ../../src/lib/cc \

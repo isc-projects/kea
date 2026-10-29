@@ -141,6 +141,7 @@
  * @section hooks Kea hook libraries
  * - @subpage libddns_gss_tsig
  * - @subpage libdhcp_bootp
+ * - @subpage libdhcp_cb_cmds
  * - @subpage libdhcp_class_cmds
  * - @subpage libdhcp_ddns_tuning
  * - @subpage libdhcp_flex_id
@@ -155,12 +156,11 @@
  * - @subpage libdhcp_perfmon
  * - @subpage libdhcp_ping_check
  * - @subpage libdhcp_radius
+ * - @subpage libdhcp_rbac
  * - @subpage libdhcp_run_script
  * - @subpage libdhcp_stat_cmds
  * - @subpage libdhcp_subnet_cmds
  * - @subpage libdhcp_user_chk
- * - @subpage libdhcp_rbac
- * - @subpage libdhcp_cb_cmds
  *
  * @section miscellaneousTopics Miscellaneous Topics
  * - @subpage terminology

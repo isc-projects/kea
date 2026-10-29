@@ -730,6 +730,7 @@ public:
     ///
     /// @tparam FunType Type of getAll method.
     /// @param callout_handle Callout handle provided to the callout.
+    /// @param keywords List of keywords to accept.
     /// @param address_family Address family (AF_INET or AF_INET6).
     /// @param get_all_fun getAll method.
     template <typename FunType>

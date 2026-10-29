@@ -145,10 +145,12 @@ public:
                       "declined-addresses")->getInteger().first, declined);
         } else {
             ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
-                    isc::stats::StatsMgr::generateName("subnet", id, "assigned-addresses"))->getInteger().first, assigned);
+                      isc::stats::StatsMgr::generateName("subnet", id,
+	                      "assigned-addresses"))->getInteger().first, assigned);
 
             ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
-                    isc::stats::StatsMgr::generateName("subnet", id, "declined-addresses"))->getInteger().first, declined);
+                      isc::stats::StatsMgr::generateName("subnet", id,
+			      "declined-addresses"))->getInteger().first, declined);
         }
     }
 

@@ -140,6 +140,7 @@ of the libraries can be verified with this command:
    $ ls -l /usr/local/lib/kea/hooks/*.so
    /usr/local/lib/kea/hooks/libddns_gss_tsig.so
    /usr/local/lib/kea/hooks/libdhcp_bootp.so
+   /usr/local/lib/kea/hooks/libdhcp_cb_cmds.so
    /usr/local/lib/kea/hooks/libdhcp_class_cmds.so
    /usr/local/lib/kea/hooks/libdhcp_ddns_tuning.so
    /usr/local/lib/kea/hooks/libdhcp_flex_id.so
@@ -156,11 +157,10 @@ of the libraries can be verified with this command:
    /usr/local/lib/kea/hooks/libdhcp_pgsql.so
    /usr/local/lib/kea/hooks/libdhcp_ping_check.so
    /usr/local/lib/kea/hooks/libdhcp_radius.so
+   /usr/local/lib/kea/hooks/libdhcp_rbac.so
    /usr/local/lib/kea/hooks/libdhcp_run_script.so
    /usr/local/lib/kea/hooks/libdhcp_stat_cmds.so
    /usr/local/lib/kea/hooks/libdhcp_subnet_cmds.so
-   /usr/local/lib/kea/hooks/libdhcp_rbac.so
-   /usr/local/lib/kea/hooks/libdhcp_cb_cmds.so
 
 The exact list returned depends on the packages installed. If the
 directory was specified via ``--prefix``, the hook libraries will be located in

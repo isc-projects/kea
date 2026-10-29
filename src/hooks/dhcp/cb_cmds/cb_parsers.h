@@ -307,7 +307,7 @@ public:
 
     /// @brief Constructor.
     ///
-    /// @param address family: @c AF_INET or @c AF_INET6.
+    /// @param address_family: @c AF_INET or @c AF_INET6.
     /// @param cfg_option_def container optionally holding option definitions
     /// defined for a class.
     /// @param backend_selector backend selector used to fetch option
@@ -750,7 +750,7 @@ public:
     ///
     /// @param backend_selector backend selector used to fetch option
     /// definitions during option data parsing.
-    /// @param sever_selector backend selector used to fetch option
+    /// @param server_selector server selector used to fetch option
     /// definitions during option data parsing.
     CBSubnets4ListConfigParser(db::BackendSelector& backend_selector,
                                db::ServerSelector& server_selector);
@@ -784,7 +784,7 @@ public:
     ///
     /// @param backend_selector backend selector used to fetch option
     /// definitions during option data parsing.
-    /// @param sever_selector backend selector used to fetch option
+    /// @param server_selector server selector used to fetch option
     /// definitions during option data parsing.
     CBSubnets6ListConfigParser(db::BackendSelector& backend_selector,
                                db::ServerSelector& server_selector);
