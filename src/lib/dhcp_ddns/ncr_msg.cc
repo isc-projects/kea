@@ -773,7 +773,8 @@ NameChangeRequest::operator == (const NameChangeRequest& other) const {
             (ip_io_address_ == other.ip_io_address_) &&
             (dhcid_ == other.dhcid_) &&
             (lease_length_ == other.lease_length_) &&
-            (conflict_resolution_mode_ == other.conflict_resolution_mode_));
+            (conflict_resolution_mode_ == other.conflict_resolution_mode_) &&
+            (reverse_zone_ == other.reverse_zone_));
 }
 
 bool
