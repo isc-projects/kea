@@ -5259,7 +5259,6 @@ Dhcpv6Srv::getVersion(bool extended) {
     tmp << VERSION;
     if (extended) {
         tmp << " (" << SOURCE_OF_INSTALLATION << ")" << endl;
-        tmp << "premium: " << PREMIUM_EXTENDED_VERSION << endl;
         tmp << "linked with:" << endl;
         tmp << "- " << Logger::getVersion() << endl;
         tmp << "- " << CryptoLink::getVersion();

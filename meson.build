@@ -728,20 +728,6 @@ if cpp_args_opt.length() == 0
     endforeach
 endif
 
-#### Premium hooks
-
-premium = fs.is_dir('premium')
-if premium
-    conf_data.set('PREMIUM', 'yes')
-    conf_data.set(
-        'PREMIUM_EXTENDED_VERSION',
-        f'"yes (@SOURCE_OF_INSTALLATION@)"',
-    )
-else
-    conf_data.set('PREMIUM', 'no')
-    conf_data.set('PREMIUM_EXTENDED_VERSION', '"no"')
-endif
-
 #### Default Includes
 
 INCLUDES = [
@@ -763,7 +749,6 @@ report_conf_data.set('EXTENDED_VERSION', EXTENDED_VERSION)
 report_conf_data.set('OS_TYPE', OS_TYPE)
 report_conf_data.set('PREFIX', PREFIX)
 report_conf_data.set('HOOKS_DIR', DEFAULT_HOOKS_PATH)
-report_conf_data.set('PREMIUM', premium ? 'yes' : 'no')
 report_conf_data.set('MESON_VERSION', meson.version())
 build_options = meson.build_options()
 report_conf_data.set('BUILD_OPTIONS', build_options.replace('\'', '"'))
@@ -1081,9 +1066,6 @@ TARGETS_GEN_PARSER = []
 subdir('tools')
 subdir('src')
 subdir('doc')
-if premium
-    subdir('premium')
-endif
 
 # SBOM
 

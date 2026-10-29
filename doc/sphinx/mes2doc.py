@@ -39,10 +39,6 @@ def parse_args():
 def read_input_files(files):
     messages = {}
     for f in files:
-        if '/premium/' in f and not pathlib.Path(f).is_file():
-            # Premium can be missing which is fine for daily development, and CI tasks.
-            print(f'Ignoring non-existing file {f}')
-            continue
         with open(f, encoding='utf-8') as fp:
             print(f'Processing {f}')
             msg_descr = None

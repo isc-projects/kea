@@ -181,8 +181,12 @@ libraries), or hook libraries (open source or subscriber).
    |                                  |                                       | hook point.                    |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.cb-cmds-hooks``,     | :ischooklib:`libdhcp_cb_cmds.so`      | Used to log messages related to|
-   | ``kea-dhcp6.cb-cmds-hooks``      | subscriber hook library               | the operation of the Config    |
+   | ``kea-dhcp6.cb-cmds-hooks``      | open-source hook library              | the operation of the Config    |
    |                                  |                                       | Backend Commands hook library. |
+   +----------------------------------+---------------------------------------+--------------------------------+
+   | ``kea-dhcp4.rbac-hooks``         | :ischooklib:`libdhcp_rbac.so`         | Used to log messages related to|
+   | ``kea-dhcp6.rbac-hooks``         | open-source hook library              | the Role Based Access Control  |
+   |                                  |                                       | hook library.                  |
    +----------------------------------+---------------------------------------+--------------------------------+
    | ``kea-dhcp4.class-cmds-hooks``,  | :ischooklib:`libdhcp_class_cmds.so`   | Used to log messages related to|
    | ``kea-dhcp6.class-cmds-hooks``   | open-source hook library              | the operation of the Class     |

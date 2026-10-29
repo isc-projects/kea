@@ -99,10 +99,6 @@ steps will unpack the subscriber tarball into the correct location:
     $ cd kea-|release|
     $ tar -Jxvf ../kea-subscriber-|release|.tar.xz
 
-Note that unpacking the Kea subscriber package puts the files into a
-directory named ``premium``. Regardless of the name of the package, the
-directory is always called ``premium``.
-
 4. Set up the build. Make sure ``meson`` and ``ninja`` are installed on your
    system. The first section of the output should look something like this:
 
@@ -121,7 +117,6 @@ directory is always called ``premium``.
 
       Prefix:             /opt/kea
       Hooks directory:    /opt/kea/lib/kea/hooks
-      Premium hooks:      yes
 
 6. Compile Kea.
 
@@ -164,13 +159,8 @@ of the libraries can be verified with this command:
    /usr/local/lib/kea/hooks/libdhcp_run_script.so
    /usr/local/lib/kea/hooks/libdhcp_stat_cmds.so
    /usr/local/lib/kea/hooks/libdhcp_subnet_cmds.so
-
-with the following subscriber libraries:
-
-.. code-block:: console
-
-   /usr/local/lib/kea/hooks/libdhcp_cb_cmds.so
    /usr/local/lib/kea/hooks/libdhcp_rbac.so
+   /usr/local/lib/kea/hooks/libdhcp_cb_cmds.so
 
 The exact list returned depends on the packages installed. If the
 directory was specified via ``--prefix``, the hook libraries will be located in
@@ -511,14 +501,13 @@ loaded by the correct process per the table below.
    |                                                           |              | BOOTP client class, and receive infinite lifetime leases.    |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`Class Commands <hooks-class-cmds>`                  | Kea open     | This hook library allows configured DHCP client classes to   |
-   |                                                           | source       | be added, updated, deleted, and fetched without              |
-   |                                                           |              | needing to restart the DHCP server.                          |
+   |                                                           | source       | be added, updated, deleted, and fetched without needing to   |
+   |                                                           |              | restart the DHCP server.                                     |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`Configuration Backend Commands <hooks-cb-cmds>`     | ISC support  | This hook                                                    |
-   |                                                           | customers    | library implements a collection of commands to manage        |
-   |                                                           |              | Kea configuration information in a                           |
-   |                                                           |              | database. This library may only be used in conjunction with  |
-   |                                                           |              | one of the supported Configuration Backend implementations.  |
+   | :ref:`Configuration Backend Commands <hooks-cb-cmds>`     | Kea open     | This hook library implements a collection of commands to     |
+   |                                                           | source       | manage Kea configuration information in a database. This     |
+   |                                                           |              | library may only be used in conjunction with one of the      |
+   |                                                           |              | supported Configuration Backend implementations.             |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`DDNS Tuning <hooks-ddns-tuning>`                    | Kea open     | This hook library adds custom behaviors related to Dynamic   |
    |                                                           | source       | DNS updates on a per-client basis. Its primary feature is to |
@@ -648,8 +637,8 @@ loaded by the correct process per the table below.
    |                                                           |              | The accounting mechanism allows a RADIUS server to keep      |
    |                                                           |              | track of device activity over time.                          |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`RBAC <hooks-rbac>`                                  | ISC support  | This hook library adds support to Kea servers (kea-dhcp4,    |
-   |                                                           | customers    | kea-dhcp6 and kea-dhcp-ddns) for Role-Based Access Control   |
+   | :ref:`RBAC <hooks-rbac>`                                  | Kea open     | This hook library adds support to Kea servers (kea-dhcp4,    |
+   |                                                           | source       | kea-dhcp6 and kea-dhcp-ddns) for Role-Based Access Control   |
    |                                                           |              | filtering of commands.                                       |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`Run Script <hooks-run-script>`                      | Kea open     | This hook library adds support to run external               |

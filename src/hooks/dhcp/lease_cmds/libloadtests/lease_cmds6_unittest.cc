@@ -150,31 +150,27 @@ public:
         SCOPED_TRACE(ss.str());
         if (id == SUBNET_ID_GLOBAL) {
             ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
-                    "assigned-nas")->getInteger().first, assigned_nas);
+                     "assigned-nas")->getInteger().first, assigned_nas);
 
             ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
-                    "declined-addresses")->getInteger().first, declined);
+                     "declined-addresses")->getInteger().first, declined);
 
             ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
-                    "assigned-pds")->getInteger().first, assigned_pds);
+                     "assigned-pds")->getInteger().first, assigned_pds);
 
             ASSERT_EQ(0, registered_nas);
         } else {
             ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
-                    isc::stats::StatsMgr::generateName("subnet", id,
-                              "assigned-nas"))->getInteger().first, assigned_nas);
+                      isc::stats::StatsMgr::generateName("subnet", id, "assigned-nas"))->getInteger().first, assigned_nas);
 
             ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
-                    isc::stats::StatsMgr::generateName("subnet", id,
-                              "declined-addresses"))->getInteger().first, declined);
+                    isc::stats::StatsMgr::generateName("subnet", id, "declined-addresses"))->getInteger().first, declined);
 
             ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
-                    isc::stats::StatsMgr::generateName("subnet", id,
-                              "assigned-pds"))->getInteger().first, assigned_pds);
+                    isc::stats::StatsMgr::generateName("subnet", id, "assigned-pds"))->getInteger().first, assigned_pds);
 
             ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
-                    isc::stats::StatsMgr::generateName("subnet", id,
-                              "registered-nas"))->getInteger().first, registered_nas);
+                    isc::stats::StatsMgr::generateName("subnet", id, "registered-nas"))->getInteger().first, registered_nas);
         }
     }
 

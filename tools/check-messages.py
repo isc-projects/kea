@@ -31,7 +31,6 @@ def check_duplicate_occurrences(occurrences):
     parent_dir = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
     for exh_txt in [
         f'{parent_dir}/exonerated-duplicate-messages.txt',
-        f'{parent_dir}/../premium/tools/exonerated-duplicate-messages.txt',
     ]:
         if pathlib.Path(exh_txt).is_file():
             with open(exh_txt, 'r', encoding='utf-8') as f:
@@ -336,13 +335,7 @@ def main():
 
     if args.autofix or args.generate_debug_messages_page:
         parent_dir = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
-        if os.path.isdir(os.path.realpath(f'{parent_dir}/../premium')):
-            generate_page_with_messages_printed_on_each_debug_level(messages, debug_levels)
-        else:
-            print('WARNING: Not generating debug-messages.rst. Premium is missing. '
-                  'It would result in incomplete generated content.', file=sys.stderr)
-            if args.autofix:
-                failure = True
+        generate_page_with_messages_printed_on_each_debug_level(messages, debug_levels)
 
         if args.generate_debug_messages_page:
             return

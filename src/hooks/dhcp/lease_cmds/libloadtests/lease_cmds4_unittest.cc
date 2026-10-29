@@ -139,18 +139,16 @@ public:
     void checkLease4Stats(isc::dhcp::SubnetID id, int32_t assigned, int32_t declined) {
         if (id == SUBNET_ID_GLOBAL) {
             ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
-                    "assigned-addresses")->getInteger().first, assigned);
+                      "assigned-addresses")->getInteger().first, assigned);
 
             ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
-                    "declined-addresses")->getInteger().first, declined);
+                      "declined-addresses")->getInteger().first, declined);
         } else {
             ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
-                    isc::stats::StatsMgr::generateName("subnet", id,
-                              "assigned-addresses"))->getInteger().first, assigned);
+                    isc::stats::StatsMgr::generateName("subnet", id, "assigned-addresses"))->getInteger().first, assigned);
 
             ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
-                    isc::stats::StatsMgr::generateName("subnet", id,
-                              "declined-addresses"))->getInteger().first, declined);
+                    isc::stats::StatsMgr::generateName("subnet", id, "declined-addresses"))->getInteger().first, declined);
         }
     }
 

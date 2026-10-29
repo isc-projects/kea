@@ -11,11 +11,8 @@
 Usages:
 ./changelog-lint.py
 ./changelog-lint.py kea
-./changelog-lint.py kea-premium
 ./changelog-lint.py 1.2.3 kea/ChangeLog ./a.html False
-./changelog-lint.py 1.2.3 kea-premium/ChangeLog ./a.html False
 ./changelog-lint.py 1.2.3 kea/changelog_unreleased/1234-bugfix ./a.html True
-./changelog-lint.py 1.2.3 kea-premium/changelog_unreleased/1234-bugfix ./a.html True
 """
 
 # pylint: disable = fixme
@@ -178,8 +175,6 @@ def main(kea_version, changelog_path, output_path=None, is_entry_file=False):
 
             releases.append(line)
             m = re.match(r'Kea (\S+) (\S*) *released on (.+)', line)
-            if not m:
-                m = re.match(r'Kea-premium hooks package (\S+) (\S*) *released on (.+)', line)
             if not m:
                 error(idx, line, 'Release line is malformed.')
             else:

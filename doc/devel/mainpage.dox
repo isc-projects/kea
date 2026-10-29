@@ -159,6 +159,8 @@
  * - @subpage libdhcp_stat_cmds
  * - @subpage libdhcp_subnet_cmds
  * - @subpage libdhcp_user_chk
+ * - @subpage libdhcp_rbac
+ * - @subpage libdhcp_cb_cmds
  *
  * @section miscellaneousTopics Miscellaneous Topics
  * - @subpage terminology

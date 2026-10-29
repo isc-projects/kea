@@ -16,21 +16,6 @@
 # used.
 set -eu
 
-# If run from premium, it lacks the premium prefix.
-for prefix in '' 'premium/'; do
-    for path in \
-        'src/hooks/dhcp/cb_cmds/cb_cmds_messages.cc' \
-        'src/hooks/dhcp/cb_cmds/cb_cmds_messages.h' \
-        'src/hooks/dhcp/rbac/rbac_messages.cc' \
-        'src/hooks/dhcp/rbac/rbac_messages.h' \
-    ; do
-        file="${prefix}${path}"
-        if test -f "${file}"; then
-            echo "${file}"
-        fi
-    done
-done
-
 printf "\
 src/bin/d2/d2_lexer.cc
 src/bin/d2/d2_parser.cc
@@ -112,6 +97,10 @@ src/hooks/dhcp/subnet_cmds/subnet_cmds_messages.cc
 src/hooks/dhcp/subnet_cmds/subnet_cmds_messages.h
 src/hooks/dhcp/user_chk/user_chk_messages.cc
 src/hooks/dhcp/user_chk/user_chk_messages.h
+src/hooks/dhcp/rbac/rbac_messages.cc
+src/hooks/dhcp/rbac/rbac_messages.h
+src/hooks/dhcp/cb_cmds/cb_cmds_messages.cc
+src/hooks/dhcp/cb_cmds/cb_cmds_messages.h
 src/lib/asiodns/asiodns_messages.cc
 src/lib/asiodns/asiodns_messages.h
 src/lib/config/config_messages.cc

@@ -19,7 +19,6 @@ Package:
 
   Prefix:             @PREFIX@
   Hooks directory:    @HOOKS_DIR@
-  Premium hooks:      @PREMIUM@
 
 Meson Version:        @MESON_VERSION@
 Build Options:        @BUILD_OPTIONS@

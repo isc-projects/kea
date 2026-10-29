@@ -1,0 +1,223 @@
+// Copyright (C) 2026 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+@page libdhcp_rbac Kea Role Based Access Control Hooks Library
+
+@section libdhcp_rbacIntro Introduction
+
+Welcome to Kea Role Based Access Control Hooks Library. This documentation is
+addressed to developers who are interested in the internal operation
+of the Role Based Access Control library. This file provides information needed
+to understand and perhaps extend this library.
+
+This documentation is stand-alone: you should have read and understood
+the <a href="https://reports.kea.isc.org/dev_guide/">Kea
+Developer's Guide</a> and in particular its section about hooks.
+
+@section libdhcp_rbacUser Now To Use libdhcp_rbac
+## Introduction
+
+The Kea Role Based Access Control Hooks Library processes HTTP requests and
+responses at the http_auth and http_response callout points before and
+after the command handling.
+
+On the http_auth callout point process steps are:
+ - returns if no role was assigned (sanity check but it gives an easy
+   way to disable the hook)
+ - returns if there is already a response (likely an error response, e.g.
+   a not authorized one from basic HTTP authentication)
+ - returns if there is no request (should not happen)
+ - rejects with unauthorized response if require TLS is true and
+   the TLS flag in the request is false
+ - returns if the request is not a JSON one (dynamic cast)
+ - returns if the body of the JSON request is empty or is not a map
+ - returns if the command entry in the body of the JSON request does not
+   exist or is not a string. After this step the command is available.
+ - assign the role
+ - get the role configuration from the role. If the role is empty uses
+   the default role, if it is not in the table (not configured) uses
+   the unknown role. Not having a role configuration is an internal error.
+ - match the command with the accept and reject lists: match accept means
+   being accepted, reject means rejected, matching both follows the
+   list-match-first parameter (default accept), none follows the
+   other-commands parameter (default reject)
+ - when accepted and the role config has response filters put the command
+   and the role config in the request callout handle context
+ - when rejected emits a forbidden response
+ - if an exception is raised reject with an internal server error response
+
+On the http_response callout point process steps are:
+ - returns if no role was assigned (sanity check but it gives an easy
+   way to disable the hook)
+ - returns if there is no request or response (sanity check, note
+   the response is a JSON response)
+ - returns if the body is empty, is not a list or is an empty list.
+ - retrieve the command and role config from the request callout handle
+   context (faster than decode the request again)
+ - check if the role config is not null and has response filters (sanity
+   check)
+ - apply to each answer from the body response filters
+ - if a response filter has modified something emits a debug log message
+
+File rbac_callout.cc
+
+## Role assignement
+
+The Kea Role Based Access Control Hooks Library provides some predefined
+role assignment methods, all based on recorded fields in the request:
+ - remote-address - use the remote address which is filled by the
+   remote IP address in textual form by the HTTP library.
+ - cert-subject - use the subject which is filled by the first commonName
+   of the subjectName of the client certificate.
+ - cert-issuer - use the issuer which is filled by the first commonName
+   of the issuerName of the client certificate.
+ - basic-authentication - use the basic_auth which is filled by the
+   user ID of the basic HTTP authentication (note this value is security
+   sensitive).
+ - custom-value - user the custom field which can be filled by
+   another prepended hook at http_auth callout point i.e. provides a way
+   to extend role assignment.
+
+For each not empty role a configuration can be associated. Empty role
+is associated with the default role, roles which are not associated
+with a dedicated configuration are associated with the unknown role.
+
+The default and unknown role reject all commands when not explicitly
+configured.
+
+Type Role (base), global variable roleAssign.
+
+File rbac_role.{h,cc}
+
+## Role configuration
+
+Here by role and command please read role name and command name, i.e.
+both are strings.
+
+Role configuration parameters are:
+ - name - the role name (at the exception of the default and unknown roles)
+ - accept-commands - takes an access list specification: all commands
+   matching the list are accepted.
+ - reject-commands - takes an access list specification: all commands
+   matching the list are rejected.
+ - other-commands - specifies what to do when a command does not match
+   accept and reject lists.
+ - list-match-first - specifies what access list to check and apply first
+   for commands matching both accept and reject lists.
+ - response-filters - filters to apply to the response.
+
+File rbac.{h,cc}
+
+Type RoleConfig, global variables roleConfigTable, defaultRoleConfig and
+unknownRoleConfig.
+
+## API commands
+
+Kea API commands for servers, agents and hooks are described in
+API files located in the src/share/api in sources and .../share/kea/api
+in installation directory.
+
+There is a file per command defining the command name, access right
+(read or write) and when registered by a hook the hook name.
+
+The Kea Role Based Access Control Hooks reads these files at startup
+and uses them for access and hook based access lists, and to check
+if a command is defined.
+
+It is possible to configure extra commands specifying:
+ - name - the command name.
+ - access - the access right: read or write.
+ - hook - optional (empty or not specified means the command is not
+   registered by a hook but by a server or agent) hook name.
+
+File rbac_api.{h,cc}
+
+Type Api, global variable apiTable (multi-index), apiAccesses (should
+have 2 elements) and apiHooks.
+
+## Access list
+
+Access lists are implemented by predicates on commands. They can be
+considered too as sets of matching commands.
+
+An access list specification is either an access list name or a map
+with one entry specifying for its name an access list kind and
+for its value parameter(s).
+
+Predified named access list are:
+ - ALL - matches everything
+ - NONE - matches nothing
+ - READ - matches commands with the read access right
+ - WRITE - matches commands with the write access right
+
+Predified access list kinds are:
+ - not - negates the access list specification it takes as parameter.
+ - and - makes the logical and on the list of access list specifications
+   it takes as parameter.
+ - or - makes the logical or on the list of access list specifications
+   it takes as parameter.
+ - commands - matches the members of the list of command names it takes
+   as parameter (implemented as a set).
+ - access - matches commands which have the access right it takes as
+   parameter (i.e. strings read or write).
+ - hook - matches commands which have the hook it takes as parameter,
+   empty means no hook.
+
+File rbac_acl.{h,cc}
+
+Type Acl (base), global variable aclTable.
+
+## Response filters
+
+Predefined response filter is:
+ - noop: no operation.
+ - list-commands: remove from list-commands' answers not allowed (i.e. rejected)
+   commands.
+Two comments:
+ - if the list-commands is not allowed the list-commands response filter will
+   be never applied.
+ - other investigated response filters can be directly implemented in a
+   stand alone hook.
+
+File rbac_response_filter.{h,cc}
+
+Type ResponseFilter, global variable responseFilterTable.
+
+## Global configuration
+
+The Kea Role Based Access Control Hooks Library global configuration takes:
+ - access-control-lists - a list of named access control list definitions
+   with for each definition a map with one entry, the name of the entry
+   specifies the name of the access control list, the value of the entry
+   takes an access control list specification.
+ - assign-role-method - (mandatory) takes the name of the method to
+   use to assign a role from the request instrumentation fields.
+ - api-files - (mandatory) takes the path of the directory where
+   the API files describing commands can be found.
+ - commands - takes the list of extra command configurations.
+ - default-role - takes the configuration of the default role
+   (used when "" is assigned).
+ - require-tls - specifies if received requests on HTTP vs HTTPS are
+   rejected. Default to false when the role assignment method is not
+   based on certificates. In particular it defaults to false for
+   the basic HTTP authentication method.
+ - roles - takes the list of role configurations.
+ - unknown-role - takes the configuration of the unknown role
+   (used when the not empty assigned role has no configuration)
+ - response-filters - takes the list of response filters.
+
+File rbac_config.{h,cc}
+
+Type Config, global variable rbacConfig.
+
+@section libdhcp_rbacMTCompatibility Multi-Threading Compatibility
+
+The libdhcp_rbac hooks library is compatible with multi-threading and
+is called only by the main thread.
+
+*/

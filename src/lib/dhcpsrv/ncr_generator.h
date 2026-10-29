@@ -67,7 +67,7 @@ void queueNCR(const dhcp_ddns::NameChangeType& chg_type, const Lease6Ptr& lease)
 /// This function is exception safe. On failure, it logs an error.
 ///
 /// This function creates name change request from the information contained
-/// in the DHCPv6 lease. 
+/// in the DHCPv6 lease.
 ///
 /// @param chg_type Type of the name change request
 /// @param lease Pointer to the lease.

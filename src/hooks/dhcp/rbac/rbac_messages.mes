@@ -1,0 +1,156 @@
+# Copyright (C) 2026 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+% RBAC_CONFIGURED_ACLS RBAC hooks library has configured %1 named ACLs.
+Logged at debug log level 40.
+This debug message indicates that some named access control lists
+have been configured. The count is displayed.
+
+% RBAC_CONFIGURED_COMMANDS RBAC hooks library has configured %1 extra commands.
+Logged at debug log level 40.
+This debug message indicates that some extra commands have been configured.
+The count is displayed.
+
+% RBAC_CONFIGURED_ROLES hooks library has configured %1 roles.
+Logged at debug log level 40.
+This debug message indicates that some roles have been configured. The count
+is displayed.
+
+% RBAC_HTTP_AUTH_ERROR Error in http_auth callout: %1.
+This error messages indicates that an error has been raised in
+http_auth callout by the RBAC hooks library. The argument details the error.
+
+% RBAC_HTTP_AUTH_FAILED RBAC processing in http_auth callout failed for unexpected condition: %1.
+The info message indicates that the RBAC hooks library reached an unexpected
+condition in the http_auth callout point. The reason of the failure is
+summarized and details are available in a debug log.
+
+% RBAC_HTTP_AUTH_REJECT Role configuration '%1' for role '%2' has rejected command '%3'.
+This info message indicates that he command has been rejected in
+http_auth callout. The role configuration name, the role name and the
+command are displayed.
+
+% RBAC_HTTP_AUTH_RESPONSE RBAC hooks library has returned response: %1.
+This info message indicates that the RBAC hooks library has returned
+a response in http_auth callout. The response is summarized.
+
+% RBAC_HTTP_RESPONSE_FAILED RBAC processing in http_response callout failed for unexpected condition: %1.
+The info message indicates that the RBAC hooks library reached an unexpected
+condition in the http_response callout point. The reason of the failure is
+summarized and details are available in a debug log.
+
+% RBAC_LOAD_FAILED RBAC hooks library failed to load: %1.
+This error message indicates that an error occurred attempting to
+load the RBAC hooks library. The argument details the error.
+
+% RBAC_LOAD_OK RBAC hooks library loaded successfully.
+This info message indicates that the RBAC hooks library has
+been loaded successfully.
+
+% RBAC_READ_API_FILES RBAC hooks library read API files from '%1' getting %2 commands, %3 access types and %4 hooks.
+This info message indicates that the RBAC hooks library has read API files
+from the configured directory. The name of the directory and some statistics
+are displayed.
+
+% RBAC_TRACE_HTTP_AUTH_ACCEPT Role configuration '%1' for role '%2' has accepted command '%3'.
+Logged at debug log level 40.
+The command has been accepted in http_auth callout. The role
+configuration name, the role name and the command are displayed.
+
+% RBAC_TRACE_HTTP_AUTH_BAD_BODY_TYPE Bad body type in JSON request in http_auth callout.
+Logged at debug log level 40.
+The http_auth callout has been called with a bad body type in the JSON request.
+The RBAC hooks library immediately returns. This is an error condition.
+
+% RBAC_TRACE_HTTP_AUTH_BAD_COMMAND_TYPE Bad command type in JSON request in http_auth callout.
+Logged at debug log level 40.
+The http_auth callout has been called with a bad command type in the
+JSON request. The RBAC hooks library immediately returns. This is an
+error condition.
+
+% RBAC_TRACE_HTTP_AUTH_COMMAND Command '%1' in http_auth callout.
+Logged at debug log level 40.
+The http_auth callout has been called with the displayed command.
+
+% RBAC_TRACE_HTTP_AUTH_DISABLED RBAC hooks library is disabled in http_auth callout.
+Logged at debug log level 40.
+The http_auth callout has been called with the RBAC hooks library disabled
+i.e. with no role assigned.
+
+% RBAC_TRACE_HTTP_AUTH_EMPTY_BODY Empty body in JSON request in http_auth callout.
+Logged at debug log level 40.
+The http_auth callout has been called with an empty body in the JSON request.
+The RBAC hooks library immediately returns. This is an error condition.
+
+% RBAC_TRACE_HTTP_AUTH_NO_COMMAND No command entry in JSON request in http_auth callout.
+Logged at debug log level 40.
+The http_auth callout has been called without a command entry in the
+JSON request. The RBAC hooks library immediately returns. This is an
+error condition.
+
+% RBAC_TRACE_HTTP_AUTH_NO_JSON No JSON request in http_auth callout.
+Logged at debug log level 40.
+The http_auth callout has been called with a non JSON request. The RBAC hooks
+library immediately returns. This is an error condition.
+
+% RBAC_TRACE_HTTP_AUTH_NO_REQUEST No request in http_auth callout.
+Logged at debug log level 40.
+The http_auth callout has been called without a request. The RBAC hooks library
+immediately returns. This is an error condition.
+
+% RBAC_TRACE_HTTP_AUTH_NO_TLS_REJECT Non TLS request has been rejected.
+Logged at debug log level 40.
+The non TLS request has been rejected in http_auth callout.
+
+% RBAC_TRACE_HTTP_AUTH_RESPONSE Response in http_auth callout: %1.
+Logged at debug log level 40.
+The http_auth callout has been called with a response. The RBAC hooks library
+immediately returns. The response is summarized.
+
+% RBAC_TRACE_HTTP_AUTH_ROLE Assigned role '%1' in http_auth callout.
+Logged at debug log level 40.
+The displayed role has been assigned in the http_auth callout.
+
+% RBAC_TRACE_HTTP_RESPONSE_BAD_BODY_TYPE Bad body type in JSON response in http_response callout.
+Logged at debug log level 40.
+The http_response callout has been called with a bad body type in the
+JSON response which is likely an error response. The RBAC hooks
+library immediately returns.
+
+% RBAC_TRACE_HTTP_RESPONSE_CONTEXT Retrieved command '%1' and role config '%2' in http_response callout.
+Logged at debug log level 40.
+The command and the role config have been retrieved from the request context.
+They are displayed.
+
+% RBAC_TRACE_HTTP_RESPONSE_DISABLED RBAC hooks library is disabled in http_response callout.
+Logged at debug log level 40.
+The http_response callout has been called with the RBAC hooks library disabled
+i.e. with no role assigned.
+
+% RBAC_TRACE_HTTP_RESPONSE_EMPTY_BODY Empty body in JSON response in http_response callout.
+Logged at debug log level 40.
+The http_response callout has been called with an empty body in the
+JSON response. The RBAC hooks library immediately returns. This is an
+error condition.
+
+% RBAC_TRACE_HTTP_RESPONSE_EMPTY_BODY_LIST Empty list in JSON response in http_response callout.
+Logged at debug log level 40.
+The http_response callout has been called with an empty body list in the JSON
+response. The RBAC hooks library immediately returns. This is an error
+condition.
+
+% RBAC_TRACE_HTTP_RESPONSE_MODIFIED The response has been modified by a response filter in http_response callout.
+Logged at debug log level 40.
+A response filter has modified the HTTP response in http_response callout.
+
+% RBAC_TRACE_HTTP_RESPONSE_NO_ARGUMENTS No request or response in http_response callout.
+Logged at debug log level 40.
+The http_response callout has been called without request or response. The RBAC
+hooks library immediately returns. This is an error condition.
+
+% RBAC_UNLOAD_OK RBAC hooks library unloaded successfully.
+This info message indicates that the RBAC hooks library has been
+unloaded successfully.

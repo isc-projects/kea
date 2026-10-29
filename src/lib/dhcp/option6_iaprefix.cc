@@ -49,7 +49,7 @@ Option6IAPrefix::Option6IAPrefix(uint32_t type,
                                  OptionBuffer::const_iterator begin,
                                  OptionBuffer::const_iterator end,
                                  size_t rec_level)
-    :Option6IAAddr(type, begin, end) {
+    : Option6IAAddr(type, begin, end) {
     setEncapsulatedSpace(DHCP6_OPTION_SPACE);
     unpack(begin, end, rec_level);
     // The unpack function always drops the extra bits in prefix so there

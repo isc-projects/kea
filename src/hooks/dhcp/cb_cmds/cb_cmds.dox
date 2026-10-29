@@ -1,0 +1,52 @@
+// Copyright (C) 2026 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+@page libdhcp_cb_cmds Kea Config Backend Commands Hooks Library
+
+Welcome to Kea Config Backend Commands Hooks Library. This documentation is
+addressed at developers who are interested in internal operation of the
+library. This file provides information needed to understand and perhaps
+extend this library.
+
+This documentation is stand-alone: you should have read and
+understood <a href="https://reports.kea.isc.org/dev_guide/">Kea
+Developer's Guide</a> and in particular its section about hooks: <a
+href="https://reports.kea.isc.org/dev_guide/df/d46/hooksdgDevelopersGuide.html">
+Hooks Developer's Guide</a>.
+
+@section cbCmdsOverview Overview
+The @c cb_cmds hooks library provides support for commands to manipulate
+Kea configuration information in the databases via the configuration
+backends. The server receiving those commands must be configured to use
+the configuration backend(s) connected to the database(s) where the
+data is stored. Each command may include a "remote" map which specifies
+the database where the data should be stored or from which the
+data should be fetched.
+
+@section cbCmdsInternals Library Internals
+
+The structure of the library is very simple. The @c cb_cmds_callouts.cc
+file contains the command handlers registered during the library
+initialization. Each such handler calls respective methods of the
+@c ConfigCmdsDhcp4Impl and @c ConfigCmdsDhcp6Impl classes to process
+the commands. The @c ConfigCmdsDhcp4Impl and @c ConfigCmdsDhcp6Impl
+methods are responsible for extracting the commands from the
+provided @c CalloutHandle objects, validating them, running through
+the parsers, processing and returning a response within the
+@c CalloutHandle object.
+
+When possible, the cb_cmds hooks library uses Kea configuration
+parsers (the same that are used to parse configuration information
+from the config file) to parse the data carried in the commands.
+
+@section cbCmdsMTCompatibility Multi-Threading Compatibility
+
+The @c cb_cmds hooks library is compatible with multi-threading.
+(it is orthogonal to the DHCP service).
+
+*/

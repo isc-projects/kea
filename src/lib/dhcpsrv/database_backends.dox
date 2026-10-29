@@ -279,9 +279,9 @@
     operations are submitted in sequence to all alternate backends until
     one finds the entry, deletes it and returns true.
 
-  - the first alternate backend can be a cache (host cache hook library
-    is a premium feature) which avoids to lookup slow databases.
-    For subnet ID and identifier negative caching is optionally supported.
+  - the first alternate backend can be a cache which avoids to lookup slow
+    databases. For subnet ID and identifier negative caching is optionally
+    supported.
 
   - host backends which do not support host collection (as host cache
     and RADIUS) must return an empty collection (so not contributing

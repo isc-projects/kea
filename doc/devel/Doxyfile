@@ -965,6 +965,8 @@ INPUT                  = ../../src/bin/d2 \
                          ../../src/hooks/dhcp/stat_cmds \
                          ../../src/hooks/dhcp/subnet_cmds \
                          ../../src/hooks/dhcp/user_chk \
+                         ../../src/hooks/dhcp/rbac \
+                         ../../src/hooks/dhcp/cb_cmds \
                          ../../src/lib/asiodns \
                          ../../src/lib/asiolink \
                          ../../src/lib/cc \

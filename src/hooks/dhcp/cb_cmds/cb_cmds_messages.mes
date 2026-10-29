@@ -1,0 +1,385 @@
+# Copyright (C) 2026 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+$NAMESPACE isc::cb
+
+% CB_CMDS_CLASS4_DEL_HANDLER_FAILED remote-class4-del command failed: %1
+This error message is issued to indicate that the remote-class4-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_CLASS4_GET_ALL_HANDLER_FAILED remote-class4-get-all command failed: %1
+This error message is issued to indicate that the remote-class4-get-all
+command handler failed while processing the command. The argument provides
+the reason for failure.
+
+% CB_CMDS_CLASS4_GET_HANDLER_FAILED remote-class4-get command failed: %1
+This error message is issued to indicate that the remote-class4-get command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_CLASS4_SET_HANDLER_FAILED remote-class4-set command failed: %1
+This error message is issued to indicate that the remote-class4-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_CLASS6_DEL_HANDLER_FAILED remote-class6-del command failed: %1
+This error message is issued to indicate that the remote-class6-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_CLASS6_GET_ALL_HANDLER_FAILED remote-class6-get-all command failed: %1
+This error message is issued to indicate that the remote-class6-get-all
+command handler failed while processing the command. The argument provides
+the reason for failure.
+
+% CB_CMDS_CLASS6_GET_HANDLER_FAILED remote-class6-get command failed: %1
+This error message is issued to indicate that the remote-class6-get command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_CLASS6_SET_HANDLER_FAILED remote-class6-set command failed: %1
+This error message is issued to indicate that the remote-class6-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_DEINIT_OK unloading cb_cmds hooks library successful
+This informational message indicates that the Config Commands hooks library has
+been unloaded successfully.
+
+% CB_CMDS_GLOBAL_PARAMETER4_DEL_HANDLER_FAILED remote-global-parameter4-del command failed: %1
+This error message is issued to indicate that the remote-global-parameter4-del
+command handler failed while processing the command. The argument provides the
+reason for failure.
+
+% CB_CMDS_GLOBAL_PARAMETER4_GET_ALL_HANDLER_FAILED remote-global-parameter4-get-all command failed: %1
+This error message is issued to indicate that the
+remote-global-parameter4-get-all command handler failed while processing
+the command. The argument provides the reason for failure.
+
+% CB_CMDS_GLOBAL_PARAMETER4_GET_HANDLER_FAILED remote-global-parameter4-get command failed: %1
+This error message is issued to indicate that the remote-global-parameter4-get
+command handler failed while processing the command. The argument provides the
+reason for failure.
+
+% CB_CMDS_GLOBAL_PARAMETER4_SET_HANDLER_FAILED remote-global-parameter4-set command failed: %1
+This error message is issued to indicate that the remote-global-parameter4-set
+command handler failed while processing the command. The argument provides the
+reason for failure.
+
+% CB_CMDS_GLOBAL_PARAMETER6_DEL_HANDLER_FAILED remote-global-parameter6-del command failed: %1
+This error message is issued to indicate that the remote-global-parameter6-del
+command handler failed while processing the command. The argument provides the
+reason for failure.
+
+% CB_CMDS_GLOBAL_PARAMETER6_GET_ALL_HANDLER_FAILED remote-global-parameter6-get-all command failed: %1
+This error message is issued to indicate that the
+remote-global-parameter6-get-all command handler failed while processing
+the command. The argument provides the reason for failure.
+
+% CB_CMDS_GLOBAL_PARAMETER6_GET_HANDLER_FAILED remote-global-parameter6-get command failed: %1
+This error message is issued to indicate that the remote-global-parameter6-get
+command handler failed while processing the command. The argument provides the
+reason for failure.
+
+% CB_CMDS_GLOBAL_PARAMETER6_SET_HANDLER_FAILED remote-global-parameter6-set command failed: %1
+This error message is issued to indicate that the remote-global-parameter6-set
+command handler failed while processing the command. The argument provides the
+reason for failure.
+
+% CB_CMDS_INIT_OK loading cb_cmds hooks library successful
+This informational message indicates that the Config Commands hooks library has
+been loaded successfully. Enjoy!
+
+% CB_CMDS_NETWORK4_DEL_HANDLER_FAILED remote-network4-del command failed: %1
+This error message is issued to indicate that the remote-network4-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_NETWORK4_GET_HANDLER_FAILED remote-network4-get command failed: %1
+This error message is issued to indicate that the remote-network4-get command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_NETWORK4_LIST_HANDLER_FAILED remote-network4-list command failed: %1
+This error message is issued to indicate that the remote-network4-list
+command handler failed while processing the command. The argument provides
+the reason for failure.
+
+% CB_CMDS_NETWORK4_SET_HANDLER_FAILED remote-network4-set command failed: %1
+This error message is issued to indicate that the remote-network4-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_NETWORK6_DEL_HANDLER_FAILED remote-network6-del command failed: %1
+This error message is issued to indicate that the remote-network6-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_NETWORK6_GET_HANDLER_FAILED remote-network6-get command failed: %1
+This error message is issued to indicate that the remote-network6-get command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_NETWORK6_LIST_HANDLER_FAILED remote-network6-list command failed: %1
+This error message is issued to indicate that the remote-network6-list
+command handler failed while processing the command. The argument provides
+the reason for failure.
+
+% CB_CMDS_NETWORK6_SET_HANDLER_FAILED remote-network6-set command failed: %1
+This error message is issued to indicate that the remote-network6-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION4_GLOBAL_DEL_HANDLER_FAILED remote-global-option4-del command failed: %1
+This error message is issued to indicate that the remote-global-option4-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION4_GLOBAL_GET_ALL_HANDLER_FAILED remote-global-option4-get-all command failed: %1
+This error message is issued to indicate that the remote-global-option4-get-all
+command handler failed while processing the command. The argument provides
+the reason for failure.
+
+% CB_CMDS_OPTION4_GLOBAL_GET_HANDLER_FAILED remote-global-option4-get command failed: %1
+This error message is issued to indicate that the remote-global-option4-get command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION4_GLOBAL_SET_HANDLER_FAILED remote-global-option4-set command failed: %1
+This error message is issued to indicate that the remote-global-option4-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION4_NETWORK_DEL_HANDLER_FAILED remote-network-option4-del command failed: %1
+This error message is issued to indicate that the remote-network-option4-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION4_NETWORK_SET_HANDLER_FAILED remote-network-option4-set command failed: %1
+This error message is issued to indicate that the remote-network-option4-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION4_POOL_DEL_HANDLER_FAILED remote-pool-option4-del command failed: %1
+This error message is issued to indicate that the remote-pool-option4-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION4_POOL_SET_HANDLER_FAILED remote-pool-option4-set command failed: %1
+This error message is issued to indicate that the remote-pool-option4-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION4_SUBNET_DEL_HANDLER_FAILED remote-subnet-option4-del command failed: %1
+This error message is issued to indicate that the remote-subnet-option4-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION4_SUBNET_SET_HANDLER_FAILED remote-subnet-option4-set command failed: %1
+This error message is issued to indicate that the remote-subnet-option4-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION6_GLOBAL_DEL_HANDLER_FAILED remote-global-option6-del command failed: %1
+This error message is issued to indicate that the remote-global-option6-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION6_GLOBAL_GET_ALL_HANDLER_FAILED remote-global-option6-get-all command failed: %1
+This error message is issued to indicate that the remote-global-option6-get-all
+command handler failed while processing the command. The argument provides
+the reason for failure.
+
+% CB_CMDS_OPTION6_GLOBAL_GET_HANDLER_FAILED remote-global-option6-get command failed: %1
+This error message is issued to indicate that the remote-global-option6-get command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION6_GLOBAL_SET_HANDLER_FAILED remote-global-option6-set command failed: %1
+This error message is issued to indicate that the remote-global-option6-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION6_NETWORK_DEL_HANDLER_FAILED remote-network-option6-del command failed: %1
+This error message is issued to indicate that the remote-network-option6-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION6_NETWORK_SET_HANDLER_FAILED remote-network-option6-set command failed: %1
+This error message is issued to indicate that the remote-network-option6-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION6_PD_POOL_DEL_HANDLER_FAILED remote-pd-pool-option6-del command failed: %1
+This error message is issued to indicate that the remote-pd-pool-option6-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION6_PD_POOL_SET_HANDLER_FAILED remote-pd-pool-option6-set command failed: %1
+This error message is issued to indicate that the remote-pd-pool-option6-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION6_POOL_DEL_HANDLER_FAILED remote-pool-option6-del command failed: %1
+This error message is issued to indicate that the remote-pool-option6-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION6_POOL_SET_HANDLER_FAILED remote-pool-option6-set command failed: %1
+This error message is issued to indicate that the remote-pool-option6-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION6_SUBNET_DEL_HANDLER_FAILED remote-subnet-option6-del command failed: %1
+This error message is issued to indicate that the remote-subnet-option6-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION6_SUBNET_SET_HANDLER_FAILED remote-subnet-option6-set command failed: %1
+This error message is issued to indicate that the remote-subnet-option6-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION_DEF4_DEL_HANDLER_FAILED remote-option-def4-del command failed: %1
+This error message is issued to indicate that the remote-option-def4-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION_DEF4_GET_ALL_HANDLER_FAILED remote-option-def4-get-all command failed: %1
+This error message is issued to indicate that the remote-option-def4-get-all
+command handler failed while processing the command. The argument provides
+the reason for failure.
+
+% CB_CMDS_OPTION_DEF4_GET_HANDLER_FAILED remote-option-def4-get command failed: %1
+This error message is issued to indicate that the remote-option-def4-get command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION_DEF4_SET_HANDLER_FAILED remote-option-def4-set command failed: %1
+This error message is issued to indicate that the remote-option-def4-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION_DEF6_DEL_HANDLER_FAILED remote-option-def6-del command failed: %1
+This error message is issued to indicate that the remote-option-def6-del command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION_DEF6_GET_ALL_HANDLER_FAILED remote-option-def6-get-all command failed: %1
+This error message is issued to indicate that the remote-option-def6-get-all
+command handler failed while processing the command. The argument provides
+the reason for failure.
+
+% CB_CMDS_OPTION_DEF6_GET_HANDLER_FAILED remote-option-def6-get command failed: %1
+This error message is issued to indicate that the remote-option-def6-get command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_OPTION_DEF6_SET_HANDLER_FAILED remote-option-def6-set command failed: %1
+This error message is issued to indicate that the remote-option-def6-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_SERVER4_DEL_HANDLER_FAILED remote-server4-del command failed: %1
+This error message is issued to indicate that the remote-server4-del
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+% CB_CMDS_SERVER4_GET_ALL_HANDLER_FAILED remote-server4-get-all command failed: %1
+This error message is issued to indicate that the remote-server4-get-all
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+% CB_CMDS_SERVER4_GET_HANDLER_FAILED remote-server4-get command failed: %1
+This error message is issued to indicate that the remote-server4-get
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+% CB_CMDS_SERVER4_SET_HANDLER_FAILED remote-server4-set command failed: %1
+This error message is issued to indicate that the remote-server4-set
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+% CB_CMDS_SERVER6_DEL_HANDLER_FAILED remote-server6-del command failed: %1
+This error message is issued to indicate that the remote-server6-del
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+% CB_CMDS_SERVER6_GET_ALL_HANDLER_FAILED remote-server6-get-all command failed: %1
+This error message is issued to indicate that the remote-server6-get-all
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+% CB_CMDS_SERVER6_GET_HANDLER_FAILED remote-server6-get command failed: %1
+This error message is issued to indicate that the remote-server6-get
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+% CB_CMDS_SERVER6_SET_HANDLER_FAILED remote-server6-set command failed: %1
+This error message is issued to indicate that the remote-server6-set
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+% CB_CMDS_SUBNET4_DEL_BY_ID_HANDLER_FAILED remote-subnet4-del-by-id command failed: %1
+This error message is issued to indicate that the remote-subnet4-del-by-id
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+% CB_CMDS_SUBNET4_DEL_BY_PREFIX_HANDLER_FAILED remote-subnet4-del-by-prefix command failed: %1
+This error message is issued to indicate that the remote-subnet4-del-by-prefix
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+% CB_CMDS_SUBNET4_GET_BY_ID_HANDLER_FAILED remote-subnet4-get-by-id command failed: %1
+This error message is issued to indicate that the remote-subnet4-get-by-id
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+% CB_CMDS_SUBNET4_GET_BY_PREFIX_HANDLER_FAILED remote-subnet4-get-by-prefix command failed: %1
+This error message is issued to indicate that the remote-subnet4-get-by-prefix
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+% CB_CMDS_SUBNET4_LIST_HANDLER_FAILED remote-subnet4-list command failed: %1
+This error message is issued to indicate that the remote-subnet4-list
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+% CB_CMDS_SUBNET4_SET_HANDLER_FAILED remote-subnet4-set command failed: %1
+This error message is issued to indicate that the remote-subnet4-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
+% CB_CMDS_SUBNET6_DEL_BY_ID_HANDLER_FAILED remote-subnet6-del-by-id command failed: %1
+This error message is issued to indicate that the remote-subnet6-del-by-id
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+% CB_CMDS_SUBNET6_DEL_BY_PREFIX_HANDLER_FAILED remote-subnet6-del-by-prefix command failed: %1
+This error message is issued to indicate that the remote-subnet6-del-by-prefix
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+% CB_CMDS_SUBNET6_GET_BY_ID_HANDLER_FAILED remote-subnet6-get-by-id command failed: %1
+This error message is issued to indicate that the remote-subnet6-get-by-id
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+% CB_CMDS_SUBNET6_GET_BY_PREFIX_HANDLER_FAILED remote-subnet6-get-by-prefix command failed: %1
+This error message is issued to indicate that the remote-subnet6-get-by-prefix
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+% CB_CMDS_SUBNET6_LIST_HANDLER_FAILED remote-subnet6-list command failed: %1
+This error message is issued to indicate that the remote-subnet6-list
+command handler failed while processing the command. The argument
+provides the reason for failure.
+
+% CB_CMDS_SUBNET6_SET_HANDLER_FAILED remote-subnet6-set command failed: %1
+This error message is issued to indicate that the remote-subnet6-set command
+handler failed while processing the command. The argument provides the reason
+for failure.

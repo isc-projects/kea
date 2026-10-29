@@ -16,11 +16,6 @@ cd "${root_path}"
 # Write to .gitattributes.
 find . -mindepth 2 -type f -name '.gitattributes' -exec rm -f {} \;
 for i in $(./tools/print-generated-files.sh); do
-    # We need to be lenient because we call this script in premium too. Files might not exist.
-    if test ! -f "${i}"; then
-        continue
-    fi
-
     # Align to 32 characters.
     dir=$(dirname "${i}")
     name="/$(basename "${i}")"

@@ -314,9 +314,7 @@ CommandCreator::insertService(ConstElementPtr& command,
 
     // We have no better way of setting a new element here than
     // doing const pointer cast. That's another reason why this
-    // functionality could be moved to the core code. We don't
-    // do it however, because we want to minimize concurrent
-    // code changes in the premium and core Kea repos.
+    // functionality could be moved to the core code.
     (boost::const_pointer_cast<Element>(command))->set("service", service);
 }
 

@@ -21,7 +21,7 @@ Primary developers:
  - Wlodek Wencel (testing, release engineering, hammer, perfdhcp)
  - Francis Dupont (crypto, flex/bison parsers, perfdhcp, control agent,
                    radius, netconf, config backend, multi-threading,
-                   GSS-TSIG, bulk leasequery)
+                   GSS-TSIG, bulk leasequery, rbac)
  - Razvan Becheriu (cassandra, netconf, multi-threading, forensic logging,
                     run script hook, multi-threading mode of high availability,
                     GSS-TSIG, statistics, fuzzing)

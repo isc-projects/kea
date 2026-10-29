@@ -1,3 +1,17 @@
+2574.	[func]		razvan
+	The following hook libraries are now open source:
+	for the kea-dhcp4 and the kea-dhcp6 servers
+	'libdhcp_cb_cmds', and 'libdhcp_rbac'.
+	(Gitlab #4889)
+
+2573.	[func]		razvan
+	Added the 'down' state to the high availability service
+	which makes it possible for the peer to transition to the
+	'partner-down' state in case of a lease database connection
+	loss. This ensures that the DHCP traffic is handled by the
+	peer until the situation is redetiated.
+	(Gitlab #4226)
+
 Kea 3.3.3 (development) released on October 28, 2026
 
 2572.	[bug]		fdupont
