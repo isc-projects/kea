@@ -6,7 +6,7 @@ about: Create a new issue using this checklist for each release.
 # Kea Release Checklist
 
 The Gitlab issue for this checklist can be created using QA script [create-release-checklist-gitlab-issue.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/release/create-release-checklist-gitlab-issue.py) with the advantage that it crosses out all the bullet points that do not apply to this release.
-   * Example command: `GITLAB_TOKEN='...' ./create-release-checklist-gitlab-issue.py 1.2.3 'stable,security'`.
+   * Example command: `GITLAB_TOKEN='...' ./create-release-checklist-gitlab-issue.py A.B.C 'stable,security'`.
 
 #### Legend
 
@@ -52,7 +52,7 @@ Some of these checks and updates can be made before the actual freeze.
 1. [ ] Check [Performance Test Results](https://jenkins.aws.isc.org/job/kea-dev/job/performance/lastSuccessfulBuild/artifact/qa-dhcp/kea/performance-jenkins/report.html) in Jenkins for drops in performance.
 1. [ ] Create a Gitlab issue for bumping up library versions and `KEA_HOOKS_VERSION` and notify developers.
    * You can use QA script [create-bump-up-lib-versions-gitlab-issue.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/release/create-bump-up-lib-versions-gitlab-issue.py)
-   * Example command: `GITLAB_TOKEN='...' ./create-bump-up-lib-versions-gitlab-issue.py 1.2.3`.
+   * Example command: `GITLAB_TOKEN='...' ./create-bump-up-lib-versions-gitlab-issue.py A.B.C`.
    * In case of no developers available, it can be done by running: [./tools/bump-lib-versions.sh](https://gitlab.isc.org/isc-projects/kea/-/blob/master/tools/bump-lib-versions.sh).
    * Example command: `./tools/bump-lib-versions.sh`
    * [ ] <mark>🟩 Stable</mark>: The target version needs to be provided. Call `./tools/bump-lib-versions.sh Kea-A.B.C` instead.
@@ -62,7 +62,7 @@ Some of these checks and updates can be made before the actual freeze.
 1. [ ] If any changes have been made to database schemas, then:
    1. [ ] Check that a previously released schema has not been changed.
    1. [ ] Check that the additions to `dhcpdb_create.*sql`, and nothing more nor less than what was added in this release, is present in a `upgrade_*_to_*.sh.in` script that should also have been added in this release.
-1. [ ] Create a draft of the release notes on the [Kea GitLab wiki](https://gitlab.isc.org/isc-projects/kea/-/wikis/home). It should be created under [the Release-Notes directory](https://gitlab.isc.org/isc-projects/kea/-/wikis/Release-Notes), like this one: <https://gitlab.isc.org/isc-projects/kea/-/wikis/Release-Notes/release-notes-2.3.4>.
+1. [ ] Create a draft of the release notes on the [Kea GitLab wiki](https://gitlab.isc.org/isc-projects/kea/-/wikis/home). It should be created under [the Release-Notes directory](https://gitlab.isc.org/isc-projects/kea/-/wikis/Release-Notes), like this one: <https://gitlab.isc.org/isc-projects/kea/-/wikis/Release-Notes/release-notes-A.B.C>.
     1. [ ] <mark>🟥 Security</mark>: Use the private Kea Gitlab wiki instead: <https://gitlab.isc.org/isc-private/kea/-/wikis/Release-Notes>.
 1. [ ] Notify Tomek that the draft is ready to be redacted.
 1. [ ] Check if ReadTheDocs can build Kea documentation. Alternatively, look for failures in emails if you know that the ReadTheDocs webhook is working.
@@ -75,7 +75,7 @@ The following steps may involve changing files in the repository.
    Example command: `GITLAB_TOKEN='...' ./sync-repos.py --source-project isc-projects/kea --target-project isc-private/kea --branch master`.
    Example command: `GITLAB_TOKEN='...' ./sync-repos.py --source-project isc-projects/forge --target-project isc-private/forge --branch master`.
 1. [ ] Run QA script [update-code-for-release.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/release/update-code-for-release.py). \
-   Example command: `GITLAB_TOKEN='...' ./update-code-for-release.py 2.3.4 --repo-dir ~/isc/repos/kea/`.
+   Example command: `GITLAB_TOKEN='...' ./update-code-for-release.py A.B.C --repo-dir ~/isc/repos/kea/`.
    * [ ] <mark>🟩 Stable or 🟨 Maintenance</mark>: Run from branch `v*_*` of `qa-dhcp`.
    * [ ] <mark>🟥 Security</mark>: Pass the `--cve` parameter.
    The script makes the following changes and actions:
@@ -176,7 +176,7 @@ Now it's time to publish the code.
     1. [ ] <mark>🟥 Security</mark>: Run it for project `isc-private/kea` instead.
     * It will create tags automatically for other repos of interest too.
     * [ ] <mark>🟩 Stable</mark>: It will also create stable branches.
-    * Example command: `./sign-tag.py --project isc-projects/kea --tag Kea-2.3.4 --branch master --key 0259A33B5F5A3A4466CF345C7A5E084CACA51884`
+    * Example command: `./sign-tag.py --project isc-projects/kea --tag Kea-A.B.C --branch master --key 0259A33B5F5A3A4466CF345C7A5E084CACA51884`
     * To get the fingerprint, run `gpg --list-keys wlodek@isc.org`.
 1. [ ] Upload final tarballs & release notes to repo.isc.org.
     1. Go to [release-tarball-upload](https://jenkins.aws.isc.org/job/kea-dev/job/release-tarball-upload/) Jenkins job.
@@ -188,21 +188,21 @@ Now it's time to publish the code.
        * Create Gitlab releases `Kea-A.B.C` in Kea main and premium repositories.
     1. [ ] <mark>🟥 Security</mark>: Tick the `CVE` parameter.
 1. [ ] Sign the tarballs. Run QA script [sign_kea_and_upload_asc.sh](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/release/sign_kea_and_upload_asc.sh).
-    * Example command: `./sign_kea_and_upload_asc.sh 2.3.4 wlodek 0259A33B5F5A3A4466CF345C7A5E084CACA51884`
+    * Example command: `./sign_kea_and_upload_asc.sh A.B.C wlodek 0259A33B5F5A3A4466CF345C7A5E084CACA51884`
     * To get the fingerprint, run `gpg --list-keys wlodek@isc.org`.
     * Fallback if it does not work:
         1. Download the tarballs from `repo.isc.org:/data/shared/sweng/kea/releases/x.y.z/*-x.y.z.tar.gz`.
         1. Sign them.
         1. Upload the public signature at `/data/shared/sweng/kea/releases/x.y.z/*-x.y.z.tar.gz.asc`.
 1. [ ] Confirm that the tarballs have the checksums mentioned on the signing ticket.
-    * Example command: `ssh repo.isc.org 'sha256sum /data/shared/sweng/kea/releases/*2.3.4/*.tar.xz'`
+    * Example command: `ssh repo.isc.org 'sha256sum /data/shared/sweng/kea/releases/*A.B.C/*.tar.xz'`
 1. [ ] <mark>🟥 Security</mark>: Wait for clearance from Incident Manager to proceed with the private release. Usually on T-5.
 1. [ ] Login to repo.isc.org and upload the final tarball to public ftp using the make-available script.
     * [ ] <mark>🟥 Security</mark>: Pass the `--private` flag instead of `--public` even for the core tarball. Save the links. Put them in the CVE ticket as an internal note.
     * [ ] For the subscriber tarball, run again with the `--private` flag instead of `--public`.
     * Example commands:
-      * `make-available --public --symlink=cur/2.3 /data/shared/sweng/kea/releases/2.3.4`
-      * `make-available --private --symlink=cur/2.3 /data/shared/sweng/kea/releases/subscriber-2.3.4`
+      * `make-available --public --symlink=cur/2.3 /data/shared/sweng/kea/releases/A.B.C`
+      * `make-available --private --symlink=cur/2.3 /data/shared/sweng/kea/releases/subscriber-A.B.C`
     * For more information, use the `--debug` option.
     * To overwrite existing content, use `--force` option.
     * If you made a mistake, contact ASAP someone from the ops team to remove incorrectly uploaded tarballs.
@@ -210,8 +210,8 @@ Now it's time to publish the code.
 1. Upload final APK, DEB & RPM packages, tarballs and signature files to cloudsmith.io:
     1. [ ] If you uploaded packages to testing repo previously, you can copy them over instantaneously. Run script [copy-packages-between-cloudsmith-repos.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/repo-management/copy-packages-between-cloudsmith-repos.py) \
         * Example commands:
-            * `./copy-packages-between-cloudsmith-repos.py -v 2.3.4 --from kea-dev-testing --to kea-dev`
-            * `./copy-packages-between-cloudsmith-repos.py -v 2.3.4 --from kea-dev-prv-testing --to kea-dev-prv --premium`
+            * `./copy-packages-between-cloudsmith-repos.py -v A.B.C --from kea-dev-testing --to kea-dev`
+            * `./copy-packages-between-cloudsmith-repos.py -v A.B.C --from kea-dev-prv-testing --to kea-dev-prv --premium`
         1. [ ] <mark>🟥 Security</mark>: Use only the premium run from the second example, since the core tarballs should also be in the private repo. You could run the command on the core repos too, but it shouldn't do anything.
         1. [ ] Remember to upload tarballs too. Run [release-upload-to-cloudsmith](https://jenkins.aws.isc.org/job/kea-dev/job/release-upload-to-cloudsmith/) with `TarballOrPkg: "tarballs"`. The other parameters should be: `PrivPubRepos: "both"`, `TestProdRepos: "production"`. Click `Build`.
             1. [ ] <mark>🟥 Security</mark>: Tick the `CVE` parameter.
@@ -225,7 +225,7 @@ Now it's time to publish the code.
 1. [ ] <mark>🟥 Security</mark>: Run make-available again with `--public` instead of `--private` for the core tarball.
 1. [ ] <mark>🟥 Security</mark>: Copy public packages from `-prv` Cloudsmith repo to public.
     * You can use script [copy-missing-public-packages-between-cloudsmith-repos.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/repo-management/copy-missing-public-packages-between-cloudsmith-repos.py) \
-      Example command: `./copy-missing-public-packages-between-cloudsmith-repos.py -v 2.3.4`.
+      Example command: `./copy-missing-public-packages-between-cloudsmith-repos.py -v A.B.C`.
     * Or you can use the Cloudsmith GUI. Consider using the filter from the script in the previous bullet point.
 1. [ ] Build and upload Docker images to Cloudsmith. Run Jenkins job [build-upload-docker](https://jenkins.aws.isc.org/job/kea-dev/job/build-upload-docker/).
     * Make sure the right package job is selected under `Packages`.
@@ -246,7 +246,7 @@ Now it's time to publish the code.
   git remote add public git@gitlab.isc.org:isc-projects/kea.git
   git remote update
   git pull --tags
-  git push Kea-2.3.4 public
+  git push Kea-A.B.C public
   ```
 1. [ ] <mark>🟥 Security</mark>: Gitlab Releases were not created on public repo because of missing tags. A quick way to create them is to run [add-missing-releases.sh](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/release/add-missing-releases.sh)
 1. [ ] <mark>Latest 🟩 Stable</mark>: Recreate the `stable` tag. Go to [the stable tag](https://gitlab.isc.org/isc-projects/kea/-/tags/stable), click `Delete tag`, then `New tag`, `Tag name`: `stable`, `Create from`: `Kea-A.B.C`.
