@@ -268,15 +268,15 @@ Now it's time to publish the code.
 ## Marketing
 
 1. [ ] Write blog article (if a major release).
-1. [ ] Check that the tarballs are available on Cloudsmith. The downloads page points to downloads.isc.org now, but for packages and especially subscriber-only hooks, users must install from Cloudsmith.
+1. [ ] Check that the tarballs are available on Cloudsmith. The downloads page points to both downloads.isc.org (source tarball) and Cloudsmith (packages).
 1. [ ] Publish links to downloads on the ISC website. Update release dates and check EOL dates.
 1. [ ] <mark>🟥 Security</mark>: Update the security releases version table in the downloads data file on the website. This information is used by Stork to flag new security versions.
 1. [ ] <mark>🟩 Stable</mark>: If it is a new `major.minor` version, SWENG will have created a new repo in Cloudsmith, which will need the customer tokens migrated from an existing repo. Verify that the KB on installing from Cloudsmith has also been updated. When posting a new Stable major version, you will also need to update the Cloudsmith repo location on the downloads page.
    * If the tokens were not migrated, contact QA team and coordinate fix.
-1. [ ] Announce release to support subscribers using the read-only Kea Announce queue, if a major version or other significant change to stable version.  Note that this announcement is different from the public announcement because you want to include the -prv repo information for the subscription hooks.
-1. [ ] Send announcement email to _kea-announce_. Highlight breaking changes, if any. NB - we use Printing press for this now.
+1. [ ] Announce release to support subscribers using the read-only Kea Announce queue; copy the text from the previous release's announcement and update the links. Include information about using a token to download software from the private repos, which is not to be included in the public announcement. (Do not include direct links to the private Cloudsmith repos; customers cannot access those.)
+1. [ ] Send announcement email to _kea-announce_. Again, look at the previous release's announcement and update it as needed. Highlight breaking changes, if any.
 1. [ ] Update "Release Schedule" document in RT with current versions and next planned release.
-1. [ ] Send announcement email to _kea-users_ (if a major release). Highlight breaking changes, if any.
+1. [ ] Send announcement email to _kea-users_ (only for major releases). Highlight breaking changes, if any.
 1. [ ] Announce on social media.
 1. [ ] Update [Wikipedia entry for Kea](https://en.wikipedia.org/wiki/Kea\_(software)).
 1. [ ] Update [Kea page on website if any new hooks](https://www.isc.org/kea/).
