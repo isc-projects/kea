@@ -164,6 +164,10 @@ public:
 
     /// \brief Creates an address from over wire data.
     ///
+    /// \note Possible lengths for data array are 0 (will throw),
+    /// at least 4 (IPv4) or at least 16 (IPv6). Only the null
+    /// pointer case is checked, other insane cases can crash.
+    ///
     /// \param family AF_INET for IPv4 or AF_INET6 for IPv6.
     /// \param data pointer to first char of data
     ///

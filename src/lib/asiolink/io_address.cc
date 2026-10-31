@@ -17,6 +17,7 @@
 #include <stdint.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <cstring>
 
 #if BOOST_VERSION < 106600
 #error "Boost ASIO older than 1.66 are not supported"
@@ -63,18 +64,20 @@ IOAddress::toText() const {
 
 IOAddress
 IOAddress::fromBytes(short family, const uint8_t* data) {
-    if (data == NULL) {
+    if (!data) {
         isc_throw(BadValue, "NULL pointer received.");
-    } else if ((family != AF_INET) && (family != AF_INET6)) {
+    } else if (family == AF_INET) {
+        boost::asio::ip::address_v4::bytes_type bytes4;
+        memcpy(bytes4.data(), data, bytes4.size());
+        return IOAddress(boost::asio::ip::address_v4(bytes4));
+    } else if (family == AF_INET6) {
+        boost::asio::ip::address_v6::bytes_type bytes6;
+        memcpy(bytes6.data(), data, bytes6.size());
+        return IOAddress(boost::asio::ip::address_v6(bytes6));
+    } else {
         isc_throw(BadValue, "Invalid family type. Only AF_INET and AF_INET6"
                   << "are supported");
     }
-
-    static_assert(INET6_ADDRSTRLEN >= INET_ADDRSTRLEN,
-                  "INET6_ADDRSTRLEN >= INET_ADDRSTRLEN");
-    char addr_str[INET6_ADDRSTRLEN];
-    inet_ntop(family, data, addr_str, INET6_ADDRSTRLEN);
-    return IOAddress(string(addr_str));
 }
 
 std::vector<uint8_t>
