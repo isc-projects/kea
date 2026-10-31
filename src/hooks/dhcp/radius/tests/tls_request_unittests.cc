@@ -4,12 +4,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-/// @file This file contains tests which exercise the load and unload
-/// functions in the Radius hooks library. In order to test the load
-/// function, one must be able to pass it hook library parameters. The
-/// the only way to populate these parameters is by actually loading the
-/// library via HooksManager::loadLibraries().
-
 #include <config.h>
 
 #include <asiolink/asio_wrapper.h>
@@ -69,21 +63,35 @@ const char* CONFIGS[] = {
 "    },\n"
 "    \"protocol\": \"TLS\",\n"
 "    \"retries\": 0,\n"
-"    \"timeout\": 1 }\n"
+"    \"timeout\": 1\n"
+"}\n"
 };
 
 /// @brief Class for callbacks.
 class Callback {
 public:
 
+    /// @brief The enum defining the use type: read or write.
+    enum TYPE {
+        READ,
+        WRITE
+    };
+
     /// @brief Constructor.
     ///
+    /// @param server The server.
+    /// @param type The usage type: read or write.
+    /// @param buffer The buffer used to read or write data.
     /// @param error_code Reference to the error code.
     /// @param size Reference to the returned size.
     /// @param flag Reference to called flag.
-    Callback(boost::system::error_code& error_code,
-             size_t& size, atomic<bool>& flag)
-        : error_code_(error_code), size_(size), called_(flag) { }
+    /// @param expected The expected data size to read or write.
+    Callback(boost::shared_ptr<TlsStreamImpl> server, enum TYPE type, vector<uint8_t> buffer,
+             boost::system::error_code& error_code, size_t& size,  atomic<bool>& flag,
+             size_t expected)
+        : server_(server), type_(type), buffer_(buffer), error_code_(error_code), size_(size),
+          called_(flag), expected_(expected) {
+        }
 
     /// @brief Callback.
     ///
@@ -100,9 +108,33 @@ public:
     /// @param size Size.
     void operator()(boost::system::error_code ec, size_t size) {
         error_code_ = ec;
-        size_ = size;
-        called_ = true;
+        if (ec) {
+            size_ = 0;
+            called_ = true;
+            return;
+        }
+        size_ += size;
+        if (expected_ && size_ < expected_) {
+            if (type_ == WRITE) {
+                server_->async_write_some(boost::asio::buffer(&buffer_[0] + size_, expected_ - size_),
+                                          *this);
+            } else {
+                server_->async_read_some(boost::asio::buffer(&buffer_[0] + size_, expected_ - size_),
+                                         *this);
+            }
+        } else {
+            called_ = true;
+        }
     }
+
+    /// @brief Fake server socket.
+    boost::shared_ptr<TlsStreamImpl> server_;
+
+    /// @brief The use type: read or write.
+    enum TYPE type_;
+
+    /// @brief The buffer used to read or write data.
+    vector<uint8_t> &buffer_;
 
     /// @brief Error code.
     boost::system::error_code& error_code_;
@@ -112,6 +144,9 @@ public:
 
     /// @brief Called flag.
     atomic<bool>& called_;
+
+    /// @brief Expected size of the data to read or write.
+    size_t expected_;
 };
 
 /// @brief Test fixture for testing synchronous communication for
@@ -200,12 +235,13 @@ public:
 
     /// @brief Done authentication handler.
     ///
-    /// @param handler Handler to the RadiusAsyncAuth.
+    /// @param result The result of the request.
+    /// @param received The authentication attributes.
     void doneAuth(int result, AttributesPtr received);
 
     /// @brief Done accounting handler.
     ///
-    /// @param handler Handler to the RadiusAsyncAcct.
+    /// @param result The result of the request.
     void doneAcct(int result);
 
     /// @brief Run a request handler i.e. the client part.
@@ -229,7 +265,7 @@ public:
     ba::tcp::acceptor acceptor_;
 
     /// @brief Fake server socket.
-    boost::scoped_ptr<TlsStreamImpl> server_;
+    boost::shared_ptr<TlsStreamImpl> server_;
 
      /// @brief Accept error code.
     boost::system::error_code accept_error_code_;
@@ -451,10 +487,10 @@ TEST_F(TlsRequestTest, noResponse) {
 
     // Push a receiver on the socket.
     size_t size = 0;
-    Callback receive_callback(receive_error_code_, size, received_);
-    server_->async_read_some(
-        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
-        receive_callback);
+    Callback receive_callback(server_, Callback::READ, receive_buffer_, receive_error_code_, size,
+                              received_, 56U);
+    server_->async_read_some(boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
+                             receive_callback);
 
     // Busy loop.
     while ((!received_ || !finished_) && !timeout_) {
@@ -566,10 +602,10 @@ TEST_F(TlsRequestTest, accept) {
 
     // Push a receiver on the socket.
     size_t size = 0;
-    Callback receive_callback(receive_error_code_, size, received_);
-    server_->async_read_some(
-        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
-        receive_callback);
+    Callback receive_callback(server_, Callback::READ, receive_buffer_, receive_error_code_, size,
+                              received_, 50U);
+    server_->async_read_some(boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
+                             receive_callback);
 
     // Busy loop.
     while (!received_ && !timeout_) {
@@ -611,10 +647,10 @@ TEST_F(TlsRequestTest, accept) {
 
     // Push a sender on the socket.
     size_t sent_size = 0;
-    Callback send_callback(send_error_code_, sent_size, sent_);
-    boost::asio::async_write(*server_,
-                             boost::asio::buffer(&send_buffer_[0], size),
-                             send_callback);
+    Callback send_callback(server_, Callback::WRITE, send_buffer_, send_error_code_, sent_size,
+                           sent_, size);
+    server_->async_write_some(boost::asio::buffer(&send_buffer_[0], size),
+                              send_callback);
 
     // Second busy loop.
     while ((!sent_ || !finished_) && !timeout_) {
@@ -681,10 +717,10 @@ TEST_F(TlsRequestTest, response) {
 
     // Push a receiver on the socket.
     size_t size = 0;
-    Callback receive_callback(receive_error_code_, size, received_);
-    server_->async_read_some(
-        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
-        receive_callback);
+    Callback receive_callback(server_, Callback::READ, receive_buffer_, receive_error_code_, size,
+                              received_, 56U);
+    server_->async_read_some(boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
+                             receive_callback);
 
     // Busy loop.
     while (!received_ && !timeout_) {
@@ -724,10 +760,10 @@ TEST_F(TlsRequestTest, response) {
 
     // Push a sender on the socket.
     size_t sent_size = 0;
-    Callback send_callback(send_error_code_, sent_size, sent_);
-    boost::asio::async_write(*server_,
-                             boost::asio::buffer(&send_buffer_[0], size),
-                             send_callback);
+    Callback send_callback(server_, Callback::WRITE, send_buffer_, send_error_code_, sent_size,
+                           sent_, size);
+    server_->async_write_some(boost::asio::buffer(&send_buffer_[0], size),
+                              send_callback);
 
     // Second busy loop.
     while ((!sent_ || !finished_) && !timeout_) {
@@ -788,10 +824,10 @@ TEST_F(TlsRequestTest, badAccept) {
 
     // Push a receiver on the socket.
     size_t size = 0;
-    Callback receive_callback(receive_error_code_, size, received_);
-    server_->async_read_some(
-        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
-        receive_callback);
+    Callback receive_callback(server_, Callback::READ, receive_buffer_, receive_error_code_, size,
+                              received_, 50U);
+    server_->async_read_some(boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
+                             receive_callback);
 
     // Busy loop.
     while (!received_ && !timeout_) {
@@ -834,10 +870,10 @@ TEST_F(TlsRequestTest, badAccept) {
 
     // Push a sender on the socket.
     size_t sent_size = 0;
-    Callback send_callback(send_error_code_, sent_size, sent_);
-    boost::asio::async_write(*server_,
-                             boost::asio::buffer(&send_buffer_[0], size),
-                             send_callback);
+    Callback send_callback(server_, Callback::WRITE, send_buffer_, send_error_code_, sent_size,
+                           sent_, size);
+    server_->async_write_some(boost::asio::buffer(&send_buffer_[0], size),
+                              send_callback);
 
     // Second busy loop.
     while ((!sent_ || !finished_) && !timeout_) {
@@ -904,10 +940,10 @@ TEST_F(TlsRequestTest, badResponse) {
 
     // Push a receiver on the socket.
     size_t size = 0;
-    Callback receive_callback(receive_error_code_, size, received_);
-    server_->async_read_some(
-        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
-        receive_callback);
+    Callback receive_callback(server_, Callback::READ, receive_buffer_, receive_error_code_, size,
+                              received_, 56U);
+    server_->async_read_some(boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
+                             receive_callback);
 
     // Busy loop.
     while (!received_ && !timeout_) {
@@ -948,10 +984,10 @@ TEST_F(TlsRequestTest, badResponse) {
 
     // Push a sender on the socket.
     size_t sent_size = 0;
-    Callback send_callback(send_error_code_, sent_size, sent_);
-    boost::asio::async_write(*server_,
-                             boost::asio::buffer(&send_buffer_[0], size),
-                             send_callback);
+    Callback send_callback(server_, Callback::WRITE, send_buffer_, send_error_code_, sent_size,
+                           sent_, size);
+    server_->async_write_some(boost::asio::buffer(&send_buffer_[0], size),
+                              send_callback);
 
     // Second busy loop.
     while ((!sent_ || !finished_) && !timeout_) {
@@ -1012,10 +1048,10 @@ TEST_F(TlsRequestTest, tooShort) {
 
     // Push a receiver on the socket.
     size_t size = 0;
-    Callback receive_callback(receive_error_code_, size, received_);
-    server_->async_read_some(
-        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
-        receive_callback);
+    Callback receive_callback(server_, Callback::READ, receive_buffer_, receive_error_code_, size,
+                              received_, 56U);
+    server_->async_read_some(boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
+                             receive_callback);
 
     // Busy loop.
     while (!received_ && !timeout_) {
@@ -1055,11 +1091,12 @@ TEST_F(TlsRequestTest, tooShort) {
 
     // Push a sender on the socket.
     size_t sent_size = 0;
-    Callback send_callback(send_error_code_, sent_size, sent_);
+    // Change the size.
+    Callback send_callback(server_, Callback::WRITE, send_buffer_, send_error_code_, sent_size,
+                           sent_, size - 2);
     // Truncate the buffer.
-    boost::asio::async_write(*server_,
-                             boost::asio::buffer(&send_buffer_[0], size - 2),
-                             send_callback);
+    server_->async_write_some(boost::asio::buffer(&send_buffer_[0], size - 2),
+                              send_callback);
 
     // Second busy loop.
     while ((!sent_ || !finished_) && !timeout_) {
@@ -1120,10 +1157,10 @@ TEST_F(TlsRequestTest, reject) {
 
     // Push a receiver on the socket.
     size_t size = 0;
-    Callback receive_callback(receive_error_code_, size, received_);
-    server_->async_read_some(
-        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
-        receive_callback);
+    Callback receive_callback(server_, Callback::READ, receive_buffer_, receive_error_code_, size,
+                              received_, 50U);
+    server_->async_read_some(boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
+                             receive_callback);
 
     // Busy loop.
     while (!received_ && !timeout_) {
@@ -1165,10 +1202,10 @@ TEST_F(TlsRequestTest, reject) {
 
     // Push a sender on the socket.
     size_t sent_size = 0;
-    Callback send_callback(send_error_code_, sent_size, sent_);
-    boost::asio::async_write(*server_,
-                             boost::asio::buffer(&send_buffer_[0], size),
-                             send_callback);
+    Callback send_callback(server_, Callback::WRITE, send_buffer_, send_error_code_, sent_size,
+                           sent_, size);
+    server_->async_write_some(boost::asio::buffer(&send_buffer_[0], size),
+                              send_callback);
 
     // Second busy loop.
     while ((!sent_ || !finished_) && !timeout_) {

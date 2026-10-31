@@ -183,23 +183,61 @@ private:
     boost::shared_ptr<PrivateData>  ptr_;   ///< Pointer to private data
 };
 
+/// @brief Read Server Data - helper function
+///
+/// Called in the part of the test that has the client send a message to the
+/// server.
+///
+/// "All the data read" means that the server has received a message that is
+/// preceded by a two-byte count field and that the total amount of data received
+/// from the remote end is equal to the value in the count field plus two bytes
+/// for the count field itself.
+///
+/// @param stream Stream on which the server is reading data
+/// @param server_cb Structure in which server data is held.
+void
+serverDoRead(TlsStreamImpl& stream, TLSCallback& server_cb) {
+    // Read block of data and update cumulative amount of data received.
+    stream.async_read_some(boost::asio::buffer(server_cb.data() + server_cb.cumulative(),
+                                               TLSCallback::MIN_SIZE - server_cb.cumulative()),
+                           [&stream, &server_cb](boost::system::error_code ec = boost::system::error_code(),
+                                                 size_t length) {
+            server_cb.setCode(ec.value());
+            server_cb.called() = server_cb.queued();
+            server_cb.length() += length;
+            server_cb.cumulative() += server_cb.length();
 
-// Read Server Data
-//
-// Called in the part of the test that has the client send a message to the
-// server, this loops until all the data has been read (synchronously) by the
-// server.
-//
-// "All the data read" means that the server has received a message that is
-// preceded by a two-byte count field and that the total amount of data received
-// from the remote end is equal to the value in the count field plus two bytes
-// for the count field itself.
-//
-// @param stream Stream on which the server is reading data
-// @param server_cb Structure in which server data is held.
+            // If we have read at least two bytes, we can work out how much we
+            // should be reading.
+            if (server_cb.cumulative() >= 2) {
+                server_cb.expected() = readUint16(server_cb.data(), server_cb.length());
+                if ((server_cb.expected() + 2) == server_cb.cumulative()) {
+
+                    // Amount of data read from stream equals the size of the
+                    // message (as indicated in the first two bytes of the message)
+                    // plus the size of the count field.  Therefore we have received
+                    // all the data.
+                    return;
+                }
+            }
+            serverDoRead(stream, server_cb);
+        });
+}
+
+/// @brief Read Server Data
+///
+/// Called in the part of the test that has the client send a message to the
+/// server.
+///
+/// "All the data read" means that the server has received a message that is
+/// preceded by a two-byte count field and that the total amount of data received
+/// from the remote end is equal to the value in the count field plus two bytes
+/// for the count field itself.
+///
+/// @param stream Stream on which the server is reading data
+/// @param server_cb Structure in which server data is held.
 void
 serverRead(TlsStreamImpl& stream, TLSCallback& server_cb) {
-
     // As we may need to read multiple times, keep a count of the cumulative
     // amount of data read and do successive reads into the appropriate part
     // of the buffer.
@@ -207,35 +245,64 @@ serverRead(TlsStreamImpl& stream, TLSCallback& server_cb) {
     // Note that there are no checks for buffer overflow - this is a test
     // program and we have sized the buffer to be large enough for the test.
     server_cb.cumulative() = 0;
+    serverDoRead(stream, server_cb);
+}
 
-    bool complete = false;
-    while (!complete) {
-
-        // Read block of data and update cumulative amount of data received.
-        server_cb.length() = stream.read_some(
-            boost::asio::buffer(server_cb.data() + server_cb.cumulative(),
-                                TLSCallback::MIN_SIZE - server_cb.cumulative()));
-        server_cb.cumulative() += server_cb.length();
-
-        // If we have read at least two bytes, we can work out how much we
-        // should be reading.
-        if (server_cb.cumulative() >= 2) {
-            server_cb.expected() = readUint16(server_cb.data(), server_cb.length());
-            if ((server_cb.expected() + 2) == server_cb.cumulative()) {
-
-                // Amount of data read from stream equals the size of the
-                // message (as indicated in the first two bytes of the message)
-                // plus the size of the count field.  Therefore we have received
-                // all the data.
-                complete = true;
+/// @brief Read Server Data - helper function
+///
+/// Called in the part of the test that has the client receive a message from the
+/// server.
+///
+/// "All the data read" means that the server has received a message that is
+/// preceded by a two-byte count field and that the total amount of data received
+/// from the remote end is equal to the value in the count field plus two bytes
+/// for the count field itself.
+///
+/// @param stream Stream on which the server is writing data
+/// @param server_cb Structure in which server data is held.
+void
+serverDoWrite(TlsStreamImpl& stream, TLSCallback& server_cb) {
+    // Read block of data and update cumulative amount of data received.
+    stream.async_write_some(boost::asio::buffer(server_cb.data() + server_cb.cumulative(),
+                                                server_cb.expected() - server_cb.cumulative()),
+                            [&stream, &server_cb](boost::system::error_code ec = boost::system::error_code(),
+                                                  size_t length) {
+            server_cb.setCode(ec.value());
+            server_cb.called() = server_cb.queued();
+            server_cb.length() += length;
+            server_cb.cumulative() += server_cb.length();
+            if (server_cb.expected() != server_cb.length()) {
+                serverDoWrite(stream, server_cb);
             }
-        }
-    }
+        });
+}
+
+/// @brief Write Server Data
+///
+/// Called in the part of the test that has the client receive a message from the
+/// server.
+///
+/// "All the data read" means that the server has received a message that is
+/// preceded by a two-byte count field and that the total amount of data sent
+/// to the remote end is equal to the value in the count field plus two bytes
+/// for the count field itself.
+///
+/// @param stream Stream on which the server is writing data
+/// @param server_cb Structure in which server data is held.
+void
+serverWrite(TlsStreamImpl& stream, TLSCallback& server_cb) {
+    // As we may need to write multiple times, keep a count of the cumulative
+    // amount of data written and do successive writes into the appropriate part
+    // of the buffer.
+    //
+    // Note that there are no checks for buffer overflow - this is a test
+    // program and we have sized the buffer to be large enough for the test.
+    server_cb.cumulative() = 0;
+    serverDoWrite(stream, server_cb);
 }
 
 // Receive complete method should return true only if the count in the first
 // two bytes is equal to the size of the rest if the buffer.
-
 TEST(TLSSocket, processReceivedData) {
     // Amount of "real" data in the buffer
     const uint16_t PACKET_SIZE = 16382;
@@ -425,8 +492,19 @@ TEST(TLSSocket, sequenceTest) {
         service->runOne();
     }
 
-    // Synchronously read the data from the server.;
+    server_cb.called() = TLSCallback::NONE;
+    server_cb.queued() = TLSCallback::READ;
+    server_cb.setCode(0);
+    server_cb.length() = 0;
+
+    // Synchronously read the data from the server.
     serverRead(server, server_cb);
+
+    // Wait for the client callback to complete. (Must do this first on
+    // Solaris: if we do the synchronous read first, the test hangs.)
+    while (server_cb.called() == TLSCallback::NONE) {
+        service->runOne();
+    }
 
     // Check the client state
     EXPECT_EQ(TLSCallback::WRITE, client_cb.called());
@@ -453,10 +531,21 @@ TEST(TLSSocket, sequenceTest) {
     writeUint16(sizeof(INBOUND_DATA), server_cb.data(), TLSCallback::MIN_SIZE);
     copy(INBOUND_DATA, (INBOUND_DATA + sizeof(INBOUND_DATA) - 1),
         (server_cb.data() + 2));
-    boost::asio::async_write(server,
-                             boost::asio::buffer(server_cb.data(),
-                                                 (sizeof(INBOUND_DATA) + 2)),
-                             server_cb);
+
+    server_cb.called() = TLSCallback::NONE;
+    server_cb.queued() = TLSCallback::WRITE;
+    server_cb.setCode(0);
+    server_cb.length() = 0;
+    server_cb.expected() = sizeof(INBOUND_DATA) + 2;
+
+    // Synchronously write the data to the server.
+    serverWrite(server, server_cb);
+
+    // Wait for the client callback to complete. (Must do this first on
+    // Solaris: if we do the synchronous read first, the test hangs.)
+    while (server_cb.called() == TLSCallback::NONE) {
+        service->runOne();
+    }
 
     // Have the client read asynchronously.
     client_cb.called() = TLSCallback::NONE;

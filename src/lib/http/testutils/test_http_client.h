@@ -463,8 +463,7 @@ public:
     virtual void sendPartialRequest(std::string request) {
         size_t chuck_size = std::min(TEST_HTTP_CHUCK_SIZE, request.size());
         auto ref = shared_from_this();
-        boost::asio::async_write(stream_,
-                                 boost::asio::buffer(request.data(), chuck_size),
+        stream_.async_write_some(boost::asio::buffer(request.data(), chuck_size),
                                  [this, ref, request](const boost::system::error_code& ec,
                                                       std::size_t bytes_transferred) mutable {
             if (ec) {

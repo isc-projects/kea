@@ -23,8 +23,8 @@
  *       Format kept for easier merge.
  */
 
-#ifndef DHCP_H
-#define DHCP_H
+#ifndef DHCP4_H
+#define DHCP4_H
 
 #include <cstdint>
 
@@ -325,4 +325,4 @@ static const uint8_t CLIENT_ID_OPTION_TYPE_DUID = 255;
 } // end of isc::dhcp namespace
 } // end of isc namespace
 
-#endif /* DHCP_H */
+#endif /* DHCP4_H */
