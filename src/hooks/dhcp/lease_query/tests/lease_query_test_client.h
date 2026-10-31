@@ -203,7 +203,7 @@ public:
     /// @param request part of the request to be sent.
     /// @param send_length  number of bytes to send.  If not zero, can be used
     /// to truncate the amount of data sent.
-    void sendPartialRequest(WireData& wire_request, size_t send_length = 0) {
+    void sendPartialRequest(WireData& wire_request, size_t send_length = 0, size_t pos = 0) {
         if (!send_length) {
             send_length = wire_request.size();
         } else {
@@ -211,10 +211,9 @@ public:
                       << "broken test, send_length exceeds wire size";
         }
 
-        socket_.async_send(boost::asio::buffer(wire_request.data(), send_length),
-                           [this, wire_request]
-                               (const boost::system::error_code& ec,
-                                size_t bytes_transferred) mutable {
+        socket_.async_send(boost::asio::buffer(wire_request.data() + pos, send_length - pos),
+                           [this, wire_request, send_length, pos](const boost::system::error_code& ec,
+                                                                  size_t bytes_transferred) mutable {
             if (ec) {
                 if (ec.value() == boost::asio::error::operation_aborted) {
                     return;
@@ -234,14 +233,14 @@ public:
             }
 
             // Remove the part of the request which has been sent.
-            if (bytes_transferred > 0 && (wire_request.size() <= bytes_transferred)) {
-                wire_request.erase(wire_request.begin(), wire_request.begin() + bytes_transferred);
+            if (bytes_transferred > 0 && (send_length - pos <= bytes_transferred)) {
+                pos += bytes_transferred;
             }
 
             // Continue sending request data if there are still some
             // to be sent.
-            if (!wire_request.empty()) {
-                sendPartialRequest(wire_request);
+            if (pos < wire_request.size()) {
+                sendPartialRequest(wire_request, send_length, pos);
             } else {
                 // Request has been sent. Start receiving response.
                 requests_sent_.push_back(request_in_send_);

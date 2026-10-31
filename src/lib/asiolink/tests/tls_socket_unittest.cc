@@ -200,7 +200,7 @@ serverDoRead(TlsStreamImpl& stream, TLSCallback& server_cb) {
     // Read block of data and update cumulative amount of data received.
     stream.async_read_some(boost::asio::buffer(server_cb.data() + server_cb.cumulative(),
                                                TLSCallback::MIN_SIZE - server_cb.cumulative()),
-                           [&stream, &server_cb](boost::system::error_code ec = boost::system::error_code(),
+                           [&stream, &server_cb](boost::system::error_code ec,
                                                  size_t length) {
             server_cb.setCode(ec.value());
             server_cb.called() = server_cb.queued();
@@ -265,7 +265,7 @@ serverDoWrite(TlsStreamImpl& stream, TLSCallback& server_cb) {
     // Read block of data and update cumulative amount of data received.
     stream.async_write_some(boost::asio::buffer(server_cb.data() + server_cb.cumulative(),
                                                 server_cb.expected() - server_cb.cumulative()),
-                            [&stream, &server_cb](boost::system::error_code ec = boost::system::error_code(),
+                            [&stream, &server_cb](boost::system::error_code ec,
                                                   size_t length) {
             server_cb.setCode(ec.value());
             server_cb.called() = server_cb.queued();

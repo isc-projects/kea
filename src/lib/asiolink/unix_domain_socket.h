@@ -7,6 +7,7 @@
 #ifndef UNIX_DOMAIN_SOCKET_H
 #define UNIX_DOMAIN_SOCKET_H
 
+#include <asiolink/asio_wrapper.h>
 #include <asiolink/io_service.h>
 #include <asiolink/io_socket.h>
 #include <boost/shared_ptr.hpp>

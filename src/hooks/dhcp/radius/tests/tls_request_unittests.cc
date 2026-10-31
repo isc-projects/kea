@@ -72,7 +72,7 @@ class Callback {
 public:
 
     /// @brief The enum defining the use type: read or write.
-    enum TYPE {
+    enum UseType : uint16_t {
         READ,
         WRITE
     };
@@ -86,8 +86,8 @@ public:
     /// @param size Reference to the returned size.
     /// @param flag Reference to called flag.
     /// @param expected The expected data size to read or write.
-    Callback(boost::shared_ptr<TlsStreamImpl> server, enum TYPE type, vector<uint8_t> buffer,
-             boost::system::error_code& error_code, size_t& size,  atomic<bool>& flag,
+    Callback(boost::shared_ptr<TlsStreamImpl> server, enum UseType type, vector<uint8_t>& buffer,
+             boost::system::error_code& error_code, size_t& size, atomic<bool>& flag,
              size_t expected)
         : server_(server), type_(type), buffer_(buffer), error_code_(error_code), size_(size),
           called_(flag), expected_(expected) {
@@ -131,7 +131,7 @@ public:
     boost::shared_ptr<TlsStreamImpl> server_;
 
     /// @brief The use type: read or write.
-    enum TYPE type_;
+    const enum UseType type_;
 
     /// @brief The buffer used to read or write data.
     vector<uint8_t> &buffer_;
@@ -146,7 +146,7 @@ public:
     atomic<bool>& called_;
 
     /// @brief Expected size of the data to read or write.
-    size_t expected_;
+    const size_t expected_;
 };
 
 /// @brief Test fixture for testing synchronous communication for

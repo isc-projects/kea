@@ -264,7 +264,7 @@ public:
     void sendUnixCommand(const string& command, string& response) {
         response = "";
         boost::scoped_ptr<UnixControlClient> client;
-        client.reset(new UnixControlClient());
+        client.reset(new UnixControlClient(getIOService()));
         ASSERT_TRUE(client);
 
         // Connect to the server. This is expected to trigger server's acceptor
@@ -1245,10 +1245,10 @@ TEST_F(CtrlChannelD2Test, concurrentConnections) {
     EXPECT_NO_THROW(createUnixChannelServer());
     SKIP_IF(skipped_);
 
-    boost::scoped_ptr<UnixControlClient> client1(new UnixControlClient());
+    boost::scoped_ptr<UnixControlClient> client1(new UnixControlClient(getIOService()));
     ASSERT_TRUE(client1);
 
-    boost::scoped_ptr<UnixControlClient> client2(new UnixControlClient());
+    boost::scoped_ptr<UnixControlClient> client2(new UnixControlClient(getIOService()));
     ASSERT_TRUE(client2);
 
     // Client 1 connects.
@@ -1326,22 +1326,14 @@ TEST_F(CtrlChannelD2Test, longCommand) {
         IOServiceWork work(getIOService());
 
         // Create client which we will use to send command to the server.
-        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
+        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient(getIOService()));
         ASSERT_TRUE(client);
 
         // Connect to the server. This will trigger acceptor handler on the
         // server side and create a new connection.
         ASSERT_TRUE(client->connectToServer(socket_path_));
 
-        // Initially the remaining_string holds the entire command and we
-        // will be erasing the portions that we have sent.
-        string remaining_data = command.str();
-        while (!remaining_data.empty()) {
-            // Send the command in chunks of 1024 bytes.
-            const size_t l = remaining_data.size() < 1024 ? remaining_data.size() : 1024;
-            ASSERT_TRUE(client->sendCommand(remaining_data.substr(0, l)));
-            remaining_data.erase(0, l);
-        }
+        ASSERT_TRUE(client->sendCommand(command.str()));
 
         // Set timeout to 5 seconds to allow the time for the server to send
         // a response.
@@ -1399,7 +1391,7 @@ TEST_F(CtrlChannelD2Test, longResponse) {
         const size_t long_response_size = reference_response.size();
 
         // Create the client and connect it to the server.
-        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
+        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient(getIOService()));
         ASSERT_TRUE(client);
         ASSERT_TRUE(client->connectToServer(socket_path_));
 
@@ -1454,7 +1446,7 @@ TEST_F(CtrlChannelD2Test, connectionTimeoutPartialCommand) {
         IOServiceWork work(getIOService());
 
         // Create the client and connect it to the server.
-        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
+        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient(getIOService()));
         ASSERT_TRUE(client);
         ASSERT_TRUE(client->connectToServer(socket_path_));
 
@@ -1474,7 +1466,7 @@ TEST_F(CtrlChannelD2Test, connectionTimeoutPartialCommand) {
         });
 
     // Run the server until stopped.
-    getIOService()->run();
+    getIOService()->runOne();
 
     // Wait for the thread to return.
     th.join();
@@ -1508,7 +1500,7 @@ TEST_F(CtrlChannelD2Test, connectionTimeoutNoData) {
         IOServiceWork work(getIOService());
 
         // Create the client and connect it to the server.
-        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
+        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient(getIOService()));
         ASSERT_TRUE(client);
         ASSERT_TRUE(client->connectToServer(socket_path_));
 
@@ -1523,7 +1515,7 @@ TEST_F(CtrlChannelD2Test, connectionTimeoutNoData) {
         });
 
     // Run the server until stopped.
-    getIOService()->run();
+    getIOService()->runOne();
 
     // Wait for the thread to return.
     th.join();

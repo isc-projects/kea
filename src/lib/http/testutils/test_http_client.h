@@ -48,7 +48,7 @@ public:
     /// @brief Send part of the HTTP request.
     ///
     /// @param request part of the HTTP request to be sent.
-    virtual void sendPartialRequest(std::string request) = 0;
+    virtual void sendPartialRequest(std::string request, size_t pos) = 0;
 
     /// @brief Receive response from the server.
     virtual void receivePartialResponse() = 0;
@@ -174,12 +174,12 @@ public:
     /// @brief Send part of the HTTP request.
     ///
     /// @param request part of the HTTP request to be sent.
-    virtual void sendPartialRequest(std::string request) {
-        size_t chuck_size = std::min(TEST_HTTP_CHUCK_SIZE, request.size());
+    virtual void sendPartialRequest(std::string request, size_t pos = 0) {
+        size_t chuck_size = std::min(TEST_HTTP_CHUCK_SIZE, request.size() - pos);
         auto ref = shared_from_this();
-        socket_.async_send(boost::asio::buffer(request.data(), chuck_size),
-                           [this, ref, request](const boost::system::error_code& ec,
-                                                std::size_t bytes_transferred) mutable {
+        socket_.async_write_some(boost::asio::buffer(request.data() + pos, chuck_size),
+                                 [this, ref, request, pos](const boost::system::error_code& ec,
+                                                           std::size_t bytes_transferred) mutable {
             if (ec) {
                 if (ec.value() == boost::asio::error::operation_aborted) {
                     return;
@@ -198,13 +198,12 @@ public:
                 }
             }
 
-            // Remove the part of the request which has been sent.
-            request.erase(0, bytes_transferred);
+            pos += bytes_transferred;
 
             // Continue sending request data if there are still some data to be
             // sent.
-            if (!request.empty()) {
-                sendPartialRequest(request);
+            if (pos < request.size()) {
+                sendPartialRequest(request, pos);
 
             } else {
                 // Request has been sent. Start receiving response.
@@ -460,11 +459,11 @@ public:
     /// @brief Send part of the HTTP request.
     ///
     /// @param request part of the HTTP request to be sent.
-    virtual void sendPartialRequest(std::string request) {
-        size_t chuck_size = std::min(TEST_HTTP_CHUCK_SIZE, request.size());
+    virtual void sendPartialRequest(std::string request, size_t pos = 0) {
+        size_t chuck_size = std::min(TEST_HTTP_CHUCK_SIZE, request.size() - pos);
         auto ref = shared_from_this();
-        stream_.async_write_some(boost::asio::buffer(request.data(), chuck_size),
-                                 [this, ref, request](const boost::system::error_code& ec,
+        stream_.async_write_some(boost::asio::buffer(request.data() + pos, chuck_size),
+                                 [this, ref, request, pos](const boost::system::error_code& ec,
                                                       std::size_t bytes_transferred) mutable {
             if (ec) {
                 if (ec.value() == boost::asio::error::operation_aborted) {
@@ -484,13 +483,12 @@ public:
                 }
             }
 
-            // Remove the part of the request which has been sent.
-            request.erase(0, bytes_transferred);
+            pos += bytes_transferred;
 
             // Continue sending request data if there are still some data to be
             // sent.
-            if (!request.empty()) {
-                sendPartialRequest(request);
+            if (pos < request.size()) {
+                sendPartialRequest(request, pos);
 
             } else {
                 // Request has been sent. Start receiving response.
