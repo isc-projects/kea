@@ -1347,7 +1347,7 @@ LeaseCmdsImpl::leaseGetByStateHandler(CalloutHandle& handle) {
             if (state_str.empty()) {
                 isc_throw(BadValue, "'state' parameter is empty");
             } else if ((state_str == "default") || (state_str == "assigned")) {
-                state_ = Lease::STATE_DEFAULT;;
+                state_ = Lease::STATE_DEFAULT;
             } else if (state_str == "declined") {
                 state_ = Lease::STATE_DECLINED;
             } else if (state_str == "expired-reclaimed") {
@@ -1362,6 +1362,10 @@ LeaseCmdsImpl::leaseGetByStateHandler(CalloutHandle& handle) {
             }
         } else if (state->getType() == Element::integer) {
             state_ = state->intValue();
+            if (state_ > Lease::STATE_REGISTERED) {
+                isc_throw(BadValue, "'state' parameter value ("
+                          << state->intValue() << ") is out of range");
+            }
         } else {
             isc_throw(BadValue, "'state' parameter must be a number or a string");
         }

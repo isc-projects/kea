@@ -146,11 +146,11 @@ public:
         } else {
             ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
                       isc::stats::StatsMgr::generateName("subnet", id,
-	                      "assigned-addresses"))->getInteger().first, assigned);
+                              "assigned-addresses"))->getInteger().first, assigned);
 
             ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
                       isc::stats::StatsMgr::generateName("subnet", id,
-			      "declined-addresses"))->getInteger().first, declined);
+                              "declined-addresses"))->getInteger().first, declined);
         }
     }
 
@@ -2172,6 +2172,28 @@ void Lease4CmdsTest::testLease4GetByStateParams() {
         "    }\n"
         "}";
     exp_rsp = "'state' parameter value (foobar) is not recognized";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // state must be in range.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": -1\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'state' parameter value (-1) is out of range";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // state must be in range.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": 9\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'state' parameter value (9) is out of range";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 

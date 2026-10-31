@@ -162,19 +162,19 @@ public:
         } else {
             ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
                       isc::stats::StatsMgr::generateName("subnet", id,
-			      "assigned-nas"))->getInteger().first, assigned_nas);
+                              "assigned-nas"))->getInteger().first, assigned_nas);
 
             ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
                       isc::stats::StatsMgr::generateName("subnet", id,
-			      "declined-addresses"))->getInteger().first, declined);
+                              "declined-addresses"))->getInteger().first, declined);
 
             ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
                       isc::stats::StatsMgr::generateName("subnet", id,
-			      "assigned-pds"))->getInteger().first, assigned_pds);
+                              "assigned-pds"))->getInteger().first, assigned_pds);
 
             ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
                       isc::stats::StatsMgr::generateName("subnet", id,
-			      "registered-nas"))->getInteger().first, registered_nas);
+                              "registered-nas"))->getInteger().first, registered_nas);
         }
     }
 
@@ -2448,6 +2448,28 @@ void Lease6CmdsTest::testLease6GetByStateParams() {
         "    }\n"
         "}";
     exp_rsp = "'state' parameter value (foobar) is not recognized";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // state must be in range.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": -1\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'state' parameter value (-1) is out of range";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // state must be in range.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": 9\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'state' parameter value (9) is out of range";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
