@@ -66,7 +66,8 @@ HooksConfig::loadLibraries(bool multi_threading_enabled) const {
     /// libraries
     if (!HooksManager::loadLibraries(libraries_, multi_threading_enabled)) {
         isc_throw(InvalidHooksLibraries,
-                  "One or more hook libraries failed to load");
+                  "One or more hook libraries failed to load: "
+                  "please look the earlier error messages for details");
     }
 }
 
