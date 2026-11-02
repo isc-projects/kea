@@ -10,6 +10,7 @@
 /// @file d2_queue_mgr.h This file defines the class D2QueueMgr.
 
 #include <asiolink/io_service.h>
+#include <d2srv/d2_cfg_mgr.h>
 #include <dhcp_ddns/ncr_io.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <exceptions/exceptions.h>
@@ -28,6 +29,74 @@
 namespace isc {
 namespace d2 {
 
+/// @brief Wrapper for NameChangeRequest has been matched to forward and
+/// reverse domains.
+///
+/// This class is a wrapper which is used to add an NCR along with the forward
+/// and/or reverse domains it matches to the D2QueueMgr's queue of requests.
+/// Domain matching was formerly done by D2UpateMgr during the construction of
+/// a NameChangeTransaction. By doing the matching before queing the request,
+/// NCRs that fail domain matching can be discarded immediately instead of wasting
+/// space on the queue. The wrapper allows the domain matching results to be
+/// preserved such that the matching need only be done once.
+class MatchedNcr {
+public:
+    /// @brief Constructor.
+    ///
+    /// @param ncr pointer to the NameChangeRequest.
+    /// @param forward_domain pointer to the matched forward DdnsDomain.
+    /// @param reverse_domain pointer to the matched reverse DdnsDomain.
+    ///
+    /// @throw D2QueueMgrError if ncr is empty or both forward_domain
+    /// and reverse_domain are empty.
+    MatchedNcr(const dhcp_ddns::NameChangeRequestPtr& ncr,
+               const DdnsDomainPtr& forward_domain,
+               const DdnsDomainPtr& reverse_domain);
+
+    /// @brief Fetches the NameChangeRequest.
+    ///
+    /// @return pointer to the NameChangeRequest.
+    dhcp_ddns::NameChangeRequestPtr getNcr() const {
+        return (ncr_);
+    }
+
+    /// @brief Fetches the DHCID from the NCR.
+    ///
+    /// @return a reference to the request's D2Dhcid
+    const dhcp_ddns::D2Dhcid& getDhcid() const {
+        return (ncr_->getDhcid());
+    }
+
+    /// @brief Fetches the forward domain matched to the FQDN.
+    ///
+    /// @return pointer to the forward domain or an empty pointer.
+    DdnsDomainPtr getForwardDomain() const {
+        return (forward_domain_);
+    }
+
+    /// @brief Fetches the reverse domain matched to the ip Address.
+    ///
+    /// @return pointer to the reverse domain or an empty pointer.
+    DdnsDomainPtr getReverseDomain() const {
+        return (reverse_domain_);
+    }
+
+    /// @brief Update the domains from the given MatchedNcr.
+    void refresh(const MatchedNcr& source);
+
+private:
+    /// @brief NameChangeRequest to be queued.
+    dhcp_ddns::NameChangeRequestPtr ncr_;
+
+    /// @brief The forward domain matched to the FQDN.
+    DdnsDomainPtr forward_domain_;
+
+    /// @brief The reverse domain matched to the ip address.
+    DdnsDomainPtr reverse_domain_;
+};
+
+/// @brief Shared pointer to a MatchedNcr.
+typedef boost::shared_ptr<MatchedNcr> MatchedNcrPtr;
 
 /// @brief Tag for insertion order index.
 struct VectorTag { };
@@ -35,13 +104,13 @@ struct VectorTag { };
 /// @brief Tag for index by DHCID
 struct DhcidTag { };
 
-/// @brief A multi index container holding NameChangeTransaction pointers.
+/// @brief A multi index container holding MatchedNcr pointers.
 ///
-/// The transactions in the container may be accessed using different indexes:
-/// - by FQDN or lease address
+/// The entries in the container may be accessed using different indexes:
+/// - by insertion order or by DHCID.
 typedef boost::multi_index_container<
-    // It holds pointers to NameChangeTransactions.
-    dhcp_ddns::NameChangeRequestPtr,
+    // It holds pointers to MatchedNcrs.
+    MatchedNcrPtr,
     boost::multi_index::indexed_by<
         // Index by insertion order
         boost::multi_index::random_access<
@@ -51,9 +120,8 @@ typedef boost::multi_index_container<
         // Index by DHCID
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<DhcidTag>,
-            boost::multi_index::const_mem_fun<dhcp_ddns::NameChangeRequest,
-                                              const dhcp_ddns::D2Dhcid&,
-                                              &dhcp_ddns::NameChangeRequest::getDhcid>
+            boost::multi_index::const_mem_fun<MatchedNcr, const dhcp_ddns::D2Dhcid&,
+                                              &MatchedNcr::getDhcid>
         >
     >
 > NcrQueue;
@@ -110,7 +178,7 @@ public:
 /// It derives from NameChangeListener::RequestReceiveHandler and supplies an
 /// implementation of the operator()(Result, NameChangeRequestPtr).  It is
 /// through this operator() that D2QueueMgr is passed inbound NCRs. D2QueueMgr
-/// will add each newly received request onto the back of the request queue
+/// will add each newly received request onto the back of the request queue.
 ///
 /// D2QueueMgr defines a simple state model constructed around the status of
 /// its NameChangeListener, consisting of the following states:
@@ -205,12 +273,14 @@ public:
     ///
     /// @param io_service IOService instance to be passed into the listener for
     /// IO management.
+    /// @param cfg_mgr reference to the configuration manager. Required to conduct
+    /// domain matching.
     /// @param max_queue_size the maximum number of entries allowed in the
     /// queue.
     /// This value must be greater than zero. It defaults to MAX_QUEUE_DEFAULT.
     ///
     /// @throw D2QueueMgrError if max_queue_size is zero.
-    D2QueueMgr(asiolink::IOServicePtr& io_service,
+    D2QueueMgr(asiolink::IOServicePtr& io_service, D2CfgMgrPtr& cfg_mgr,
                const size_t max_queue_size = MAX_QUEUE_DEFAULT);
 
     /// @brief Destructor
@@ -247,7 +317,8 @@ public:
     /// completion callback and is how the inbound NameChangeRequests are
     /// passed up to the D2QueueMgr for queuing.
     /// If the given result indicates a successful receive completion and
-    /// there is room left in the queue, the given request is queued.
+    /// there is room left in the queue given request will be queued provided
+    /// it passes de-duplication and domain matcing requirements.
     ///
     /// If the queue is at maximum capacity, stopListening() is invoked and
     /// the state is set to STOPPED_QUEUE_FULL.
@@ -327,7 +398,7 @@ public:
     /// @return Pointer reference to the queue entry.
     ///
     /// @throw D2QueueMgrQueueEmpty if there are no entries in the queue.
-    const dhcp_ddns::NameChangeRequestPtr& peek() const;
+    const MatchedNcrPtr& peek() const;
 
     /// @brief Returns the entry at a given position in the queue.
     ///
@@ -339,7 +410,7 @@ public:
     ///
     /// @throw D2QueueMgrInvalidIndex if the given index is beyond the
     /// end of the queue.
-    const dhcp_ddns::NameChangeRequestPtr& peekAt(const size_t index) const;
+    const MatchedNcrPtr& peekAt(const size_t index) const;
 
     /// @brief Removes the entry at a given position in the queue.
     ///
@@ -358,11 +429,17 @@ public:
     /// @brief Fetches the last entry in the queue for a given DHCID.
     ///
     /// @param dhcid DHCID to look for.
-    /// @return matching NameChangeRequest or an empty pointer.
-    const dhcp_ddns::NameChangeRequestPtr
+    /// @return pointer to the MatchedNcr or an empty pointer.
+    const MatchedNcrPtr
     findLast(const dhcp_ddns::D2Dhcid& dhcid) const;
 
     /// @brief Adds a request to the end of the queue.
+    ///
+    /// The ncr is first checked against redundancy (if enabled). If it is
+    /// redundant it is discarded. Otherwise it is matched to a forward domain
+    /// (if forward DDNS is enabled) and/or a reverse domain (if reverse DDNS
+    /// is enabled). If matching fails the request is discarded otherwise it
+    /// is added to the end of the queue.
     ///
     /// @param ncr pointer to the NameChangeRequest to add to the queue.
     /// @param suppress_duplicates if true, the ncr will not be added to the queue
@@ -370,6 +447,20 @@ public:
     /// @return True if the request is added to the queue, false otherwise.
     bool enqueue(dhcp_ddns::NameChangeRequestPtr& ncr,
                  bool suppress_duplicates = false);
+
+    /// @brief Creates an NCR matched to forward and reverse domains
+    ///
+    /// Attempts to match an NCR to forward and reverse domains. If a
+    /// given direction is enabled and no match exits it will return
+    /// an empty pointer. If neither a forward nor reverse domain is
+    /// matched it will return an empty pointer.
+    ///
+    /// @param ncr NCR to match
+    /// @return Pointer to a MatchedNcr or an empty pointer.
+    MatchedNcrPtr matchNcr(dhcp_ddns::NameChangeRequestPtr ncr) const;
+
+    /// @brief Iterate over queue contents and redo the matching.
+    void refreshQueuedMatching();
 
     /// @brief Removes all entries from the queue.
     void clearQueue();
@@ -384,10 +475,13 @@ public:
     /// @brief IOService that our listener should use for IO management.
     asiolink::IOServicePtr io_service_;
 
+    /// @brief Pointer to the configuration manager.
+    D2CfgMgrPtr cfg_mgr_;
+
     /// @brief Dictates the maximum number of entries allowed in the queue.
     size_t max_queue_size_;
 
-    /// @brief Queue of received NameChangeRequests.
+    /// @brief Queue of received MatchedNcrs.
     NcrQueue ncr_queue_;
 
     /// @brief Listener instance from which requests are received.

@@ -17,14 +17,41 @@ using namespace boost::multi_index;
 namespace isc {
 namespace d2 {
 
+MatchedNcr::MatchedNcr(const NameChangeRequestPtr& ncr,
+                       const DdnsDomainPtr& forward_domain,
+                       const DdnsDomainPtr& reverse_domain)
+    : ncr_(ncr), forward_domain_(forward_domain),
+     reverse_domain_(reverse_domain) {
+    if (!ncr) {
+        isc_throw(D2QueueMgrError, "MatchedNcr ncr cannot be null");
+    }
+
+    if (!reverse_domain_ && !forward_domain) {
+        isc_throw(D2QueueMgrError, "MatcheNcrPtr forward and reverse cannot both be null");
+    }
+}
+
+void
+MatchedNcr::refresh(const MatchedNcr& source) {
+    forward_domain_ = source.getForwardDomain();
+    reverse_domain_ = source.getReverseDomain();
+}
+
 // Makes constant visible to Google test macros.
 const size_t D2QueueMgr::MAX_QUEUE_DEFAULT;
 
-D2QueueMgr::D2QueueMgr(asiolink::IOServicePtr& io_service, const size_t max_queue_size)
-    : io_service_(io_service), max_queue_size_(max_queue_size),
+D2QueueMgr::D2QueueMgr(asiolink::IOServicePtr& io_service, 
+                       D2CfgMgrPtr& cfg_mgr,
+                       const size_t max_queue_size)
+    : io_service_(io_service), cfg_mgr_(cfg_mgr), max_queue_size_(max_queue_size),
       mgr_state_(NOT_INITTED), target_stop_state_(NOT_INITTED) {
     if (!io_service_) {
         isc_throw(D2QueueMgrError, "IOServicePtr cannot be null");
+    }
+
+    if (!cfg_mgr_) {
+        isc_throw(D2QueueMgrError,
+                  "D2QueueMgr configuration manager cannot be null");
     }
 
     // Use setter to do validation.
@@ -215,12 +242,12 @@ D2QueueMgr::removeListener() {
     mgr_state_ = NOT_INITTED;
 }
 
-const NameChangeRequestPtr&
+const MatchedNcrPtr&
 D2QueueMgr::peek() const {
     return (peekAt(0));
 }
 
-const NameChangeRequestPtr&
+const MatchedNcrPtr&
 D2QueueMgr::peekAt(const size_t index) const {
     if (index >= ncr_queue_.size()) {
         isc_throw(D2QueueMgrInvalidIndex, "D2QueueMgr::peekAt index " << index
@@ -246,9 +273,9 @@ D2QueueMgr::dequeueAt(const size_t index) {
     idx.erase(idx.begin() + index);
 }
 
-const NameChangeRequestPtr
+const MatchedNcrPtr
 D2QueueMgr::findLast(const D2Dhcid& new_dhcid) const {
-    NameChangeRequestPtr found_ncr;
+    MatchedNcrPtr found_ncr;
 
     // Get all entries for the dhcid
     auto& key_index = ncr_queue_.get<1>();
@@ -293,13 +320,105 @@ D2QueueMgr::enqueue(NameChangeRequestPtr& new_ncr,
         }
     }
 
-    auto ret = ncr_queue_.push_back(new_ncr);
+
+    /// Match the NCR to forward and/or reverse domains.
+    auto matched_ncr = matchNcr(new_ncr);
+    if (!matched_ncr) {
+        return (false);
+    }
+
+    auto ret = ncr_queue_.push_back(matched_ncr);
     if (ret.second == false) {
         isc_throw(D2QueueMgrError, "D2QueueMgr::enqueue cannot add NCR: "
                   << new_ncr->toText());
-        }
+    }
 
     return (true);
+}
+
+void 
+D2QueueMgr::refreshQueuedMatching() {
+    for (auto it = ncr_queue_.begin(); it != ncr_queue_.end(); ) {
+        auto matched_ncr = *it;
+        auto ncr = matched_ncr->getNcr();
+        auto tmp = matchNcr(matched_ncr->getNcr());
+        if (tmp) {
+            matched_ncr->refresh(*tmp);
+            ++it;
+        } else {
+            // No longer matches it, discard it.
+            auto copyit = it;
+            ++it;
+            std::cout << "no longer matches, discard it" << std::endl;
+            ncr_queue_.erase(copyit);
+        }
+    }
+}
+
+MatchedNcrPtr
+D2QueueMgr::matchNcr(NameChangeRequestPtr ncr) const {
+    int direction_count = 0;
+    // If forward change is enabled, match to forward servers.
+    DdnsDomainPtr forward_domain;
+    if (ncr->isForwardChange()) {
+        if (!cfg_mgr_->forwardUpdatesEnabled()) {
+            LOG_DEBUG(dhcp_to_d2_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
+                      DHCP_DDNS_FWD_REQUEST_IGNORED)
+                      .arg(ncr->getRequestId())
+                      .arg(ncr->toText());
+        } else {
+            bool matched = cfg_mgr_->matchForward(ncr->getFqdn(),
+                                                  forward_domain);
+            // Could not find a match for forward DNS server. Log it and get
+            // out. This has the net affect of dropping the request on the
+            // floor.
+            if (!matched) {
+                LOG_ERROR(dhcp_to_d2_logger, DHCP_DDNS_NO_FWD_MATCH_ERROR)
+                          .arg(ncr->getRequestId())
+                          .arg(ncr->toText());
+                return (MatchedNcrPtr());
+            }
+
+            ++direction_count;
+        }
+    }
+
+    // If reverse change is enabled, match to reverse servers.
+    DdnsDomainPtr reverse_domain;
+    if (ncr->isReverseChange()) {
+        if (!cfg_mgr_->reverseUpdatesEnabled()) {
+            LOG_DEBUG(dhcp_to_d2_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
+                      DHCP_DDNS_REV_REQUEST_IGNORED)
+                      .arg(ncr->getRequestId())
+                      .arg(ncr->toText());
+        } else {
+            bool matched = cfg_mgr_->matchReverse(ncr->getIpAddress(),
+                                                  reverse_domain,
+                                                  ncr->getReverseZone());
+            // Could not find a match for reverse DNS server. Log it and get
+            // out. This has the net affect of dropping the request on the
+            // floor.
+            if (!matched) {
+                LOG_ERROR(dhcp_to_d2_logger, DHCP_DDNS_NO_REV_MATCH_ERROR)
+                          .arg(ncr->getRequestId())
+                          .arg(ncr->toText());
+                return (MatchedNcrPtr());
+            }
+
+            ++direction_count;
+        }
+    }
+
+    // If there is nothing to actually do, then the request falls on the floor.
+    if (!direction_count) {
+        LOG_DEBUG(dhcp_to_d2_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
+                  DHCP_DDNS_REQUEST_DROPPED)
+                  .arg(ncr->getRequestId())
+                  .arg(ncr->toText());
+        return (MatchedNcrPtr());
+    }
+
+    return (MatchedNcrPtr(new MatchedNcr(ncr, forward_domain, reverse_domain)));
 }
 
 void

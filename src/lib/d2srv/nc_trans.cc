@@ -89,14 +89,9 @@ NameChangeTransaction(asiolink::IOServicePtr& io_service,
                   "NameChangeRequest cannot be null");
     }
 
-    if (ncr_->isForwardChange() && !(forward_domain_)) {
+    if (!forward_domain_ && !reverse_domain_) {
         isc_throw(NameChangeTransactionError,
-                 "Forward change must have a forward domain");
-    }
-
-    if (ncr_->isReverseChange() && !(reverse_domain_)) {
-        isc_throw(NameChangeTransactionError,
-                 "Reverse change must have a reverse domain");
+                 "Forward and reverse change cannot both be empty");
     }
 
     if (!cfg_mgr_) {
@@ -174,12 +169,12 @@ NameChangeTransaction::transactionOutcomeString() const {
                              ? "Completed, " : "Failed, ")
            << "Event: " << getEventLabel(getNextEvent()) << ", ";
 
-    if (ncr_->isForwardChange()) {
+    if (forward_domain_) {
         stream << " Forward change:" << (getForwardChangeCompleted()
                                          ? " completed, " : " failed, ");
     }
 
-    if (ncr_->isReverseChange()) {
+    if (reverse_domain_) {
         stream << " Reverse change:" << (getReverseChangeCompleted()
                                           ? " completed, " : " failed, ");
     }
@@ -588,6 +583,16 @@ NameChangeTransaction::getUpdateAttempts() const {
 const dns::RRType&
 NameChangeTransaction::getAddressRRType() const {
     return (ncr_->isV4() ? dns::RRType::A() : dns::RRType::AAAA());
+}
+
+void
+NameChangeTransaction::setForwardDomain(DdnsDomainPtr domain) {
+    forward_domain_ = domain;
+}
+
+void 
+NameChangeTransaction::setReverseDomain(DdnsDomainPtr domain) {
+    reverse_domain_ = domain;
 }
 
 } // namespace isc::d2

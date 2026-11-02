@@ -415,16 +415,10 @@ TEST_F(NameChangeTransactionTest, construction) {
                                        empty_cfg),
                                        NameChangeTransactionError);
 
-    // Verify that construction with an empty forward domain when the
-    // NameChangeRequest calls for a forward change throws.
+    // Verify that construction with both forward and reverse domains
+    // empty is not allowed.
     EXPECT_THROW(NameChangeTransaction(io_service_, ncr,
-                                       empty_domain, reverse_domain, cfg_mgr),
-                                       NameChangeTransactionError);
-
-    // Verify that construction with an empty reverse domain when the
-    // NameChangeRequest calls for a reverse change throws.
-    EXPECT_THROW(NameChangeTransaction(io_service_, ncr,
-                                       forward_domain, empty_domain, cfg_mgr),
+                                       empty_domain, empty_domain, cfg_mgr),
                                        NameChangeTransactionError);
 
     // Verify that a valid construction attempt works.
@@ -432,18 +426,12 @@ TEST_F(NameChangeTransactionTest, construction) {
                                           forward_domain, reverse_domain,
                                           cfg_mgr));
 
-    // Verify that an empty forward domain is allowed when the requests does
-    // not include a forward change.
-    ncr->setForwardChange(false);
-    ncr->setReverseChange(true);
+    // Verify that an empty forward domain is allowed.
     EXPECT_NO_THROW(NameChangeTransaction(io_service_, ncr,
                                           empty_domain, reverse_domain,
                                           cfg_mgr));
 
-    // Verify that an empty reverse domain is allowed when the requests does
-    // not include a reverse change.
-    ncr->setForwardChange(true);
-    ncr->setReverseChange(false);
+    // Verify that an empty reverse domain is allowed.
     EXPECT_NO_THROW(NameChangeTransaction(io_service_, ncr,
                                           forward_domain, empty_domain,
                                           cfg_mgr));
@@ -593,29 +581,29 @@ TEST_F(NameChangeTransactionTest, transactionOutcomeString) {
     exp_str += ncr->toText();
 
     std::string tstring = name_change_->transactionOutcomeString();
-    std::cout << "tstring is: [" << tstring << "]" << std::endl;
-
     EXPECT_EQ(exp_str, name_change_->transactionOutcomeString());
 
     // Check case of success all around
     name_change_->setNcrStatus(dhcp_ddns::ST_COMPLETED);
     name_change_->setForwardChangeCompleted(true);
     name_change_->setReverseChangeCompleted(true);
-
     exp_str = "Status: Completed, Event: UNDEFINED,  Forward change: completed,"
               "  Reverse change: completed,  request: " + ncr->toText();
     EXPECT_EQ(exp_str, name_change_->transactionOutcomeString());
 
+
     // Check case of success, with no forward change
     name_change_->setNcrStatus(dhcp_ddns::ST_COMPLETED);
-    ncr->setForwardChange(false);
+    auto sav_forward_domain = name_change_->getForwardDomain();
+    name_change_->setForwardDomain(DdnsDomainPtr());
     exp_str = "Status: Completed, Event: UNDEFINED, "
               " Reverse change: completed,  request: " + ncr->toText();
     EXPECT_EQ(exp_str, name_change_->transactionOutcomeString());
 
     // Check case of success, with no reverse change
     name_change_->setNcrStatus(dhcp_ddns::ST_COMPLETED);
-    ncr->setForwardChange(true);
+    name_change_->setForwardDomain(sav_forward_domain);
+    name_change_->setReverseDomain(DdnsDomainPtr());
     ncr->setReverseChange(false);
     exp_str = "Status: Completed, Event: UNDEFINED, "
               " Forward change: completed,  request: " + ncr->toText();

@@ -74,8 +74,8 @@ public:
     boost::shared_ptr<FauxServer> server_;
 
     D2UpdateMgrTest() {
-        queue_mgr_.reset(new D2QueueMgr(io_service_));
         cfg_mgr_.reset(new D2CfgMgr());
+        queue_mgr_.reset(new D2QueueMgr(io_service_, cfg_mgr_));
         update_mgr_.reset(new D2UpdateMgrWrapper(queue_mgr_, cfg_mgr_,
                                                  io_service_));
         makeCannedNcrs();
@@ -266,7 +266,7 @@ TEST(D2UpdateMgr, construction) {
                  D2UpdateMgrError);
 
     // Verify that constructor fails if given an invalid config manager.
-    ASSERT_NO_THROW(queue_mgr.reset(new D2QueueMgr(io_service)));
+    ASSERT_NO_THROW(queue_mgr.reset(new D2QueueMgr(io_service, cfg_mgr)));
     ASSERT_NO_THROW(cfg_mgr.reset());
     EXPECT_THROW(D2UpdateMgr(queue_mgr, cfg_mgr, io_service),
                  D2UpdateMgrError);
@@ -291,7 +291,6 @@ TEST(D2UpdateMgr, construction) {
     EXPECT_EQ(D2UpdateMgr::MAX_TRANSACTIONS_DEFAULT,
               update_mgr->getMaxTransactions());
 
-
     // Verify that constructor permits custom max transactions.
     ASSERT_NO_THROW(update_mgr.reset(new D2UpdateMgr(queue_mgr, cfg_mgr,
                                                      io_service, 100)));
@@ -303,7 +302,7 @@ TEST(D2UpdateMgr, construction) {
 /// @brief Tests the D2UpdateManager's transaction store services
 /// This test verifies that:
 /// 1. A transaction can be added to the store.
-/// 2. Finding a transaction 0in the store by key works correctly.
+/// 2. Finding a transaction 0 in the store by key works correctly.
 /// 3. Looking for a non-existent transaction works properly.
 /// 4. Attempting to add a transaction for an FQDN or address already in the store fails.
 TEST_F(D2UpdateMgrTest, transactionStore) {
@@ -312,7 +311,10 @@ TEST_F(D2UpdateMgrTest, transactionStore) {
     auto zero_address = IOAddress::IPV4_ZERO_ADDRESS();
 
     // Verify that we can add a transaction.
-    EXPECT_NO_THROW(update_mgr_->makeTransaction(ncr));
+    auto matched_ncr = queue_mgr_->matchNcr(ncr);
+    ASSERT_TRUE(matched_ncr);
+
+    EXPECT_NO_THROW(update_mgr_->makeTransaction(matched_ncr));
     EXPECT_EQ(1U, update_mgr_->getTransactionCount());
 
     // Verify that we can find the transaction by FQDN.
@@ -338,15 +340,19 @@ TEST_F(D2UpdateMgrTest, transactionStore) {
     // Verify that adding a transaction for the same FQDN fails.
     NameChangeRequestPtr ncopy(new NameChangeRequest(*ncr));
     ncopy->setIpAddress(zero_address);
+    matched_ncr = queue_mgr_->matchNcr(ncopy);
+    ASSERT_TRUE(matched_ncr);
 
-    EXPECT_THROW(update_mgr_->makeTransaction(ncopy), D2UpdateMgrError);
+    EXPECT_THROW(update_mgr_->makeTransaction(matched_ncr), D2UpdateMgrError);
     EXPECT_EQ(1U, update_mgr_->getTransactionCount());
 
     // Verify that adding a transaction for the same address fails.
     ncopy.reset(new NameChangeRequest(*ncr));
-    ncopy->setFqdn("not-there");
+    ncopy->setFqdn("another.example.com.");
+    matched_ncr = queue_mgr_->matchNcr(ncopy);
+    ASSERT_TRUE(matched_ncr);
 
-    EXPECT_THROW(update_mgr_->makeTransaction(ncr), D2UpdateMgrError);
+    EXPECT_THROW(update_mgr_->makeTransaction(matched_ncr), D2UpdateMgrError);
     EXPECT_EQ(1U, update_mgr_->getTransactionCount());
 }
 
@@ -367,12 +373,14 @@ TEST_F(D2UpdateMgrTest, bothEnabled) {
     ASSERT_TRUE(cfg_mgr_->reverseUpdatesEnabled());
 
     // Attempt to make a transaction.
-    ASSERT_NO_THROW(update_mgr_->makeTransaction(ncr));
+    auto matched_ncr = queue_mgr_->matchNcr(ncr);
+    ASSERT_TRUE(matched_ncr);
+    ASSERT_NO_THROW(update_mgr_->makeTransaction(matched_ncr));
 
     // Verify we create a transaction with both directions turned on.
     EXPECT_EQ(1U, update_mgr_->getTransactionCount());
-    EXPECT_TRUE(ncr->isForwardChange());
-    EXPECT_TRUE(ncr->isReverseChange());
+    EXPECT_TRUE(matched_ncr->getForwardDomain());
+    EXPECT_TRUE(matched_ncr->getReverseDomain());
 }
 
 /// @brief Checks transaction creation when reverse updates are disabled.
@@ -393,12 +401,14 @@ TEST_F(D2UpdateMgrTest, reverseDisable) {
     ASSERT_FALSE(cfg_mgr_->reverseUpdatesEnabled());
 
     // Attempt to make a transaction.
-    ASSERT_NO_THROW(update_mgr_->makeTransaction(ncr));
+    auto matched_ncr = queue_mgr_->matchNcr(ncr);
+    ASSERT_TRUE(matched_ncr);
+    ASSERT_NO_THROW(update_mgr_->makeTransaction(matched_ncr));
 
     // Verify we create a transaction with only forward turned on.
     EXPECT_EQ(1U, update_mgr_->getTransactionCount());
-    EXPECT_TRUE(ncr->isForwardChange());
-    EXPECT_FALSE(ncr->isReverseChange());
+    EXPECT_TRUE(matched_ncr->getForwardDomain());
+    EXPECT_FALSE(matched_ncr->getReverseDomain());
 }
 
 /// @brief Checks transaction creation when forward updates are disabled.
@@ -419,18 +429,20 @@ TEST_F(D2UpdateMgrTest, forwardDisabled) {
     ASSERT_TRUE(cfg_mgr_->reverseUpdatesEnabled());
 
     // Attempt to make a transaction.
-    ASSERT_NO_THROW(update_mgr_->makeTransaction(ncr));
+    auto matched_ncr = queue_mgr_->matchNcr(ncr);
+    ASSERT_TRUE(matched_ncr);
+    ASSERT_NO_THROW(update_mgr_->makeTransaction(matched_ncr));
 
     // Verify we create a transaction with only reverse turned on.
     EXPECT_EQ(1U, update_mgr_->getTransactionCount());
-    EXPECT_FALSE(ncr->isForwardChange());
-    EXPECT_TRUE(ncr->isReverseChange());
+    EXPECT_FALSE(matched_ncr->getForwardDomain());
+    EXPECT_TRUE(matched_ncr->getReverseDomain());
 }
 
-
-/// @brief Checks transaction creation when neither update direction is enabled.
-/// Verifies that transactions are not created when both forward and reverse
-/// directions are disabled.
+/// @brief Checks an MatchedNcr cannot be created for which both
+/// the forward and reverse domains are disabled.  This logic use to
+/// be part of D2UpdateMgr::makeTransaction() but was moved to
+/// D2QueueMgr::matchNcr().
 TEST_F(D2UpdateMgrTest, bothDisabled) {
     // Grab a canned request for test purposes.
     NameChangeRequestPtr& ncr = canned_ncrs_[0];
@@ -445,11 +457,10 @@ TEST_F(D2UpdateMgrTest, bothDisabled) {
     EXPECT_FALSE(cfg_mgr_->forwardUpdatesEnabled());
     EXPECT_FALSE(cfg_mgr_->reverseUpdatesEnabled());
 
-    // Attempt to make a transaction.
-    ASSERT_NO_THROW(update_mgr_->makeTransaction(ncr));
-
-    // Verify that do not create a transaction.
-    EXPECT_EQ(0U, update_mgr_->getTransactionCount());
+    // Attempt to match the NCR to make a transaction. This will fail.
+    // Really this tests D2QueueMgr::matchNcr().
+    auto matched_ncr = queue_mgr_->matchNcr(ncr);
+    ASSERT_FALSE(matched_ncr);
 }
 
 /// @brief Tests D2UpdateManager's checkFinishedTransactions method.
@@ -464,8 +475,11 @@ TEST_F(D2UpdateMgrTest, checkFinishedTransaction) {
 
     // Create a transaction for each canned request.
     for (size_t i = 0; i < canned_count_; i++) {
-        EXPECT_NO_THROW(update_mgr_->makeTransaction(canned_ncrs_[i]));
+        auto matched_ncr = queue_mgr_->matchNcr(canned_ncrs_[i]);
+        ASSERT_TRUE(matched_ncr);
+        EXPECT_NO_THROW(update_mgr_->makeTransaction(matched_ncr));
     }
+
     // Verify we have that the transaction count is correct.
     EXPECT_EQ(canned_count_, update_mgr_->getTransactionCount());
 
@@ -586,60 +600,6 @@ TEST_F(D2UpdateMgrTest, pickNextJob) {
     // 3. Does dequeue the entry
     EXPECT_NO_THROW(update_mgr_->pickNextJob());
     EXPECT_EQ(0U, update_mgr_->getTransactionCount());
-    EXPECT_EQ(0U, update_mgr_->getQueueCount());
-}
-
-/// @brief Tests D2UpdateManager's pickNextJob method.
-/// This test verifies that pickNextJob skips over requests
-/// for which makeTransation() fails.
-TEST_F(D2UpdateMgrTest, pickNextJobSkips) {
-    // Ensure we have at least 4 canned requests with which to work.
-    ASSERT_TRUE(canned_count_ >= 4);
-
-    // Enqueue a forward change NCR with an FQDN that has no forward match.
-    dhcp_ddns::NameChangeRequestPtr bogus_ncr;
-    bogus_ncr.reset(new dhcp_ddns::NameChangeRequest(*(canned_ncrs_[0])));
-    bogus_ncr->setForwardChange(true);
-    bogus_ncr->setReverseChange(false);
-    bogus_ncr->setFqdn("bogus.forward.domain.com");
-    ASSERT_NO_THROW(queue_mgr_->enqueue(bogus_ncr));
-
-    // Enqueue a reverse change NCR with an FQDN that has no reverse match.
-    bogus_ncr.reset(new dhcp_ddns::NameChangeRequest(*(canned_ncrs_[0])));
-    bogus_ncr->setForwardChange(false);
-    bogus_ncr->setReverseChange(true);
-    bogus_ncr->setIpAddress("77.77.77.77");
-    ASSERT_NO_THROW(queue_mgr_->enqueue(bogus_ncr));
-
-    // Put the valid transactions on the queue.
-    for (size_t i = 0; i < canned_count_; i++) {
-        ASSERT_NO_THROW(queue_mgr_->enqueue(canned_ncrs_[i]));
-    }
-
-    ASSERT_EQ(2 + canned_count_, update_mgr_->getQueueCount());
-    ASSERT_EQ(0U, update_mgr_->getTransactionCount());
-
-    // Invoke pickNextJob once.
-    EXPECT_NO_THROW(update_mgr_->pickNextJob());
-    EXPECT_EQ(1U, update_mgr_->getTransactionCount());
-    EXPECT_TRUE(update_mgr_->hasTransaction(canned_ncrs_[0]));
-
-    // Verify that the queue has all but one of the canned requests still queued.
-    EXPECT_EQ(canned_count_ - 1, update_mgr_->getQueueCount());
-
-    // Empty the queue and transactions.
-    queue_mgr_->clearQueue();
-    ASSERT_EQ(0U, update_mgr_->getQueueCount());
-    update_mgr_->clearTransactions();
-    EXPECT_EQ(0U, update_mgr_->getTransactionCount());
-
-    // Add two no match requests.
-    ASSERT_NO_THROW(queue_mgr_->enqueue(bogus_ncr));
-    ASSERT_NO_THROW(queue_mgr_->enqueue(bogus_ncr));
-    ASSERT_EQ(2U, update_mgr_->getQueueCount());
-
-    // Invoking pickNextJob() should empty the queue without adding transactions.
-    EXPECT_NO_THROW(update_mgr_->pickNextJob());
     EXPECT_EQ(0U, update_mgr_->getQueueCount());
 }
 

@@ -62,18 +62,17 @@ const unsigned int D2Process::IO_SERVICE_RUN_TIME_USECS = (100 * 1000);
 D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
     : DProcessBase(name, io_service, DCfgMgrBasePtr(new D2CfgMgr())),
       reconf_queue_flag_(false), shutdown_type_(SD_NORMAL) {
-
+    D2CfgMgrPtr tmp = getD2CfgMgr();
     // Instantiate queue manager.  Note that queue manager does not start
     // listening at this point.  That can only occur after configuration has
     // been received.  This means that until we receive the configuration,
     // D2 will neither receive nor process NameChangeRequests.
     // Pass in IOService for NCR IO event processing.
-    queue_mgr_.reset(new D2QueueMgr(getIOService()));
+    queue_mgr_.reset(new D2QueueMgr(getIOService(), tmp));
 
     // Instantiate update manager.
     // Pass in both queue manager and configuration manager.
     // Pass in IOService for DNS update transaction IO event processing.
-    D2CfgMgrPtr tmp = getD2CfgMgr();
     update_mgr_.reset(new D2UpdateMgr(queue_mgr_, tmp, getIOService()));
 
     // Initialize stats manager.
@@ -464,6 +463,9 @@ D2Process::reconfigureQueueMgr() {
                       << dhcp_ddns::ncrProtocolToString(d2_params->
                                                         getNcrProtocol()));
         }
+
+        // Iterate over queue entries and redo domain matching.
+        queue_mgr_->refreshQueuedMatching();
 
         // Now start it. This assumes that starting is a synchronous,
         // blocking call that executes quickly.

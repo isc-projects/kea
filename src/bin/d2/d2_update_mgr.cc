@@ -102,8 +102,8 @@ void D2UpdateMgr::pickNextJob() {
     // the next request in the queue.
     size_t queue_count = getQueueCount();
     for (size_t index = 0; index < queue_count; ) {
-        NameChangeRequestPtr queued_ncr = queue_mgr_->peekAt(index);
-        if (hasTransaction(queued_ncr)) {
+        MatchedNcrPtr queued_ncr = queue_mgr_->peekAt(index);
+        if (hasTransaction(queued_ncr->getNcr())) {
             // Leave it on the queue, move on to the next.
             ++index;
         } else {
@@ -126,77 +126,15 @@ void D2UpdateMgr::pickNextJob() {
 }
 
 bool
-D2UpdateMgr::makeTransaction(NameChangeRequestPtr& next_ncr) {
-    int direction_count = 0;
-    // If forward change is enabled, match to forward servers.
-    DdnsDomainPtr forward_domain;
-    if (next_ncr->isForwardChange()) {
-        if (!cfg_mgr_->forwardUpdatesEnabled()) {
-            next_ncr->setForwardChange(false);
-            LOG_DEBUG(dhcp_to_d2_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
-                      DHCP_DDNS_FWD_REQUEST_IGNORED)
-                      .arg(next_ncr->getRequestId())
-                      .arg(next_ncr->toText());
-        } else {
-            bool matched = cfg_mgr_->matchForward(next_ncr->getFqdn(),
-                                                  forward_domain);
-            // Could not find a match for forward DNS server. Log it and get
-            // out. This has the net affect of dropping the request on the
-            // floor.
-            if (!matched) {
-                LOG_ERROR(dhcp_to_d2_logger, DHCP_DDNS_NO_FWD_MATCH_ERROR)
-                          .arg(next_ncr->getRequestId())
-                          .arg(next_ncr->toText());
-                return (false);
-            }
+D2UpdateMgr::makeTransaction(MatchedNcrPtr& matched_ncr) {
 
-            ++direction_count;
-        }
-    }
-
-    // If reverse change is enabled, match to reverse servers.
-    DdnsDomainPtr reverse_domain;
-    if (next_ncr->isReverseChange()) {
-        if (!cfg_mgr_->reverseUpdatesEnabled()) {
-            next_ncr->setReverseChange(false);
-            LOG_DEBUG(dhcp_to_d2_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
-                      DHCP_DDNS_REV_REQUEST_IGNORED)
-                      .arg(next_ncr->getRequestId())
-                      .arg(next_ncr->toText());
-        } else {
-            bool matched = cfg_mgr_->matchReverse(next_ncr->getIpAddress(),
-                                                  reverse_domain,
-                                                  next_ncr->getReverseZone());
-
-            // Could not find a match for reverse DNS server. Log it and get
-            // out. This has the net affect of dropping the request on the
-            // floor.
-            if (!matched) {
-                LOG_ERROR(dhcp_to_d2_logger, DHCP_DDNS_NO_REV_MATCH_ERROR)
-                          .arg(next_ncr->getRequestId())
-                          .arg(next_ncr->toText());
-                return (false);
-            }
-
-            ++direction_count;
-        }
-    }
-
-    // If there is nothing to actually do, then the request falls on the floor.
-    // Should we log this?
-    if (!direction_count) {
-        LOG_DEBUG(dhcp_to_d2_logger, isc::log::DBGLVL_TRACE_DETAIL_DATA,
-                  DHCP_DDNS_REQUEST_DROPPED)
-                  .arg(next_ncr->getRequestId())
-                  .arg(next_ncr->toText());
-        return (false);
-    }
-
-    // We matched to the required servers, so construct the transaction.
     // @todo If multi-threading is implemented, one would pass in an
     // empty IOServicePtr, rather than our instance value.  This would cause
     // the transaction to instantiate its own, separate IOService to handle
     // the transaction's IO.
+    auto next_ncr = matched_ncr->getNcr(); 
+    auto forward_domain = matched_ncr->getForwardDomain();
+    auto reverse_domain = matched_ncr->getReverseDomain();
     NameChangeTransactionPtr trans;
     if (next_ncr->getChangeType() == CHG_ADD) {
         switch(next_ncr->getConflictResolutionMode()) {
@@ -359,7 +297,6 @@ TransactionAddressIndex::iterator
 D2UpdateMgr::transactionAddressEnd() {
     return (transaction_store_.get<AddressTag>().end());
 }
-
 
 } // namespace isc::d2
 } // namespace isc

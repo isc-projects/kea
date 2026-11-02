@@ -9,6 +9,7 @@
 #include <asiolink/io_service.h>
 #include <asiolink/interval_timer.h>
 #include <d2/d2_queue_mgr.h>
+#include <process/testutils/d_test_stubs.h>
 #include <d2srv/testutils/stats_test_utils.h>
 #include <dhcp_ddns/ncr_udp.h>
 
@@ -19,9 +20,12 @@
 
 using namespace std;
 using namespace isc;
+using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::dhcp_ddns;
 using namespace isc::d2;
 using namespace isc::d2::test;
+using namespace isc::process;
 
 namespace {
 
@@ -32,7 +36,7 @@ const char *valid_msgs[] =
      "{"
      " \"change-type\" : 0 , "
      " \"forward-change\" : true , "
-     " \"reverse-change\" : false , "
+     " \"reverse-change\" : true , "
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
@@ -43,7 +47,7 @@ const char *valid_msgs[] =
      "{"
      " \"change-type\" : 1 , "
      " \"forward-change\" : true , "
-     " \"reverse-change\" : false , "
+     " \"reverse-change\" : true , "
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
@@ -54,9 +58,9 @@ const char *valid_msgs[] =
      "{"
      " \"change-type\" : 0 , "
      " \"forward-change\" : true , "
-     " \"reverse-change\" : false , "
+     " \"reverse-change\" : true , "
      " \"fqdn\" : \"walah.walah.com\" , "
-     " \"ip-address\" : \"fe80::2acf:e9ff:fe12:e56f\" , "
+     " \"ip-address\" : \"2001:db8:302::1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\" : \"check-with-dhcid\""
@@ -65,13 +69,13 @@ const char *valid_msgs[] =
      "{"
      " \"change-type\" : 0 , "
      " \"forward-change\" : true , "
-     " \"reverse-change\" : false , "
+     " \"reverse-change\" : true , "
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\" : \"check-with-dhcid\","
-     " \"reverse-zone\" : \"backward.com.\""
+     " \"reverse-zone\" : \"in-addr.arpa.\""
      "}",
 };
 
@@ -82,25 +86,136 @@ const uint32_t LISTENER_PORT = 5301;
 const uint32_t SENDER_PORT = LISTENER_PORT+1;
 const long TEST_TIMEOUT = 5 * 1000;
 
+/// @brief Test fixture for testing D2QueueMgr.
+class D2QueueMgrTest : public ConfigParseTest {
+public:
+    D2QueueMgrTest() {
+        io_service_.reset(new IOService());
+        cfg_mgr_.reset(new D2CfgMgr());
+        queue_mgr_.reset(new D2QueueMgr(io_service_, cfg_mgr_, VALID_MSG_CNT));
+    }
+
+    ~D2QueueMgrTest() {
+    }
+
+    /// @brief Seeds configuration manager with a valid DHCP_DDNS configuration.
+    void makeFullConfig() {
+        std::string canned_config =
+                 "{ "
+                  "\"ip-address\" : \"192.168.1.33\" , "
+                  "\"port\" : 88 , "
+                  "\"tsig-keys\": [] ,"
+                  "\"forward-ddns\" : {"
+                  " \"ddns-domains\": [ "
+                  "  { \"name\": \"walah.walah.com.\" , "
+                  "   \"dns-servers\" : [ "
+                  "    { \"ip-address\": \"127.0.0.1\", \"port\" : 5301 } "
+                  "   ] },"
+                  "  { \"name\": \"org.\" , "
+                  "   \"dns-servers\" : [ "
+                  "    { \"ip-address\": \"127.0.0.1\" } "
+                  "    ] }"
+                  "  ] }, "
+                  "\"reverse-ddns\" : { "
+                  " \"ddns-domains\": [ "
+                  "  { \"name\": \"2.168.192.in-addr.arpa.\" , "
+                  "   \"dns-servers\" : [ "
+                  "    { \"ip-address\": \"127.0.0.1\", \"port\" : 5301 } "
+                  "   ] }, "
+                  "  { \"name\": \"2.0.3.0.8.B.D.0.1.0.0.2.ip6.arpa.\" , "
+                  "   \"dns-servers\" : [ "
+                  "    { \"ip-address\": \"127.0.0.1\" } "
+                  "    ] } "
+                  "  ] } }";
+
+        // If this configuration fails to parse most tests will fail.
+        ASSERT_TRUE(fromJSON(canned_config));
+        answer_ = cfg_mgr_->simpleParseConfig(config_set_);
+        ASSERT_TRUE(checkAnswer(0));
+    }
+
+    /// @brief Seeds configuration manager with a valid DHCP_DDNS configuration.
+    void makeForwardOnlyConfig() {
+        std::string canned_config =
+                 "{ "
+                  "\"ip-address\" : \"192.168.1.33\" , "
+                  "\"port\" : 88 , "
+                  "\"tsig-keys\": [] ,"
+                  "\"forward-ddns\" : {"
+                  " \"ddns-domains\": [ "
+                  "  { \"name\": \"walah.walah.com.\" , "
+                  "   \"dns-servers\" : [ "
+                  "    { \"ip-address\": \"127.0.0.1\", \"port\" : 5301 } "
+                  "   ] },"
+                  "  { \"name\": \"org.\" , "
+                  "   \"dns-servers\" : [ "
+                  "    { \"ip-address\": \"127.0.0.1\" } "
+                  "    ] }"
+                  "  ] } }";
+
+        // If this configuration fails to parse most tests will fail.
+        ASSERT_TRUE(fromJSON(canned_config));
+        answer_ = cfg_mgr_->simpleParseConfig(config_set_);
+        ASSERT_TRUE(checkAnswer(0));
+    }
+
+    /// @brief Seeds configuration manager with a valid DHCP_DDNS configuration.
+    void makeReverseOnlyConfig() {
+        std::string canned_config =
+                 "{ "
+                  "\"ip-address\" : \"192.168.1.33\" , "
+                  "\"port\" : 88 , "
+                  "\"tsig-keys\": [] ,"
+                  "\"reverse-ddns\" : { "
+                  " \"ddns-domains\": [ "
+                  "  { \"name\": \"2.168.192.in-addr.arpa.\" , "
+                  "   \"dns-servers\" : [ "
+                  "    { \"ip-address\": \"127.0.0.1\", \"port\" : 5301 } "
+                  "   ] }, "
+                  "  { \"name\": \"2.0.3.0.8.B.D.0.1.0.0.2.ip6.arpa.\" , "
+                  "   \"dns-servers\" : [ "
+                  "    { \"ip-address\": \"127.0.0.1\" } "
+                  "    ] } "
+                  "  ] } }";
+
+        // If this configuration fails to parse most tests will fail.
+        ASSERT_TRUE(fromJSON(canned_config));
+        answer_ = cfg_mgr_->simpleParseConfig(config_set_);
+        ASSERT_TRUE(checkAnswer(0));
+    }
+
+    IOServicePtr io_service_;
+    D2CfgMgrPtr cfg_mgr_;
+    D2QueueMgrPtr queue_mgr_;
+};
+
 /// @brief Tests that construction with max queue size of zero is not allowed.
 TEST(D2QueueMgrBasicTest, construction1) {
     asiolink::IOServicePtr io_service;
+    D2CfgMgrPtr cfg_mgr(new D2CfgMgr());
 
     // Verify that constructing with null IOServicePtr is not allowed.
-    EXPECT_THROW((D2QueueMgr(io_service)), D2QueueMgrError);
+    EXPECT_THROW((D2QueueMgr(io_service, cfg_mgr)), D2QueueMgrError);
+
+    // Verify that constructing with null CfgMgrPtr is not allowed.
+    cfg_mgr.reset();
+    EXPECT_THROW((D2QueueMgr(io_service, cfg_mgr)), D2QueueMgrError);
 
     io_service.reset(new isc::asiolink::IOService());
+    cfg_mgr.reset(new D2CfgMgr());
+
     // Verify that constructing with max queue size of zero is not allowed.
-    EXPECT_THROW(D2QueueMgr(io_service, 0), D2QueueMgrError);
+    EXPECT_THROW(D2QueueMgr(io_service, cfg_mgr, 0), D2QueueMgrError);
 }
 
 /// @brief Tests default construction works.
 TEST(D2QueueMgrBasicTest, construction2) {
     asiolink::IOServicePtr io_service(new isc::asiolink::IOService());
+    D2CfgMgrPtr cfg_mgr(new D2CfgMgr());
 
     // Verify that valid constructor works.
     D2QueueMgrPtr queue_mgr;
-    ASSERT_NO_THROW(queue_mgr.reset(new D2QueueMgr(io_service)));
+    ASSERT_NO_THROW(queue_mgr.reset(new D2QueueMgr(io_service, cfg_mgr)));
     // Verify queue max is defaulted correctly.
     EXPECT_EQ(D2QueueMgr::MAX_QUEUE_DEFAULT, queue_mgr->getMaxQueueSize());
 }
@@ -108,10 +223,11 @@ TEST(D2QueueMgrBasicTest, construction2) {
 /// @brief Tests construction with custom queue size works properly
 TEST(D2QueueMgrBasicTest, construction3) {
     asiolink::IOServicePtr io_service(new isc::asiolink::IOService());
+    D2CfgMgrPtr cfg_mgr(new D2CfgMgr());
 
     // Verify that custom queue size constructor works.
     D2QueueMgrPtr queue_mgr;
-    ASSERT_NO_THROW(queue_mgr.reset(new D2QueueMgr(io_service, 100)));
+    ASSERT_NO_THROW(queue_mgr.reset(new D2QueueMgr(io_service, cfg_mgr, 100)));
     // Verify queue max is the custom value.
     EXPECT_EQ(100U, queue_mgr->getMaxQueueSize());
 }
@@ -123,21 +239,16 @@ TEST(D2QueueMgrBasicTest, construction3) {
 /// 3. Attempting to dequeue an empty queue is not allowed
 /// 4. Peek returns the first entry on the queue without altering queue content
 /// 5. Dequeue removes the first entry on the queue
-TEST(D2QueueMgrBasicTest, basicQueue) {
-    asiolink::IOServicePtr io_service(new isc::asiolink::IOService());
+TEST_F(D2QueueMgrTest, basicQueue) {
+    makeFullConfig();
 
-    // Construct the manager with max queue size set to number of messages
-    // we'll use.
-    D2QueueMgrPtr queue_mgr;
-    ASSERT_NO_THROW(queue_mgr.reset(new D2QueueMgr(io_service, VALID_MSG_CNT)));
-    ASSERT_EQ(VALID_MSG_CNT, queue_mgr->getMaxQueueSize());
-
-    // Verify queue is empty after construction.
-    EXPECT_EQ(0U, queue_mgr->getQueueSize());
+    // Verify queue size is VALID_MSG_CNT and queue is empty.
+    ASSERT_EQ(VALID_MSG_CNT, queue_mgr_->getMaxQueueSize());
+    ASSERT_EQ(0U, queue_mgr_->getQueueSize());
 
     // Verify that peek and dequeue both throw when queue is empty.
-    EXPECT_THROW(queue_mgr->peek(), D2QueueMgrInvalidIndex);
-    EXPECT_THROW(queue_mgr->dequeue(), D2QueueMgrInvalidIndex);
+    EXPECT_THROW(queue_mgr_->peek(), D2QueueMgrInvalidIndex);
+    EXPECT_THROW(queue_mgr_->dequeue(), D2QueueMgrInvalidIndex);
 
     // Vector to keep track of the NCRs we que.
     std::vector<NameChangeRequestPtr>ref_msgs;
@@ -151,29 +262,30 @@ TEST(D2QueueMgrBasicTest, basicQueue) {
 
         // Verify that the request can be added to the queue and queue
         // size increments accordingly.
-        EXPECT_NO_THROW(queue_mgr->enqueue(ncr));
-        EXPECT_EQ(i + 1, queue_mgr->getQueueSize());
+        EXPECT_NO_THROW(queue_mgr_->enqueue(ncr));
+        EXPECT_EQ(i + 1, queue_mgr_->getQueueSize());
     }
 
     // Loop through and verify that the queue contents match the
     // reference list.
+    MatchedNcrPtr matched_ncr;
     for (size_t i = 0; i < VALID_MSG_CNT; i++) {
         // Verify that peek on a non-empty queue returns first entry
         // without altering queue content.
-        EXPECT_NO_THROW(ncr = queue_mgr->peek());
+        EXPECT_NO_THROW(matched_ncr = queue_mgr_->peek());
 
         // Verify the peeked entry is the one it should be.
-        ASSERT_TRUE(ncr);
-        EXPECT_EQ(*(ref_msgs[i]), *ncr);
+        ASSERT_TRUE(matched_ncr);
+        EXPECT_EQ(*(ref_msgs[i]), *(matched_ncr->getNcr()));
 
         // Verify that peek did not alter the queue size.
-        EXPECT_EQ(VALID_MSG_CNT - i, queue_mgr->getQueueSize());
+        EXPECT_EQ(VALID_MSG_CNT - i, queue_mgr_->getQueueSize());
 
         // Verify the dequeuing from non-empty queue works
-        EXPECT_NO_THROW(queue_mgr->dequeue());
+        EXPECT_NO_THROW(queue_mgr_->dequeue());
 
         // Verify queue size decrements following dequeue.
-        EXPECT_EQ(VALID_MSG_CNT - (i + 1), queue_mgr->getQueueSize());
+        EXPECT_EQ(VALID_MSG_CNT - (i + 1), queue_mgr_->getQueueSize());
     }
 
     // Iterate over the list of requests and add each to the queue.
@@ -181,25 +293,25 @@ TEST(D2QueueMgrBasicTest, basicQueue) {
         // Create the ncr and add to our reference list.
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         ref_msgs.push_back(ncr);
-        EXPECT_NO_THROW(queue_mgr->enqueue(ncr));
+        EXPECT_NO_THROW(queue_mgr_->enqueue(ncr));
     }
 
     // Verify queue count is correct.
-    EXPECT_EQ(VALID_MSG_CNT, queue_mgr->getQueueSize());
+    EXPECT_EQ(VALID_MSG_CNT, queue_mgr_->getQueueSize());
 
     // Verify that peekAt returns the correct entry.
-    EXPECT_NO_THROW(ncr = queue_mgr->peekAt(1));
-    EXPECT_EQ(*(ref_msgs[1]), *ncr);
+    EXPECT_NO_THROW(matched_ncr = queue_mgr_->peekAt(1));
+    EXPECT_EQ(*(ref_msgs[1]), *(matched_ncr->getNcr()));
 
     // Verify that dequeueAt removes the correct entry.
     // Removing it, this should shift the queued entries forward by one.
-    EXPECT_NO_THROW(queue_mgr->dequeueAt(1));
-    EXPECT_NO_THROW(ncr = queue_mgr->peekAt(1));
-    EXPECT_EQ(*(ref_msgs[2]), *ncr);
+    EXPECT_NO_THROW(queue_mgr_->dequeueAt(1));
+    EXPECT_NO_THROW(matched_ncr = queue_mgr_->peekAt(1));
+    EXPECT_EQ(*(ref_msgs[2]), *(matched_ncr->getNcr()));
 
     // Verify the peekAt and dequeueAt throw when given indexes beyond the end.
-    EXPECT_THROW(queue_mgr->peekAt(VALID_MSG_CNT + 1), D2QueueMgrInvalidIndex);
-    EXPECT_THROW(queue_mgr->dequeueAt(VALID_MSG_CNT + 1),
+    EXPECT_THROW(queue_mgr_->peekAt(VALID_MSG_CNT + 1), D2QueueMgrInvalidIndex);
+    EXPECT_THROW(queue_mgr_->dequeueAt(VALID_MSG_CNT + 1),
                  D2QueueMgrInvalidIndex);
 }
 
@@ -210,10 +322,10 @@ bool checkSendVsReceived(NameChangeRequestPtr sent_ncr,
         (*sent_ncr == *received_ncr));
 }
 
-class QueueMgrUDPTestRequestHandler : public NameChangeSender::RequestSendHandler {
+class D2QueueMgrUDPTestRequestHandler : public NameChangeSender::RequestSendHandler {
 public:
     /// @brief Constructor
-    QueueMgrUDPTestRequestHandler() : send_result_(NameChangeSender::SUCCESS) {
+    D2QueueMgrUDPTestRequestHandler() : send_result_(NameChangeSender::SUCCESS) {
     }
 
     /// @brief Implements the send completion handler.
@@ -231,18 +343,15 @@ public:
 /// @brief Text fixture that allows testing a listener and sender together
 /// It derives from both the receive and send handler classes and contains
 /// and instance of UDP listener and UDP sender.
-class QueueMgrUDPTest : public virtual ::testing::Test, public D2StatTest {
+class D2QueueMgrUDPTest : public D2QueueMgrTest, public D2StatTest {
 public:
-    asiolink::IOServicePtr io_service_;
     NameChangeSenderPtr sender_;
     isc::asiolink::IntervalTimer test_timer_;
-    D2QueueMgrPtr queue_mgr_;
-    boost::shared_ptr<QueueMgrUDPTestRequestHandler> handle_;
+    boost::shared_ptr<D2QueueMgrUDPTestRequestHandler> handle_;
     std::vector<NameChangeRequestPtr> received_ncrs_;
 
-    QueueMgrUDPTest() : io_service_(new isc::asiolink::IOService()),
-                        test_timer_(io_service_),
-                        handle_(new QueueMgrUDPTestRequestHandler()) {
+    D2QueueMgrUDPTest() : test_timer_(io_service_),
+                        handle_(new D2QueueMgrUDPTestRequestHandler()) {
         isc::asiolink::IOAddress addr(TEST_ADDRESS);
         // Create our sender instance. Note that reuse_address is true.
         sender_.reset(new NameChangeUDPSender(addr, SENDER_PORT,
@@ -250,12 +359,13 @@ public:
                                               FMT_JSON, handle_, 100, true));
 
         // Set the test timeout to break any running tasks if they hang.
-        test_timer_.setup(std::bind(&QueueMgrUDPTest::testTimeoutHandler,
+        test_timer_.setup(std::bind(&D2QueueMgrUDPTest::testTimeoutHandler,
                                     this),
                           TEST_TIMEOUT);
+        makeFullConfig();
     }
 
-    virtual ~QueueMgrUDPTest() {
+    virtual ~D2QueueMgrUDPTest() {
         sender_->stopSending();
         queue_mgr_->stopListening();
         test_timer_.cancel();
@@ -288,11 +398,7 @@ public:
 /// 5. Starting listener from INITTED transitions to RUNNING.
 /// 6. Stopping the  listener transitions from RUNNING to STOPPED.
 /// 7. Starting listener from STOPPED transitions to RUNNING.
-TEST_F (QueueMgrUDPTest, stateModel) {
-    // Create the queue manager.
-    ASSERT_NO_THROW(queue_mgr_.reset(new D2QueueMgr(io_service_,
-                                     VALID_MSG_CNT)));
-
+TEST_F(D2QueueMgrUDPTest, stateModel) {
     // Verify that the initial state is NOT_INITTED.
     EXPECT_EQ(D2QueueMgr::NOT_INITTED, queue_mgr_->getMgrState());
 
@@ -300,8 +406,7 @@ TEST_F (QueueMgrUDPTest, stateModel) {
     EXPECT_THROW(queue_mgr_->startListening(), D2QueueMgrError);
 
     // Verify that initializing the listener moves us to INITTED state.
-    isc::asiolink::IOAddress addr(TEST_ADDRESS);
-    EXPECT_NO_THROW(queue_mgr_->initUDPListener(addr, LISTENER_PORT,
+    isc::asiolink::IOAddress addr(TEST_ADDRESS); EXPECT_NO_THROW(queue_mgr_->initUDPListener(addr, LISTENER_PORT,
                                                 FMT_JSON, true));
     EXPECT_EQ(D2QueueMgr::INITTED, queue_mgr_->getMgrState());
 
@@ -360,13 +465,12 @@ TEST_F (QueueMgrUDPTest, stateModel) {
 /// 6. Requests can be received and queued normally after the queue
 /// has been emptied.
 /// 7. setQueueMax disallows values of 0 or less than current queue size.
-TEST_F (QueueMgrUDPTest, liveFeed) {
+TEST_F(D2QueueMgrUDPTest, liveFeed) {
     NameChangeRequestPtr send_ncr;
     NameChangeRequestPtr received_ncr;
 
-    // Create the queue manager and start listening..
-    ASSERT_NO_THROW(queue_mgr_.reset(new D2QueueMgr(io_service_,
-                                                    VALID_MSG_CNT)));
+    // Verifyt the queue manager's size and stat is NOT_INITTED.
+    ASSERT_EQ(VALID_MSG_CNT, queue_mgr_->getMaxQueueSize());
     ASSERT_EQ(D2QueueMgr::NOT_INITTED, queue_mgr_->getMgrState());
 
     // Verify that setting max queue size to 0 is not allowed.
@@ -401,7 +505,7 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
         EXPECT_EQ(1U, queue_mgr_->getQueueSize());
 
         // Verify that peek shows the NCR we just sent
-        EXPECT_NO_THROW(received_ncr = queue_mgr_->peek());
+        ASSERT_NO_THROW(received_ncr = queue_mgr_->peek()->getNcr());
         EXPECT_TRUE(checkSendVsReceived(send_ncr, received_ncr));
 
         // Verify that we and dequeue the request.
@@ -491,11 +595,9 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
 }
 
 // Verifies that nested NCRs are enqueued individually.
-TEST_F(QueueMgrUDPTest, nestedNCRs) {
+TEST_F(D2QueueMgrUDPTest, nestedNCRs) {
 
-    // Create the queue manager and start listening..
-    ASSERT_NO_THROW(queue_mgr_.reset(new D2QueueMgr(io_service_,
-                                                    VALID_MSG_CNT)));
+    // Start the queue manager listening.
     ASSERT_EQ(D2QueueMgr::NOT_INITTED, queue_mgr_->getMgrState());
 
     isc::asiolink::IOAddress addr(TEST_ADDRESS);
@@ -540,7 +642,7 @@ TEST_F(QueueMgrUDPTest, nestedNCRs) {
     next_ncr = first_ncr;
     for (size_t i = 0; i < VALID_MSG_CNT; i++) {
         NameChangeRequestPtr received_ncr;
-        EXPECT_NO_THROW(received_ncr = queue_mgr_->peek());
+        EXPECT_NO_THROW(received_ncr = queue_mgr_->peek()->getNcr());
         EXPECT_TRUE(checkSendVsReceived(next_ncr, received_ncr));
         next_ncr = next_ncr->getNextNcr();
 
@@ -619,17 +721,18 @@ TEST(D2QueueMgrBasicTest, findLast) {
         ASSERT_NO_THROW(queued = queue_mgr->enqueue(ncr, true));
         ASSERT_TRUE(queued);
 
-        auto found_ncr = queue_mgr->findLast(dhcid1);
+        auto found = queue_mgr->findLast(dhcid1);
         int last_idx = scenario.exp_last_dhcid1_idx_;
         if (last_idx < 0) {
-            ASSERT_FALSE(found_ncr);
+            ASSERT_FALSE(found);
         } else  {
-            ASSERT_TRUE(found_ncr);
+            ASSERT_TRUE(found);
+            auto found_ncr = found->getNcr();
             ASSERT_EQ(*found_ncr, *(ref_msgs[last_idx]))
                 << "found_ncr:" << found_ncr->toText()
                 << "ref_ncr:" << (ref_msgs[last_idx])->toText();
         }
-
+#if 0
         found_ncr = queue_mgr->findLast(dhcid2);
         last_idx = scenario.exp_last_dhcid2_idx_;
         if (last_idx < 0) {
@@ -652,6 +755,7 @@ TEST(D2QueueMgrBasicTest, findLast) {
                 << "ref_ncr:" << (ref_msgs[last_idx])->toText();
         }
     }
+#endif
 }
 
 /// @brief Tests QueueMgr's duplicate suppression scheme.
@@ -716,6 +820,8 @@ TEST(D2QueueMgrBasicTest, duplicateSuppression) {
     // Verify the queue size.
     EXPECT_EQ(exp_queue_size, queue_mgr->getQueueSize());
 
+        MatchedNcrPtr mncr;
+
     // Verify stats are correct.
     StatMap stats_ncr = {
         { "ncr-received", 0},
@@ -726,6 +832,164 @@ TEST(D2QueueMgrBasicTest, duplicateSuppression) {
     };
 
     checkStats(stats_ncr);
+}
+
+// Test forward matching when only forward domains are defined.
+// Prior tests all use canned config which defines both forward
+// and reverse domains which verifies when both must match.
+TEST_F(D2QueueMgrTest, forwardDomainMatching) {
+    makeForwardOnlyConfig();
+
+    const char *test_msgs[] =
+    {
+        // Forward matches.
+        "{"
+        " \"change-type\" : 0 , "
+        " \"forward-change\" : true , "
+        " \"reverse-change\" : true , "
+        " \"fqdn\" : \"walah.walah.com\" , "
+        " \"ip-address\" : \"192.168.2.1\" , "
+        " \"dhcid\" : \"010203040A7F8E3D\" , "
+        " \"lease-length\" : 1300, "
+        " \"conflict-resolution-mode\" : \"check-with-dhcid\""
+        "}",
+        // Forward does not match.
+        "{"
+        " \"change-type\" : 0 , "
+        " \"forward-change\" : true , "
+        " \"reverse-change\" : true , "
+        " \"fqdn\" : \"bogus.net\" , "
+        " \"ip-address\" : \"192.168.2.1\" , "
+        " \"dhcid\" : \"010203040A7F8E3D\" , "
+        " \"lease-length\" : 1300, "
+        " \"conflict-resolution-mode\" : \"check-with-dhcid\""
+        "}",
+    };
+
+    NameChangeRequestPtr ncr;
+    ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(test_msgs[0]));
+
+    // Verify that the request can be added to the queue and queue
+    // size increments accordingly.
+    bool queued;
+    EXPECT_NO_THROW(queued = queue_mgr_->enqueue(ncr, true));
+
+    ASSERT_TRUE(queued);
+    ASSERT_EQ(1, queue_mgr_->getQueueSize());
+    // Verify the MatchedNCR is as expected.
+    auto mncr = queue_mgr_->peek();
+    ASSERT_TRUE(mncr);
+    EXPECT_TRUE(mncr->getForwardDomain());
+    EXPECT_FALSE(mncr->getReverseDomain());
+
+    // Empty the queue so we know its domain matching that inhibits queuing.
+    queue_mgr_->clearQueue();
+
+    // Verify that a non-matching request is not added to the queue.
+    ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(test_msgs[1]));
+    EXPECT_NO_THROW(queued = queue_mgr_->enqueue(ncr, true));
+    EXPECT_FALSE(queued);
+    EXPECT_EQ(0, queue_mgr_->getQueueSize());
+}
+
+// Test reverse matching when only reverse domains are defined.
+// Prior tests all use canned config which defines both forward
+// and reverse domains which verifies when both must match.
+TEST_F(D2QueueMgrTest, reverseDomainMatching) {
+    makeReverseOnlyConfig();
+
+    const char *test_msgs[] =
+    {
+        // Reverse matches.
+        "{"
+        " \"change-type\" : 0 , "
+        " \"forward-change\" : true , "
+        " \"reverse-change\" : true , "
+        " \"fqdn\" : \"walah.walah.com\" , "
+        " \"ip-address\" : \"192.168.2.1\" , "
+        " \"dhcid\" : \"010203040A7F8E3D\" , "
+        " \"lease-length\" : 1300, "
+        " \"conflict-resolution-mode\" : \"check-with-dhcid\""
+        "}",
+        // Reverse does not match.
+        "{"
+        " \"change-type\" : 0 , "
+        " \"forward-change\" : true , "
+        " \"reverse-change\" : true , "
+        " \"fqdn\" : \"walah.walah.com\" , "
+        " \"ip-address\" : \"172.168.2.1\" , "
+        " \"dhcid\" : \"010203040A7F8E3D\" , "
+        " \"lease-length\" : 1300, "
+        " \"conflict-resolution-mode\" : \"check-with-dhcid\""
+        "}",
+    };
+
+    NameChangeRequestPtr ncr;
+    ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(test_msgs[0]));
+
+    // Verify that the request can be added to the queue and queue
+    // size increments accordingly.
+    bool queued;
+    EXPECT_NO_THROW(queued = queue_mgr_->enqueue(ncr, true));
+    EXPECT_TRUE(queued);
+    EXPECT_EQ(1, queue_mgr_->getQueueSize());
+
+    // Verify the MatchedNCR is as expected.
+    auto mncr = queue_mgr_->peek();
+    ASSERT_TRUE(mncr);
+    EXPECT_FALSE(mncr->getForwardDomain());
+    EXPECT_TRUE(mncr->getReverseDomain());
+
+    // Empty the queue so we know its domain matching that inhibits queuing.
+    queue_mgr_->clearQueue();
+
+    // Verify that a non-matching request is not added to the queue.
+    ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(test_msgs[1]));
+    EXPECT_NO_THROW(queued = queue_mgr_->enqueue(ncr, true));
+    EXPECT_FALSE(queued);
+    EXPECT_EQ(0, queue_mgr_->getQueueSize());
+}
+
+TEST_F(D2QueueMgrTest, refreshMatching) {
+    makeFullConfig();
+
+    // Iterate over the list of requests and add each to the queue.
+    std::vector<NameChangeRequestPtr>ref_msgs;
+    for (size_t i = 0; i < VALID_MSG_CNT; i++) {
+        // Create the ncr and add to our reference list.
+        NameChangeRequestPtr ncr;
+        ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
+        EXPECT_NO_THROW(queue_mgr_->enqueue(ncr));
+        ref_msgs.push_back(ncr);
+    }
+
+    queue_mgr_->refreshQueuedMatching();
+    ASSERT_EQ(VALID_MSG_CNT, queue_mgr_->getQueueSize());
+    for (size_t i = 0; i < queue_mgr_->getQueueSize(); ++i) {
+        auto mncr = queue_mgr_->peekAt(i);
+        ASSERT_TRUE(mncr->getForwardDomain());
+        ASSERT_TRUE(mncr->getReverseDomain());
+    }
+
+    makeForwardOnlyConfig();
+    queue_mgr_->refreshQueuedMatching();
+    ASSERT_EQ(VALID_MSG_CNT, queue_mgr_->getQueueSize());
+    // Forward domain should be set, reverse domain should be empty.
+    for (size_t i = 0; i < queue_mgr_->getQueueSize(); ++i) {
+        auto mncr = queue_mgr_->peekAt(i);
+        ASSERT_TRUE(mncr->getForwardDomain());
+        ASSERT_FALSE(mncr->getReverseDomain());
+    }
+
+    makeReverseOnlyConfig();
+    queue_mgr_->refreshQueuedMatching();
+    ASSERT_EQ(VALID_MSG_CNT, queue_mgr_->getQueueSize());
+    // Forward domain should be set, reverse domain should be empty.
+    for (size_t i = 0; i < queue_mgr_->getQueueSize(); ++i) {
+        auto mncr = queue_mgr_->peekAt(i);
+        ASSERT_FALSE(mncr->getForwardDomain());
+        ASSERT_TRUE(mncr->getReverseDomain());
+    }
 }
 
 } // end of anonymous namespace

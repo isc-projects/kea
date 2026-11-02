@@ -92,12 +92,6 @@ typedef TransactionStore::index<AddressTag>::type TransactionAddressIndex;
 /// wrapped in NameChangeTransaction and added to the D2UpdateMgr's list of
 /// transactions.
 ///
-/// As part of the process of forming transactions, D2UpdateMgr matches each
-/// request with the appropriate list of DNS servers.  This matching is based
-/// upon request attributes, primarily the FQDN and update direction (forward
-/// or reverse).  D2UpdateMgr uses the services of D2CfgMgr to match requests
-/// to DNS server lists.
-///
 /// Once created, each transaction is responsible for carrying out the steps
 /// required to fulfill its specific request.  These steps typically consist of
 /// one or more DNS packet exchanges with the appropriate DNS server.  As
@@ -176,33 +170,20 @@ protected:
 
     /// @brief Create a new transaction for the given request.
     ///
-    /// This method will attempt to match the request to suitable DNS servers.
-    /// If matching servers are found, it will instantiate a transaction for
-    /// the requests, add the transaction to the transaction list, and start
-    /// the transaction.
+    /// The request is expected to have already been matched to either a
+    /// forward domain, a reverse domain, or both.
     ///
-    /// If updates in a given direction are disabled requests for updates in
-    /// that direction will be ignored.  For example: If a request is received
-    /// which asks for updates in both directions but only forward updates are
-    /// enabled; only the forward update will be attempted.  Effectively, the
-    /// request will be treated as if it only asked for forward updates.
-    ///
-    /// If updates in a given direction are enabled, and a request asks for
-    /// updates in that direction, failing to match the request to a list
-    /// of servers is an error which will be logged and the request will be
-    /// discarded.
-    ///
-    /// Finally, If conflict resolution is enabled, it will instantiate either
+    /// If conflict resolution is enabled, it will instantiate either
     /// a NameAddTransaction or a NameRemoveTransaction. If disabled it will
     /// instantiate either a SimpleAddTransaction or a SimpleRemoveTransaction.
     ///
-    /// @param ncr the NameChangeRequest for which to create a transaction.
+    /// @param ncr the MatchedNcr for which to create a transaction.
     ///
     /// @return True if a transaction was added, false otherwise.
     ///
     /// @throw D2UpdateMgrError if a transaction for this DHCID already
     /// exists. Note this would be programmatic error.
-    bool makeTransaction(isc::dhcp_ddns::NameChangeRequestPtr& ncr);
+    bool makeTransaction(MatchedNcrPtr& ncr);
 
 public:
     /// @brief Gets the D2UpdateMgr's IOService.

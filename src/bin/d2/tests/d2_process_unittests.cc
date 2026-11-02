@@ -318,7 +318,7 @@ TEST_F(D2ProcessTest, queueFullRecovery) {
         " \"change-type\" : 0 , "
         " \"forward-change\" : true , "
         " \"reverse-change\" : false , "
-        " \"fqdn\" : \"walah.walah.com\" , "
+        " \"fqdn\" : \"my.example.com\" , "
         " \"ip-address\" : \"192.168.2.1\" , "
         " \"dhcid\" : \"010203040A7F8E3D\" , "
         " \"lease-length\" : 1300, "

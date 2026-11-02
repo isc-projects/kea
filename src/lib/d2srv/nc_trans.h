@@ -490,6 +490,18 @@ public:
     /// the request does not include a reverse change, the pointer will empty.
     DdnsDomainPtr& getReverseDomain();
 
+    /// @brief Sets the forward DdnsDomain.
+    ///
+    /// Used for UTs only.
+    /// @param domain pointer to the forward DdnsDomain
+    void setForwardDomain(DdnsDomainPtr domain);
+
+    /// @brief Sets the reverse DdnsDomain.
+    ///
+    /// Used for UTs only.
+    /// @param domain pointer to the forward DdnsDomain
+    void setReverseDomain(DdnsDomainPtr domain);
+
     /// @brief Fetches the currently selected server.
     ///
     /// @return A const pointer reference to the DnsServerInfo of the current
