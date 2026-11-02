@@ -204,14 +204,13 @@ serverDoRead(TlsStreamImpl& stream, TLSCallback& server_cb) {
                                                  size_t length) {
             server_cb.setCode(ec.value());
             server_cb.called() = server_cb.queued();
-            server_cb.length() += length;
-            server_cb.cumulative() += server_cb.length();
+            server_cb.cumulative() += length;
 
             // If we have read at least two bytes, we can work out how much we
             // should be reading.
-            if (server_cb.cumulative() >= 2) {
-                server_cb.expected() = readUint16(server_cb.data(), server_cb.length());
-                if ((server_cb.expected() + 2) == server_cb.cumulative()) {
+            if (server_cb.cumulative() >= 2 && !server_cb.length()) {
+                server_cb.length() = readUint16(server_cb.data(), sizeof(uint16_t));
+                if ((server_cb.expected()) == server_cb.cumulative()) {
 
                     // Amount of data read from stream equals the size of the
                     // message (as indicated in the first two bytes of the message)
@@ -269,9 +268,8 @@ serverDoWrite(TlsStreamImpl& stream, TLSCallback& server_cb) {
                                                   size_t length) {
             server_cb.setCode(ec.value());
             server_cb.called() = server_cb.queued();
-            server_cb.length() += length;
-            server_cb.cumulative() += server_cb.length();
-            if (server_cb.expected() != server_cb.length()) {
+            server_cb.cumulative() += length;
+            if (server_cb.expected() != server_cb.cumulative()) {
                 serverDoWrite(stream, server_cb);
             }
         });
@@ -496,13 +494,15 @@ TEST(TLSSocket, sequenceTest) {
     server_cb.queued() = TLSCallback::READ;
     server_cb.setCode(0);
     server_cb.length() = 0;
+    server_cb.expected() = sizeof(OUTBOUND_DATA) + 2;
 
     // Synchronously read the data from the server.
     serverRead(server, server_cb);
 
     // Wait for the client callback to complete. (Must do this first on
     // Solaris: if we do the synchronous read first, the test hangs.)
-    while (server_cb.called() == TLSCallback::NONE) {
+    while (server_cb.called() == TLSCallback::NONE ||
+           server_cb.expected() != server_cb.cumulative()) {
         service->runOne();
     }
 
@@ -543,7 +543,8 @@ TEST(TLSSocket, sequenceTest) {
 
     // Wait for the client callback to complete. (Must do this first on
     // Solaris: if we do the synchronous read first, the test hangs.)
-    while (server_cb.called() == TLSCallback::NONE) {
+    while (server_cb.called() == TLSCallback::NONE ||
+           server_cb.expected() != server_cb.cumulative()) {
         service->runOne();
     }
 
@@ -589,7 +590,7 @@ TEST(TLSSocket, sequenceTest) {
                 // sent.
                 EXPECT_EQ(TLSCallback::WRITE, server_cb.called());
                 EXPECT_EQ(0, server_cb.getCode());
-                EXPECT_EQ((sizeof(INBOUND_DATA) + 2), server_cb.length());
+                EXPECT_EQ((sizeof(INBOUND_DATA) + 2), server_cb.cumulative());
                 server_complete = true;
             }
         }
@@ -639,7 +640,7 @@ TEST(TLSSocket, sequenceTest) {
     // ... and check what the server sent.
     EXPECT_EQ(TLSCallback::WRITE, server_cb.called());
     EXPECT_EQ(0, server_cb.getCode());
-    EXPECT_EQ(sizeof(INBOUND_DATA) + 2, server_cb.length());
+    EXPECT_EQ(sizeof(INBOUND_DATA) + 2, server_cb.cumulative());
 
     // ... and that what was sent is what was received.
     const uint8_t* received = client_buffer->getData();

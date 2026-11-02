@@ -822,7 +822,7 @@ TEST_F(TLSTest, noHandshake) {
     // Send on the client.
     char send_buf[] = "some text...";
     TestCallback send_cb;
-    client_->async_write_some(boost::asio::buffer(send_buf), send_cb);
+    async_write(*client_, boost::asio::buffer(send_buf), send_cb);
     while (!timeout && !send_cb.getCalled()) {
         io_service_->runOne();
     }
@@ -1517,7 +1517,7 @@ TEST_F(TLSTest, noHandshakeCloseonError) {
     // Send on the client.
     char send_buf[] = "some text...";
     TestCallback send_cb(&client_->lowest_layer());
-    client_->async_write_some(boost::asio::buffer(send_buf), send_cb);
+    async_write(*client_, boost::asio::buffer(send_buf), send_cb);
     while (!timeout && !send_cb.getCalled()) {
         io_service_->runOne();
     }
