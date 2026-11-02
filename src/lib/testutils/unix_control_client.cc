@@ -25,7 +25,8 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
-UnixControlClient::UnixControlClient(IOServicePtr io_service) : io_service_(io_service), socket_(io_service_) {
+UnixControlClient::UnixControlClient(IOServicePtr io_service)
+    : io_service_(io_service), socket_(io_service_) {
 }
 
 UnixControlClient::~UnixControlClient() {
@@ -94,6 +95,7 @@ bool UnixControlClient::getResponse(std::string& response,
     std::atomic<bool> done(false);
     std::atomic<bool> result(true);
     std::array<char, 4096> buffer;
+    std::mutex m;
     IntervalTimerPtr timer;
     if (timeout_sec) {
         timer.reset(new IntervalTimer(io_service_));
@@ -103,10 +105,11 @@ bool UnixControlClient::getResponse(std::string& response,
         }, timeout_sec * 1000, IntervalTimer::ONE_SHOT);
     }
     std::function<void(const boost::system::error_code&, size_t)> f =
-        [&f, &response, &buffer, &result, &done, this](const boost::system::error_code& ec,
-                                                       size_t bytes_transferred) {
+        [&f, &response, &buffer, &result, &done, &m, this](const boost::system::error_code& ec,
+                                                           size_t bytes_transferred) {
         if (!ec) {
             if (bytes_transferred) {
+                std::scoped_lock<std::mutex> lk(m);
                 response.append(buffer.data(), buffer.data() + bytes_transferred);
             }
             socket_.asyncReceive(buffer.data(), buffer.size(), f);

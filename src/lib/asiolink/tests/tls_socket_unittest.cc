@@ -490,13 +490,14 @@ TEST(TLSSocket, sequenceTest) {
     client_cb.queued() = TLSCallback::WRITE;
     client_cb.setCode(143);  // Arbitrary number
     client_cb.length() = 0;
+    client_cb.cumulative() = 0;
     client_cb.expected() = sizeof(OUTBOUND_DATA) + 2;
 
-    writeUint16(sizeof(OUTBOUND_DATA) - 1, client_cb.data(), TLSCallback::MIN_SIZE);
-    copy(OUTBOUND_DATA, (OUTBOUND_DATA + sizeof(OUTBOUND_DATA) - 1),
+    writeUint16(sizeof(OUTBOUND_DATA), client_cb.data(), TLSCallback::MIN_SIZE);
+    copy(OUTBOUND_DATA, (OUTBOUND_DATA + sizeof(OUTBOUND_DATA)),
         (client_cb.data() + 2));
 
-    client.asyncSend(client_cb.data() + 2, sizeof(OUTBOUND_DATA) - 1, &server_endpoint, client_cb);
+    client.asyncSend(client_cb.data() + 2, sizeof(OUTBOUND_DATA), &server_endpoint, client_cb);
 
     // Wait for the client callback to complete. (Must do this first on
     // Solaris: if we do the synchronous read first, the test hangs.)
@@ -509,6 +510,7 @@ TEST(TLSSocket, sequenceTest) {
     server_cb.queued() = TLSCallback::READ;
     server_cb.setCode(143);  // Arbitrary number
     server_cb.length() = 0;
+    server_cb.cumulative() = 0;
     server_cb.expected() = sizeof(OUTBOUND_DATA) + 2;
 
     // Synchronously read the data from the server.
@@ -529,7 +531,7 @@ TEST(TLSSocket, sequenceTest) {
     // ... and check what the server received.
     EXPECT_EQ(sizeof(OUTBOUND_DATA) + 2, server_cb.cumulative());
     EXPECT_TRUE(equal(OUTBOUND_DATA,
-                (OUTBOUND_DATA + (sizeof(OUTBOUND_DATA) - 1)),
+                (OUTBOUND_DATA + (sizeof(OUTBOUND_DATA))),
                 (server_cb.data() + 2)));
 
     // Step 3.  Get the server to write all the data asynchronously and have the
@@ -545,8 +547,8 @@ TEST(TLSSocket, sequenceTest) {
     server_cb.cumulative() = 0;
     server_cb.expected() = sizeof(INBOUND_DATA) + 2;
 
-    writeUint16(sizeof(INBOUND_DATA) - 1, server_cb.data(), TLSCallback::MIN_SIZE);
-    copy(INBOUND_DATA, (INBOUND_DATA + sizeof(INBOUND_DATA) - 1),
+    writeUint16(sizeof(INBOUND_DATA), server_cb.data(), TLSCallback::MIN_SIZE);
+    copy(INBOUND_DATA, (INBOUND_DATA + sizeof(INBOUND_DATA)),
         (server_cb.data() + 2));
 
     // Synchronously write the data to the server.
@@ -646,7 +648,7 @@ TEST(TLSSocket, sequenceTest) {
     EXPECT_EQ(TLSCallback::READ, client_cb.called());
     EXPECT_EQ(0, client_cb.getCode());
     EXPECT_EQ(sizeof(INBOUND_DATA) + 2, client_cb.cumulative());
-    EXPECT_EQ(sizeof(INBOUND_DATA) - 1, client_buffer->getLength());
+    EXPECT_EQ(sizeof(INBOUND_DATA), client_buffer->getLength());
 
     // ... and check what the server sent.
     EXPECT_EQ(TLSCallback::WRITE, server_cb.called());
@@ -655,7 +657,7 @@ TEST(TLSSocket, sequenceTest) {
 
     // ... and that what was sent is what was received.
     const uint8_t* received = client_buffer->getData();
-    EXPECT_TRUE(equal(INBOUND_DATA, (INBOUND_DATA + (sizeof(INBOUND_DATA) - 1)),
+    EXPECT_TRUE(equal(INBOUND_DATA, (INBOUND_DATA + (sizeof(INBOUND_DATA))),
                       received));
 
     // Close client and server.
