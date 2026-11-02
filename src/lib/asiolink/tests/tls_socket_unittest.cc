@@ -73,10 +73,10 @@ public:
     };
 
     struct PrivateData {
-        PrivateData() :
+        PrivateData(TLSSocket<TLSCallback>& client) :
             error_code_(), length_(0), cumulative_(0), expected_(0), offset_(0),
-            name_(""), queued_(NONE), called_(NONE), data_(MIN_SIZE, 0)
-        {}
+            name_(""), queued_(NONE), called_(NONE), data_(MIN_SIZE, 0), client_(client) {
+        }
 
         boost::system::error_code  error_code_;    ///< Completion error code
         size_t                     length_;        ///< Bytes transferred in this I/O
@@ -87,6 +87,7 @@ public:
         Operation                  queued_;        ///< Queued operation
         Operation                  called_;        ///< Which callback called
         std::vector<uint8_t>       data_;          ///< Receive buffer
+        TLSSocket<TLSCallback>&    client_;        ///< The client under test
     };
 
     /// @brief Constructor
@@ -101,16 +102,14 @@ public:
     /// data.
     ///
     /// @param which Which of the two callback objects this is
-    TLSCallback(std::string which) : ptr_(new PrivateData())
-    {
+    TLSCallback(std::string which, TLSSocket<TLSCallback>& client) : ptr_(new PrivateData(client)) {
         ptr_->name_ = which;
     }
 
     /// @brief Destructor
     ///
     /// No code needed, destroying the shared pointer destroys the private data.
-    virtual ~TLSCallback()
-    {}
+    virtual ~TLSCallback() = default;
 
     /// @brief Client Callback Function
     ///
@@ -120,11 +119,20 @@ public:
     /// @param ec I/O completion error code passed to callback function.
     /// @param length Number of bytes transferred
     void operator()(boost::system::error_code ec = boost::system::error_code(),
-                            size_t length = 0)
-    {
+                    size_t length = 0) {
         setCode(ec.value());
         ptr_->called_ = ptr_->queued_;
-        ptr_->length_ = length;
+        ptr_->length_ += length;
+        if (ptr_->length_ != ptr_->expected_) {
+            if (ptr_->called_ == TLSCallback::READ) {
+                TCPEndpoint client_remote_endpoint;
+                ptr_->client_.asyncReceive(ptr_->data_.data(), TLSCallback::MIN_SIZE, ptr_->length_,
+                                           &client_remote_endpoint, *this);
+            } else if (ptr_->called_ == TLSCallback::WRITE) {
+                ptr_->client_.asyncSend(ptr_->data_.data() + ptr_->length_,
+                                        ptr_->expected_ - ptr_->length_, *this);
+            }
+        }
     }
 
     /// @brief Get I/O completion error code
@@ -395,7 +403,7 @@ TEST(TLSSocket, sequenceTest) {
     // Socket under test
     TLSSocket<TLSCallback> client(service, client_ctx);
     // Async I/O callback function
-    TLSCallback client_cb("Client");
+    TLSCallback client_cb("Client", client);
     // Where client receives message from
     TCPEndpoint client_remote_endpoint;
     // Received data is put here
@@ -404,7 +412,7 @@ TEST(TLSSocket, sequenceTest) {
     // Address of target server
     IOAddress server_address(SERVER_ADDRESS);
     // Server callback
-    TLSCallback server_cb("Server");
+    TLSCallback server_cb("Server", client);
     // Endpoint describing server
     TCPEndpoint server_endpoint(server_address, SERVER_PORT);
     // Address where server received message from
@@ -482,17 +490,24 @@ TEST(TLSSocket, sequenceTest) {
     client_cb.queued() = TLSCallback::WRITE;
     client_cb.setCode(143);  // Arbitrary number
     client_cb.length() = 0;
-    client.asyncSend(OUTBOUND_DATA, sizeof(OUTBOUND_DATA), &server_endpoint, client_cb);
+    client_cb.expected() = sizeof(OUTBOUND_DATA) + 2;
+
+    writeUint16(sizeof(OUTBOUND_DATA) - 1, client_cb.data(), TLSCallback::MIN_SIZE);
+    copy(OUTBOUND_DATA, (OUTBOUND_DATA + sizeof(OUTBOUND_DATA) - 1),
+        (client_cb.data() + 2));
+
+    client.asyncSend(client_cb.data() + 2, sizeof(OUTBOUND_DATA) - 1, &server_endpoint, client_cb);
 
     // Wait for the client callback to complete. (Must do this first on
     // Solaris: if we do the synchronous read first, the test hangs.)
-    while (client_cb.called() == TLSCallback::NONE) {
+    while (client_cb.called() == TLSCallback::NONE ||
+           client_cb.expected() != client_cb.length()) {
         service->runOne();
     }
 
     server_cb.called() = TLSCallback::NONE;
     server_cb.queued() = TLSCallback::READ;
-    server_cb.setCode(0);
+    server_cb.setCode(143);  // Arbitrary number
     server_cb.length() = 0;
     server_cb.expected() = sizeof(OUTBOUND_DATA) + 2;
 
@@ -525,18 +540,14 @@ TEST(TLSSocket, sequenceTest) {
     // Have the server write asynchronously to the client.
     server_cb.called() = TLSCallback::NONE;
     server_cb.queued() = TLSCallback::WRITE;
+    server_cb.setCode(143);  // Arbitrary number
     server_cb.length() = 0;
     server_cb.cumulative() = 0;
+    server_cb.expected() = sizeof(INBOUND_DATA) + 2;
 
-    writeUint16(sizeof(INBOUND_DATA), server_cb.data(), TLSCallback::MIN_SIZE);
+    writeUint16(sizeof(INBOUND_DATA) - 1, server_cb.data(), TLSCallback::MIN_SIZE);
     copy(INBOUND_DATA, (INBOUND_DATA + sizeof(INBOUND_DATA) - 1),
         (server_cb.data() + 2));
-
-    server_cb.called() = TLSCallback::NONE;
-    server_cb.queued() = TLSCallback::WRITE;
-    server_cb.setCode(0);
-    server_cb.length() = 0;
-    server_cb.expected() = sizeof(INBOUND_DATA) + 2;
 
     // Synchronously write the data to the server.
     serverWrite(server, server_cb);
@@ -553,7 +564,7 @@ TEST(TLSSocket, sequenceTest) {
     client_cb.queued() = TLSCallback::READ;
     client_cb.length() = 0;
     client_cb.cumulative() = 0;
-    client_cb.expected() = 0;
+    client_cb.expected() = sizeof(INBOUND_DATA) + 2;
     client_cb.offset() = 0;
 
     client.asyncReceive(client_cb.data(), TLSCallback::MIN_SIZE,
@@ -635,7 +646,7 @@ TEST(TLSSocket, sequenceTest) {
     EXPECT_EQ(TLSCallback::READ, client_cb.called());
     EXPECT_EQ(0, client_cb.getCode());
     EXPECT_EQ(sizeof(INBOUND_DATA) + 2, client_cb.cumulative());
-    EXPECT_EQ(sizeof(INBOUND_DATA), client_buffer->getLength());
+    EXPECT_EQ(sizeof(INBOUND_DATA) - 1, client_buffer->getLength());
 
     // ... and check what the server sent.
     EXPECT_EQ(TLSCallback::WRITE, server_cb.called());

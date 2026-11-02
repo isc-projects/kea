@@ -62,8 +62,8 @@ bool UnixControlClient::connectToServer(const std::string& socket_path) {
 
 bool UnixControlClient::sendCommand(const std::string& command) {
     size_t pos = 0;
-    std::atomic<bool> done = false;
-    std::atomic<bool> result = true;
+    std::atomic<bool> done(false);
+    std::atomic<bool> result(true);
     std::function<void(const boost::system::error_code&, size_t)> f =
         [&f, &command, &result, &done, &pos, this](const boost::system::error_code& ec,
                                                    size_t bytes_transferred) {
@@ -91,8 +91,8 @@ bool UnixControlClient::sendCommand(const std::string& command) {
 
 bool UnixControlClient::getResponse(std::string& response,
                                     const unsigned int timeout_sec) {
-    std::atomic<bool> result = true;
-    std::atomic<bool> done = false;
+    std::atomic<bool> done(false);
+    std::atomic<bool> result(true);
     std::array<char, 4096> buffer;
     IntervalTimerPtr timer;
     if (timeout_sec) {
