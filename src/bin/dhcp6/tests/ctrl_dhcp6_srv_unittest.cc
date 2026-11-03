@@ -341,7 +341,7 @@ public:
     void sendUnixCommand(const std::string& command, std::string& response) {
         response = "";
         boost::scoped_ptr<UnixControlClient> client;
-        client.reset(new UnixControlClient(getIOService()));
+        client.reset(new UnixControlClient());
         ASSERT_TRUE(client);
 
         // Connect to the server. This is expected to trigger server's acceptor
@@ -3561,10 +3561,10 @@ TEST_F(CtrlChannelDhcpv6SrvTest, concurrentConnections) {
     createUnixChannelServer();
     SKIP_IF(skipped_);
 
-    boost::scoped_ptr<UnixControlClient> client1(new UnixControlClient(getIOService()));
+    boost::scoped_ptr<UnixControlClient> client1(new UnixControlClient());
     ASSERT_TRUE(client1);
 
-    boost::scoped_ptr<UnixControlClient> client2(new UnixControlClient(getIOService()));
+    boost::scoped_ptr<UnixControlClient> client2(new UnixControlClient());
     ASSERT_TRUE(client2);
 
     // Client 1 connects.
@@ -3642,14 +3642,22 @@ TEST_F(CtrlChannelDhcpv6SrvTest, longCommand) {
         IOServiceWork work(getIOService());
 
         // Create client which we will use to send command to the server.
-        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient(getIOService()));
+        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
         ASSERT_TRUE(client);
 
         // Connect to the server. This will trigger acceptor handler on the
         // server side and create a new connection.
         ASSERT_TRUE(client->connectToServer(socket_path_));
 
-        ASSERT_TRUE(client->sendCommand(command.str()));
+        // Initially the remaining_string holds the entire command and we
+        // will be erasing the portions that we have sent.
+        std::string remaining_data = command.str();
+        while (!remaining_data.empty()) {
+            // Send the command in chunks of 1024 bytes.
+            const size_t l = remaining_data.size() < 1024 ? remaining_data.size() : 1024;
+            ASSERT_TRUE(client->sendCommand(remaining_data.substr(0, l)));
+            remaining_data.erase(0, l);
+        }
 
         // Set timeout to 5 seconds to allow the time for the server to send
         // a response.
@@ -3707,7 +3715,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, longResponse) {
         const ssize_t long_response_size = reference_response.size();
 
         // Create the client and connect it to the server.
-        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient(getIOService()));
+        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
         ASSERT_TRUE(client);
         ASSERT_TRUE(client->connectToServer(socket_path_));
 
@@ -3762,7 +3770,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeoutPartialCommand) {
         IOServiceWork work(getIOService());
 
         // Create the client and connect it to the server.
-        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient(getIOService()));
+        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
         ASSERT_TRUE(client);
         ASSERT_TRUE(client->connectToServer(socket_path_));
 
@@ -3782,7 +3790,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeoutPartialCommand) {
     });
 
     // Run the server until stopped.
-    getIOService()->runOne();
+    getIOService()->run();
 
     // Wait for the thread to return.
     th.join();
@@ -3817,7 +3825,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeoutNoData) {
         IOServiceWork work(getIOService());
 
         // Create the client and connect it to the server.
-        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient(getIOService()));
+        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
         ASSERT_TRUE(client);
         ASSERT_TRUE(client->connectToServer(socket_path_));
 
@@ -3833,7 +3841,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeoutNoData) {
     });
 
     // Run the server until stopped.
-    getIOService()->runOne();
+    getIOService()->run();
 
     // Wait for the thread to return.
     th.join();

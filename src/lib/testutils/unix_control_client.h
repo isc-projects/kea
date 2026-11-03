@@ -7,8 +7,6 @@
 #ifndef UNIX_CONTROL_CLIENT_H
 #define UNIX_CONTROL_CLIENT_H
 
-#include <asiolink/io_service.h>
-#include <asiolink/unix_domain_socket.h>
 #include <string>
 
 namespace isc {
@@ -30,9 +28,7 @@ class UnixControlClient {
 public:
 
     /// @brief Default constructor
-    ///
-    /// @brief io_service The IOService used in test.
-    UnixControlClient(asiolink::IOServicePtr io_service);
+    UnixControlClient();
 
     /// @brief Destructor
     ~UnixControlClient();
@@ -58,13 +54,14 @@ public:
     /// false otherwise
     bool getResponse(std::string& response, const unsigned int timeout_sec = 0);
 
-private:
+    /// @brief Uses select to poll the Control Channel for data waiting
+    ///
+    /// @param timeout_sec Select timeout in seconds
+    /// @return -1 on error, 0 if no data is available, 1 if data is ready
+    int selectCheck(const unsigned int timeout_sec);
 
-    /// @brief The IOSerice used for async operations.
-    asiolink::IOServicePtr io_service_;
-
-    /// @brief Unix domain socket used for communication with a server.
-    asiolink::UnixDomainSocket socket_;
+    /// @brief Retains the fd of the open socket
+    int socket_fd_;
 };
 
 } // end of isc::dhcp::test namespace

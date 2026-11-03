@@ -46,6 +46,8 @@ static string const KEA_DHCP6_CONF(KEA_FUZZ_DIR() + "/kea-dhcp6-" + PID_STR + ".
 static string const KEA_DHCP6_CSV(KEA_FUZZ_DIR() + "/kea-dhcp6-" + PID_STR + ".csv");
 static string const SOCKET(KEA_FUZZ_DIR() + "/kea-dhcp6-ctrl-" + PID_STR + ".sock");
 
+static UnixControlClient TEST_CLIENT;
+
 }  // namespace
 
 extern "C" {
@@ -126,7 +128,6 @@ LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
     assert(isSocket(SOCKET));
 
     string const command(reinterpret_cast<char const*>(data), size);
-    UnixControlClient TEST_CLIENT(ControlledDhcpv6Srv::getInstance()->getIOService());
     TEST_CLIENT.connectToServer(SOCKET);
 
     // On macOS the Unix/local socket sendspace is smaller than
@@ -158,9 +159,9 @@ LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
     ControlledDhcpv6Srv::getInstance()->getIOService()->poll();
     string response;
     TEST_CLIENT.getResponse(response);
-    ControlledDhcpv6Srv::getInstance()->getIOService()->stopAndPoll();
+    ControlledDhcpv6Srv::getInstance()->getIOService()->poll();
     TEST_CLIENT.disconnectFromServer();
-    ControlledDhcpv6Srv::getInstance()->getIOService()->stopAndPoll();
+    ControlledDhcpv6Srv::getInstance()->getIOService()->poll();
 
     return 0;
 }
