@@ -57,12 +57,12 @@ writeTempLease(bool isV4) {
     }
 
     void deleteTempFile(std::string file_path) {
-        if (fs::exists(file_path)) {
-            try {
+        try {
+            if (fs::exists(file_path)) {
                 fs::remove(file_path);
-            } catch (...) {
-                // Silent exceptions
             }
+        } catch (...) {
+            // Silent exceptions
         }
     }
 

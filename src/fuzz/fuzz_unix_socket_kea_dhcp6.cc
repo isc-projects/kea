@@ -12,6 +12,7 @@
 #include <config/unix_command_config.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <testutils/env_var_wrapper.h>
 #include <testutils/unix_control_client.h>
 #include <util/filesystem.h>
 
@@ -30,6 +31,7 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::test;
 using namespace isc::util;
 using namespace isc::util::file;
 using namespace std;
