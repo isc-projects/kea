@@ -419,6 +419,20 @@ if cpp_standard.version_compare('<201400')
         error('\n'.join(msgs))
     endif
 endif
+if GTEST_DEP.found()
+    version = GTEST_DEP.version()
+    if version != 'unknown' and version.version_compare('>=1.17.0')
+        if cpp_standard.version_compare('<201700')
+            msgs = ['Recent GoogleTest requires at least C++17.']
+            if cpp_std_opt == 'none'
+                msgs += no_cpp_std_opt_msg
+            else
+                msgs += cpp_std_opt_msg
+            endif
+            error('\n'.join(msgs))
+        endif
+    endif
+endif
 if NETCONF_DEP.found() and cpp_standard.version_compare('<202000')
     msgs = ['NETCONF dependency requires at least C++20.']
     if cpp_std_opt == 'none'
@@ -778,7 +792,7 @@ result = cpp.get_define(
 if result != ''
     report_conf_data.set('BOOST_VERSION', result.strip())
 else
-    report_conf_data.set('BOOST_VERSION', 'unknown version')
+    report_conf_data.set('BOOST_VERSION', 'unknown')
 endif
 if CRYPTO_DEP.name() == botan.name()
     report_conf_data.set('CRYPTO_NAME', 'Botan')
@@ -797,9 +811,6 @@ if CRYPTO_DEP.name() == botan.name()
             version = botan.version()
         endif
     endif
-    if version == 'unknown'
-        version = 'unknown version'
-    endif
     report_conf_data.set('CRYPTO_VERSION', version)
 elif CRYPTO_DEP.name() == openssl.name()
     report_conf_data.set('CRYPTO_NAME', 'OpenSSL')
@@ -814,9 +825,6 @@ elif CRYPTO_DEP.name() == openssl.name()
     else
         version = openssl.version()
     endif
-    if version == 'unknown'
-        version = 'unknown version'
-    endif
     report_conf_data.set('CRYPTO_VERSION', version)
 endif
 result = cpp.get_define(
@@ -828,9 +836,6 @@ if result != ''
     version = result.strip()
 else
     version = LOG4CPLUS_DEP.version()
-endif
-if version == 'unknown'
-    version = 'unknown version'
 endif
 report_conf_data.set('LOG4CPLUS_VERSION', version)
 if FLEX.found()
@@ -846,9 +851,6 @@ endif
 if MYSQL_DEP.found()
     report_conf_data.set('HAVE_MYSQL', 'yes')
     version = MYSQL_DEP.version()
-    if version == 'unknown'
-        version = 'unknown version'
-    endif
     report_conf_data.set('MYSQL_VERSION', version)
 else
     report_conf_data.set('HAVE_MYSQL', 'no')
@@ -857,9 +859,6 @@ endif
 if POSTGRESQL_DEP.found()
     report_conf_data.set('HAVE_PGSQL', 'yes')
     version = POSTGRESQL_DEP.version()
-    if version == 'unknown'
-        version = 'unknown version'
-    endif
     report_conf_data.set('PGSQL_VERSION', version)
 else
     report_conf_data.set('HAVE_PGSQL', 'no')
@@ -901,9 +900,6 @@ endif
 if FUZZ_OPT.enabled() or TESTS_OPT.enabled()
     report_conf_data.set('HAVE_GTEST', 'yes')
     version = GTEST_DEP.version()
-    if version == 'unknown'
-        version = 'unknown version'
-    endif
     report_conf_data.set('GTEST_VERSION', version)
 else
     report_conf_data.set('HAVE_GTEST', 'no')
@@ -912,9 +908,6 @@ endif
 if KRB5_DEP.found()
     report_conf_data.set('HAVE_KRB5', 'yes')
     version = KRB5_DEP.version()
-    if version == 'unknown'
-        version = 'unknown version'
-    endif
     report_conf_data.set('KRB5_GSSAPI_VERSION', version)
     report_conf_data.set(
         'KRB5_GSSAPI_VENDOR',
