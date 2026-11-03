@@ -1,4 +1,4 @@
-[func]		fdupont
+[func]*		fdupont
 	Removed support for deprecated config entries for DHCPv4
 	and DHCPv6 servers:
 	 - "control-socket" (root level)
