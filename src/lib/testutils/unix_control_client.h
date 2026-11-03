@@ -19,6 +19,11 @@ namespace test {
 /// with the servers that use control channel (see src/lib/config/command_mgr.h)
 /// It can connect to an open UnixCommandSocket and exchange ControlChannel
 /// commands and responses.
+///
+/// It uses standard socket system calls e.g. send() and recv() by design.
+/// @note macOS uses by default small send and receive spaces for Unix/local
+/// sockets so for instance a large command can make send() to hang if
+/// the server is not reading.
 class UnixControlClient {
 public:
 

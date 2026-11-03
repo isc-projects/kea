@@ -15,8 +15,13 @@
 #include <testutils/unix_control_client.h>
 #include <util/filesystem.h>
 
+#include <atomic>
 #include <cassert>
+#include <chrono>
+#include <cstdlib>
 #include <iostream>
+#include <thread>
+#include <unistd.h>
 
 #include <fuzz/fuzz.h>
 
@@ -28,6 +33,7 @@ using namespace isc::dhcp::test;
 using namespace isc::util;
 using namespace isc::util::file;
 using namespace std;
+using namespace std::chrono;
 
 namespace {
 
@@ -120,7 +126,25 @@ LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
 
     string const command(reinterpret_cast<char const*>(data), size);
     TEST_CLIENT.connectToServer(SOCKET);
-    TEST_CLIENT.sendCommand(command);
+
+    // On macOS the Unix/local socket sendspace is smaller than
+    // the biggest sample so the send() system call hangs until
+    // the server reads: using a second thread for sending.
+    // Note that poll() and server code in general must be called
+    // by the main thread.
+    atomic<bool> sent = false;
+    thread th([&] () {
+        TEST_CLIENT.sendCommand(command);
+        sent = true;
+    });
+
+    system_clock::time_point deadline = system_clock::now() + seconds(10);
+    while (!sent && (system_clock::now() < deadline)) {
+        ControlledDhcpv6Srv::getInstance()->getIOService()->poll();
+        usleep(1000);
+    }
+    th.join();
+
     ControlledDhcpv6Srv::getInstance()->getIOService()->poll();
     string response;
     TEST_CLIENT.getResponse(response);
