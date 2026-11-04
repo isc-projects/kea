@@ -36,11 +36,12 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
+using namespace isc::asiolink;
+using namespace isc::util;
+
+using namespace std;
 using namespace boost::asio;
 using namespace boost::asio::ip;
-using namespace isc::util;
-using namespace isc::asiolink;
-using namespace std;
 
 namespace {
 
