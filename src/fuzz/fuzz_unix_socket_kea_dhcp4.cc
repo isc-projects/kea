@@ -16,13 +16,13 @@
 #include <testutils/unix_control_client.h>
 #include <util/filesystem.h>
 
-#include <atomic>
 #include <cassert>
 #include <chrono>
+#include <condition_variable>
 #include <cstdlib>
 #include <iostream>
+#include <mutex>
 #include <thread>
-#include <unistd.h>
 
 #include <fuzz/fuzz.h>
 
@@ -128,16 +128,24 @@ LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
     // the server reads: using a second thread for sending.
     // Note that poll() and server code in general must be called
     // by the main thread.
-    atomic<bool> sent = false;
+    mutex mtx;
+    bool sent = false;
+    condition_variable cv;
     thread th([&] () {
         TEST_CLIENT.sendCommand(command);
-        sent = true;
+        {
+            lock_guard lck(mtx);
+            sent = true;
+        }
+        cv.notify_one();
     });
 
-    system_clock::time_point deadline = system_clock::now() + seconds(10);
-    while (!sent && (system_clock::now() < deadline)) {
+    for (;;) {
         ControlledDhcpv4Srv::getInstance()->getIOService()->poll();
-        usleep(1000);
+        unique_lock lck(mtx);
+        if (cv.wait_for(lck, 1ms, [&] () { return (sent); })) {
+            break;
+        }
     }
     th.join();
 
