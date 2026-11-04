@@ -310,7 +310,7 @@ D2QueueMgr::enqueue(NameChangeRequestPtr& new_ncr,
         auto last_ncr = findLast(new_ncr->getDhcid());
         /// @todo TKM current comparison includes lease time. We might want
         /// to exclude that from the comparison.
-        if (last_ncr && (*last_ncr == *new_ncr)) {
+        if (last_ncr && (*(last_ncr->getNcr()) == *new_ncr)) {
             LOG_DEBUG(dhcp_to_d2_logger,
                       isc::log::DBGLVL_TRACE_DETAIL_DATA,
                       DHCP_DDNS_QUEUE_MGR_DUPLICATE_NCR)

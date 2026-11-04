@@ -759,8 +759,8 @@ TEST(D2QueueMgrBasicTest, findLast) {
 }
 
 /// @brief Tests QueueMgr's duplicate suppression scheme.
-TEST(D2QueueMgrBasicTest, duplicateSuppression) {
-    asiolink::IOServicePtr io_service(new isc::asiolink::IOService());
+TEST_F(D2QueueMgrTest, duplicateSuppression) {
+    makeFullConfig();
 
     // Initialize stats manager.
     D2Stats::init();
