@@ -413,7 +413,8 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
         { "ncr-received", 4},
         { "ncr-invalid", 0},
         { "ncr-error", 0},
-        { "queue-mgr-queue-full", 0}
+        { "queue-mgr-queue-full", 0},
+        { "ncr-duplicate", 0 }
     };
     checkStats(stats_ncr);
 
@@ -434,7 +435,8 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
         { "ncr-received", 8},
         { "ncr-invalid", 0},
         { "ncr-error", 0},
-        { "queue-mgr-queue-full", 0}
+        { "queue-mgr-queue-full", 0},
+        { "ncr-duplicate", 0 }
     };
     checkStats(stats_ncr_new);
 
@@ -454,7 +456,8 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
         { "ncr-received", 9},
         { "ncr-invalid", 0},
         { "ncr-error", 0},
-        { "queue-mgr-queue-full", 1}
+        { "queue-mgr-queue-full", 1},
+        { "ncr-duplicate", 0 }
     };
     checkStats(stats_ncr_full);
 
@@ -550,7 +553,8 @@ TEST_F(QueueMgrUDPTest, nestedNCRs) {
         { "ncr-received", 4},
         { "ncr-invalid", 0},
         { "ncr-error", 0},
-        { "queue-mgr-queue-full", 0}
+        { "queue-mgr-queue-full", 0},
+        { "ncr-duplicate", 0 }
     };
 
     checkStats(stats_ncr);
@@ -559,6 +563,9 @@ TEST_F(QueueMgrUDPTest, nestedNCRs) {
 /// @brief Tests QueueMgr's duplicate suppression scheme.
 TEST(D2QueueMgrBasicTest, duplicateSuppression) {
     asiolink::IOServicePtr io_service(new isc::asiolink::IOService());
+
+    // Initialize stats manager.
+    D2Stats::init();
 
     // Construct the manager.
     D2QueueMgrPtr queue_mgr;
@@ -589,6 +596,17 @@ TEST(D2QueueMgrBasicTest, duplicateSuppression) {
     // Trying to queue the first one again should succeed.
     EXPECT_NO_THROW(queued = queue_mgr->enqueue(ref_msgs[0], true));
     EXPECT_TRUE(queued);
+
+    // Verify stats are correct.
+    StatMap stats_ncr = {
+        { "ncr-received", 0},
+        { "ncr-invalid", 0},
+        { "ncr-error", 0},
+        { "queue-mgr-queue-full", 0},
+        { "ncr-duplicate", 1 }
+    };
+
+    checkStats(stats_ncr);
 }
 
 } // end of anonymous namespace

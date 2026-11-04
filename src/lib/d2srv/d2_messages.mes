@@ -464,5 +464,14 @@ server.
 
 % DHCP_DDNS_UPDATE_RESPONSE_RECEIVED Request ID %1: to server: %2 status: %3
 Logged at debug log level 50.
-This is a debug message issued when DHCP_DDNS receives sends a DNS update
+This is a debug message issued when DHCP_DDNS receives a DNS update
 response from a DNS server.
+
+% DHCP_DDNS_QUEUE_MGR_DUPLICATE_NCR Received NCR duplicates an entry on the queue, discarding it: %1
+Logged at debug log level 55.
+This is a debug message issued when DHCP_DDNS detects that a received NCR
+duplicates an NCR already in the queue waiting to be processed. This is
+most likely to occur when kea-dhcp<4/6> is configured with
+"ddns-update-on-renew" set true and has clients that renew often. The
+number of duplicates can be monitored with the global statistic,
+"ncr-duplicate".

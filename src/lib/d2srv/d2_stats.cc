@@ -22,7 +22,8 @@ D2Stats::ncr = {
     "ncr-received",
     "ncr-invalid",
     "ncr-error",
-    "queue-mgr-queue-full"
+    "queue-mgr-queue-full",
+    "ncr-duplicate",
 };
 
 const list<string>

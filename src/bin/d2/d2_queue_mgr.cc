@@ -275,7 +275,11 @@ D2QueueMgr::enqueue(NameChangeRequestPtr& new_ncr,
         /// @todo TKM current comparison includes lease time. We might want
         /// to exclude that from the comparison.
         if (last_ncr && (*last_ncr == *new_ncr)) {
-            std::cout << "**** SUPPRESS DUPLICATE: " << last_ncr->toText();
+            LOG_DEBUG(dhcp_to_d2_logger,
+                      isc::log::DBGLVL_TRACE_DETAIL_DATA,
+                      DHCP_DDNS_QUEUE_MGR_DUPLICATE_NCR)
+                      .arg(new_ncr->toText());
+            StatsMgr::instance().addValue("ncr-duplicate", static_cast<int64_t>(1));
             return (false);
         }
     }

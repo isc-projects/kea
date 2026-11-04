@@ -1,0 +1,8 @@
+[func]		tmark
+	kea-dhcp-ddns will now discard inbound DDNS
+	update requests that duplicate an request already
+	waiting in its queue to be processes. This may
+	improve performance for sites that enable
+	"ddns-update-on-renew" and have clients that
+	renew often.
+	(Gitlab #4870)

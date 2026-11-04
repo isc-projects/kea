@@ -50,6 +50,7 @@ extern const isc::log::MessageID DHCP_DDNS_NO_ELIGIBLE_JOBS = "DHCP_DDNS_NO_ELIG
 extern const isc::log::MessageID DHCP_DDNS_NO_FWD_MATCH_ERROR = "DHCP_DDNS_NO_FWD_MATCH_ERROR";
 extern const isc::log::MessageID DHCP_DDNS_NO_MATCH = "DHCP_DDNS_NO_MATCH";
 extern const isc::log::MessageID DHCP_DDNS_NO_REV_MATCH_ERROR = "DHCP_DDNS_NO_REV_MATCH_ERROR";
+extern const isc::log::MessageID DHCP_DDNS_QUEUE_MGR_DUPLICATE_NCR = "DHCP_DDNS_QUEUE_MGR_DUPLICATE_NCR";
 extern const isc::log::MessageID DHCP_DDNS_QUEUE_MGR_QUEUE_FULL = "DHCP_DDNS_QUEUE_MGR_QUEUE_FULL";
 extern const isc::log::MessageID DHCP_DDNS_QUEUE_MGR_QUEUE_RECEIVE = "DHCP_DDNS_QUEUE_MGR_QUEUE_RECEIVE";
 extern const isc::log::MessageID DHCP_DDNS_QUEUE_MGR_RECONFIGURING = "DHCP_DDNS_QUEUE_MGR_RECONFIGURING";
@@ -140,6 +141,7 @@ const char* values[] = {
     "DHCP_DDNS_NO_FWD_MATCH_ERROR", "Request ID %1: the configured list of forward DDNS domains does not contain a match for: %2  The request has been discarded.",
     "DHCP_DDNS_NO_MATCH", "No DNS servers match FQDN %1",
     "DHCP_DDNS_NO_REV_MATCH_ERROR", "Request ID %1: the configured list of reverse DDNS domains does not contain a match for: %2  The request has been discarded.",
+    "DHCP_DDNS_QUEUE_MGR_DUPLICATE_NCR", "Received NCR duplicates an entry on the queue, discarding it: %1",
     "DHCP_DDNS_QUEUE_MGR_QUEUE_FULL", "application request queue has reached maximum number of entries %1",
     "DHCP_DDNS_QUEUE_MGR_QUEUE_RECEIVE", "Request ID %1: received and queued a request.",
     "DHCP_DDNS_QUEUE_MGR_RECONFIGURING", "application is reconfiguring the queue manager",

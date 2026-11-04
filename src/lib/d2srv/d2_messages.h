@@ -51,6 +51,7 @@ extern const isc::log::MessageID DHCP_DDNS_NO_ELIGIBLE_JOBS;
 extern const isc::log::MessageID DHCP_DDNS_NO_FWD_MATCH_ERROR;
 extern const isc::log::MessageID DHCP_DDNS_NO_MATCH;
 extern const isc::log::MessageID DHCP_DDNS_NO_REV_MATCH_ERROR;
+extern const isc::log::MessageID DHCP_DDNS_QUEUE_MGR_DUPLICATE_NCR;
 extern const isc::log::MessageID DHCP_DDNS_QUEUE_MGR_QUEUE_FULL;
 extern const isc::log::MessageID DHCP_DDNS_QUEUE_MGR_QUEUE_RECEIVE;
 extern const isc::log::MessageID DHCP_DDNS_QUEUE_MGR_RECONFIGURING;
