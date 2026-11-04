@@ -23,6 +23,7 @@
 #include <iostream>
 #include <mutex>
 #include <thread>
+#include <unistd.h>
 
 #include <fuzz/fuzz.h>
 
