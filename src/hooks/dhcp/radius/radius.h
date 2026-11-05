@@ -325,6 +325,9 @@ public:
     /// @brief Extract Duid from Client Id.
     bool extract_duid_;
 
+    /// @brief Flag which indicates if cache has been initialized.
+    bool already_tried_;
+
     /// @brief Reselect subnet using pool.
     bool reselect_subnet_pool_;
 

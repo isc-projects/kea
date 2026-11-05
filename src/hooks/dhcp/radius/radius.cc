@@ -207,7 +207,7 @@ RadiusImpl::RadiusImpl()
       auth_(new RadiusAccess()), acct_(new RadiusAccounting()),
       bindaddr_("*"), canonical_mac_address_(false),
       clientid_pop0_(false), clientid_printable_(false),
-      deadtime_(0), extract_duid_(true),
+      deadtime_(0), extract_duid_(true), already_tried_(false),
       reselect_subnet_pool_(false), reselect_subnet_address_(false),
       retries_(3), thread_pool_size_(0), timeout_(0),
       id_type4_(Host::IDENT_CLIENT_ID), id_type6_(Host::IDENT_DUID),
@@ -249,6 +249,7 @@ void RadiusImpl::cleanup() {
     id_type4_ = Host::IDENT_CLIENT_ID;
     timeout_ = 10;
     retries_ = 3;
+    already_tried_ = false;
     reselect_subnet_address_ = false;
     reselect_subnet_pool_ = false;
     extract_duid_ = true;
@@ -591,11 +592,10 @@ bool RadiusImpl::checkHostBackends() {
         return (true);
     }
     // Try only once.
-    static bool already_tried = false;
-    if (already_tried) {
+    if (already_tried_) {
         return (false);
     }
-    already_tried = true;
+    already_tried_ = true;
     // Add backends
     try {
         // createManagers can reset the host manager so re-add host cache.

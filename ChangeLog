@@ -1,3 +1,9 @@
+2576.	[bug]		razvan
+	Fixed a bug which was causing radius access to not function
+	properly after issuing 'config-reload' or 'config-set'
+	commands.
+	(Gitlab #4736)
+
 2575.	[bug]		razvan
 	Fixed improper handling of RADIUS attributes that are not
 	defined in the local dictionary.
