@@ -1,0 +1,4 @@
+[doc]		tmark
+	Added a discussion of statistics and shared
+	lease back ends to the ARM.
+	(Gitlab #4831)
