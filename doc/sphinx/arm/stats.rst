@@ -1718,3 +1718,14 @@ limits for a single statistic, use :isccmd:`statistic-sample-age-set`; use
 :isccmd:`statistic-sample-age-set-all` to set time-based limits for all statistics.
 For a given statistic only one type of limit can be active; storage
 is limited by either time or size, not both.
+
+Lease Statistics and Shared Lease Back Ends
+===========================================
+
+Outside of HA configurations with lease updates enabled, each server's statistics
+measure only what that server experiences. Statistics are not shared between
+servers. When multiple Kea servers share the same lease back end, lease related
+statistics (e.g. assigned-addresses, declined-addresses) held by each server will
+not be accurate as they will not include lease changes made by other servers. To
+retrieve accurate lease statistics for shared lease back ends it is necessary
+to use the stats-cmds hook library. See :ref:`hooks-stat-cmds`
