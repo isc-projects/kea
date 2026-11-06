@@ -28,6 +28,12 @@ Precompiled packages are available for easy installation. See
 Release notes for current and historical releases are available here:
 https://gitlab.isc.org/isc-projects/kea/-/wikis/Release-Notes
 
+## Reporting issues
+
+Please use the issue tracker on
+[ISC's GitLab](https://gitlab.isc.org/isc-projects/kea/-/issues)
+to report issues and submit feature requests.
+
 ## Getting support
 
 The Kea mailing lists are available via https://lists.isc.org/.
