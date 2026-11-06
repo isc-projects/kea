@@ -8164,13 +8164,13 @@ following statistics-related commands:
 - :isccmd:`statistic-get`
 - :isccmd:`statistic-reset`
 - :isccmd:`statistic-remove`
-- :isccmd:`statistic-get`-all
-- :isccmd:`statistic-reset`-all
-- :isccmd:`statistic-remove`-all
+- :isccmd:`statistic-get-all`
+- :isccmd:`statistic-reset-all`
+- :isccmd:`statistic-remove-all`
 - :isccmd:`statistic-sample-age-set`
-- :isccmd:`statistic-sample-age-set`-all
+- :isccmd:`statistic-sample-age-set-all`
 - :isccmd:`statistic-sample-count-set`
-- :isccmd:`statistic-sample-count-set`-all
+- :isccmd:`statistic-sample-count-set-all`
 
 as described in :ref:`command-stats`.
 
