@@ -1214,7 +1214,7 @@ top_docs = [
     'CONTRIBUTING.md',
     'COPYING',
     'ChangeLog',
-    'README',
+    'README.md',
     'SECURITY.md',
     'code_of_conduct.md',
     'platforms.rst',
