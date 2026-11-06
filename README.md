@@ -1,6 +1,6 @@
 # Kea - a modern DHCP
 
-<img align="right" src="doc/images/kea-logo-100x70.png"/>
+<img align="right" src="doc/sphinx/static/kea-logo-200.png"/>
 
 Kea provides DHCPv4 and DHCPv6 servers, a dynamic DNS update module,
 optional databases support (PostgreSQL, MySQL, MariaDB) that allows
