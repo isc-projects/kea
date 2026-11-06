@@ -17,8 +17,11 @@ us and the technical communities in which we participate.
 This code of conduct applies to all spaces managed by the Kea project or
 Internet Systems Consortium. This includes chat, the mailing lists, the issue
 tracker, and any other fora created by the project team which the
-community uses for communication. In addition, violations of this code outside
-these spaces may affect a person's ability to participate within them.
+community uses for communication.
+
+All the fora are intended for discussion about the software and its aspects.
+Any other topics, in particular politics, religion and anything related to
+sexuality are explicitly out of scope.
 
 If you believe someone is violating the code of conduct, we ask that you report
 it by emailing [conduct@isc.org](conduct@isc.org). For more details please see
