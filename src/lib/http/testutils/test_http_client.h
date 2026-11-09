@@ -48,6 +48,7 @@ public:
     /// @brief Send part of the HTTP request.
     ///
     /// @param request part of the HTTP request to be sent.
+    /// @param pos position of data to be sent in the request.
     virtual void sendPartialRequest(std::string request, size_t pos) = 0;
 
     /// @brief Receive response from the server.
@@ -174,12 +175,16 @@ public:
     /// @brief Send part of the HTTP request.
     ///
     /// @param request part of the HTTP request to be sent.
+    /// @param pos position of data to be sent in the request.
     virtual void sendPartialRequest(std::string request, size_t pos = 0) {
-        size_t chuck_size = std::min(TEST_HTTP_CHUCK_SIZE, request.size() - pos);
+        size_t chuck_size = std::min(TEST_HTTP_CHUCK_SIZE,
+                                     request.size() - pos);
         auto ref = shared_from_this();
-        socket_.async_write_some(boost::asio::buffer(request.data() + pos, chuck_size),
-                                 [this, ref, request, pos](const boost::system::error_code& ec,
-                                                           std::size_t bytes_transferred) mutable {
+        socket_.async_write_some(boost::asio::buffer(request.data() + pos,
+                                                     chuck_size),
+                                 [this, ref, request, pos]
+                                     (const boost::system::error_code& ec,
+                                      std::size_t bytes_transferred) mutable {
             if (ec) {
                 if (ec.value() == boost::asio::error::operation_aborted) {
                     return;
@@ -216,7 +221,8 @@ public:
     /// @brief Receive response from the server.
     virtual void receivePartialResponse() {
         auto ref = shared_from_this();
-        socket_.async_read_some(boost::asio::buffer(ref->buf_.data(), ref->buf_.size()),
+        socket_.async_read_some(boost::asio::buffer(ref->buf_.data(),
+                                                    ref->buf_.size()),
                                 [this, ref](const boost::system::error_code& ec,
                                             std::size_t bytes_transferred) {
             if (ec) {
