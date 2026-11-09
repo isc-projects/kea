@@ -240,7 +240,7 @@ underscores, but must not start with a digit.</li>
 <li>The rest of the line - from the first non-space character to the
 last non- space character - is the text of the message. There are no
 restrictions on what characters may be in this text, other than they be
-printable (so both single-quote (') and double-quote (") characters are
+printable (so both single-quote (') and double-quote (\") characters are
 allowed).  The message text may include replacement tokens (the strings
 "%1", "%2" etc.).  When a message is logged, these are replaced with the
 arguments passed to the logging call: %1 refers to the first argument,
@@ -258,7 +258,7 @@ by the message compiler.</li>
 blank lines are ignored.</li>
 </ul>
 
-Although there are few restriction on what can be in the message
+Although there are few restrictions on what can be in the message
 identification and text, there are a number of conventions used by Kea,
 both in the contents of the message and in the usage.  All code
 should adhere to these:
