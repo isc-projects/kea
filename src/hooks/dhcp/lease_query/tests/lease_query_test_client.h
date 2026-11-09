@@ -42,8 +42,8 @@ public:
                                   uint16_t family,
                                   const std::string& server_address = "127.0.0.1",
                                   uint16_t port = 18123)
-        : io_service_(io_service), socket_(io_service_->getInternalIOService()), buf_(),
-          response_(), done_callback_(done_callback), family_(family),
+        : io_service_(io_service), socket_(io_service_->getInternalIOService()),
+          buf_(), response_(), done_callback_(done_callback), family_(family),
           server_address_(server_address), server_port_(port),
           receive_done_(false), expected_eof_(true), next_xid_(76) {
     }
@@ -59,7 +59,8 @@ public:
     ///
     /// @param request request string to send.
     void connect() {
-        boost::asio::ip::tcp::endpoint endpoint(make_address(server_address_), server_port_);
+        boost::asio::ip::tcp::endpoint endpoint(make_address(server_address_),
+                                                server_port_);
         socket_.async_connect(endpoint,
         [this](const boost::system::error_code& ec) {
             receive_done_ = false;
@@ -90,7 +91,8 @@ public:
     /// timeout the connection.
     void startRequest(BlqQueryPtr request) {
 
-        boost::asio::ip::tcp::endpoint endpoint(make_address(server_address_), server_port_);
+        boost::asio::ip::tcp::endpoint endpoint(make_address(server_address_),
+                                                server_port_);
         socket_.async_connect(endpoint,
         [this, request](const boost::system::error_code& ec) {
             receive_done_ = false;
@@ -130,7 +132,8 @@ public:
     void startRequests(const std::list<BlqQueryPtr>& requests) {
         requests_to_send_ = requests;
 
-        boost::asio::ip::tcp::endpoint endpoint(make_address(server_address_), server_port_);
+        boost::asio::ip::tcp::endpoint endpoint(make_address(server_address_),
+                                                server_port_);
         socket_.async_connect(endpoint,
         [this](const boost::system::error_code& ec) {
             receive_done_ = false;
@@ -201,19 +204,20 @@ public:
     /// @brief Send part of the request.
     ///
     /// @param request part of the request to be sent.
-    /// @param send_length  number of bytes to send.  If not zero, can be used
+    /// @param send_length number of bytes to send.  If not zero, can be used
     /// to truncate the amount of data sent.
-    void sendPartialRequest(WireData& wire_request, size_t send_length = 0, size_t pos = 0) {
-        if (!send_length) {
-            send_length = wire_request.size();
-        } else {
-            ASSERT_LE(send_length, wire_request.size())
-                      << "broken test, send_length exceeds wire size";
-        }
+    /// @param pos position of sent bytes in the request. Initialize to 0
+    /// and up to send_length (whichmeans that all bytes were sent).
+    void sendPartialRequest(WireData& wire_request, size_t send_length,
+                            size_t pos = 0) {
+        ASSERT_LE(send_length, wire_request.size())
+            << "broken test, send_length exceeds wire size";
 
-        socket_.async_send(boost::asio::buffer(wire_request.data() + pos, send_length - pos),
-                           [this, wire_request, send_length, pos](const boost::system::error_code& ec,
-                                                                  size_t bytes_transferred) mutable {
+        socket_.async_send(boost::asio::buffer(wire_request.data() + pos,
+                                               send_length - pos),
+                           [this, wire_request, send_length, pos]
+                               (const boost::system::error_code& ec,
+                                size_t bytes_transferred) mutable {
             if (ec) {
                 if (ec.value() == boost::asio::error::operation_aborted) {
                     return;
@@ -232,14 +236,16 @@ public:
                 }
             }
 
-            // Remove the part of the request which has been sent.
-            if (bytes_transferred > 0 && (send_length - pos <= bytes_transferred)) {
+            // Advance the sent position.
+            if (bytes_transferred <= send_length - pos) {
                 pos += bytes_transferred;
+            } else {
+                pos = send_length;
             }
 
             // Continue sending request data if there are still some
             // to be sent.
-            if (pos < wire_request.size()) {
+            if (pos < send_length) {
                 sendPartialRequest(wire_request, send_length, pos);
             } else {
                 // Request has been sent. Start receiving response.
