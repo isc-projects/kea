@@ -72,10 +72,10 @@ public:
     };
 
     struct PrivateData {
-        PrivateData(TCPSocket<TCPCallback>& client) :
+        PrivateData() :
             error_code_(), length_(0), cumulative_(0), expected_(0), offset_(0),
-            name_(""), queued_(NONE), called_(NONE), data_(MIN_SIZE, 0), client_(client) {
-        }
+            name_(""), queued_(NONE), called_(NONE), data_(MIN_SIZE, 0)
+        {}
 
         boost::system::error_code  error_code_;    ///< Completion error code
         size_t                     length_;        ///< Bytes transferred in this I/O
@@ -86,7 +86,6 @@ public:
         Operation                  queued_;        ///< Queued operation
         Operation                  called_;        ///< Which callback called
         std::vector<uint8_t>       data_;          ///< Receive buffer
-        TCPSocket<TCPCallback>&    client_;        ///< The client under test
     };
 
     /// @brief Constructor
@@ -101,14 +100,16 @@ public:
     /// data.
     ///
     /// @param which Which of the two callback objects this is
-    TCPCallback(std::string which, TCPSocket<TCPCallback>& client) : ptr_(new PrivateData(client)) {
+    TCPCallback(std::string which) : ptr_(new PrivateData())
+    {
         ptr_->name_ = which;
     }
 
     /// @brief Destructor
     ///
     /// No code needed, destroying the shared pointer destroys the private data.
-    virtual ~TCPCallback() = default;
+    virtual ~TCPCallback()
+    {}
 
     /// @brief Client Callback Function
     ///
@@ -118,20 +119,11 @@ public:
     /// @param ec I/O completion error code passed to callback function.
     /// @param length Number of bytes transferred
     void operator()(boost::system::error_code ec = boost::system::error_code(),
-                    size_t length = 0) {
+                            size_t length = 0)
+    {
         setCode(ec.value());
         ptr_->called_ = ptr_->queued_;
-        ptr_->length_ += length;
-        if (ptr_->length_ != ptr_->expected_) {
-            if (ptr_->called_ == TCPCallback::READ) {
-                TCPEndpoint client_remote_endpoint;
-                ptr_->client_.asyncReceive(ptr_->data_.data(), TCPCallback::MIN_SIZE, ptr_->length_,
-                                           &client_remote_endpoint, *this);
-            } else if (ptr_->called_ == TCPCallback::WRITE) {
-                ptr_->client_.asyncSend(ptr_->data_.data() + ptr_->length_,
-                                        ptr_->expected_ - ptr_->length_, *this);
-            }
-        }
+        ptr_->length_ = length;
     }
 
     /// @brief Get I/O completion error code
@@ -190,60 +182,23 @@ private:
     boost::shared_ptr<PrivateData>  ptr_;   ///< Pointer to private data
 };
 
-/// @brief Read Server Data - helper function
-///
-/// Called in the part of the test that has the client send a message to the
-/// server.
-///
-/// "All the data read" means that the server has received a message that is
-/// preceded by a two-byte count field and that the total amount of data received
-/// from the remote end is equal to the value in the count field plus two bytes
-/// for the count field itself.
-///
-/// @param socket Socket on which the server is reading data
-/// @param server_cb Structure in which server data is held.
-void
-serverDoRead(tcp::socket& socket, TCPCallback& server_cb) {
-    // Read block of data and update cumulative amount of data received.
-    socket.async_read_some(boost::asio::buffer(server_cb.data() + server_cb.cumulative(),
-                                               TCPCallback::MIN_SIZE - server_cb.cumulative()),
-                           [&socket, &server_cb](boost::system::error_code ec,
-                                                 size_t length) {
-            server_cb.setCode(ec.value());
-            server_cb.called() = server_cb.queued();
-            server_cb.cumulative() += length;
 
-            // If we have read at least two bytes, we can work out how much we
-            // should be reading.
-            if (server_cb.cumulative() >= 2 && !server_cb.length()) {
-                server_cb.length() = readUint16(server_cb.data(), sizeof(uint16_t));
-                if ((server_cb.expected()) == server_cb.cumulative()) {
-
-                    // Amount of data read from stream equals the size of the
-                    // message (as indicated in the first two bytes of the message)
-                    // plus the size of the count field.  Therefore we have received
-                    // all the data.
-                    return;
-                }
-            }
-            serverDoRead(socket, server_cb);
-        });
-}
-
-/// @brief Read Server Data
-///
-/// Called in the part of the test that has the client send a message to the
-/// server.
-///
-/// "All the data read" means that the server has received a message that is
-/// preceded by a two-byte count field and that the total amount of data received
-/// from the remote end is equal to the value in the count field plus two bytes
-/// for the count field itself.
-///
-/// @param socket Socket on which the server is reading data
-/// @param server_cb Structure in which server data is held.
+// Read Server Data
+//
+// Called in the part of the test that has the client send a message to the
+// server, this loops until all the data has been read (synchronously) by the
+// server.
+//
+// "All the data read" means that the server has received a message that is
+// preceded by a two-byte count field and that the total amount of data received
+// from the remote end is equal to the value in the count field plus two bytes
+// for the count field itself.
+//
+// @param socket Socket on which the server is reading data
+// @param server_cb Structure in which server data is held.
 void
 serverRead(tcp::socket& socket, TCPCallback& server_cb) {
+
     // As we may need to read multiple times, keep a count of the cumulative
     // amount of data read and do successive reads into the appropriate part
     // of the buffer.
@@ -251,81 +206,46 @@ serverRead(tcp::socket& socket, TCPCallback& server_cb) {
     // Note that there are no checks for buffer overflow - this is a test
     // program and we have sized the buffer to be large enough for the test.
     server_cb.cumulative() = 0;
-    serverDoRead(socket, server_cb);
-}
 
-/// @brief Read Server Data - helper function
-///
-/// Called in the part of the test that has the client receive a message from the
-/// server.
-///
-/// "All the data read" means that the server has received a message that is
-/// preceded by a two-byte count field and that the total amount of data received
-/// from the remote end is equal to the value in the count field plus two bytes
-/// for the count field itself.
-///
-/// @param socket Socket on which the server is writing data
-/// @param server_cb Structure in which server data is held.
-void
-serverDoWrite(tcp::socket& socket, TCPCallback& server_cb) {
-    // Read block of data and update cumulative amount of data received.
-    socket.async_write_some(boost::asio::buffer(server_cb.data() + server_cb.cumulative(),
-                                                server_cb.expected() - server_cb.cumulative()),
-                            [&socket, &server_cb](boost::system::error_code ec,
-                                                  size_t length) {
-            server_cb.setCode(ec.value());
-            server_cb.called() = server_cb.queued();
-            server_cb.cumulative() += length;
-            if (server_cb.expected() != server_cb.cumulative()) {
-                serverDoWrite(socket, server_cb);
+    bool complete = false;
+    while (!complete) {
+
+        // Read block of data and update cumulative amount of data received.
+        server_cb.length() = socket.receive(
+            boost::asio::buffer(server_cb.data() + server_cb.cumulative(),
+                TCPCallback::MIN_SIZE - server_cb.cumulative()));
+        server_cb.cumulative() += server_cb.length();
+
+        // If we have read at least two bytes, we can work out how much we
+        // should be reading.
+        if (server_cb.cumulative() >= 2) {
+            server_cb.expected() = readUint16(server_cb.data(), server_cb.length());
+            if ((server_cb.expected() + 2) == server_cb.cumulative()) {
+
+                // Amount of data read from socket equals the size of the
+                // message (as indicated in the first two bytes of the message)
+                // plus the size of the count field.  Therefore we have received
+                // all the data.
+                complete = true;
             }
-        });
-}
-
-/// @brief Write Server Data
-///
-/// Called in the part of the test that has the client receive a message from the
-/// server.
-///
-/// "All the data read" means that the server has received a message that is
-/// preceded by a two-byte count field and that the total amount of data sent
-/// to the remote end is equal to the value in the count field plus two bytes
-/// for the count field itself.
-///
-/// @param socket Socket on which the server is writing data
-/// @param server_cb Structure in which server data is held.
-void
-serverWrite(tcp::socket& socket, TCPCallback& server_cb) {
-    // As we may need to write multiple times, keep a count of the cumulative
-    // amount of data written and do successive writes into the appropriate part
-    // of the buffer.
-    //
-    // Note that there are no checks for buffer overflow - this is a test
-    // program and we have sized the buffer to be large enough for the test.
-    server_cb.cumulative() = 0;
-    serverDoWrite(socket, server_cb);
+        }
+    }
 }
 
 // Receive complete method should return true only if the count in the first
 // two bytes is equal to the size of the rest if the buffer.
-TEST(TCPSocket, processReceivedData) {
-    // Amount of "real" data in the buffer
-    const uint16_t PACKET_SIZE = 16382;
 
-    // Used to instantiate socket
-    IOServicePtr service(new IOService());
-    // Socket under test
-    TCPSocket<TCPCallback>  test(service);
-    // Buffer to check
-    uint8_t inbuff[PACKET_SIZE + 2];
-    // Where data is put
-    OutputBufferPtr outbuff(new OutputBuffer(16));
-    // Expected amount of data
-    size_t expected;
-    // Where to put next data
-    size_t offset;
-    // Cumulative data received
-    size_t cumulative;
+TEST(TCPSocket, processReceivedData) {
+    const uint16_t PACKET_SIZE = 16382;     // Amount of "real" data in the buffer
+
+    IOServicePtr            service(new IOService());  // Used to instantiate socket
+    TCPSocket<TCPCallback>  test(service);  // Socket under test
+    uint8_t                 inbuff[PACKET_SIZE + 2];   // Buffer to check
+    OutputBufferPtr         outbuff(new OutputBuffer(16));
+                                            // Where data is put
+    size_t                  expected;       // Expected amount of data
+    size_t                  offset;         // Where to put next data
+    size_t                  cumulative;     // Cumulative data received
 
     // Set some dummy values in the buffer to check
     for (size_t i = 0; i < sizeof(inbuff); ++i) {
@@ -392,29 +312,24 @@ TEST(TCPSocket, processReceivedData) {
 TEST(TCPSocket, sequenceTest) {
 
     // Common objects.
-    // Service object for async control
-    IOServicePtr service(new IOService());
+    IOServicePtr service(new IOService());  // Service object for async control
 
     // The client - the TCPSocket being tested
-    // Socket under test
-    TCPSocket<TCPCallback> client(service);
-    // Async I/O callback function
-    TCPCallback client_cb("Client", client);
-    // Where client receives message from
-    TCPEndpoint client_remote_endpoint;
-    // Received data is put here
+    TCPSocket<TCPCallback> client(service); // Socket under test
+    TCPCallback client_cb("Client");        // Async I/O callback function
+    TCPEndpoint client_remote_endpoint;     // Where client receives message from
     OutputBufferPtr client_buffer(new OutputBuffer(128));
+                                            // Received data is put here
+
     // The server - with which the client communicates.
-    // Address of target server
-    IOAddress server_address(SERVER_ADDRESS);
-    // Server callback
-    TCPCallback server_cb("Server", client);
-    // Endpoint describing server
+    IOAddress   server_address(SERVER_ADDRESS);
+                                            // Address of target server
+    TCPCallback server_cb("Server");        // Server callback
     TCPEndpoint server_endpoint(server_address, SERVER_PORT);
-    // Address where server received message from
-    TCPEndpoint server_remote_endpoint;
-    // Socket used for server.
-    tcp::socket server(service->getInternalIOService());
+                                            // Endpoint describing server
+    TCPEndpoint server_remote_endpoint;     // Address where server received message from
+    tcp::socket server_socket(service->getInternalIOService());
+                                            // Socket used for server
 
     // Step 1.  Create the connection between the client and the server.  Set
     // up the server to accept incoming connections and have the client open
@@ -427,7 +342,7 @@ TEST(TCPSocket, sequenceTest) {
     tcp::acceptor acceptor(service->getInternalIOService(),
                            tcp::endpoint(tcp::v4(), SERVER_PORT));
     acceptor.set_option(tcp::acceptor::reuse_address(true));
-    acceptor.async_accept(server, server_cb);
+    acceptor.async_accept(server_socket, server_cb);
 
     // Set up client - connect to the server.
     client_cb.queued() = TCPCallback::OPEN;
@@ -437,10 +352,9 @@ TEST(TCPSocket, sequenceTest) {
     client.open(&server_endpoint, client_cb);
 
     // Run the open and the accept callback and check that they ran.
-    while ((server_cb.called() == TCPCallback::NONE) ||
-           (client_cb.called() == TCPCallback::NONE)) {
-        service->runOne();
-    }
+    service->runOne();
+    service->runOne();
+
     EXPECT_EQ(TCPCallback::ACCEPT, server_cb.called());
     EXPECT_EQ(0, server_cb.getCode());
 
@@ -463,38 +377,14 @@ TEST(TCPSocket, sequenceTest) {
     client_cb.queued() = TCPCallback::WRITE;
     client_cb.setCode(143);  // Arbitrary number
     client_cb.length() = 0;
-    client_cb.cumulative() = 0;
-    client_cb.expected() = sizeof(OUTBOUND_DATA) + 2;
-
-    writeUint16(sizeof(OUTBOUND_DATA), client_cb.data(), TCPCallback::MIN_SIZE);
-    copy(OUTBOUND_DATA, (OUTBOUND_DATA + sizeof(OUTBOUND_DATA)),
-        (client_cb.data() + 2));
-
-    client.asyncSend(client_cb.data() + 2, sizeof(OUTBOUND_DATA), &server_endpoint, client_cb);
+    client.asyncSend(OUTBOUND_DATA, sizeof(OUTBOUND_DATA), &server_endpoint, client_cb);
 
     // Wait for the client callback to complete. (Must do this first on
     // Solaris: if we do the synchronous read first, the test hangs.)
-    while (client_cb.called() == TCPCallback::NONE ||
-           client_cb.expected() != client_cb.length()) {
-        service->runOne();
-    }
+    service->runOne();
 
-    server_cb.called() = TCPCallback::NONE;
-    server_cb.queued() = TCPCallback::READ;
-    server_cb.setCode(143);  // Arbitrary number
-    server_cb.length() = 0;
-    server_cb.cumulative() = 0;
-    server_cb.expected() = sizeof(OUTBOUND_DATA) + 2;
-
-    // Synchronously read the data from the server.
-    serverRead(server, server_cb);
-
-    // Wait for the client callback to complete. (Must do this first on
-    // Solaris: if we do the synchronous read first, the test hangs.)
-    while (server_cb.called() == TCPCallback::NONE ||
-           server_cb.expected() != server_cb.cumulative()) {
-        service->runOne();
-    }
+    // Synchronously read the data from the server.;
+    serverRead(server_socket, server_cb);
 
     // Check the client state
     EXPECT_EQ(TCPCallback::WRITE, client_cb.called());
@@ -504,7 +394,7 @@ TEST(TCPSocket, sequenceTest) {
     // ... and check what the server received.
     EXPECT_EQ(sizeof(OUTBOUND_DATA) + 2, server_cb.cumulative());
     EXPECT_TRUE(equal(OUTBOUND_DATA,
-                (OUTBOUND_DATA + (sizeof(OUTBOUND_DATA))),
+                (OUTBOUND_DATA + (sizeof(OUTBOUND_DATA) - 1)),
                 (server_cb.data() + 2)));
 
     // Step 3.  Get the server to write all the data asynchronously and have the
@@ -515,31 +405,22 @@ TEST(TCPSocket, sequenceTest) {
     // Have the server write asynchronously to the client.
     server_cb.called() = TCPCallback::NONE;
     server_cb.queued() = TCPCallback::WRITE;
-    server_cb.setCode(143);  // Arbitrary number
     server_cb.length() = 0;
     server_cb.cumulative() = 0;
-    server_cb.expected() = sizeof(INBOUND_DATA) + 2;
 
     writeUint16(sizeof(INBOUND_DATA), server_cb.data(), TCPCallback::MIN_SIZE);
-    copy(INBOUND_DATA, (INBOUND_DATA + sizeof(INBOUND_DATA)),
+    copy(INBOUND_DATA, (INBOUND_DATA + sizeof(INBOUND_DATA) - 1),
         (server_cb.data() + 2));
-
-    // Synchronously write the data to the server.
-    serverWrite(server, server_cb);
-
-    // Wait for the client callback to complete. (Must do this first on
-    // Solaris: if we do the synchronous read first, the test hangs.)
-    while (server_cb.called() == TCPCallback::NONE ||
-           server_cb.expected() != server_cb.cumulative()) {
-        service->runOne();
-    }
+    server_socket.async_send(boost::asio::buffer(server_cb.data(),
+                                          (sizeof(INBOUND_DATA) + 2)),
+                             server_cb);
 
     // Have the client read asynchronously.
     client_cb.called() = TCPCallback::NONE;
     client_cb.queued() = TCPCallback::READ;
     client_cb.length() = 0;
     client_cb.cumulative() = 0;
-    client_cb.expected() = sizeof(INBOUND_DATA) + 2;
+    client_cb.expected() = 0;
     client_cb.offset() = 0;
 
     client.asyncReceive(client_cb.data(), TCPCallback::MIN_SIZE,
@@ -569,14 +450,13 @@ TEST(TCPSocket, sequenceTest) {
 
         // Has the server run?
         if (!server_complete) {
-            if (server_cb.called() != TCPCallback::NONE) {
+            if (server_cb.called() == server_cb.queued()) {
 
                 // Yes.  Check that the send completed successfully and that
                 // all the data that was expected to have been sent was in fact
                 // sent.
-                EXPECT_EQ(TCPCallback::WRITE, server_cb.called());
                 EXPECT_EQ(0, server_cb.getCode());
-                EXPECT_EQ((sizeof(INBOUND_DATA) + 2), server_cb.cumulative());
+                EXPECT_EQ((sizeof(INBOUND_DATA) + 2), server_cb.length());
                 server_complete = true;
             }
         }
@@ -584,7 +464,7 @@ TEST(TCPSocket, sequenceTest) {
         // Has the client run?
         if (!client_complete) {
 
-            if (client_cb.called() == TCPCallback::NONE) {
+            if (client_cb.called() != client_cb.queued()) {
                 // No. Run the service another time.
                 continue;
             }
@@ -603,7 +483,7 @@ TEST(TCPSocket, sequenceTest) {
                                                          client_buffer);
 
             // If the data is not complete, queue another read.
-            if (!client_complete) {
+            if (! client_complete) {
                 client_cb.called() = TCPCallback::NONE;
                 client_cb.queued() = TCPCallback::READ;
                 client_cb.length() = 0;
@@ -626,14 +506,14 @@ TEST(TCPSocket, sequenceTest) {
     // ... and check what the server sent.
     EXPECT_EQ(TCPCallback::WRITE, server_cb.called());
     EXPECT_EQ(0, server_cb.getCode());
-    EXPECT_EQ(sizeof(INBOUND_DATA) + 2, server_cb.cumulative());
+    EXPECT_EQ(sizeof(INBOUND_DATA) + 2, server_cb.length());
 
     // ... and that what was sent is what was received.
     const uint8_t* received = client_buffer->getData();
-    EXPECT_TRUE(equal(INBOUND_DATA, (INBOUND_DATA + (sizeof(INBOUND_DATA))),
+    EXPECT_TRUE(equal(INBOUND_DATA, (INBOUND_DATA + (sizeof(INBOUND_DATA) - 1)),
                       received));
 
     // Close client and server.
     EXPECT_NO_THROW(client.close());
-    EXPECT_NO_THROW(server.close());
+    EXPECT_NO_THROW(server_socket.close());
 }

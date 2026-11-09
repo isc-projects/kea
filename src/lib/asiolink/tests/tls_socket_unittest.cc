@@ -103,6 +103,7 @@ public:
     /// data.
     ///
     /// @param which Which of the two callback objects this is
+    /// @param client The client socket
     TLSCallback(std::string which, TLSSocket<TLSCallback>& client) : ptr_(new PrivateData(client)) {
         ptr_->name_ = which;
     }
@@ -127,11 +128,15 @@ public:
         if (ptr_->length_ != ptr_->expected_) {
             if (ptr_->called_ == TLSCallback::READ) {
                 TCPEndpoint client_remote_endpoint;
-                ptr_->client_.asyncReceive(ptr_->data_.data(), TLSCallback::MIN_SIZE, ptr_->length_,
-                                           &client_remote_endpoint, *this);
+                ptr_->client_.asyncReceive(ptr_->data_.data(),
+                                           TLSCallback::MIN_SIZE,
+                                           ptr_->length_,
+                                           &client_remote_endpoint,
+                                           *this);
             } else if (ptr_->called_ == TLSCallback::WRITE) {
                 ptr_->client_.asyncSend(ptr_->data_.data() + ptr_->length_,
-                                        ptr_->expected_ - ptr_->length_, *this);
+                                        ptr_->expected_ - ptr_->length_,
+                                        *this);
             }
         }
     }
@@ -213,18 +218,22 @@ serverDoRead(TlsStreamImpl& stream, TLSCallback& server_cb) {
                                                  size_t length) {
             server_cb.setCode(ec.value());
             server_cb.called() = server_cb.queued();
+            server_cb.length() = length;
             server_cb.cumulative() += length;
 
             // If we have read at least two bytes, we can work out how much we
             // should be reading.
-            if (server_cb.cumulative() >= 2 && !server_cb.length()) {
-                server_cb.length() = readUint16(server_cb.data(), sizeof(uint16_t));
-                if ((server_cb.expected()) == server_cb.cumulative()) {
+            if (!server_cb.expected() && server_cb.cumulative() >= 2) {
+                server_cb.expected() = readUint16(server_cb.data(),
+                                                  server_cb.cumulative());
+                server_cb.expected() += 2;
+                if (server_cb.expected() == server_cb.cumulative()) {
 
-                    // Amount of data read from stream equals the size of the
-                    // message (as indicated in the first two bytes of the message)
-                    // plus the size of the count field.  Therefore we have received
-                    // all the data.
+                    // Amount of data read from stream equals the size
+                    // of the message (as indicated in the first two
+                    // bytes of the message) plus the size of the
+                    // count field.  Therefore we have received all
+                    // the data.
                     return;
                 }
             }
@@ -256,7 +265,7 @@ serverRead(TlsStreamImpl& stream, TLSCallback& server_cb) {
     serverDoRead(stream, server_cb);
 }
 
-/// @brief Read Server Data - helper function
+/// @brief Write Server Data - helper function
 ///
 /// Called in the part of the test that has the client receive a message from the
 /// server.
@@ -351,8 +360,8 @@ TEST(TLSSocket, processReceivedData) {
     EXPECT_EQ(0U, outbuff->getLength());
 
     // Now pretend that we've received one more byte.
-    complete = test.processReceivedData(inbuff, 1, cumulative, offset, expected,
-                                        outbuff);
+    complete = test.processReceivedData(inbuff, 1, cumulative, offset,
+                                        expected, outbuff);
     EXPECT_FALSE(complete);
     EXPECT_EQ(2U, cumulative);
     EXPECT_EQ(0U, offset);
@@ -498,7 +507,8 @@ TEST(TLSSocket, sequenceTest) {
     copy(OUTBOUND_DATA, (OUTBOUND_DATA + sizeof(OUTBOUND_DATA)),
         (client_cb.data() + 2));
 
-    client.asyncSend(client_cb.data() + 2, sizeof(OUTBOUND_DATA), &server_endpoint, client_cb);
+    client.asyncSend(client_cb.data() + 2, sizeof(OUTBOUND_DATA),
+                     &server_endpoint, client_cb);
 
     // Wait for the client callback to complete. (Must do this first on
     // Solaris: if we do the synchronous read first, the test hangs.)
