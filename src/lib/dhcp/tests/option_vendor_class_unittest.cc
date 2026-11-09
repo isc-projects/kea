@@ -449,14 +449,14 @@ TEST(OptionVendorClass, toText4) {
     vendor_class.addTuple(tuple);
     // Check that the text representation of the option is as expected.
     EXPECT_EQ("type=124, len=24,  enterprise id=0x4d2,"
-              " data-len0=11, vendor-class-data0='Hello world',"
-              " enterprise id=0x4d2, data-len1=3, vendor-class-data1='foo'",
+              " data-len0=11, vendor-class-data0=48656C6C6F20776F726C64 'Hello world',"
+              " enterprise id=0x4d2, data-len1=3, vendor-class-data1=666F6F 'foo'",
               vendor_class.toText());
 
     // Check that indentation works.
     EXPECT_EQ("   type=124, len=24,  enterprise id=0x4d2,"
-              " data-len0=11, vendor-class-data0='Hello world',"
-              " enterprise id=0x4d2, data-len1=3, vendor-class-data1='foo'",
+              " data-len0=11, vendor-class-data0=48656C6C6F20776F726C64 'Hello world',"
+              " enterprise id=0x4d2, data-len1=3, vendor-class-data1=666F6F 'foo'",
               vendor_class.toText(3));
 }
 
@@ -474,14 +474,14 @@ TEST(OptionVendorClass, toText6) {
     vendor_class.addTuple(tuple);
     // Check that the text representation of the option is as expected.
     EXPECT_EQ("type=16, len=22,  enterprise id=0x4d2,"
-              " data-len0=11, vendor-class-data0='Hello world',"
-              " data-len1=3, vendor-class-data1='foo'",
+              " data-len0=11, vendor-class-data0=48656C6C6F20776F726C64 'Hello world',"
+              " data-len1=3, vendor-class-data1=666F6F 'foo'",
               vendor_class.toText());
 
     // Check that indentation works.
     EXPECT_EQ("  type=16, len=22,  enterprise id=0x4d2,"
-              " data-len0=11, vendor-class-data0='Hello world',"
-              " data-len1=3, vendor-class-data1='foo'",
+              " data-len0=11, vendor-class-data0=48656C6C6F20776F726C64 'Hello world',"
+              " data-len1=3, vendor-class-data1=666F6F 'foo'",
               vendor_class.toText(2));
 }
 

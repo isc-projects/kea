@@ -1,3 +1,8 @@
+2577.	[bug]		razvan
+	Options are now properly displayed as hexstrings and as text
+	only if all characters are printable.
+	(Gitlab #4456)
+
 2576.	[bug]		razvan
 	Fixed a bug which was causing radius access to not function
 	properly after issuing 'config-reload' or 'config-set'

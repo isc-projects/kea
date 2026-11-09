@@ -7,8 +7,12 @@
 #include <config.h>
 
 #include <dhcp/option_string.h>
+#include <util/encode/encode.h>
 #include <util/str.h>
+
 #include <sstream>
+
+using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
@@ -102,9 +106,14 @@ OptionString::unpack(OptionBufferConstIter begin,
 std::string
 OptionString::toText(int indent) const {
     std::ostringstream output;
-    output << headerToText(indent) << ": "
-           << "\"" << getValue() << "\" (string)";
+    auto v = getValue();
 
+    output << headerToText(indent) << ": "
+           << util::encode::encodeHex(getData());
+    if (str::isPrintable(v)) {
+        std::string printable(v.cbegin(), v.cend());
+        output << " \"" << printable << "\"" << " (string)";
+    }
     return (output.str());
 }
 

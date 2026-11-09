@@ -9,7 +9,12 @@
 #include <exceptions/exceptions.h>
 #include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option_opaque_data_tuples.h>
+#include <util/encode/encode.h>
+#include <util/str.h>
+
 #include <sstream>
+
+using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
@@ -144,8 +149,14 @@ OptionOpaqueDataTuples::toText(int indent) const {
     // Iterate over all tuples and print their size and contents.
     for (unsigned i = 0; i < getTuplesNum(); ++i) {
         // Print the tuple.
-        s << ", data-len" << i << "=" << getTuple(i).getLength();
-        s << ", data" << i << "='" << getTuple(i) << "'";
+        auto t = getTuple(i);
+        s << ", data-len" << i << "=" << t.getLength();
+        s << ", data" << i << "=" << util::encode::encodeHex(t.getData());
+        auto txt = t.getText();
+        if (str::isPrintable(txt)) {
+            std::string printable(txt.cbegin(), txt.cend());
+            s << " '" << printable << "'";
+        }
     }
 
     return (s.str());

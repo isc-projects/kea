@@ -9,9 +9,13 @@
 #include <exceptions/exceptions.h>
 #include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option_vendor_class.h>
+#include <util/encode/encode.h>
 #include <util/io.h>
+#include <util/str.h>
 
 #include <sstream>
+
+using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
@@ -189,13 +193,19 @@ OptionVendorClass::toText(int indent) const {
         " enterprise id=0x" << std::hex << getVendorId() << std::dec;
     // Iterate over all tuples and print their size and contents.
     for (unsigned i = 0; i < getTuplesNum(); ++i) {
+        auto t = getTuple(i);
         // The DHCPv4 V-I Vendor Class has enterprise id before every tuple.
         if ((getUniverse() == V4) && (i > 0)) {
             s << ", enterprise id=0x" << std::hex << getVendorId() << std::dec;
         }
         // Print the tuple.
-        s << ", data-len" << i << "=" << getTuple(i).getLength();
-        s << ", vendor-class-data" << i << "='" << getTuple(i) << "'";
+        s << ", data-len" << i << "=" << t.getLength();
+        s << ", vendor-class-data" << i << "=" << util::encode::encodeHex(t.getData());
+        auto txt = t.getText();
+        if (str::isPrintable(txt)) {
+            std::string printable(txt.cbegin(), txt.cend());
+            s << " '" << printable << "'";
+        }
     }
 
     return (s.str());
