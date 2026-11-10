@@ -67,11 +67,10 @@ foreach i : [
     )
 endforeach
 
-# From external contribution.
-# These source files include LLVM's FuzzedDataProvider.h.
-# As a result, they can only be compiled using clang++.
+# The following fuzz harnesses are inherited from external contributors.
+# They include LLVM's fuzzer/FuzzedDataProvider.h header.
 cpp = meson.get_compiler('cpp')
-if cpp.get_id() == 'clang'
+if cpp.has_header('fuzzer/FuzzedDataProvider.h', required: false)
     maybe_ddns_gss_tsig_lib = []
     if KRB5_DEP.found()
         maybe_ddns_gss_tsig_lib += [ddns_gss_tsig_lib]
@@ -233,6 +232,10 @@ if cpp.get_id() == 'clang'
             )
         endforeach
     endif
+else
+    message(
+        'Not all fuzz harnesses will be compiled due to header fuzzer/FuzzedDataProvider.h not being available.',
+    )
 endif
 
 subdir('corp')
