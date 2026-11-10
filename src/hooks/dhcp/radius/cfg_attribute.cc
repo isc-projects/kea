@@ -104,7 +104,6 @@ CfgAttributes::getEvalAll(Pkt& pkt) {
         if (!def) {
             continue;
         }
-        AttributePtr attr;
         vector<uint8_t> binary;
         binary.resize(value.size());
         memmove(&binary[0], value.c_str(), binary.size());

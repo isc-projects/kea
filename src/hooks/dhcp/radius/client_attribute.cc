@@ -797,7 +797,7 @@ Attributes::get(const uint8_t type) const {
     if (it != idx.end()) {
         return (*it);
     } else {
-        return(ConstAttributePtr());
+        return (ConstAttributePtr());
     }
 }
 

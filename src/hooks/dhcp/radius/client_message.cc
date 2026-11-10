@@ -308,13 +308,16 @@ Message::decode() {
             (attr->getType() == PW_USER_PASSWORD)) {
             attr = decodeUserPassword(attr);
         }
-        if (attr->getType() == PW_MESSAGE_AUTHENTICATOR) {
-            if (msg_auth_ptr != 0) {
-                isc_throw(BadValue, "2 Message-Authenticator attributes");
+        if (attr) {
+            if (attr->getType() == PW_MESSAGE_AUTHENTICATOR) {
+                if (msg_auth_ptr != 0) {
+                    isc_throw(BadValue, "2 Message-Authenticator attributes");
+                }
+                msg_auth_ptr = ptr;
             }
-            msg_auth_ptr = ptr;
+
+            attributes_->add(attr);
         }
-        attributes_->add(attr);
         ptr += len;
     }
     if (msg_auth_ptr != 0) {

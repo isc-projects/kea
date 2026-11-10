@@ -267,7 +267,10 @@ public:
     }
 
     /// @brief Thread server function.
-    void server();
+    ///
+    /// @brief unknown_attr The flag which indicates if the server has sent an unknown
+    /// attribute.
+    void server(bool unknown_attr);
 
     /// @brief Thread not servicing server function.
     void dummyServer();
@@ -332,13 +335,13 @@ public:
     void testNoHost4(ConstSubnet4Ptr subnet, uint32_t const test_id = 12345);
 
     /// @brief Verify the result of running testNoHost4.
-    void checkNoHost4Results(ConstSubnet4Ptr subnet, uint32_t const test_id = 12345);
+    void checkNoHost4Results(ConstSubnet4Ptr subnet, uint32_t const test_id = 12345, bool unknown_attr = false);
 
     /// @brief Verify the hook calls the server when it can't get a host - IPv6.
     void testNoHost6(ConstSubnet6Ptr subnet, uint32_t const test_id = 12345);
 
     /// @brief Verify the result of running testNoHost6.
-    void checkNoHost6Results(ConstSubnet6Ptr subnet, uint32_t const test_id = 12345);
+    void checkNoHost6Results(ConstSubnet6Ptr subnet, uint32_t const test_id = 12345, bool unknown_attr = false);
 
     /// @brief Verify that failing to get identifier makes SKIP status - IPv4.
     void testNoIdentifier4(uint32_t const test_id = 12345);
@@ -488,7 +491,7 @@ struct MTAccessTest : AccessTest {
 
 /// @brief Server method running in a thread.
 void
-AccessTest::server() {
+AccessTest::server(bool unknown_attr = false) {
     // Get private service.
     IOServicePtr service(new IOService());
 
@@ -579,7 +582,7 @@ AccessTest::server() {
         send_buffer[0] = PW_ACCESS_ACCEPT;
         send_buffer[2] = send_buffer.size() >> 8;
         send_buffer[3] = send_buffer.size() & 0xff;
-        send_buffer[AUTH_HDR_LEN] = PW_FRAMED_POOL;
+        send_buffer[AUTH_HDR_LEN] = PW_FRAMED_POOL + (unknown_attr ? 64 : 0);
         send_buffer[AUTH_HDR_LEN + 1] = send_size - AUTH_HDR_LEN;
         memmove(&send_buffer[AUTH_HDR_LEN + 2], pool.c_str(), pool.size());
 
@@ -1310,7 +1313,8 @@ AccessTest::testNoHost4(ConstSubnet4Ptr subnet, uint32_t const test_id /* = 1234
 }
 
 void
-AccessTest::checkNoHost4Results(ConstSubnet4Ptr subnet, uint32_t i /* = 12345 */) {
+AccessTest::checkNoHost4Results(ConstSubnet4Ptr subnet, uint32_t i /* = 12345 */,
+                                bool unknown_attr /* = false */) {
     vector<uint8_t> id = { 0x00, 0x46, 0x6f, 0x6f, 0x62, 0x61, 0x72, 0x00, 0x00, 0x00, 0x00 };
     writeUint32(i, &id[7], 4);
     ConstHostPtr host = HostMgr::instance().get4Any(subnet->getID(),
@@ -1338,12 +1342,20 @@ AccessTest::checkNoHost4Results(ConstSubnet4Ptr subnet, uint32_t i /* = 12345 */
     ASSERT_TRUE(ctx);
     ASSERT_EQ(Element::map, ctx->getType());
     ConstElementPtr saved_attrs = ctx->get("radius");
-    ASSERT_TRUE(saved_attrs);
-    ASSERT_EQ(Element::list, saved_attrs->getType());
-    EXPECT_EQ(1U, saved_attrs->size());
+    if (unknown_attr) {
+        ASSERT_FALSE(saved_attrs);
+    } else {
+        ASSERT_TRUE(saved_attrs);
+        ASSERT_EQ(Element::list, saved_attrs->getType());
+        EXPECT_EQ(1U, saved_attrs->size());
+    }
 
     for (PktPtr const& pkt : packets_) {
-        EXPECT_TRUE(pkt->inClass("foobar"));
+        if (unknown_attr) {
+            EXPECT_FALSE(pkt->inClass("foobar"));
+        } else {
+            EXPECT_TRUE(pkt->inClass("foobar"));
+        }
 
         CalloutHandlePtr handle = getCalloutHandle(pkt);
         ConstSubnet4Ptr subneth;
@@ -1385,7 +1397,8 @@ AccessTest::testNoHost6(ConstSubnet6Ptr subnet, uint32_t const test_id /* = 1234
 }
 
 void
-AccessTest::checkNoHost6Results(ConstSubnet6Ptr subnet, uint32_t i /* = 12345 */) {
+AccessTest::checkNoHost6Results(ConstSubnet6Ptr subnet, uint32_t i /* = 12345 */,
+                                bool unknown_attr /* = false */) {
     vector<uint8_t> id = { 0x00, 0x00, 0x46, 0x6f, 0x6f, 0x62, 0x61, 0x72, 0x00, 0x00, 0x00, 0x00 };
     writeUint32(i, &id[7], 4);
     ConstHostPtr host = HostMgr::instance().get6Any(subnet->getID(),
@@ -1413,12 +1426,20 @@ AccessTest::checkNoHost6Results(ConstSubnet6Ptr subnet, uint32_t i /* = 12345 */
     ASSERT_TRUE(ctx);
     ASSERT_EQ(Element::map, ctx->getType());
     ConstElementPtr saved_attrs = ctx->get("radius");
-    ASSERT_TRUE(saved_attrs);
-    ASSERT_EQ(Element::list, saved_attrs->getType());
-    EXPECT_EQ(1U, saved_attrs->size());
+    if (unknown_attr) {
+        ASSERT_FALSE(saved_attrs);
+    } else {
+        ASSERT_TRUE(saved_attrs);
+        ASSERT_EQ(Element::list, saved_attrs->getType());
+        EXPECT_EQ(1U, saved_attrs->size());
+    }
 
     for (PktPtr const& pkt : packets_) {
-        EXPECT_TRUE(pkt->inClass("foobar"));
+        if (unknown_attr) {
+            EXPECT_FALSE(pkt->inClass("foobar"));
+        } else {
+            EXPECT_TRUE(pkt->inClass("foobar"));
+        }
 
         CalloutHandlePtr handle = getCalloutHandle(pkt);
         ConstSubnet6Ptr subneth;
@@ -3574,7 +3595,7 @@ TEST_F(AccessTest, noHost4) {
     CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->add(subnet);
 
     // Start server.
-    thread_.reset(new thread(bind(&AccessTest::server, this)));
+    thread_.reset(new thread(bind(&AccessTest::server, this, false)));
     system_clock::time_point start(system_clock::now());
     while (!ready_ && system_clock::now() < start + milliseconds(GENERAL_TIMEOUT)) {
         this_thread::sleep_for(1ms);
@@ -3604,12 +3625,47 @@ TEST_F(AccessTest, noHost4) {
     checkNoHost4Results(subnet);
 }
 
+TEST_F(AccessTest, noHost4UnknownAttr) {
+    Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, 1));
+    CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->add(subnet);
+
+    // Start server.
+    thread_.reset(new thread(bind(&AccessTest::server, this, true)));
+    system_clock::time_point start(system_clock::now());
+    while (!ready_ && system_clock::now() < start + milliseconds(GENERAL_TIMEOUT)) {
+        this_thread::sleep_for(1ms);
+    }
+    EXPECT_TRUE(ready_);
+
+    testNoHost4(subnet);
+
+    start = system_clock::now();
+    while (system_clock::now() < start + milliseconds(GENERAL_TIMEOUT)) {
+        {
+            if (expected_received_ <= unparked_) {
+                break;
+            }
+        }
+        service_->poll();
+        this_thread::sleep_for(1ms);
+    }
+    EXPECT_EQ(expected_received_, unparked_);
+
+    start = system_clock::now();
+    while (!finished_ && system_clock::now() < start + milliseconds(GENERAL_TIMEOUT)) {
+        this_thread::sleep_for(1ms);
+    }
+    EXPECT_TRUE(finished_);
+
+    checkNoHost4Results(subnet, 12345, true);
+}
+
 TEST_F(AccessTest, noHost6) {
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 64, 1, 2, 3, 4, 1));
     CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->add(subnet);
 
     // Start server.
-    thread_.reset(new thread(bind(&AccessTest::server, this)));
+    thread_.reset(new thread(bind(&AccessTest::server, this, false)));
     system_clock::time_point start(system_clock::now());
     while (!ready_ && system_clock::now() < start + milliseconds(GENERAL_TIMEOUT)) {
         this_thread::sleep_for(1ms);
@@ -3637,6 +3693,41 @@ TEST_F(AccessTest, noHost6) {
     EXPECT_TRUE(finished_);
 
     checkNoHost6Results(subnet);
+}
+
+TEST_F(AccessTest, noHost6UnknownAttr) {
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 64, 1, 2, 3, 4, 1));
+    CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->add(subnet);
+
+    // Start server.
+    thread_.reset(new thread(bind(&AccessTest::server, this, true)));
+    system_clock::time_point start(system_clock::now());
+    while (!ready_ && system_clock::now() < start + milliseconds(GENERAL_TIMEOUT)) {
+        this_thread::sleep_for(1ms);
+    }
+    EXPECT_TRUE(ready_);
+
+    testNoHost6(subnet);
+
+    start = system_clock::now();
+    while (system_clock::now() < start + milliseconds(GENERAL_TIMEOUT)) {
+        service_->poll();
+        {
+            if (expected_received_ <= unparked_) {
+                break;
+            }
+        }
+        this_thread::sleep_for(1ms);
+    }
+    EXPECT_EQ(expected_received_, unparked_);
+
+    start = system_clock::now();
+    while (!finished_ && system_clock::now() < start + milliseconds(GENERAL_TIMEOUT)) {
+        this_thread::sleep_for(1ms);
+    }
+    EXPECT_TRUE(finished_);
+
+    checkNoHost6Results(subnet, 12345, true);
 }
 
 TEST_F(AccessTest, noIdentifier4) {
@@ -3764,7 +3855,7 @@ TEST_F(MTAccessTest, noHost4) {
     CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->add(subnet);
 
     // Start server.
-    thread_.reset(new thread(bind(&AccessTest::server, this)));
+    thread_.reset(new thread(bind(&AccessTest::server, this, false)));
     system_clock::time_point start(system_clock::now());
     while (!ready_ && system_clock::now() < start + milliseconds(GENERAL_TIMEOUT)) {
         this_thread::sleep_for(1ms);
@@ -3818,12 +3909,71 @@ TEST_F(MTAccessTest, noHost4) {
     }
 }
 
+TEST_F(MTAccessTest, noHost4UnknownAttr) {
+    Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, 1));
+    CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->add(subnet);
+
+    // Start server.
+    thread_.reset(new thread(bind(&AccessTest::server, this, true)));
+    system_clock::time_point start(system_clock::now());
+    while (!ready_ && system_clock::now() < start + milliseconds(GENERAL_TIMEOUT)) {
+        this_thread::sleep_for(1ms);
+    }
+    EXPECT_TRUE(ready_);
+
+    run([&](uint32_t const i) { testNoHost4(subnet, i); });
+
+    // Wait for the simulated RADIUS server to finish.
+    start = system_clock::now();
+    while (!finished_ && system_clock::now() < start + milliseconds(GENERAL_TIMEOUT)) {
+        this_thread::sleep_for(1ms);
+    }
+
+    // Wait for all the unpark callbacks.
+    start = system_clock::now();
+    while (system_clock::now() < start + milliseconds(GENERAL_TIMEOUT)) {
+        service_->poll();
+        size_t const parking_lot_size(
+            ServerHooks::getServerHooks().getParkingLotPtr("subnet4_select")->size());
+        {
+            lock_guard<mutex> lock(mutex_);
+            if (expected_received_ <= unparked_ && !parking_lot_size) {
+                break;
+            }
+        }
+        this_thread::sleep_for(1ms);
+    }
+    EXPECT_EQ(expected_received_, unparked_);
+    EXPECT_EQ(0U, ServerHooks::getServerHooks().getParkingLotPtr("subnet4_select")->size());
+
+    // Join threads.
+    EXPECT_NO_THROW_LOG(thread_pool_.wait());
+    EXPECT_NO_THROW_LOG(thread_pool_.stop());
+
+    // Join RADIUS hook library threads.
+    ASSERT_TRUE(impl_.udp_client_);
+    EXPECT_NO_THROW_LOG(impl_.udp_client_->stop());
+
+    // Half should be parked and then unparked. Half should be dropped.
+    EXPECT_EQ(0U, steps_[CalloutHandle::NEXT_STEP_CONTINUE]);
+    EXPECT_EQ(0U, steps_[CalloutHandle::NEXT_STEP_SKIP]);
+    EXPECT_EQ(0U, steps_[CalloutHandle::NEXT_STEP_DROP]);
+    EXPECT_EQ(expected_received_, steps_[CalloutHandle::NEXT_STEP_PARK]);
+    EXPECT_EQ(expected_received_, unparked_);
+
+    EXPECT_EQ(expected_received_, cache_->size());
+
+    for (uint16_t i = 0; i < expected_received_; ++i) {
+        checkNoHost4Results(subnet, static_cast<uint32_t>(i), true);
+    }
+}
+
 TEST_F(MTAccessTest, noHost6) {
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 64, 1, 2, 3, 4, 1));
     CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->add(subnet);
 
     // Start server.
-    thread_.reset(new thread(bind(&AccessTest::server, this)));
+    thread_.reset(new thread(bind(&AccessTest::server, this, false)));
     system_clock::time_point start(system_clock::now());
     while (!ready_ && system_clock::now() < start + milliseconds(GENERAL_TIMEOUT)) {
         this_thread::sleep_for(1ms);
@@ -3874,6 +4024,65 @@ TEST_F(MTAccessTest, noHost6) {
 
     for (uint16_t i = 0; i < expected_received_; ++i) {
         checkNoHost6Results(subnet, static_cast<uint32_t>(i));
+    }
+}
+
+TEST_F(MTAccessTest, noHost6UnknownAttr) {
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 64, 1, 2, 3, 4, 1));
+    CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->add(subnet);
+
+    // Start server.
+    thread_.reset(new thread(bind(&AccessTest::server, this, true)));
+    system_clock::time_point start(system_clock::now());
+    while (!ready_ && system_clock::now() < start + milliseconds(GENERAL_TIMEOUT)) {
+        this_thread::sleep_for(1ms);
+    }
+    EXPECT_TRUE(ready_);
+
+    run([&](uint32_t const i) { testNoHost6(subnet, i); });
+
+    // Wait for the simulated RADIUS server to finish.
+    start = system_clock::now();
+    while (!finished_ && system_clock::now() < start + milliseconds(GENERAL_TIMEOUT)) {
+        this_thread::sleep_for(1ms);
+    }
+
+    // Wait for all the unpark callbacks.
+    start = system_clock::now();
+    while (system_clock::now() < start + milliseconds(GENERAL_TIMEOUT)) {
+        service_->poll();
+        size_t const parking_lot_size(
+            ServerHooks::getServerHooks().getParkingLotPtr("subnet6_select")->size());
+        {
+            lock_guard<mutex> lock(mutex_);
+            if (expected_received_ <= unparked_ && !parking_lot_size) {
+                break;
+            }
+        }
+        this_thread::sleep_for(1ms);
+    }
+    EXPECT_EQ(expected_received_, unparked_);
+    EXPECT_EQ(0U, ServerHooks::getServerHooks().getParkingLotPtr("subnet6_select")->size());
+
+    // Join threads.
+    EXPECT_NO_THROW_LOG(thread_pool_.wait());
+    EXPECT_NO_THROW_LOG(thread_pool_.stop());
+
+    // Join RADIUS hook library threads.
+    ASSERT_TRUE(impl_.udp_client_);
+    EXPECT_NO_THROW_LOG(impl_.udp_client_->stop());
+
+    // Half should be parked and then unparked. Half should be dropped.
+    EXPECT_EQ(0U, steps_[CalloutHandle::NEXT_STEP_CONTINUE]);
+    EXPECT_EQ(0U, steps_[CalloutHandle::NEXT_STEP_SKIP]);
+    EXPECT_EQ(0U, steps_[CalloutHandle::NEXT_STEP_DROP]);
+    EXPECT_EQ(expected_received_, steps_[CalloutHandle::NEXT_STEP_PARK]);
+    EXPECT_EQ(expected_received_, unparked_);
+
+    EXPECT_EQ(expected_received_, cache_->size());
+
+    for (uint16_t i = 0; i < expected_received_; ++i) {
+        checkNoHost6Results(subnet, static_cast<uint32_t>(i), true);
     }
 }
 

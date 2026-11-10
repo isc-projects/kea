@@ -265,12 +265,18 @@ public:
     }
 
     /// @brief Thread server function.
-    void server();
+    ///
+    /// @brief unknown_attr The flag which indicates if the server has sent an unknown
+    /// attribute.
+    void server(bool unknown_attr = false);
 
     /// @brief Start server.
-    void startServer() {
+    ///
+    /// @brief unknown_attr The flag which indicates if the server has sent an unknown
+    /// attribute.
+    void startServer(bool unknown_attr = false) {
         start_acct_counter_ = RadiusAcctHandler::getCounter();
-        thread_.reset(new thread(std::bind(&AccountingTest::server, this)));
+        thread_.reset(new thread(std::bind(&AccountingTest::server, this, unknown_attr)));
         // Wait for the server to be ready. Don't wait forever.
         system_clock::time_point const start(system_clock::now());
         while (!ready_ && system_clock::now() < start + milliseconds(GENERAL_TIMEOUT)) {
@@ -545,7 +551,7 @@ struct MTAccountingTest : AccountingTest {
 
 /// @brief Server method running in a thread.
 void
-AccountingTest::server() {
+AccountingTest::server(bool unknown_attr) {
     // Get private service.
     IOServicePtr service(new IOService());
 
@@ -684,7 +690,7 @@ AccountingTest::server() {
         send_buffer[0] = PW_ACCOUNTING_RESPONSE;
         send_buffer[2] = send_buffer.size() >> 8;
         send_buffer[3] = send_buffer.size() & 0xff;
-        send_buffer[AUTH_HDR_LEN] = PW_FRAMED_POOL;
+        send_buffer[AUTH_HDR_LEN] = PW_FRAMED_POOL + (unknown_attr ? 64 : 0);
         send_buffer[AUTH_HDR_LEN + 1] = send_size - AUTH_HDR_LEN;
         memmove(&send_buffer[AUTH_HDR_LEN + 2], pool.c_str(), pool.size());
 
@@ -3551,6 +3557,16 @@ TEST_F(AccountingTest, lease4Select) {
     ASSERT_EQ(1U, status_types_.size());
     EXPECT_EQ(PW_STATUS_START, status_types_[0]);
 }
+TEST_F(AccountingTest, lease4SelectUnknownAttr) {
+    startServer(true);
+
+    testLease4Select();
+
+    waitForServerToFinish();
+
+    ASSERT_EQ(1U, status_types_.size());
+    EXPECT_EQ(PW_STATUS_START, status_types_[0]);
+}
 TEST_F(AccountingTest, lease4Renew) {
     startServer();
 
@@ -3607,6 +3623,16 @@ TEST_F(AccountingTest, lease6SelectFake) {
 }
 TEST_F(AccountingTest, lease6Select) {
     startServer();
+
+    testLease6Select();
+
+    waitForServerToFinish();
+
+    ASSERT_EQ(1U, status_types_.size());
+    EXPECT_EQ(PW_STATUS_START, status_types_[0]);
+}
+TEST_F(AccountingTest, lease6SelectUnknownAttr) {
+    startServer(true);
 
     testLease6Select();
 
@@ -4054,6 +4080,18 @@ TEST_F(MTAccountingTest, lease4Select) {
         EXPECT_EQ(PW_STATUS_START, status);
     }
 }
+TEST_F(MTAccountingTest, lease4SelectUnknownAttr) {
+    startServer(true);
+
+    run([this]() { testLease4Select(); });
+
+    waitForServerToFinish();
+
+    ASSERT_EQ(expected_received_, status_types_.size());
+    for (AcctStatusType const status : status_types_) {
+        EXPECT_EQ(PW_STATUS_START, status);
+    }
+}
 TEST_F(MTAccountingTest, lease4Renew) {
     startServer();
 
@@ -4107,6 +4145,18 @@ TEST_F(MTAccountingTest, lease6SelectFake) {
 }
 TEST_F(MTAccountingTest, lease6Select) {
     startServer();
+
+    run([this]() { testLease6Select(); });
+
+    waitForServerToFinish();
+
+    ASSERT_EQ(expected_received_, status_types_.size());
+    for (AcctStatusType const status : status_types_) {
+        EXPECT_EQ(PW_STATUS_START, status);
+    }
+}
+TEST_F(MTAccountingTest, lease6SelectUnknownAttr) {
+    startServer(true);
 
     run([this]() { testLease6Select(); });
 

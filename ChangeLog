@@ -1,3 +1,8 @@
+2575.	[bug]		razvan
+	Fixed improper handling of RADIUS attributes that are not
+	defined in the local dictionary.
+	(Gitlab #4892)
+
 2574.	[func]		razvan
 	The following hook libraries are now open source:
 	for the kea-dhcp4 and the kea-dhcp6 servers
