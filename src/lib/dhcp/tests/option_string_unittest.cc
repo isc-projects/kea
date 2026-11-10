@@ -167,12 +167,12 @@ TEST_F(OptionStringTest, toText) {
     // V4 option
     std::string option_value("lorem ipsum");
     OptionString optv4(Option::V4, 122, option_value);
-    EXPECT_EQ("type=122, len=011: 6C6F72656D20697073756D \"lorem ipsum\" (string)", optv4.toText());
+    EXPECT_EQ("type=122, len=011: 6C6F72656D20697073756D 'lorem ipsum'", optv4.toText());
 
     // V6 option
     option_value = "is a filler text";
     OptionString optv6(Option::V6, 512, option_value);
-    EXPECT_EQ("type=00512, len=00016: 697320612066696C6C65722074657874 \"is a filler text\" (string)", optv6.toText());
+    EXPECT_EQ("type=00512, len=00016: 697320612066696C6C65722074657874 'is a filler text'", optv6.toText());
 }
 
 // This test checks proper handling of trailing and embedded NULLs in

@@ -3960,7 +3960,7 @@ TEST_F(LibDhcpTest, splitNtpServerOptions6) {
     expected += "  type=00001, len=00016: 2001:db8::cdef (ipv6-address)\n";
     expected += "type=00056, len=00013:,\noptions:\n";
     expected += "  type=00003, len=00009: \"foo.bar.\" (fqdn)\n";
-    expected += "type=00059, len=00006: 666F6F626172 \"foobar\" (string)\n";
+    expected += "type=00059, len=00006: 666F6F626172 'foobar'\n";
     ostringstream output;
     for (auto const& opt : col) {
         output << opt.second->toText() << endl;

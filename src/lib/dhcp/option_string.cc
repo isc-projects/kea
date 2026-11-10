@@ -111,8 +111,7 @@ OptionString::toText(int indent) const {
     output << headerToText(indent) << ": "
            << util::encode::encodeHex(getData());
     if (str::isPrintable(v)) {
-        std::string printable(v.cbegin(), v.cend());
-        output << " \"" << printable << "\"" << " (string)";
+        output << " '" << v << "'";
     }
     return (output.str());
 }

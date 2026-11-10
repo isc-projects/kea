@@ -203,8 +203,7 @@ OptionVendorClass::toText(int indent) const {
         s << ", vendor-class-data" << i << "=" << util::encode::encodeHex(t.getData());
         auto txt = t.getText();
         if (str::isPrintable(txt)) {
-            std::string printable(txt.cbegin(), txt.cend());
-            s << " '" << printable << "'";
+            s << " '" << txt << "'";
         }
     }
 
