@@ -94,6 +94,11 @@ isSocket(string const& path) {
     return ((statbuf.st_mode & S_IFMT) == S_IFSOCK);
 }
 
+bool
+remove(string const& path) {
+    return (::remove(path.c_str()) == 0);
+}
+
 void
 setUmask() {
     // No group write and no other access.

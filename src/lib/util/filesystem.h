@@ -97,6 +97,14 @@ isFile(const std::string& path);
 bool
 isSocket(const std::string& path);
 
+/// @brief Remove file at the given path.
+///
+/// @param path The path being removed.
+///
+/// @return True on success, false otherwise.
+bool
+remove(const std::string& path);
+
 /// @brief Set umask (at least 0027 i.e. no group write and no other access).
 void
 setUmask();

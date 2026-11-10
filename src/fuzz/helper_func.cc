@@ -8,14 +8,13 @@
 
 #include <config.h>
 
+#include <fuzz/helper_func.h>
+#include <util/filesystem.h>
+
 #include <cstdlib>
-#include <filesystem>
 #include <fstream>
 
-#include <fuzz/helper_func.h>
 #include <unistd.h>
-
-namespace fs = std::filesystem;
 
 using namespace isc::data;
 
@@ -58,8 +57,8 @@ writeTempLease(bool isV4) {
 
     void deleteTempFile(std::string file_path) {
         try {
-            if (fs::exists(file_path)) {
-                fs::remove(file_path);
+            if (isc::util::file::exists(file_path)) {
+                isc::util::file::remove(file_path);
             }
         } catch (...) {
             // Silent exceptions
