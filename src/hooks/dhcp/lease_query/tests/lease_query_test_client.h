@@ -207,7 +207,7 @@ public:
     /// @param send_length number of bytes to send.  If not zero, can be used
     /// to truncate the amount of data sent.
     /// @param pos position of sent bytes in the request. Initialize to 0
-    /// and up to send_length (whichmeans that all bytes were sent).
+    /// and up to send_length (which means that all bytes were sent).
     void sendPartialRequest(WireData& wire_request, size_t send_length,
                             size_t pos = 0) {
         ASSERT_LE(send_length, wire_request.size())

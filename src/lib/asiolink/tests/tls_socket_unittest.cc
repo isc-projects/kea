@@ -218,15 +218,20 @@ serverDoRead(TlsStreamImpl& stream, TLSCallback& server_cb) {
                                                  size_t length) {
             server_cb.setCode(ec.value());
             server_cb.called() = server_cb.queued();
-            server_cb.length() = length;
             server_cb.cumulative() += length;
 
             // If we have read at least two bytes, we can work out how much we
             // should be reading.
-            if (!server_cb.expected() && server_cb.cumulative() >= 2) {
-                server_cb.expected() = readUint16(server_cb.data(),
-                                                  server_cb.cumulative());
-                server_cb.expected() += 2;
+            if (server_cb.cumulative() >= 2 &&
+                (!server_cb.length() || !server_cb.expected())) {
+                size_t size = readUint16(server_cb.data(),
+                                         server_cb.cumulative());
+                if (!server_cb.length()) {
+                    server_cb.length() = size;
+                }
+                if (!server_cb.expected()) {
+                    server_cb.expected() = size + sizeof(uint16_t);
+                }
             }
             if (server_cb.expected() == server_cb.cumulative()) {
 
@@ -540,6 +545,7 @@ TEST(TLSSocket, sequenceTest) {
 
     // ... and check what the server received.
     EXPECT_EQ(sizeof(OUTBOUND_DATA) + 2, server_cb.cumulative());
+    EXPECT_EQ(sizeof(OUTBOUND_DATA), server_cb.length());
     EXPECT_TRUE(equal(OUTBOUND_DATA,
                 (OUTBOUND_DATA + (sizeof(OUTBOUND_DATA))),
                 (server_cb.data() + 2)));
