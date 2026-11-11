@@ -415,7 +415,7 @@ PingChannel::socketWriteCallback(ICMPMsgPtr echo, boost::system::error_code ec,
             // going to be shutting down.
             return;
         } else if ((error_value == boost::asio::error::try_again) ||
-                    (error_value == boost::asio::error::would_block)) {
+                   (error_value == boost::asio::error::would_block)) {
             // We got EWOULDBLOCK or EAGAIN which indicates that we may be able to
             // write something from the socket on the next attempt.  Set the length
             // to zero so we skip the completion callback.

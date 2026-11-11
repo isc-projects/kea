@@ -304,7 +304,7 @@ public:
             }
         }
 
-        if ( (offset != data.size()) || (bufsize != 0) ) {
+        if ((offset != data.size()) || (bufsize != 0)) {
             isc_throw(Unexpected, "message not parsed completely");
         }
     }

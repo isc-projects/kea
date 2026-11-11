@@ -414,6 +414,7 @@ int load(LibraryHandle& handle) {
 
         // Get and decode configuration.
         ElementPtr config = getConfig(handle);
+        RadiusImpl::createImpl();
         RadiusImpl& impl = RadiusImpl::instance();
         impl.init(config);
     } catch (const std::exception& ex) {
@@ -432,6 +433,7 @@ int load(LibraryHandle& handle) {
 int unload() {
     IOServiceMgr::instance().unregisterIOService(RadiusImpl::instance().getIOService());
     RadiusImpl::instance().reset();
+    RadiusImpl::destroyImpl();
     LOG_INFO(radius_logger, RADIUS_DEINIT_OK);
     return (CONTROL_RESULT_SUCCESS);
 }
@@ -528,7 +530,7 @@ int subnet6_select(CalloutHandle& handle) {
     CalloutHandle::CalloutNextStep status = handle.getStatus();
     if (status == CalloutHandle::NEXT_STEP_DROP ||
         status == CalloutHandle::NEXT_STEP_SKIP) {
-        return (CONTROL_RESULT_SUCCESS);
+        return (0);
     }
 
     InHook in_hook;

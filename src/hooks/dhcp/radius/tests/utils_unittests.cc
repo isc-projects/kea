@@ -174,4 +174,13 @@ TEST_F(UtilsTest, extractDuid) {
     EXPECT_EQ(vec[0], ret[0]);
 }
 
+TEST(RadiusImplInit, init) {
+    ASSERT_THROW(RadiusImpl::instance(), Unexpected);
+    {
+        struct RadiusImplInit init;
+        ASSERT_NO_THROW(RadiusImpl::instance());
+    }
+    ASSERT_THROW(RadiusImpl::instance(), Unexpected);
+}
+
 } // end of anonymous namespace

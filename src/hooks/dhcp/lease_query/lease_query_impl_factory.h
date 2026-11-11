@@ -25,7 +25,7 @@ public:
     /// @param config config parameters to use
     static void createImpl(uint16_t family, isc::data::ConstElementPtr config);
 
-    /// @brief Destroy the LeaseQueryImpl singleton
+    /// @brief Destroys the LeaseQueryImpl singleton
     static void destroyImpl();
 
     /// @brief Fetch the LeaseQueryImpl singleton

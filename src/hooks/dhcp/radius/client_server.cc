@@ -38,8 +38,12 @@ struct AddrInfo {
             string const errmsg(gai_strerror(err));
             isc_throw(BadValue, "failed to resolve '" << hostname << "': " << errmsg);
         }
-        if (!addrinfo_ || !addrinfo_->ai_addr) {
+        if (!addrinfo_) {
             isc_throw(BadValue, "getaddrinfo('" << hostname << ") returned null");
+        }
+        if (!addrinfo_->ai_addr) {
+            freeaddrinfo(addrinfo_);
+            isc_throw(BadValue, "getaddrinfo('" << hostname << ") returned null address");
         }
     }
     ~AddrInfo() {

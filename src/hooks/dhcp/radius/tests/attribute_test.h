@@ -9,6 +9,7 @@
 
 #include <dhcpsrv/host_mgr.h>
 #include <radius/client_attribute.h>
+#include <radius/radius.h>
 
 #include <gtest/gtest.h>
 
@@ -47,6 +48,9 @@ public:
     bool compare(const Attributes& first, const Attributes& second);
 
 private:
+
+    /// @brief Initializer.
+    RadiusImplInit init_;
 
     /// @brief The host manager.
     isc::dhcp::HostMgr& host_mgr_;

@@ -151,11 +151,17 @@ typedef boost::shared_ptr<RadiusImpl> RadiusImplPtr;
 class RadiusImpl : public data::CfgToElement, public boost::noncopyable {
 public:
 
-    /// RadiusImpl is a singleton class. This method returns reference
+    /// @brief RadiusImpl is a singleton class. This method returns reference
     /// to its sole instance.
     ///
     /// @return the only existing instance of radius implementation.
     static RadiusImpl& instance();
+
+    /// @brief Creates the RadiusImpl singleton
+    static void createImpl();
+
+    /// @brief Destroys the RadiusImpl singleton
+    static void destroyImpl();
 
     /// @brief Destructor.
     ~RadiusImpl();
@@ -326,7 +332,7 @@ public:
     bool extract_duid_;
 
     /// @brief Flag which indicates if cache has been initialized.
-    bool already_tried_;
+    bool check_host_backends_;
 
     /// @brief Reselect subnet using pool.
     bool reselect_subnet_pool_;
@@ -359,13 +365,9 @@ public:
     static std::atomic<bool> shutdown_;
 
 protected:
+
     /// @brief Protected constructor.
     RadiusImpl();
-
-    /// @brief Returns pointer to the sole instance of radius implementation.
-    ///
-    /// @return Shared pointer to the RadiusImpl instance.
-    static const RadiusImplPtr& instancePtr();
 
     /// @brief Clean up members.
     void cleanup();
@@ -401,6 +403,19 @@ private:
 
     /// @brief Mutex to protect the set.
     static std::mutex mutex_;
+};
+
+/// @brief Initialization structure used to create and destroy the RadiusImpl.
+struct RadiusImplInit {
+    // @brief Constructor.
+    RadiusImplInit() {
+        RadiusImpl::createImpl();
+    }
+
+    /// @brief Destructor.
+    ~RadiusImplInit() {
+        RadiusImpl::destroyImpl();
+    }
 };
 
 } // end of namespace isc::radius
