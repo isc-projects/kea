@@ -597,14 +597,16 @@ TEST(OptionOpaqueDataTuples, toText4) {
     data_tuple.addTuple(tuple);
     // Check that the text representation of the option is as expected.
     EXPECT_EQ("type=124, len=16,"
-              " data-len0=11, data0=48656C6C6F20776F726C64 'Hello world',"
-              " data-len1=3, data1=666F6F 'foo'",
+              " data-len0=11, data0=48:65:6c:6c:6f:20:77:6f:72:6c:64"
+              " 'Hello world',"
+              " data-len1=3, data1=66:6f:6f 'foo'",
               data_tuple.toText());
 
     // Check that indentation works.
     EXPECT_EQ("  type=124, len=16,"
-              " data-len0=11, data0=48656C6C6F20776F726C64 'Hello world',"
-              " data-len1=3, data1=666F6F 'foo'",
+              " data-len0=11, data0=48:65:6c:6c:6f:20:77:6f:72:6c:64"
+              " 'Hello world',"
+              " data-len1=3, data1=66:6f:6f 'foo'",
               data_tuple.toText(2));
 }
 
@@ -622,14 +624,16 @@ TEST(OptionOpaqueDataTuples, toText4_with_ltf) {
     data_tuple.addTuple(tuple);
     // Check that the text representation of the option is as expected.
     EXPECT_EQ("type=143, len=18,"
-              " data-len0=11, data0=48656C6C6F20776F726C64 'Hello world',"
-              " data-len1=3, data1=666F6F 'foo'",
+              " data-len0=11, data0=48:65:6c:6c:6f:20:77:6f:72:6c:64"
+              " 'Hello world',"
+              " data-len1=3, data1=66:6f:6f 'foo'",
               data_tuple.toText());
 
     // Check that indentation works.
     EXPECT_EQ("  type=143, len=18,"
-              " data-len0=11, data0=48656C6C6F20776F726C64 'Hello world',"
-              " data-len1=3, data1=666F6F 'foo'",
+              " data-len0=11, data0=48:65:6c:6c:6f:20:77:6f:72:6c:64"
+              " 'Hello world',"
+              " data-len1=3, data1=66:6f:6f 'foo'",
               data_tuple.toText(2));
 }
 
@@ -646,14 +650,16 @@ TEST(OptionOpaqueDataTuples, toText6) {
     data_tuple.addTuple(tuple);
     // Check that the text representation of the option is as expected.
     EXPECT_EQ("type=60, len=18,"
-              " data-len0=11, data0=48656C6C6F20776F726C64 'Hello world',"
-              " data-len1=3, data1=666F6F 'foo'",
+              " data-len0=11, data0=48:65:6c:6c:6f:20:77:6f:72:6c:64"
+              " 'Hello world',"
+              " data-len1=3, data1=66:6f:6f 'foo'",
               data_tuple.toText());
 
     // Check that indentation works.
     EXPECT_EQ("  type=60, len=18,"
-              " data-len0=11, data0=48656C6C6F20776F726C64 'Hello world',"
-              " data-len1=3, data1=666F6F 'foo'",
+              " data-len0=11, data0=48:65:6c:6c:6f:20:77:6f:72:6c:64"
+              " 'Hello world',"
+              " data-len1=3, data1=66:6f:6f 'foo'",
               data_tuple.toText(2));
 }
 

@@ -9,7 +9,6 @@
 #include <exceptions/exceptions.h>
 #include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option_opaque_data_tuples.h>
-#include <util/encode/encode.h>
 #include <util/str.h>
 
 #include <sstream>
@@ -151,7 +150,7 @@ OptionOpaqueDataTuples::toText(int indent) const {
         // Print the tuple.
         auto t = getTuple(i);
         s << ", data-len" << i << "=" << t.getLength();
-        s << ", data" << i << "=" << util::encode::encodeHex(t.getData());
+        s << ", data" << i << "=" << str::dumpAsHex(t.getData());
         auto txt = t.getText();
         if (str::isPrintable(txt)) {
             s << " '" << txt << "'";

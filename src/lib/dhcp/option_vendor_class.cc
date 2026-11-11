@@ -9,7 +9,6 @@
 #include <exceptions/exceptions.h>
 #include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option_vendor_class.h>
-#include <util/encode/encode.h>
 #include <util/io.h>
 #include <util/str.h>
 
@@ -200,7 +199,7 @@ OptionVendorClass::toText(int indent) const {
         }
         // Print the tuple.
         s << ", data-len" << i << "=" << t.getLength();
-        s << ", vendor-class-data" << i << "=" << util::encode::encodeHex(t.getData());
+        s << ", vendor-class-data" << i << "=" << str::dumpAsHex(t.getData());
         auto txt = t.getText();
         if (str::isPrintable(txt)) {
             s << " '" << txt << "'";

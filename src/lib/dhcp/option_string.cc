@@ -7,7 +7,6 @@
 #include <config.h>
 
 #include <dhcp/option_string.h>
-#include <util/encode/encode.h>
 #include <util/str.h>
 
 #include <sstream>
@@ -108,11 +107,14 @@ OptionString::toText(int indent) const {
     std::ostringstream output;
     auto v = getValue();
 
-    output << headerToText(indent) << ": "
-           << util::encode::encodeHex(getData());
+    output << headerToText(indent) << ": ";
     if (str::isPrintable(v)) {
-        output << " '" << v << "'";
+        output << "\"" << v << "\"";
+    } else {
+        output << str::dumpAsHex(getData());
     }
+    output << " (string)";
+
     return (output.str());
 }
 

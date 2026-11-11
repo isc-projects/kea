@@ -1,6 +1,8 @@
-2577.	[bug]		razvan
-	Options are now properly displayed as hexstrings and as text
-	only if all characters are printable.
+2577.	[func]		razvan
+	Tuples in options are now properly displayed as hexstrings
+	and as text only if all characters are printable.
+	Option strings are displayed as hexstrings when at least
+	a character is not printable.
 	(Gitlab #4456)
 
 2576.	[bug]		razvan

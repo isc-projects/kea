@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2026,2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -167,12 +167,27 @@ TEST_F(OptionStringTest, toText) {
     // V4 option
     std::string option_value("lorem ipsum");
     OptionString optv4(Option::V4, 122, option_value);
-    EXPECT_EQ("type=122, len=011: 6C6F72656D20697073756D 'lorem ipsum'", optv4.toText());
+    EXPECT_EQ("type=122, len=011: \"lorem ipsum\" (string)", optv4.toText());
 
     // V6 option
     option_value = "is a filler text";
     OptionString optv6(Option::V6, 512, option_value);
-    EXPECT_EQ("type=00512, len=00016: 697320612066696C6C65722074657874 'is a filler text'", optv6.toText());
+    EXPECT_EQ("type=00512, len=00016: \"is a filler text\" (string)", optv6.toText());
+}
+
+// This test checks that the DHCP option holding a single string is
+// correctly returned as hexstring when not printable.
+TEST_F(OptionStringTest, toTextNotPrintable) {
+    // Newline is not printable.
+    std::string option_value("foo\n");
+    OptionString optv4(Option::V4, 122, option_value);
+    EXPECT_EQ("type=122, len=004: 66:6f:6f:0a (string)", optv4.toText());
+
+    // Embedded null.
+    option_value = "foo";
+    option_value[1] = 0;
+    OptionString optv6(Option::V6, 512, option_value);
+    EXPECT_EQ("type=00512, len=00003: 66:00:6f (string)", optv6.toText());
 }
 
 // This test checks proper handling of trailing and embedded NULLs in
