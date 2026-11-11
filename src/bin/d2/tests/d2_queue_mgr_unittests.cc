@@ -587,6 +587,11 @@ TEST(D2QueueMgrBasicTest, duplicateSuppression) {
         EXPECT_NO_THROW(queued = queue_mgr->enqueue(ncr, true));
         EXPECT_TRUE(queued);
         EXPECT_EQ(i + 1, queue_mgr->getQueueSize());
+
+        // Verify the last one added is returned by findLast().
+        auto found_ncr = queue_mgr->findLast(ncr->getDhcid());
+        ASSERT_TRUE(ncr);
+        EXPECT_EQ(*found_ncr, *ncr);
     }
 
     // All valid msgs have the same DHCID, queueing the last again one should fail.
@@ -607,6 +612,100 @@ TEST(D2QueueMgrBasicTest, duplicateSuppression) {
     };
 
     checkStats(stats_ncr);
+}
+
+/// @brief Tests QueueMgr's findLast() method. The test queues
+/// a series of NCRs spread among three dhcids. As each NCR is
+/// created it is stored in a reference list and then queued.
+/// After each NCR is queued, D2QueueMgr::findLast() is invoked
+/// for each of the three dhcids. The expected result is indicated
+/// by the expected index within the reference list. An index of -1
+/// means findLast() should return an empty pointr (i.e. not
+/// found).
+TEST(D2QueueMgrBasicTest, findLast) {
+    asiolink::IOServicePtr io_service(new isc::asiolink::IOService());
+
+    // Construct the manager.
+    D2QueueMgrPtr queue_mgr;
+    ASSERT_NO_THROW(queue_mgr.reset(new D2QueueMgr(io_service, 100)));
+
+    // Vector to keep track of the NCRs we queue.
+    std::vector<NameChangeRequestPtr>ref_msgs;
+    NameChangeRequestPtr ncr;
+
+    D2Dhcid dhcid1("111111111A7F8E3D");
+    D2Dhcid dhcid2("222222222A7F8E3D");
+    D2Dhcid dhcid3("333333333A7F8E3D");
+
+    struct Scenario {
+        D2Dhcid& dhcid_;            // dhcid of the NCR to queue 
+        NameChangeType type_;       // type of the NCR to  queue
+        uint32_t lease_length_;     // lease length of the NCR to queue
+        int exp_last_dhcid1_idx_;   // expected idx of last NCR for dhcid1
+        int exp_last_dhcid2_idx_;   // expected idx of last NCR for dhcid2
+        int exp_last_dhcid3_idx_;   // expected idx of last NCR for dhcid3
+    };
+
+    //  List of scenarios to peform.
+    std::list<Scenario> scenarios = {
+        { dhcid1, CHG_ADD,      100, 0, -1, -1 },
+        { dhcid1, CHG_REMOVE,   200, 1, -1, -1 },
+        { dhcid3, CHG_ADD,      300, 1, -1,  2 },
+        { dhcid2, CHG_ADD,      400, 1,  3,  2 },
+        { dhcid1, CHG_ADD,      500, 4,  3,  2 },
+        { dhcid3, CHG_REMOVE,   600, 4,  3,  5 },
+    };
+
+    // Iterate over the list of requests and add each to the queue.
+    bool queued;
+    int pass = 0;
+    for ( auto scenario : scenarios ) {
+        ostringstream os;
+        os << "pass: " << pass++;
+        SCOPED_TRACE(os.str());
+        ncr.reset(new NameChangeRequest(scenario.type_, true, true,
+                                       "walah.walah.com", "192.168.2.1",
+                                       scenario.dhcid_,  scenario.lease_length_));
+        ref_msgs.push_back(ncr);
+
+        // Verify that the request can be added to the queue and queue
+        // size increments accordingly.
+        ASSERT_NO_THROW(queued = queue_mgr->enqueue(ncr, true));
+        ASSERT_TRUE(queued);
+
+        auto found_ncr = queue_mgr->findLast(dhcid1);
+        int last_idx = scenario.exp_last_dhcid1_idx_;
+        if (last_idx < 0) {
+            ASSERT_FALSE(found_ncr);
+        } else  {
+            ASSERT_TRUE(found_ncr);
+            ASSERT_EQ(*found_ncr, *(ref_msgs[last_idx]))
+                << "found_ncr:" << found_ncr->toText()
+                << "ref_ncr:" << (ref_msgs[last_idx])->toText();
+        }
+
+        found_ncr = queue_mgr->findLast(dhcid2);
+        last_idx = scenario.exp_last_dhcid2_idx_;
+        if (last_idx < 0) {
+            ASSERT_FALSE(found_ncr);
+        } else  {
+            ASSERT_TRUE(found_ncr);
+            ASSERT_EQ(*found_ncr, *(ref_msgs[last_idx]))
+                << "found_ncr:" << found_ncr->toText()
+                << "ref_ncr:" << (ref_msgs[last_idx])->toText();
+        }
+
+        found_ncr = queue_mgr->findLast(dhcid3);
+        last_idx = scenario.exp_last_dhcid3_idx_;
+        if (last_idx < 0) {
+            ASSERT_FALSE(found_ncr);
+        } else  {
+            ASSERT_TRUE(found_ncr);
+            ASSERT_EQ(*found_ncr, *(ref_msgs[last_idx]))
+                << "found_ncr:" << found_ncr->toText()
+                << "ref_ncr:" << (ref_msgs[last_idx])->toText();
+        }
+    }
 }
 
 } // end of anonymous namespace

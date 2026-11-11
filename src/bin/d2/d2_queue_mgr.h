@@ -51,7 +51,8 @@ typedef boost::multi_index_container<
         // Index by DHCID
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<DhcidTag>,
-            boost::multi_index::const_mem_fun<dhcp_ddns::NameChangeRequest, const dhcp_ddns::D2Dhcid&,
+            boost::multi_index::const_mem_fun<dhcp_ddns::NameChangeRequest,
+                                              const dhcp_ddns::D2Dhcid&,
                                               &dhcp_ddns::NameChangeRequest::getDhcid>
         >
     >

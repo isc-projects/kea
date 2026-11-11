@@ -70,7 +70,7 @@ D2QueueMgr::operator()(const NameChangeListener::Result result,
 
             bool nested = false;
             do {
-                // Add the NCR to the queue. Suppres duplicate ADDs.
+                // Add the NCR to the queue. Suppress duplicate ADDs.
                 enqueue(ncr, (ncr->getChangeType() == CHG_ADD));
 
                 // Log that we got the request
@@ -255,9 +255,18 @@ D2QueueMgr::findLast(const D2Dhcid& new_dhcid) const {
     auto range = key_index.equal_range(new_dhcid);
 
     if (range.first != range.second) {
-        // Get the last entry using the sequence index
-        auto& seq_index = ncr_queue_.get<0>();
-        found_ncr = *std::prev(seq_index.end());
+        // Get the last matching entry using the sequence index
+        auto it = range.first;
+        auto candidate = ncr_queue_.project<0>(it);
+        // Skip first.
+        ++it;
+        for (; it != range.second; ++it) {
+            auto it0 = ncr_queue_.project<0>(it);
+            if (it0 > candidate) {
+                candidate = it0;
+            }
+        }
+        found_ncr = *candidate;
     }
 
     return (found_ncr);
