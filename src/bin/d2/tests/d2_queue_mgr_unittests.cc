@@ -560,60 +560,6 @@ TEST_F(QueueMgrUDPTest, nestedNCRs) {
     checkStats(stats_ncr);
 }
 
-/// @brief Tests QueueMgr's duplicate suppression scheme.
-TEST(D2QueueMgrBasicTest, duplicateSuppression) {
-    asiolink::IOServicePtr io_service(new isc::asiolink::IOService());
-
-    // Initialize stats manager.
-    D2Stats::init();
-
-    // Construct the manager.
-    D2QueueMgrPtr queue_mgr;
-    ASSERT_NO_THROW(queue_mgr.reset(new D2QueueMgr(io_service, VALID_MSG_CNT)));
-
-    // Vector to keep track of the NCRs we queue.
-    std::vector<NameChangeRequestPtr>ref_msgs;
-    NameChangeRequestPtr ncr;
-
-    // Iterate over the list of requests and add each to the queue.
-    bool queued;
-    for (size_t i = 0; i < VALID_MSG_CNT; i++) {
-        // Create the ncr and add to our reference list.
-        ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
-        ref_msgs.push_back(ncr);
-
-        // Verify that the request can be added to the queue and queue
-        // size increments accordingly.
-        EXPECT_NO_THROW(queued = queue_mgr->enqueue(ncr, true));
-        EXPECT_TRUE(queued);
-        EXPECT_EQ(i + 1, queue_mgr->getQueueSize());
-
-        // Verify the last one added is returned by findLast().
-        auto found_ncr = queue_mgr->findLast(ncr->getDhcid());
-        ASSERT_TRUE(ncr);
-        EXPECT_EQ(*found_ncr, *ncr);
-    }
-
-    // All valid msgs have the same DHCID, queueing the last again one should fail.
-    EXPECT_NO_THROW(queued = queue_mgr->enqueue(ref_msgs[VALID_MSG_CNT - 1], true));
-    EXPECT_FALSE(queued);
-
-    // Trying to queue the first one again should succeed.
-    EXPECT_NO_THROW(queued = queue_mgr->enqueue(ref_msgs[0], true));
-    EXPECT_TRUE(queued);
-
-    // Verify stats are correct.
-    StatMap stats_ncr = {
-        { "ncr-received", 0},
-        { "ncr-invalid", 0},
-        { "ncr-error", 0},
-        { "queue-mgr-queue-full", 0},
-        { "ncr-duplicate", 1 }
-    };
-
-    checkStats(stats_ncr);
-}
-
 /// @brief Tests QueueMgr's findLast() method. The test queues
 /// a series of NCRs spread among three dhcids. As each NCR is
 /// created it is stored in a reference list and then queued.
@@ -706,6 +652,80 @@ TEST(D2QueueMgrBasicTest, findLast) {
                 << "ref_ncr:" << (ref_msgs[last_idx])->toText();
         }
     }
+}
+
+/// @brief Tests QueueMgr's duplicate suppression scheme.
+TEST(D2QueueMgrBasicTest, duplicateSuppression) {
+    asiolink::IOServicePtr io_service(new isc::asiolink::IOService());
+
+    // Initialize stats manager.
+    D2Stats::init();
+
+    // Construct the manager.
+    D2QueueMgrPtr queue_mgr;
+    ASSERT_NO_THROW(queue_mgr.reset(new D2QueueMgr(io_service, 100)));
+
+    // Vector to keep track of the NCRs we queue.
+    std::vector<NameChangeRequestPtr>ref_msgs;
+    NameChangeRequestPtr ncr;
+
+    D2Dhcid dhcid1("111111111A7F8E3D");
+    D2Dhcid dhcid2("222222222A7F8E3D");
+    D2Dhcid dhcid3("333333333A7F8E3D");
+
+    struct Scenario {
+        D2Dhcid& dhcid_;        // dhcid of the NCR to queue 
+        NameChangeType type_;   // type of the NCR to  queue
+        bool should_queue_;     // true if NCR should queue successfully
+    };
+
+    //  List of scenarios to peform.
+    std::list<Scenario> scenarios = {
+        { dhcid1, CHG_ADD,      true  },
+        { dhcid1, CHG_ADD,      false },
+        { dhcid1, CHG_REMOVE,   true  }, 
+        { dhcid3, CHG_REMOVE,   true  },
+        { dhcid2, CHG_ADD,      true  },
+        { dhcid3, CHG_REMOVE,   false },
+        { dhcid2, CHG_ADD,      false },
+        { dhcid3, CHG_ADD,      true  }
+    };
+
+    // Iterate over the list of requests and add each to the queue.
+    bool queued;
+    int pass = 0;
+    int exp_duplicates = 0;
+    int exp_queue_size = 0;
+    for ( auto scenario : scenarios ) {
+        ostringstream os;
+        os << "pass: " << pass++;
+        SCOPED_TRACE(os.str());
+        ncr.reset(new NameChangeRequest(scenario.type_, true, true,
+                                       "walah.walah.com", "192.168.2.1",
+                                       scenario.dhcid_,  100));
+
+        ASSERT_NO_THROW(queued = queue_mgr->enqueue(ncr, true));
+        ASSERT_EQ(queued, scenario.should_queue_);
+        if (scenario.should_queue_) {
+            ++exp_queue_size;
+        } else {
+            ++exp_duplicates;
+        }
+    }
+
+    // Verify the queue size.
+    EXPECT_EQ(exp_queue_size, queue_mgr->getQueueSize());
+
+    // Verify stats are correct.
+    StatMap stats_ncr = {
+        { "ncr-received", 0},
+        { "ncr-invalid", 0},
+        { "ncr-error", 0},
+        { "queue-mgr-queue-full", 0},
+        { "ncr-duplicate", exp_duplicates }
+    };
+
+    checkStats(stats_ncr);
 }
 
 } // end of anonymous namespace
