@@ -51,8 +51,6 @@ We prefer a confidential issue on GitLab (not GitHub). An issue is
 much better, because it's easier to get more ISC engineers involved in it,
 evolve the case as more information is known, update or add information, etc.
 
-If a GitLab issue is not possible, please send e-mail (possibly encrypted)
-to kea-security@isc.org.
 
 ## Reporting a Bug
 
