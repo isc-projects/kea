@@ -141,7 +141,7 @@ LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
     thread th([&] () {
         TEST_CLIENT.sendCommand(command);
         {
-            lock_guard lck(mtx);
+            lock_guard<mutex> lck(mtx);
             sent = true;
         }
         cv.notify_one();
@@ -149,7 +149,7 @@ LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
 
     for (;;) {
         ControlledDhcpv6Srv::getInstance()->getIOService()->poll();
-        unique_lock lck(mtx);
+        unique_lock<mutex> lck(mtx);
         if (cv.wait_for(lck, 1ms, [&] () { return (sent); })) {
             break;
         }
