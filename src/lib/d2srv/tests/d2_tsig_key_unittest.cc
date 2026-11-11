@@ -26,7 +26,7 @@ namespace {
 
 /// @brief Check statistics names.
 TEST(D2StatsTest, names) {
-    ASSERT_EQ(4U, D2Stats::ncr.size());
+    ASSERT_EQ(5U, D2Stats::ncr.size());
     ASSERT_EQ(6U, D2Stats::update.size());
     ASSERT_EQ(4U, D2Stats::key.size());
 }
