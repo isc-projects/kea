@@ -227,15 +227,14 @@ serverDoRead(TlsStreamImpl& stream, TLSCallback& server_cb) {
                 server_cb.expected() = readUint16(server_cb.data(),
                                                   server_cb.cumulative());
                 server_cb.expected() += 2;
-                if (server_cb.expected() == server_cb.cumulative()) {
+            }
+            if (server_cb.expected() == server_cb.cumulative()) {
 
-                    // Amount of data read from stream equals the size
-                    // of the message (as indicated in the first two
-                    // bytes of the message) plus the size of the
-                    // count field.  Therefore we have received all
-                    // the data.
-                    return;
-                }
+                // Amount of data read from stream equals the size of
+                // the message (as indicated in the first two bytes of
+                // the message) plus the size of the count field.
+                // Therefore we have received all the data.
+                return;
             }
             serverDoRead(stream, server_cb);
         });
