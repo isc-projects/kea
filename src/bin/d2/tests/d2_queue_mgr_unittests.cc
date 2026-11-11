@@ -693,9 +693,9 @@ TEST(D2QueueMgrBasicTest, duplicateSuppression) {
 
     // Iterate over the list of requests and add each to the queue.
     bool queued;
-    int pass = 0;
-    int exp_duplicates = 0;
-    int exp_queue_size = 0;
+    size_t pass = 0;
+    size_t exp_duplicates = 0;
+    size_t exp_queue_size = 0;
     for ( auto scenario : scenarios ) {
         ostringstream os;
         os << "pass: " << pass++;
