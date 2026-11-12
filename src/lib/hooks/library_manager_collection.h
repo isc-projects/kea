@@ -92,13 +92,26 @@ public:
     ///
     /// @param multi_threading_enabled The flag which indicates if MT is enabled
     ///        (used to check hook libraries compatibility with MT).
+    ///
+    /// @return true if all libraries loaded, false if one or more failed t
+    ////        load.
+    bool loadLibraries(bool multi_threading_enabled = false);
+
+    /// @brief Load libraries (info variant)
+    ///
+    /// Loads the libraries.  This creates the LibraryManager associated with
+    /// each library and calls its loadLibrary() method.  If a library fails
+    /// to load, the loading is abandoned and all libraries loaded so far
+    /// are unloaded.
+    ///
+    /// @param multi_threading_enabled The flag which indicates if MT is enabled
+    ///        (used to check hook libraries compatibility with MT).
     /// @param info The string which stores the error message with more details
     ///        about library which failed to load.
     ///
     /// @return true if all libraries loaded, false if one or more failed t
     ////        load.
-    bool loadLibraries(bool multi_threading_enabled = false,
-                       std::shared_ptr<std::string> info = std::shared_ptr<std::string>());
+    bool loadLibraries(bool multi_threading_enabled, std::string& info);
 
     /// @brief Get callout manager
     ///

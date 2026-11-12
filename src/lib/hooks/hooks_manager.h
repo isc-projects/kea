@@ -68,6 +68,26 @@ public:
     ///        hook will be called.
     /// @param multi_threading_enabled The flag which indicates if MT is enabled
     ///        (used to check hook libraries compatibility with MT).
+    ///
+    /// @return true if all libraries loaded without a problem, false if one or
+    ///        more libraries failed to load.  In the latter case, message will
+    ///        be logged that give the reason.
+    /// @throw LibrariesStillOpened when some libraries are already loaded.
+    static bool loadLibraries(const HookLibsCollection& libraries,
+                              bool multi_threading_enabled = false);
+
+    /// @brief Load and reload libraries (info variant)
+    ///
+    /// Loads the list of libraries into the server address space.  For each
+    /// library, the "standard" functions (ones with the same names as the
+    /// hook points) are configured and the libraries' "load" function
+    /// called.
+    ///
+    /// @param libraries List of libraries to be loaded.  The order is
+    ///        important, as it determines the order that callouts on the same
+    ///        hook will be called.
+    /// @param multi_threading_enabled The flag which indicates if MT is enabled
+    ///        (used to check hook libraries compatibility with MT).
     /// @param info The string which stores the error message with more details
     ///        about library which failed to load.
     ///
@@ -76,8 +96,8 @@ public:
     ///        be logged that give the reason.
     /// @throw LibrariesStillOpened when some libraries are already loaded.
     static bool loadLibraries(const HookLibsCollection& libraries,
-                              bool multi_threading_enabled = false,
-                              std::shared_ptr<std::string> info = std::shared_ptr<std::string>());
+                              bool multi_threading_enabled,
+                              std::string& info);
 
     /// @brief Unload libraries
     ///
@@ -402,7 +422,7 @@ private:
     ///        be logged that give the reason.
     bool loadLibrariesInternal(const HookLibsCollection& libraries,
                                bool multi_threading_enabled,
-                               std::shared_ptr<std::string> info);
+                               std::string& info);
 
     /// @brief Unload libraries
     ///

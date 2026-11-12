@@ -90,10 +90,10 @@ TEST_F(LibraryManagerCollectionTest, LoadLibraries) {
     PublicLibraryManagerCollection lm_collection(library_names);
 
     // Load the libraries.
-    shared_ptr<string> info = make_shared<string>("error");
+    string info("error");
     EXPECT_TRUE(lm_collection.loadLibraries(false, info));
     EXPECT_EQ(2, lm_collection.getLoadedLibraryCount());
-    EXPECT_TRUE(info->empty());
+    EXPECT_TRUE(info.empty());
 
     // Execute the callouts.  The first library implements the calculation.
     //
@@ -146,12 +146,12 @@ TEST_F(LibraryManagerCollectionTest, LoadLibrariesWithError) {
 
     // Load the libraries.  We expect a failure status to be returned as
     // one of the libraries failed to load.
-    shared_ptr<string> info = make_shared<string>();
+    string info;
     EXPECT_FALSE(lm_collection.loadLibraries(false, info));
     string expected = "Error loading library: ";
     expected += INCORRECT_VERSION_LIBRARY;
     expected += " (index: 1).";
-    EXPECT_EQ(*info, expected);
+    EXPECT_EQ(info, expected);
 
     // Expect no libraries were loaded.
     EXPECT_EQ(0, lm_collection.getLoadedLibraryCount());

@@ -96,7 +96,7 @@ HooksManager::callCommandHandlers(const std::string& command_name,
 bool
 HooksManager::loadLibrariesInternal(const HookLibsCollection& libraries,
                                     bool multi_threading_enabled,
-                                    std::shared_ptr<std::string> info) {
+                                    string& info) {
     if (test_mode_) {
         return (true);
     }
@@ -132,10 +132,20 @@ HooksManager::loadLibrariesInternal(const HookLibsCollection& libraries,
 
 bool
 HooksManager::loadLibraries(const HookLibsCollection& libraries,
-                            bool multi_threading_enabled,
-                            std::shared_ptr<std::string> info) {
+                            bool multi_threading_enabled) {
+    string info;
     return (getHooksManager().loadLibrariesInternal(libraries,
-                                                    multi_threading_enabled, info));
+                                                    multi_threading_enabled,
+                                                    info));
+}
+
+bool
+HooksManager::loadLibraries(const HookLibsCollection& libraries,
+                            bool multi_threading_enabled,
+                            string& info) {
+    return (getHooksManager().loadLibrariesInternal(libraries,
+                                                    multi_threading_enabled,
+                                                    info));
 }
 
 // Unload the libraries.  This just deletes all internal objects (which will
