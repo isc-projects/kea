@@ -371,7 +371,7 @@ const char* values[] = {
     "DHCP4_SERVER_INITIATED_DECLINE_RESOURCE_BUSY", "%1: error declining a lease for address %2",
     "DHCP4_SERVER_INITIATED_DECLINE_UPDATE_FAILED", "%1: error updating lease for address %2",
     "DHCP4_SHUTDOWN", "server shutdown",
-    "DHCP4_SHUTDOWN_ON_FATAL_ERROR", "Invoked with command line option -F, Exit on critical error",
+    "DHCP4_SHUTDOWN_ON_FATAL_ERROR", "Invoked with command line option -F, exit on critical error",
     "DHCP4_SHUTDOWN_REQUEST", "shutdown of server requested",
     "DHCP4_SRV_CONSTRUCT_ERROR", "error creating Dhcpv4Srv object, reason: %1",
     "DHCP4_SRV_D2STOP_ERROR", "error stopping IO with DHCP_DDNS during shutdown: %1",

@@ -1157,9 +1157,9 @@ The reason for the failure is included in the message.
 Logged at debug log level 40.
 The IPv6 DHCP server has terminated normally.
 
-% DHCP6_SHUTDOWN_ON_FATAL_ERROR Invoked with command line option -F, Exit on critical error
+% DHCP6_SHUTDOWN_ON_FATAL_ERROR Invoked with command line option -F, exit on critical error
 This warning is emitted when exit on critical error was required via
-via command line option '-F'.
+command line option '-F'.
 
 % DHCP6_SHUTDOWN_REQUEST shutdown of server requested
 Logged at debug log level 40.

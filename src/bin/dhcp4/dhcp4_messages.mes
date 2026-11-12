@@ -1177,9 +1177,9 @@ address for which the decline was attempted.
 Logged at debug log level 40.
 The DHCPv4 server has terminated normally.
 
-% DHCP4_SHUTDOWN_ON_FATAL_ERROR Invoked with command line option -F, Exit on critical error
+% DHCP4_SHUTDOWN_ON_FATAL_ERROR Invoked with command line option -F, exit on critical error
 This warning is emitted when exit on critical error was required via
-via command line option '-F'.
+command line option '-F'.
 
 % DHCP4_SHUTDOWN_REQUEST shutdown of server requested
 Logged at debug log level 40.

@@ -366,7 +366,7 @@ const char* values[] = {
     "DHCP6_SECURITY_CHECKS_DISABLED", "Invoked with command line option -X, Security checks are disabled!!",
     "DHCP6_SERVER_FAILED", "server failed: %1",
     "DHCP6_SHUTDOWN", "server shutdown",
-    "DHCP6_SHUTDOWN_ON_FATAL_ERROR", "Invoked with command line option -F, Exit on critical error",
+    "DHCP6_SHUTDOWN_ON_FATAL_ERROR", "Invoked with command line option -F, exit on critical error",
     "DHCP6_SHUTDOWN_REQUEST", "shutdown of server requested",
     "DHCP6_SRV_CONSTRUCT_ERROR", "error creating Dhcpv6Srv object, reason: %1",
     "DHCP6_SRV_D2STOP_ERROR", "error stopping IO with DHCP_DDNS during shutdown: %1",
