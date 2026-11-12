@@ -92,10 +92,13 @@ public:
     ///
     /// @param multi_threading_enabled The flag which indicates if MT is enabled
     ///        (used to check hook libraries compatibility with MT).
+    /// @param info The string which stores the error message with more details
+    ///        about library which failed to load.
     ///
     /// @return true if all libraries loaded, false if one or more failed t
     ////        load.
-    bool loadLibraries(bool multi_threading_enabled = false);
+    bool loadLibraries(bool multi_threading_enabled = false,
+                       std::shared_ptr<std::string> info = std::shared_ptr<std::string>());
 
     /// @brief Get callout manager
     ///
@@ -171,17 +174,17 @@ protected:
 
 private:
 
-    /// Vector of library names
+    /// @brief Vector of library names
     std::vector<std::string>                        library_names_;
 
-    /// Vector of library managers
+    /// @brief Vector of library managers
     std::vector<boost::shared_ptr<LibraryManager> > lib_managers_;
 
-    /// Vector of library information. Each piece of information
+    /// @brief Vector of library information. Each piece of information
     /// consists of a pair of (library name, library parameters)
     HookLibsCollection                              library_info_;
 
-    /// Callout manager to be associated with the libraries
+    /// @brief Callout manager to be associated with the libraries
     boost::shared_ptr<CalloutManager>               callout_manager_;
 };
 

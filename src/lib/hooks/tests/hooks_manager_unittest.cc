@@ -198,7 +198,9 @@ TEST_F(HooksManagerTest, LoadLibraries) {
                                         data::ConstElementPtr()));
 
     // Load the libraries.
-    EXPECT_TRUE(HooksManager::loadLibraries(library_names));
+    shared_ptr<string> info = make_shared<string>("error");
+    EXPECT_TRUE(HooksManager::loadLibraries(library_names, false, info));
+    EXPECT_TRUE(info->empty());
 
     // Execute the callouts.  The first library implements the calculation.
     //
@@ -254,7 +256,12 @@ TEST_F(HooksManagerTest, LoadLibrariesWithError) {
 
     // Load the libraries.  We expect a failure return because one of the
     // libraries fails to load.
-    EXPECT_FALSE(HooksManager::loadLibraries(library_names));
+    shared_ptr<string> info = make_shared<string>();
+    EXPECT_FALSE(HooksManager::loadLibraries(library_names, false, info));
+    string expected = "Error loading library: ";
+    expected += INCORRECT_VERSION_LIBRARY;
+    expected += " (index: 1).";
+    EXPECT_EQ(*info, expected);
 }
 
 // Test that we can unload a set of libraries while we have a CalloutHandle

@@ -50,8 +50,12 @@ LibraryManagerCollection::LibraryManagerCollection(const HookLibsCollection& lib
 // Load a set of libraries
 
 bool
-LibraryManagerCollection::loadLibraries(bool multi_threading_enabled) {
+LibraryManagerCollection::loadLibraries(bool multi_threading_enabled,
+                                        std::shared_ptr<std::string> info) {
 
+    if (info) {
+        info->clear();
+    }
     // There must be no libraries still in memory.
     if (!lib_managers_.empty()) {
         isc_throw(LibrariesStillOpened, "some libraries are still opened");
@@ -76,7 +80,7 @@ LibraryManagerCollection::loadLibraries(bool multi_threading_enabled) {
     // re-registered.
     callout_manager_.reset(new CalloutManager(library_names_.size()));
 
-    // Now iterate through the libraries are load them one by one.  We'll
+    // Now iterate through the libraries are load them one by one.
     for (size_t i = 0; i < library_names_.size(); ++i) {
         // Create a pointer to the new library manager.  The index of this
         // library is determined by the number of library managers currently
@@ -93,6 +97,11 @@ LibraryManagerCollection::loadLibraries(bool multi_threading_enabled) {
         if (manager->loadLibrary(multi_threading_enabled)) {
             lib_managers_.push_back(manager);
         } else {
+            if (info) {
+                std::ostringstream ss;
+                ss << "Error loading library: " << library_names_[i] << " (index: " << i << ").";
+                *info = ss.str();
+            }
             static_cast<void>(unloadLibraries());
             return (false);
         }

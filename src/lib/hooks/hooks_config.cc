@@ -64,10 +64,12 @@ HooksConfig::loadLibraries(bool multi_threading_enabled) const {
     /// the list of libraries has changed.
     /// @todo: Delete any stored CalloutHandles before reloading the
     /// libraries
-    if (!HooksManager::loadLibraries(libraries_, multi_threading_enabled)) {
-        isc_throw(InvalidHooksLibraries,
-                  "One or more hook libraries failed to load: "
-                  "please look the earlier error messages for details");
+    shared_ptr<string> info = make_shared<string>();
+    if (!HooksManager::loadLibraries(libraries_, multi_threading_enabled, info)) {
+        string msg("One or more hook libraries failed to load: ");
+        msg += *info;
+        msg += " Please look at previous error messages for details.";
+        isc_throw(InvalidHooksLibraries, msg);
     }
 }
 

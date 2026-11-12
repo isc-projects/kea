@@ -95,7 +95,8 @@ HooksManager::callCommandHandlers(const std::string& command_name,
 
 bool
 HooksManager::loadLibrariesInternal(const HookLibsCollection& libraries,
-                                    bool multi_threading_enabled) {
+                                    bool multi_threading_enabled,
+                                    std::shared_ptr<std::string> info) {
     if (test_mode_) {
         return (true);
     }
@@ -115,7 +116,7 @@ HooksManager::loadLibrariesInternal(const HookLibsCollection& libraries,
     }
 
     // Load the libraries.
-    bool status = lm_collection_->loadLibraries(multi_threading_enabled);
+    bool status = lm_collection_->loadLibraries(multi_threading_enabled, info);
 
     if (status) {
         // ... and obtain the callout manager for them if successful.
@@ -131,9 +132,10 @@ HooksManager::loadLibrariesInternal(const HookLibsCollection& libraries,
 
 bool
 HooksManager::loadLibraries(const HookLibsCollection& libraries,
-                            bool multi_threading_enabled) {
+                            bool multi_threading_enabled,
+                            std::shared_ptr<std::string> info) {
     return (getHooksManager().loadLibrariesInternal(libraries,
-                                                    multi_threading_enabled));
+                                                    multi_threading_enabled, info));
 }
 
 // Unload the libraries.  This just deletes all internal objects (which will
@@ -151,7 +153,7 @@ HooksManager::unloadLibrariesInternal() {
     // Keep a weak pointer on the existing library manager collection.
     boost::weak_ptr<LibraryManagerCollection> weak_lmc(lm_collection_);
 
-    // Create the collection with any empty set of libraries.
+    // Create the collection with an empty set of libraries.
     HookLibsCollection libraries;
     lm_collection_.reset(new LibraryManagerCollection(libraries));
 

@@ -68,13 +68,16 @@ public:
     ///        hook will be called.
     /// @param multi_threading_enabled The flag which indicates if MT is enabled
     ///        (used to check hook libraries compatibility with MT).
+    /// @param info The string which stores the error message with more details
+    ///        about library which failed to load.
     ///
     /// @return true if all libraries loaded without a problem, false if one or
     ///        more libraries failed to load.  In the latter case, message will
     ///        be logged that give the reason.
     /// @throw LibrariesStillOpened when some libraries are already loaded.
     static bool loadLibraries(const HookLibsCollection& libraries,
-                              bool multi_threading_enabled = false);
+                              bool multi_threading_enabled = false,
+                              std::shared_ptr<std::string> info = std::shared_ptr<std::string>());
 
     /// @brief Unload libraries
     ///
@@ -391,12 +394,15 @@ private:
     ///        hook will be called.
     /// @param multi_threading_enabled The flag which indicates if MT is enabled
     ///        (used to check hook libraries compatibility with MT).
+    /// @param info The string which stores the error message with more details
+    ///        about library which failed to load.
     ///
     /// @return true if all libraries loaded without a problem, false if one or
     ///        more libraries failed to load.  In the latter case, message will
     ///        be logged that give the reason.
     bool loadLibrariesInternal(const HookLibsCollection& libraries,
-                               bool multi_threading_enabled);
+                               bool multi_threading_enabled,
+                               std::shared_ptr<std::string> info);
 
     /// @brief Unload libraries
     ///
