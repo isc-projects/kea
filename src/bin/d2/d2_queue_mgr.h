@@ -36,9 +36,9 @@ namespace d2 {
 /// and/or reverse domains it matches to the D2QueueMgr's queue of requests.
 /// Domain matching was formerly done by D2UpateMgr during the construction of
 /// a NameChangeTransaction. By doing the matching before queing the request,
-/// NCRs that fail domain matching can be discarded immediately instead of wasting
-/// space on the queue. The wrapper allows the domain matching results to be
-/// preserved such that the matching need only be done once.
+/// NCRs that fail domain matching can be discarded immediately instead of
+/// wasting space on the queue. The wrapper allows the domain matching results
+/// to be preserved such that the matching need only be done once.
 class MatchedNcr {
 public:
     /// @brief Constructor.
@@ -273,8 +273,8 @@ public:
     ///
     /// @param io_service IOService instance to be passed into the listener for
     /// IO management.
-    /// @param cfg_mgr reference to the configuration manager. Required to conduct
-    /// domain matching.
+    /// @param cfg_mgr reference to the configuration manager. Required to
+    /// conduct domain matching.
     /// @param max_queue_size the maximum number of entries allowed in the
     /// queue.
     /// This value must be greater than zero. It defaults to MAX_QUEUE_DEFAULT.

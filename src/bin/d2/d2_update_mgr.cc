@@ -132,7 +132,7 @@ D2UpdateMgr::makeTransaction(MatchedNcrPtr& matched_ncr) {
     // empty IOServicePtr, rather than our instance value.  This would cause
     // the transaction to instantiate its own, separate IOService to handle
     // the transaction's IO.
-    auto next_ncr = matched_ncr->getNcr(); 
+    auto next_ncr = matched_ncr->getNcr();
     auto forward_domain = matched_ncr->getForwardDomain();
     auto reverse_domain = matched_ncr->getReverseDomain();
     NameChangeTransactionPtr trans;

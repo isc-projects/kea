@@ -27,7 +27,8 @@ MatchedNcr::MatchedNcr(const NameChangeRequestPtr& ncr,
     }
 
     if (!reverse_domain_ && !forward_domain) {
-        isc_throw(D2QueueMgrError, "MatcheNcrPtr forward and reverse cannot both be null");
+        isc_throw(D2QueueMgrError,
+                  "MatcheNcrPtr forward and reverse cannot both be null");
     }
 }
 
@@ -40,11 +41,12 @@ MatchedNcr::refresh(const MatchedNcr& source) {
 // Makes constant visible to Google test macros.
 const size_t D2QueueMgr::MAX_QUEUE_DEFAULT;
 
-D2QueueMgr::D2QueueMgr(asiolink::IOServicePtr& io_service, 
+D2QueueMgr::D2QueueMgr(asiolink::IOServicePtr& io_service,
                        D2CfgMgrPtr& cfg_mgr,
                        const size_t max_queue_size)
-    : io_service_(io_service), cfg_mgr_(cfg_mgr), max_queue_size_(max_queue_size),
-      mgr_state_(NOT_INITTED), target_stop_state_(NOT_INITTED) {
+    : io_service_(io_service), cfg_mgr_(cfg_mgr),
+      max_queue_size_(max_queue_size), mgr_state_(NOT_INITTED),
+      target_stop_state_(NOT_INITTED) {
     if (!io_service_) {
         isc_throw(D2QueueMgrError, "IOServicePtr cannot be null");
     }
@@ -336,7 +338,7 @@ D2QueueMgr::enqueue(NameChangeRequestPtr& new_ncr,
     return (true);
 }
 
-void 
+void
 D2QueueMgr::refreshQueuedMatching() {
     for (auto it = ncr_queue_.begin(); it != ncr_queue_.end(); ) {
         auto matched_ncr = *it;

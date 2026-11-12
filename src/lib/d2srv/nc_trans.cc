@@ -590,7 +590,7 @@ NameChangeTransaction::setForwardDomain(DdnsDomainPtr domain) {
     forward_domain_ = domain;
 }
 
-void 
+void
 NameChangeTransaction::setReverseDomain(DdnsDomainPtr domain) {
     reverse_domain_ = domain;
 }
