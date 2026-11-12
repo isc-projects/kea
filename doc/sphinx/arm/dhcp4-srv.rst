@@ -8162,10 +8162,10 @@ as described in :ref:`commands-common`. In addition, it supports the
 following statistics-related commands:
 
 - :isccmd:`statistic-get`
-- :isccmd:`statistic-reset`
-- :isccmd:`statistic-remove`
 - :isccmd:`statistic-get-all`
+- :isccmd:`statistic-reset`
 - :isccmd:`statistic-reset-all`
+- :isccmd:`statistic-remove`
 - :isccmd:`statistic-remove-all`
 - :isccmd:`statistic-sample-age-set`
 - :isccmd:`statistic-sample-age-set-all`
