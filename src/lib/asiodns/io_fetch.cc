@@ -225,10 +225,14 @@ IOFetch::operator()(boost::system::error_code ec, size_t length) {
         /// declarations.
         {
             if (data_->packet) {
-                // A packet was given, overwrite the QID (which is in the
-                // first two bytes of the packet).
-                data_->msgbuf->writeUint16At(data_->qid, 0);
-
+                // A pre-rendered packet was given. It may already be signed
+                // (TSIG / GSS-TSIG), and the MAC covers the header, so the
+                // QID must not be changed after signing: some servers (e.g.
+                // Samba internal DNS) verify the MAC against the ID on the
+                // wire, not the TSIG Original ID. Adopt the packet's own QID
+                // (D2 already sets a random one before rendering).
+                data_->qid = readUint16(data_->msgbuf->getData(),
+                                        data_->msgbuf->getLength());
             }
         }
 
