@@ -15,6 +15,8 @@ The utilities library (libkea-util) provides generic and Kea utilities:
 
  - buffer (header only): input and output buffers.
 
+ - chrono time: std::chrono time and duration to text conversions.
+
  - csv file: comma-separated values (CSV) files.
 
  - double: test utility for checking double equivalence (vs. strict
@@ -22,7 +24,10 @@ The utilities library (libkea-util) provides generic and Kea utilities:
 
  - encode: base16, base32, base64 and hexadecimal conversions.
 
- - filename: filename manipulation (avoid dependency on boost).
+ - fd event handler: file descriptor event handler (e.g. select or poll).
+
+ - filesystem: filename manipulation (avoid dependency on boost or
+  c++17 std::filesystem).
 
  - hash: Fowler-Noll-Vo 64 bit hash function.
 
@@ -37,6 +42,9 @@ The utilities library (libkea-util) provides generic and Kea utilities:
 
  - optional: optional values.
 
+ - patricia tree: patricia tree (known to be the best (worst case in
+   the number of bits so constant) for look for address matching prefixes).
+
  - pid file: process id files.
 
  - pointer util: test utility to compare smart pointers.
@@ -47,8 +55,10 @@ The utilities library (libkea-util) provides generic and Kea utilities:
 
  - read-write mutex (header only).
 
- - signal set: signal handling (please use @c isc::asiolink::IOSignalSet
-  instead).
+ - reconnect control.
+
+ - signal set: signal handling (removed, please use @c
+  isc::asiolink::IOSignalSet instead).
 
  - staged values.
 
@@ -60,7 +70,7 @@ The utilities library (libkea-util) provides generic and Kea utilities:
 
  - thread pool.
 
- - time utilities: DNSSEC time conversions from and to text.
+ - triplet.
 
  - unittests (directory): tools for google test unit tests.
 

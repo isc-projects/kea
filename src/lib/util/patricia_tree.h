@@ -12,7 +12,6 @@
 #include <cstdint>
 #include <cstring>
 #include <functional>
-#include <list>
 #include <vector>
 
 namespace isc {
@@ -36,7 +35,7 @@ struct PatriciaNode {
     NodePtr right_;
 
     /// @brief Values associated with this exact prefix (empty for glue).
-    std::list<ContentType> contents_;
+    ContentType contents_;
 
     /// @brief Bit index at which this node branches (0 .. key_bits).
     uint16_t bit_;
