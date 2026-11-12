@@ -1,4 +1,4 @@
-# Kea - a modern DHCP
+# Kea - a modern DHCP system
 
 <img align="right" src="doc/sphinx/static/kea-logo-200.png"/>
 
@@ -18,9 +18,9 @@ at https://gitlab.isc.org/isc-projects/kea/-/wikis/known-issues-list.
 
 ## Getting Kea
 
-Kea is distributed under open source Mozilla Public License v2. See the
-[license file](COPYING) for details. Source code can be downloaded from
-the gitlab repository directly or downloaded as tarballs.
+Kea is distributed under Mozilla Public License v2, an open source license.
+See the [license file](COPYING) for details. Source code can be downloaded
+from the gitlab repository directly or downloaded as tarballs.
 
 Precompiled packages are available for easy installation. See
 [Installation instructions](INSTALL.md) for details.

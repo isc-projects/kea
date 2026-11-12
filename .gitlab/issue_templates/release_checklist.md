@@ -107,7 +107,7 @@ The following steps may involve changing files in the repository.
       1. [ ] Check and update Build Requirements.
       1. [ ] Check configure options against what `meson configure` says.
 1. [ ] Check ChangeLog entries in Kea main and premium: spelling, trailing whitespaces, etc.
-1. [ ] Check AUTHORS, INSTALL, README.md files in Kea main and premium.
+1. [ ] Check AUTHORS, INSTALL.md, README.md files in Kea main and premium.
    * AUTHORS: update credits
    * README.md: check "provides" with Release Notes, User Guide (1.3 Kea Software)
 1. [ ] If changes were made, commit them, push the branch to the main repository, and request a review. Once the changes have been approved, merge the MR to the master.
