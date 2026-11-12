@@ -670,12 +670,11 @@ TEST_F(D2QueueMgrUDPTest, nestedNCRs) {
 /// by the expected index within the reference list. An index of -1
 /// means findLast() should return an empty pointr (i.e. not
 /// found).
-TEST(D2QueueMgrBasicTest, findLast) {
-    asiolink::IOServicePtr io_service(new isc::asiolink::IOService());
+TEST_F(D2QueueMgrTest, findLast) {
+    makeFullConfig();
 
-    // Construct the manager.
-    D2QueueMgrPtr queue_mgr;
-    ASSERT_NO_THROW(queue_mgr.reset(new D2QueueMgr(io_service, 100)));
+    // Remake with default size.
+    queue_mgr_.reset(new D2QueueMgr(io_service_, cfg_mgr_));
 
     // Vector to keep track of the NCRs we queue.
     std::vector<NameChangeRequestPtr>ref_msgs;
@@ -718,10 +717,10 @@ TEST(D2QueueMgrBasicTest, findLast) {
 
         // Verify that the request can be added to the queue and queue
         // size increments accordingly.
-        ASSERT_NO_THROW(queued = queue_mgr->enqueue(ncr, true));
+        ASSERT_NO_THROW(queued = queue_mgr_->enqueue(ncr, true));
         ASSERT_TRUE(queued);
 
-        auto found = queue_mgr->findLast(dhcid1);
+        auto found = queue_mgr_->findLast(dhcid1);
         int last_idx = scenario.exp_last_dhcid1_idx_;
         if (last_idx < 0) {
             ASSERT_FALSE(found);
@@ -732,30 +731,31 @@ TEST(D2QueueMgrBasicTest, findLast) {
                 << "found_ncr:" << found_ncr->toText()
                 << "ref_ncr:" << (ref_msgs[last_idx])->toText();
         }
-#if 0
-        found_ncr = queue_mgr->findLast(dhcid2);
+
+        found = queue_mgr_->findLast(dhcid2);
         last_idx = scenario.exp_last_dhcid2_idx_;
         if (last_idx < 0) {
-            ASSERT_FALSE(found_ncr);
+            ASSERT_FALSE(found);
         } else  {
-            ASSERT_TRUE(found_ncr);
+            ASSERT_TRUE(found);
+            auto found_ncr = found->getNcr();
             ASSERT_EQ(*found_ncr, *(ref_msgs[last_idx]))
                 << "found_ncr:" << found_ncr->toText()
                 << "ref_ncr:" << (ref_msgs[last_idx])->toText();
         }
 
-        found_ncr = queue_mgr->findLast(dhcid3);
+        found = queue_mgr_->findLast(dhcid3);
         last_idx = scenario.exp_last_dhcid3_idx_;
         if (last_idx < 0) {
-            ASSERT_FALSE(found_ncr);
+            ASSERT_FALSE(found);
         } else  {
-            ASSERT_TRUE(found_ncr);
+            ASSERT_TRUE(found);
+            auto found_ncr = found->getNcr();
             ASSERT_EQ(*found_ncr, *(ref_msgs[last_idx]))
                 << "found_ncr:" << found_ncr->toText()
                 << "ref_ncr:" << (ref_msgs[last_idx])->toText();
         }
     }
-#endif
 }
 
 /// @brief Tests QueueMgr's duplicate suppression scheme.
@@ -765,9 +765,8 @@ TEST_F(D2QueueMgrTest, duplicateSuppression) {
     // Initialize stats manager.
     D2Stats::init();
 
-    // Construct the manager.
-    D2QueueMgrPtr queue_mgr;
-    ASSERT_NO_THROW(queue_mgr.reset(new D2QueueMgr(io_service, 100)));
+    // Remake with default size.
+    queue_mgr_.reset(new D2QueueMgr(io_service_, cfg_mgr_));
 
     // Vector to keep track of the NCRs we queue.
     std::vector<NameChangeRequestPtr>ref_msgs;
@@ -796,7 +795,7 @@ TEST_F(D2QueueMgrTest, duplicateSuppression) {
     };
 
     // Iterate over the list of requests and add each to the queue.
-    bool queued;
+    bool queued = false;
     size_t pass = 0;
     size_t exp_duplicates = 0;
     size_t exp_queue_size = 0;
@@ -808,7 +807,7 @@ TEST_F(D2QueueMgrTest, duplicateSuppression) {
                                        "walah.walah.com", "192.168.2.1",
                                        scenario.dhcid_,  100));
 
-        ASSERT_NO_THROW(queued = queue_mgr->enqueue(ncr, true));
+        ASSERT_NO_THROW(queued = queue_mgr_->enqueue(ncr, true));
         ASSERT_EQ(queued, scenario.should_queue_);
         if (scenario.should_queue_) {
             ++exp_queue_size;
@@ -818,9 +817,7 @@ TEST_F(D2QueueMgrTest, duplicateSuppression) {
     }
 
     // Verify the queue size.
-    EXPECT_EQ(exp_queue_size, queue_mgr->getQueueSize());
-
-        MatchedNcrPtr mncr;
+    EXPECT_EQ(exp_queue_size, queue_mgr_->getQueueSize());
 
     // Verify stats are correct.
     StatMap stats_ncr = {
