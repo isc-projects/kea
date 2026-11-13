@@ -104,6 +104,11 @@ TEST_F(PatriciaTreeTest, nestedPrefixes) {
     auto n24 = tree4_.insert(pton(AF_INET, "10.0.0.0"), 24);
     n24->contents_.push_back(Marker(24));
 
+    // Two nodes: n8 is the root and n24 is its left.
+    EXPECT_EQ(2U, tree4_.getNodeCount());
+    ASSERT_TRUE(n8->left_);
+    EXPECT_EQ(n8->left_, n24);
+
     vector<int> path_ids;
     tree4_.findPath(pton(AF_INET, "10.0.0.5"),
                     [&path_ids](const NodePtr& n) {
@@ -135,6 +140,8 @@ TEST_F(PatriciaTreeTest, nestedPrefixes) {
 TEST_F(PatriciaTreeTest, disjointPrefixes) {
     tree4_.insert(pton(AF_INET, "10.0.0.0"), 8)->contents_.push_back(Marker(10));
     tree4_.insert(pton(AF_INET, "192.0.2.0"), 24)->contents_.push_back(Marker(192));
+    // Three nodes: the root is a glue at the first bit.
+    EXPECT_EQ(3U, tree4_.getNodeCount());
 
     vector<int> path_ids;
     tree4_.findPath(pton(AF_INET, "10.9.9.9"),
