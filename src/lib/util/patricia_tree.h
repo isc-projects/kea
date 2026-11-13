@@ -104,6 +104,11 @@ public:
         return (node_count_);
     }
 
+    /// @brief Root node.
+    NodePtr getRoot() const {
+        return (root_);
+    }
+
     /// @brief Remove all nodes.
     void clear() {
         if (!root_) {

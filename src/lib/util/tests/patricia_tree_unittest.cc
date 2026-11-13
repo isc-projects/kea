@@ -54,6 +54,7 @@ public:
 // Empty tree lookups return null / invoke nothing.
 TEST_F(PatriciaTreeTest, emptyTree) {
     EXPECT_EQ(0U, tree4_.getNodeCount());
+    EXPECT_FALSE(tree4_.getRoot());
     EXPECT_FALSE(tree4_.findExact(pton(AF_INET, "10.0.0.0"), 8));
     EXPECT_FALSE(tree4_.findBest(pton(AF_INET, "10.0.0.1"), 32));
 
@@ -82,6 +83,7 @@ TEST_F(PatriciaTreeTest, insertFindRemoveV4) {
     ASSERT_TRUE(node);
     node->contents_.push_back(Marker(1));
     EXPECT_EQ(1U, tree4_.getNodeCount());
+    EXPECT_EQ(node, tree4_.getRoot());
 
     NodePtr found = tree4_.findExact(key, 24);
     ASSERT_TRUE(found);
@@ -95,6 +97,7 @@ TEST_F(PatriciaTreeTest, insertFindRemoveV4) {
     tree4_.remove(found);
     EXPECT_FALSE(tree4_.findExact(key, 24));
     EXPECT_EQ(0U, tree4_.getNodeCount());
+    EXPECT_FALSE(tree4_.getRoot());
 }
 
 // Nested prefixes: path returns both; findBest returns the longer one.
@@ -104,8 +107,9 @@ TEST_F(PatriciaTreeTest, nestedPrefixes) {
     auto n24 = tree4_.insert(pton(AF_INET, "10.0.0.0"), 24);
     n24->contents_.push_back(Marker(24));
 
-    // Two nodes: n8 is the root and n24 is its left.
+    // Two nodes: the root is n8 and n24 is its left.
     EXPECT_EQ(2U, tree4_.getNodeCount());
+    EXPECT_EQ(n8, tree4_.getRoot());
     ASSERT_TRUE(n8->left_);
     EXPECT_EQ(n8->left_, n24);
 
@@ -140,8 +144,21 @@ TEST_F(PatriciaTreeTest, nestedPrefixes) {
 TEST_F(PatriciaTreeTest, disjointPrefixes) {
     tree4_.insert(pton(AF_INET, "10.0.0.0"), 8)->contents_.push_back(Marker(10));
     tree4_.insert(pton(AF_INET, "192.0.2.0"), 24)->contents_.push_back(Marker(192));
-    // Three nodes: the root is a glue at the first bit.
+    // Three nodes: the root is a glue at the first bit,
+    // 10.0.0.0/8 is left and 192.0.2.0/24 is right.
     EXPECT_EQ(3U, tree4_.getNodeCount());
+    auto root = tree4_.getRoot();
+    ASSERT_TRUE(root);
+    EXPECT_FALSE(root->hasPrefix());
+    EXPECT_EQ(0U, root->bit_);
+    ASSERT_TRUE(root->left_);
+    EXPECT_TRUE(root->left_->hasPrefix());
+    EXPECT_EQ(pton(AF_INET, "10.0.0.0"), root->left_->addr_);
+    EXPECT_EQ(8U, root->left_->len_);
+    ASSERT_TRUE(root->right_);
+    EXPECT_TRUE(root->right_->hasPrefix());
+    EXPECT_EQ(pton(AF_INET, "192.0.2.0"), root->right_->addr_);
+    EXPECT_EQ(24U, root->right_->len_);
 
     vector<int> path_ids;
     tree4_.findPath(pton(AF_INET, "10.9.9.9"),
@@ -174,9 +191,12 @@ TEST_F(PatriciaTreeTest, removePrunesGlue) {
     auto b = tree4_.insert(pton(AF_INET, "11.0.0.0"), 8);
     b->contents_.push_back(Marker(2));
     EXPECT_GT(tree4_.getNodeCount(), 2U); // root glue + two leaves
+    EXPECT_FALSE(tree4_.getRoot()->hasPrefix());
+    EXPECT_EQ(7U, tree4_.getRoot()->bit_);
 
     NodePtr to_remove = tree4_.findExact(pton(AF_INET, "11.0.0.0"), 8);
     ASSERT_TRUE(to_remove);
+    EXPECT_EQ(b, to_remove);
     tree4_.remove(to_remove);
 
     EXPECT_TRUE(tree4_.findExact(pton(AF_INET, "10.0.0.0"), 8));
@@ -184,6 +204,7 @@ TEST_F(PatriciaTreeTest, removePrunesGlue) {
 
     // After pruning, only the remaining prefix node should remain.
     EXPECT_EQ(1U, tree4_.getNodeCount());
+    EXPECT_EQ(a, tree4_.getRoot());
 }
 
 // Clear empties the tree; re-insert works.
@@ -191,14 +212,17 @@ TEST_F(PatriciaTreeTest, clearAndReinsert) {
     tree4_.insert(pton(AF_INET, "203.0.113.0"), 24);
     tree4_.insert(pton(AF_INET, "198.51.100.0"), 24);
     EXPECT_GT(tree4_.getNodeCount(), 0U);
+    EXPECT_TRUE(tree4_.getRoot());
 
     tree4_.clear();
     EXPECT_EQ(0U, tree4_.getNodeCount());
+    EXPECT_FALSE(tree4_.getRoot());
     EXPECT_FALSE(tree4_.findExact(pton(AF_INET, "203.0.113.0"), 24));
 
     auto node = tree4_.insert(pton(AF_INET, "203.0.113.0"), 24);
     ASSERT_TRUE(node);
     EXPECT_EQ(1U, tree4_.getNodeCount());
+    EXPECT_EQ(node, tree4_.getRoot());
 }
 
 // IPv6 insert / path / best.
