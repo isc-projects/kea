@@ -97,6 +97,7 @@ bool
 HooksManager::loadLibrariesInternal(const HookLibsCollection& libraries,
                                     bool multi_threading_enabled,
                                     string& info) {
+    info.clear();
     if (test_mode_) {
         return (true);
     }

@@ -84,7 +84,7 @@ LibraryManagerCollection::loadLibraries(bool multi_threading_enabled,
     // re-registered.
     callout_manager_.reset(new CalloutManager(library_names_.size()));
 
-    // Now iterate through the libraries are load them one by one.  We'll
+    // Now iterate through the libraries are load them one by one.
     for (size_t i = 0; i < library_names_.size(); ++i) {
         // Create a pointer to the new library manager.  The index of this
         // library is determined by the number of library managers currently

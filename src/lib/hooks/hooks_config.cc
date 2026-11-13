@@ -69,7 +69,7 @@ HooksConfig::loadLibraries(bool multi_threading_enabled) const {
         isc_throw(InvalidHooksLibraries,
                   "One or more hook libraries failed to load: "
                   << info
-                  << " Please look the earlier error messages for details");
+                  << " Please look at previous error messages for details.");
     }
 }
 
