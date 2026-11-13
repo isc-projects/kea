@@ -25,8 +25,6 @@ kea_util_tests = executable(
     'hash_unittest.cc',
     'io_unittests.cc',
     'labeled_value_unittest.cc',
-    'memory_segment_common_unittest.cc',
-    'memory_segment_local_unittest.cc',
     'multi_threading_mgr_unittest.cc',
     'optional_unittest.cc',
     'pid_file_unittest.cc',
