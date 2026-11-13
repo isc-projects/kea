@@ -856,7 +856,9 @@ TEST_F(TLSTest, noHandshake) {
     timer2.cancel();
 
     exps.clear();
-    // On Botan and some OpenSSL the receive party hangs.
+    // Botan error.
+    exps.addError("InvalidObjectState");
+    // On some Botan and OpenSSL the receive party hangs.
     exps.addTimeout();
     // OpenSSL errors.
     exps.addError("uninitialized");
@@ -1141,6 +1143,7 @@ TEST_F(TLSTest, clientHTTPnoS) {
     // Botan error.
     exps.addError("protocol_version");
     exps.addError("unexpected_message");
+    exps.addError("illegal_parameter");
     // Old LibreSSL error.
     exps.addError("tlsv1 alert protocol version");
     // OpenSSL errors (OpenSSL recognizes HTTP).
@@ -1234,6 +1237,7 @@ TEST_F(TLSTest, unknownClient) {
     exps.addError("record_overflow");
     exps.addError("protocol_version");
     exps.addError("unexpected_message");
+    exps.addError("illegal_parameter");
     // Old LibreSSL error.
     exps.addError("tlsv1 alert protocol version");
     // Old OpenSSL error.
@@ -1551,6 +1555,8 @@ TEST_F(TLSTest, noHandshakeCloseonError) {
     timer2.cancel();
 
     exps.clear();
+    // Botan error.
+    exps.addError("InvalidObjectState");
     // Botan and some OpenSSL.
     exps.addError("stream truncated");
     // OpenSSL errors.
@@ -1830,6 +1836,7 @@ TEST_F(TLSTest, clientHTTPnoSCloseonError) {
     // Botan behavior was reported and fixed.
     exps.addError("protocol_version");
     exps.addError("unexpected_message");
+    exps.addError("illegal_parameter");
     // Old LibreSSL error.
     exps.addError("tlsv1 alert protocol version");
     // OpenSSL errors when OpenSSL recognizes HTTP.

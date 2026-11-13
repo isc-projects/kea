@@ -34,6 +34,8 @@
 #endif
 
 #include <boost/beast/core/error.hpp>
+#include <botan/pkix_types.h>
+#include <botan/x509cert.h>
 #include <botan/asio_stream.h>
 
 #ifdef BOTAN_BACKUP_FOR_PROTOCOL_VERSION
