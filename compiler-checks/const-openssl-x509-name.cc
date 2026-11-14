@@ -8,5 +8,5 @@ int main() {
     const ::X509_NAME_ENTRY* ne = ::X509_NAME_get_entry(name, loc);
     unsigned char* buf = 0;
     int len = ::ASN1_STRING_to_UTF8(&buf, ::X509_NAME_ENTRY_get_data(ne));
-    return 0;
+    return len;
 }
