@@ -1,0 +1,5 @@
+[func]		fdupont
+	Added the KEA_LFC_SYSLOG_FACILITY environment variable
+	to set the syslog facility of the kea-lfc tool (which
+	defaults to "LOCAL0").
+	(Gitlab #3933)

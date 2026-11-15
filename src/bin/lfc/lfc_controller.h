@@ -44,6 +44,9 @@ public:
     /// the executable name.
     static const char* lfc_bin_name_;
 
+    /// @brief Name of the environment variable to set the syslog facility.
+    static const char* lfc_facility_;
+
     /// @brief Constructor
     LFCController();
 

@@ -72,3 +72,7 @@ There are several additional arguments, mostly for debugging purposes.
 ``-d`` sets the logging level to debug. ``-v`` and ``-V`` print out
 version stamps, with ``-V`` providing a longer form. ``-h`` prints out
 the usage string.
+
+:iscman:`kea-lfc` logs on syslog with the ``LOCAL0`` facility, since
+Kea 3.3.5 the `KEA_LFC_SYSLOG_FACILITY` environment variable allows
+to set the syslog facility.

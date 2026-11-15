@@ -48,6 +48,9 @@ const char* LFCController::lfc_app_name_ = "DhcpLFC";
 /// @brief Defines the executable name.
 const char* LFCController::lfc_bin_name_ = "kea-lfc";
 
+/// @brief Name of the environment variable to set the syslog facility.
+const char* LFCController::lfc_facility_ = "KEA_LFC_SYSLOG_FACILITY";
+
 LFCController::LFCController()
     : protocol_version_(0), verbose_(false), config_file_(""), previous_file_(""),
       copy_file_(""), output_file_(""), finish_file_(""), pid_file_("") {
@@ -448,6 +451,10 @@ LFCController::startLogger(const bool test_mode) const {
             option.destination = OutputOption::DEST_CONSOLE;
         } else {
             option.destination = OutputOption::DEST_SYSLOG;
+            const char* env = std::getenv(LFCController::lfc_facility_);
+            if (env) {
+                option.facility = env;
+            }
         }
 
         // ... and set the destination
