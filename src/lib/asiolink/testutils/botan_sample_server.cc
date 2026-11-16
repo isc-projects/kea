@@ -11,14 +11,12 @@
 #include <config.h>
 
 #include <cstdlib>
-#include <functional>
 #include <iostream>
 
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/botan_wrapper.h>
 #include <botan/certstor_flatfile.h>
 #include <botan/pkcs8.h>
-#include <botan/auto_rng.h>
 #include <botan/tls_session_manager_noop.h>
 
 inline std::string CA_(const std::string& filename) {
@@ -205,8 +203,8 @@ int main(int argc, char* argv[])
     }
 
     boost::asio::io_context io_context;
-    std::shared_ptr<Botan::AutoSeeded_RNG>
-      rng(new Botan::AutoSeeded_RNG());
+    std::shared_ptr<BotanRandomNumberGenerator>
+      rng(new BotanRandomNumberGenerator());
     std::shared_ptr<Server_Credentials_Manager>
       creds_mgr(new Server_Credentials_Manager());
     std::shared_ptr<Server_Session_Manager>

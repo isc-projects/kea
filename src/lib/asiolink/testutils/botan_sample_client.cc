@@ -12,14 +12,12 @@
 
 #include <cstdlib>
 #include <cstring>
-#include <functional>
 #include <iostream>
 
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/botan_wrapper.h>
 #include <botan/certstor_flatfile.h>
 #include <botan/pkcs8.h>
-#include <botan/auto_rng.h>
 #include <botan/tls_session_manager_noop.h>
 
 inline std::string CA_(const std::string& filename) {
@@ -212,8 +210,8 @@ int main(int argc, char* argv[])
     using namespace std; // For atoi.
     tcp::endpoint endpoint(
       boost::asio::ip::make_address(argv[1]), atoi(argv[2]));
-    std::shared_ptr<Botan::AutoSeeded_RNG>
-      rng(new Botan::AutoSeeded_RNG());
+    std::shared_ptr<BotanRandomNumberGenerator>
+      rng(new BotanRandomNumberGenerator());
     std::shared_ptr<Client_Credentials_Manager>
       creds_mgr(new Client_Credentials_Manager());
     std::shared_ptr<Client_Session_Manager>

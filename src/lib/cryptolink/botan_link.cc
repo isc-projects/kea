@@ -6,18 +6,14 @@
 
 #include <config.h>
 
-#include <cryptolink/cryptolink.h>
+#include <asiolink/botan_wrapper.h>
 #include <cryptolink/crypto_hash.h>
 #include <cryptolink/crypto_hmac.h>
 #include <cryptolink/crypto_rng.h>
+#include <cryptolink/cryptolink.h>
 
 #include <botan/exceptn.h>
 #include <botan/version.h>
-#ifdef BOTAN_HAS_SYSTEM_RNG
-#include <botan/system_rng.h>
-#else
-#include <botan/auto_rng.h>
-#endif
 
 namespace isc {
 namespace cryptolink {
@@ -33,12 +29,7 @@ CryptoLink::~CryptoLink() {
 /// \brief Botan implementation of RNG.
 class RNGImpl : public RNG {
 public:
-    RNGImpl() {
-#ifdef BOTAN_HAS_SYSTEM_RNG
-        rng.reset(new Botan::System_RNG());
-#else
-        rng.reset(new Botan::AutoSeeded_RNG());
-#endif
+    RNGImpl() : rng(new BotanRandomNumberGenerator()) {
     }
 
     ~RNGImpl() {

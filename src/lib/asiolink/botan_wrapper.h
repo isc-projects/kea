@@ -47,6 +47,14 @@
 #pragma GCC diagnostic pop
 #endif
 
+#ifdef BOTAN_HAS_SYSTEM_RNG
+#include <botan/system_rng.h>
+using BotanRandomNumberGenerator = Botan::System_RNG;
+#else
+#include <botan/auto_rng.h>
+using BotanRandomNumberGenerator = Botan::AutoSeeded_RNG;
+#endif
+
 #endif // WITH_BOTAN
 
 #endif // BOTAN_WRAPPER_H

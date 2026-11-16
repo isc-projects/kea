@@ -13,7 +13,6 @@
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/crypto_tls.h>
 
-#include <botan/auto_rng.h>
 #include <botan/certstor_flatfile.h>
 #include <botan/data_src.h>
 #include <botan/pem.h>
@@ -202,7 +201,7 @@ public:
     // Constructor.
     TlsContextImpl() :
         cred_mgr_(new KeaCredentialsManager()),
-        rng_(new Botan::AutoSeeded_RNG()),
+        rng_(new BotanRandomNumberGenerator()),
         sess_mgr_(new KeaSessionManager()),
         policy_(new KeaPolicy()) {
     }
@@ -282,7 +281,7 @@ public:
     std::shared_ptr<KeaCredentialsManager> cred_mgr_;
 
     // Random Number Generator.
-    std::shared_ptr<Botan::AutoSeeded_RNG> rng_;
+    std::shared_ptr<BotanRandomNumberGenerator> rng_;
 
     // Session Manager.
     std::shared_ptr<KeaSessionManager> sess_mgr_;
