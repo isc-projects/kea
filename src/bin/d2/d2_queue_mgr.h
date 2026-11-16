@@ -35,7 +35,7 @@ namespace d2 {
 /// This class is a wrapper which is used to add an NCR along with the forward
 /// and/or reverse domains it matches to the D2QueueMgr's queue of requests.
 /// Domain matching was formerly done by D2UpateMgr during the construction of
-/// a NameChangeTransaction. By doing the matching before queing the request,
+/// a NameChangeTransaction. By doing the matching before queuing the request,
 /// NCRs that fail domain matching can be discarded immediately instead of
 /// wasting space on the queue. The wrapper allows the domain matching results
 /// to be preserved such that the matching need only be done once.
@@ -120,7 +120,8 @@ typedef boost::multi_index_container<
         // Index by DHCID
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<DhcidTag>,
-            boost::multi_index::const_mem_fun<MatchedNcr, const dhcp_ddns::D2Dhcid&,
+            boost::multi_index::const_mem_fun<MatchedNcr,
+                                              const dhcp_ddns::D2Dhcid&,
                                               &MatchedNcr::getDhcid>
         >
     >
@@ -318,7 +319,7 @@ public:
     /// passed up to the D2QueueMgr for queuing.
     /// If the given result indicates a successful receive completion and
     /// there is room left in the queue given request will be queued provided
-    /// it passes de-duplication and domain matcing requirements.
+    /// it passes de-duplication and domain matching requirements.
     ///
     /// If the queue is at maximum capacity, stopListening() is invoked and
     /// the state is set to STOPPED_QUEUE_FULL.
@@ -448,7 +449,7 @@ public:
     bool enqueue(dhcp_ddns::NameChangeRequestPtr& ncr,
                  bool suppress_duplicates = false);
 
-    /// @brief Creates an NCR matched to forward and reverse domains
+    /// @brief Creates an NCR matched to forward and reverse domains.
     ///
     /// Attempts to match an NCR to forward and reverse domains. If a
     /// given direction is enabled and no match exits it will return

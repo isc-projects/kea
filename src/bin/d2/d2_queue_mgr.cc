@@ -28,7 +28,7 @@ MatchedNcr::MatchedNcr(const NameChangeRequestPtr& ncr,
 
     if (!reverse_domain_ && !forward_domain) {
         isc_throw(D2QueueMgrError,
-                  "MatcheNcrPtr forward and reverse cannot both be null");
+                  "MatcheDNcrPtr forward and reverse cannot both be null");
     }
 }
 
@@ -340,18 +340,14 @@ D2QueueMgr::enqueue(NameChangeRequestPtr& new_ncr,
 
 void
 D2QueueMgr::refreshQueuedMatching() {
-    for (auto it = ncr_queue_.begin(); it != ncr_queue_.end(); ) {
+    for (auto it = ncr_queue_.begin(); it != ncr_queue_.end(); ++it) {
         auto matched_ncr = *it;
-        auto ncr = matched_ncr->getNcr();
         auto tmp = matchNcr(matched_ncr->getNcr());
         if (tmp) {
             matched_ncr->refresh(*tmp);
-            ++it;
         } else {
             // No longer matches it, discard it.
             auto copyit = it;
-            ++it;
-            std::cout << "no longer matches, discard it" << std::endl;
             ncr_queue_.erase(copyit);
         }
     }

@@ -579,8 +579,6 @@ TEST_F(NameChangeTransactionTest, transactionOutcomeString) {
     std::string exp_str("Status: Failed, Event: UNDEFINED,  Forward change:"
                         " failed,  Reverse change: failed,  request: ");
     exp_str += ncr->toText();
-
-    std::string tstring = name_change_->transactionOutcomeString();
     EXPECT_EQ(exp_str, name_change_->transactionOutcomeString());
 
     // Check case of success all around
@@ -590,7 +588,6 @@ TEST_F(NameChangeTransactionTest, transactionOutcomeString) {
     exp_str = "Status: Completed, Event: UNDEFINED,  Forward change: completed,"
               "  Reverse change: completed,  request: " + ncr->toText();
     EXPECT_EQ(exp_str, name_change_->transactionOutcomeString());
-
 
     // Check case of success, with no forward change
     name_change_->setNcrStatus(dhcp_ddns::ST_COMPLETED);

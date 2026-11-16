@@ -250,7 +250,7 @@ TEST_F(D2QueueMgrTest, basicQueue) {
     EXPECT_THROW(queue_mgr_->peek(), D2QueueMgrInvalidIndex);
     EXPECT_THROW(queue_mgr_->dequeue(), D2QueueMgrInvalidIndex);
 
-    // Vector to keep track of the NCRs we que.
+    // Vector to keep track of the NCRs we queue.
     std::vector<NameChangeRequestPtr>ref_msgs;
     NameChangeRequestPtr ncr;
 
@@ -406,7 +406,8 @@ TEST_F(D2QueueMgrUDPTest, stateModel) {
     EXPECT_THROW(queue_mgr_->startListening(), D2QueueMgrError);
 
     // Verify that initializing the listener moves us to INITTED state.
-    isc::asiolink::IOAddress addr(TEST_ADDRESS); EXPECT_NO_THROW(queue_mgr_->initUDPListener(addr, LISTENER_PORT,
+    isc::asiolink::IOAddress addr(TEST_ADDRESS);
+    EXPECT_NO_THROW(queue_mgr_->initUDPListener(addr, LISTENER_PORT,
                                                 FMT_JSON, true));
     EXPECT_EQ(D2QueueMgr::INITTED, queue_mgr_->getMgrState());
 
@@ -469,7 +470,7 @@ TEST_F(D2QueueMgrUDPTest, liveFeed) {
     NameChangeRequestPtr send_ncr;
     NameChangeRequestPtr received_ncr;
 
-    // Verifyt the queue manager's size and stat is NOT_INITTED.
+    // Verify the queue manager's size and stat is NOT_INITTED.
     ASSERT_EQ(VALID_MSG_CNT, queue_mgr_->getMaxQueueSize());
     ASSERT_EQ(D2QueueMgr::NOT_INITTED, queue_mgr_->getMgrState());
 
@@ -668,7 +669,7 @@ TEST_F(D2QueueMgrUDPTest, nestedNCRs) {
 /// After each NCR is queued, D2QueueMgr::findLast() is invoked
 /// for each of the three dhcids. The expected result is indicated
 /// by the expected index within the reference list. An index of -1
-/// means findLast() should return an empty pointr (i.e. not
+/// means findLast() should return an empty pointer (i.e. not
 /// found).
 TEST_F(D2QueueMgrTest, findLast) {
     makeFullConfig();
@@ -685,7 +686,7 @@ TEST_F(D2QueueMgrTest, findLast) {
     D2Dhcid dhcid3("333333333A7F8E3D");
 
     struct Scenario {
-        D2Dhcid& dhcid_;            // dhcid of the NCR to queue 
+        D2Dhcid& dhcid_;            // dhcid of the NCR to queue
         NameChangeType type_;       // type of the NCR to  queue
         uint32_t lease_length_;     // lease length of the NCR to queue
         int exp_last_dhcid1_idx_;   // expected idx of last NCR for dhcid1
@@ -777,7 +778,7 @@ TEST_F(D2QueueMgrTest, duplicateSuppression) {
     D2Dhcid dhcid3("333333333A7F8E3D");
 
     struct Scenario {
-        D2Dhcid& dhcid_;        // dhcid of the NCR to queue 
+        D2Dhcid& dhcid_;        // dhcid of the NCR to queue
         NameChangeType type_;   // type of the NCR to  queue
         bool should_queue_;     // true if NCR should queue successfully
     };
@@ -786,7 +787,7 @@ TEST_F(D2QueueMgrTest, duplicateSuppression) {
     std::list<Scenario> scenarios = {
         { dhcid1, CHG_ADD,      true  },
         { dhcid1, CHG_ADD,      false },
-        { dhcid1, CHG_REMOVE,   true  }, 
+        { dhcid1, CHG_REMOVE,   true  },
         { dhcid3, CHG_REMOVE,   true  },
         { dhcid2, CHG_ADD,      true  },
         { dhcid3, CHG_REMOVE,   false },
@@ -872,7 +873,7 @@ TEST_F(D2QueueMgrTest, forwardDomainMatching) {
     EXPECT_NO_THROW(queued = queue_mgr_->enqueue(ncr, true));
 
     ASSERT_TRUE(queued);
-    ASSERT_EQ(1, queue_mgr_->getQueueSize());
+    ASSERT_EQ(1U, queue_mgr_->getQueueSize());
     // Verify the MatchedNCR is as expected.
     auto mncr = queue_mgr_->peek();
     ASSERT_TRUE(mncr);
@@ -886,7 +887,7 @@ TEST_F(D2QueueMgrTest, forwardDomainMatching) {
     ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(test_msgs[1]));
     EXPECT_NO_THROW(queued = queue_mgr_->enqueue(ncr, true));
     EXPECT_FALSE(queued);
-    EXPECT_EQ(0, queue_mgr_->getQueueSize());
+    EXPECT_EQ(0U, queue_mgr_->getQueueSize());
 }
 
 // Test reverse matching when only reverse domains are defined.
@@ -929,7 +930,7 @@ TEST_F(D2QueueMgrTest, reverseDomainMatching) {
     bool queued;
     EXPECT_NO_THROW(queued = queue_mgr_->enqueue(ncr, true));
     EXPECT_TRUE(queued);
-    EXPECT_EQ(1, queue_mgr_->getQueueSize());
+    EXPECT_EQ(1U, queue_mgr_->getQueueSize());
 
     // Verify the MatchedNCR is as expected.
     auto mncr = queue_mgr_->peek();
@@ -944,7 +945,7 @@ TEST_F(D2QueueMgrTest, reverseDomainMatching) {
     ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(test_msgs[1]));
     EXPECT_NO_THROW(queued = queue_mgr_->enqueue(ncr, true));
     EXPECT_FALSE(queued);
-    EXPECT_EQ(0, queue_mgr_->getQueueSize());
+    EXPECT_EQ(0U, queue_mgr_->getQueueSize());
 }
 
 TEST_F(D2QueueMgrTest, refreshMatching) {
