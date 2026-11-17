@@ -122,9 +122,15 @@ public:
             NodePtr node = stack.back();
             stack.pop_back();
             if (node->left_) {
+                if (node->left_->parent_) {
+                    node->left_->parent_.reset();
+                }
                 stack.push_back(node->left_);
             }
             if (node->right_) {
+                if (node->right_->parent_) {
+                    node->right_->parent_.reset();
+                }
                 stack.push_back(node->right_);
             }
             node->left_.reset();
