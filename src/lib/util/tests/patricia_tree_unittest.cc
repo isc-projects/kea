@@ -285,4 +285,62 @@ TEST_F(PatriciaTreeTest, defaultRoute) {
     EXPECT_EQ(0, path_ids[0]);
 }
 
+/// @brief Counting payload.
+class CMarkerList {
+public:
+    static size_t counter_;
+    static size_t overflow_;
+    CMarkerList() : list_() {
+        ++counter_;
+    }
+    ~CMarkerList() {
+        if (counter_ == 0) {
+            ++overflow_;
+        } else {
+            --counter_;
+        }
+    }
+    void push_back(int id) {
+        list_.push_back(Marker(id));
+    }
+    void clear() {
+        list_.clear();
+    }
+    list<Marker> list_;
+};
+
+size_t CMarkerList::counter_ = 0;
+size_t CMarkerList::overflow_ = 0;
+
+typedef PatriciaTree<CMarkerList> CTree;
+
+// Check tree build and clear.
+TEST(PatriciaTreeCounterTest, clear) {
+    CTree tree(4);
+    int id = 0;
+    CMarkerList::counter_ = 0;
+    CMarkerList::overflow_ = 0;
+    list<pair<string, uint8_t> > prefixes =  {
+        { "192.0.2.0", 24 },
+        { "10.0.0.0", 8 },
+        { "10.0.0.0", 24 },
+        { "11.0.0.0", 8 },
+        { "203.0.113.0", 24 },
+        { "198.51.100.0", 24 },
+        { "172.16.0.0", 12 },
+        { "0.0.0.0", 0 }
+    };
+    for (auto const& prefix : prefixes) {
+        auto key = pton(AF_INET, prefix.first);
+        auto node = tree.insert(key, prefix.second);
+        ASSERT_TRUE(node);
+        node->contents_.push_back(++id);
+    };
+    EXPECT_EQ(CMarkerList::counter_, tree.getNodeCount());
+    tree.clear();
+    EXPECT_EQ(0U, tree.getNodeCount());
+    EXPECT_EQ(0U, CMarkerList::counter_);
+    ASSERT_EQ(0U, CMarkerList::overflow_);
+}
+
 } // namespace
