@@ -42,8 +42,8 @@ The utilities library (libkea-util) provides generic and Kea utilities:
 
  - optional: optional values.
 
- - patricia tree: patricia tree (known to be the best (worst case in
-   the number of bits so constant) for look for address matching prefixes).
+ - patricia tree: binary patricia tree over fixed-size network addresses,
+  useful for matching an address to a subnet.
 
  - pid file: process id files.
 
