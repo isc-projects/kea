@@ -29,6 +29,7 @@ using namespace isc::data;
 using namespace isc::hooks;
 using namespace isc::http;
 using namespace isc::process;
+using namespace isc::util::file;
 using namespace isc::yang;
 
 namespace {
@@ -185,8 +186,10 @@ TEST(NetconfCfgMgr, contextGlobals) {
     }
 }
 
+static TemporaryDirectory TEMP_DIR = TemporaryDirectory();
+
 /// @brief Netconf configurations used in tests.
-const char* NETCONF_CONFIGS[] = {
+static std::string NETCONF_CONFIGS_DATA[] = {
 
     // configuration 0: empty (nothing specified)
     "{ }",
@@ -206,7 +209,7 @@ const char* NETCONF_CONFIGS[] = {
     "            \"boot-update\": true,\n"
     "            \"control-socket\": {\n"
     "                \"socket-type\": \"unix\",\n"
-    "                \"socket-name\": \"" TEST_DATA_BUILDDIR "/socket-v4\"\n"
+    "                \"socket-name\": \"" + TEMP_DIR.dirName() + "/socket-v4\"\n"
     "            }\n"
     "        }\n"
     "    }\n"
@@ -220,20 +223,20 @@ const char* NETCONF_CONFIGS[] = {
     "            \"boot-update\": true,\n"
     "            \"control-socket\": {\n"
     "                \"socket-type\": \"unix\",\n"
-    "                \"socket-name\": \"" TEST_DATA_BUILDDIR "/socket-v4\"\n"
+    "                \"socket-name\": \"" + TEMP_DIR.dirName() + "/socket-v4\"\n"
     "            }\n"
     "        },\n"
     "        \"dhcp6\": {\n"
     "            \"control-socket\": {\n"
     "                \"socket-type\": \"unix\",\n"
-    "                \"socket-name\": \"" TEST_DATA_BUILDDIR "/socket-v6\"\n"
+    "                \"socket-name\": \"" + TEMP_DIR.dirName() + "/socket-v6\"\n"
     "            }\n"
     "        },\n"
     "        \"d2\": {\n"
     "            \"subscribe-changes\": false,\n"
     "            \"control-socket\": {\n"
     "                \"socket-type\": \"unix\",\n"
-    "                \"socket-name\": \"" TEST_DATA_BUILDDIR "/socket-d2\"\n"
+    "                \"socket-name\": \"" + TEMP_DIR.dirName() + "/socket-d2\"\n"
     "            }\n"
     "        }\n"
     "    }\n"
@@ -247,7 +250,7 @@ const char* NETCONF_CONFIGS[] = {
     "        \"dhcp4\": {\n"
     "            \"control-socket\": {\n"
     "                \"socket-type\": \"unix\",\n"
-    "                \"socket-name\": \"" TEST_DATA_BUILDDIR "/socket-v4\"\n"
+    "                \"socket-name\": \"" + TEMP_DIR.dirName() + "/socket-v4\"\n"
     "            }\n"
     "        }\n"
     "    },\n"
@@ -268,7 +271,7 @@ const char* NETCONF_CONFIGS[] = {
     "            \"subscribe-changes\": false,\n"
     "            \"control-socket\": {\n"
     "                \"socket-type\": \"unix\",\n"
-    "                \"socket-name\": \"" TEST_DATA_BUILDDIR "/socket-d2\"\n"
+    "                \"socket-name\": \"" + TEMP_DIR.dirName() + "/socket-d2\"\n"
     "            }\n"
     "        }\n"
     "    }\n"
@@ -280,7 +283,7 @@ const char* NETCONF_CONFIGS[] = {
     "        \"dhcp6\": {\n"
     "            \"control-socket\": {\n"
     "                \"socket-type\": \"unix\",\n"
-    "                \"socket-name\": \"" TEST_DATA_BUILDDIR "/socket-v6\"\n"
+    "                \"socket-name\": \"" + TEMP_DIR.dirName() + "/socket-v6\"\n"
     "            }\n"
     "        }\n"
     "    }\n"
@@ -294,13 +297,13 @@ const char* NETCONF_CONFIGS[] = {
     "            \"comment\": \"dhcp4 server\",\n"
     "            \"control-socket\": {\n"
     "                \"socket-type\": \"unix\",\n"
-    "                \"socket-name\": \"" TEST_DATA_BUILDDIR "/socket-v4\",\n"
+    "                \"socket-name\": \"" + TEMP_DIR.dirName() + "/socket-v4\",\n"
     "            }\n"
     "        },\n"
     "        \"dhcp6\": {\n"
     "            \"control-socket\": {\n"
     "                \"socket-type\": \"unix\",\n"
-    "                \"socket-name\": \"" TEST_DATA_BUILDDIR "/socket-v6\",\n"
+    "                \"socket-name\": \"" + TEMP_DIR.dirName() + "/socket-v6\",\n"
     "                \"user-context\": { \"version\": 1 }\n"
     "            }\n"
     "        }\n"
@@ -354,6 +357,21 @@ const char* NETCONF_CONFIGS[] = {
     "}"
 };  // NETCONF_CONFIGS
 
+static const char* NETCONF_CONFIGS[] = {
+    NETCONF_CONFIGS_DATA[0].c_str(),
+    NETCONF_CONFIGS_DATA[1].c_str(),
+    NETCONF_CONFIGS_DATA[2].c_str(),
+    NETCONF_CONFIGS_DATA[3].c_str(),
+    NETCONF_CONFIGS_DATA[4].c_str(),
+    NETCONF_CONFIGS_DATA[5].c_str(),
+    NETCONF_CONFIGS_DATA[6].c_str(),
+    NETCONF_CONFIGS_DATA[7].c_str(),
+    NETCONF_CONFIGS_DATA[8].c_str(),
+    NETCONF_CONFIGS_DATA[9].c_str(),
+    NETCONF_CONFIGS_DATA[10].c_str(),
+    NETCONF_CONFIGS_DATA[11].c_str(),
+};
+
 // Tests the handling of bad socket type. Can't use the fixture class
 // because the Netconf parser does not allow bad socket types.
 TEST(NetconfParser, badSocketType) {
@@ -399,9 +417,8 @@ public:
     /// @brief Sets the path in which the socket can be created.
     /// @param explicit_path path to use as the hooks path.
     void setSocketTestPath(const std::string explicit_path = "") {
-        UnixCommandConfig::getSocketPath(true,
-                                            (!explicit_path.empty() ?
-                                            explicit_path : TEST_DATA_BUILDDIR));
+        UnixCommandConfig::getSocketPath(true, (!explicit_path.empty() ?
+                                                explicit_path : TEMP_DIR.dirName()));
 
         auto path = UnixCommandConfig::getSocketPath();
         UnixCommandConfig::setSocketPathPerms(isc::util::file::getPermissions(path));
@@ -514,7 +531,7 @@ TEST_F(NetconfParserTest, configParseServerDhcp4) {
     CfgControlSocketPtr socket = server->getCfgControlSocket();
     ASSERT_TRUE(socket);
     EXPECT_EQ(CfgControlSocket::Type::UNIX, socket->getType());
-    EXPECT_EQ(TEST_DATA_BUILDDIR "/socket-v4", socket->getName());
+    EXPECT_EQ(TEMP_DIR.dirName() + "/socket-v4", socket->getName());
     EXPECT_EQ("http://127.0.0.1:8000/", socket->getUrl().toText());
 }
 
@@ -536,7 +553,7 @@ TEST_F(NetconfParserTest, configParseServerD2) {
     CfgControlSocketPtr socket = server->getCfgControlSocket();
     ASSERT_TRUE(socket);
     EXPECT_EQ(CfgControlSocket::Type::UNIX, socket->getType());
-    EXPECT_EQ(TEST_DATA_BUILDDIR "/socket-d2", socket->getName());
+    EXPECT_EQ(TEMP_DIR.dirName() + "/socket-d2", socket->getName());
     EXPECT_EQ("http://127.0.0.1:8000/", socket->getUrl().toText());
 }
 
@@ -555,7 +572,7 @@ TEST_F(NetconfParserTest, configParseServerDhcp6) {
     CfgControlSocketPtr socket = server->getCfgControlSocket();
     ASSERT_TRUE(socket);
     EXPECT_EQ(CfgControlSocket::Type::UNIX, socket->getType());
-    EXPECT_EQ(TEST_DATA_BUILDDIR "/socket-v6", socket->getName());
+    EXPECT_EQ(TEMP_DIR.dirName() + "/socket-v6", socket->getName());
     EXPECT_EQ("http://127.0.0.1:8000/", socket->getUrl().toText());
 }
 
@@ -579,7 +596,7 @@ TEST_F(NetconfParserTest, configParse4Servers) {
     CfgControlSocketPtr socket = server->getCfgControlSocket();
     ASSERT_TRUE(socket);
     EXPECT_EQ(CfgControlSocket::Type::UNIX, socket->getType());
-    EXPECT_EQ(TEST_DATA_BUILDDIR "/socket-v4", socket->getName());
+    EXPECT_EQ(TEMP_DIR.dirName() + "/socket-v4", socket->getName());
     EXPECT_EQ("http://127.0.0.1:8000/", socket->getUrl().toText());
 
     ASSERT_NO_THROW_LOG(ctx->getCfgServersMap()->at("dhcp6"));
@@ -592,7 +609,7 @@ TEST_F(NetconfParserTest, configParse4Servers) {
     EXPECT_TRUE(server->getValidateChanges());
     ASSERT_TRUE(socket);
     EXPECT_EQ(CfgControlSocket::Type::UNIX, socket->getType());
-    EXPECT_EQ(TEST_DATA_BUILDDIR "/socket-v6", socket->getName());
+    EXPECT_EQ(TEMP_DIR.dirName() + "/socket-v6", socket->getName());
     EXPECT_EQ("http://127.0.0.1:8000/", socket->getUrl().toText());
 
     ASSERT_NO_THROW_LOG(ctx->getCfgServersMap()->at("d2"));
@@ -605,7 +622,7 @@ TEST_F(NetconfParserTest, configParse4Servers) {
     socket = server->getCfgControlSocket();
     ASSERT_TRUE(socket);
     EXPECT_EQ(CfgControlSocket::Type::UNIX, socket->getType());
-    EXPECT_EQ(TEST_DATA_BUILDDIR "/socket-d2", socket->getName());
+    EXPECT_EQ(TEMP_DIR.dirName() + "/socket-d2", socket->getName());
     EXPECT_EQ("http://127.0.0.1:8000/", socket->getUrl().toText());
 
     // Check unparsing.
@@ -620,7 +637,7 @@ TEST_F(NetconfParserTest, configParse4Servers) {
         "                \"validate-changes\": true,\n"
         "                \"control-socket\": {\n"
         "                    \"socket-type\": \"unix\",\n"
-        "                    \"socket-name\": \"" TEST_DATA_BUILDDIR "/socket-v4\",\n"
+        "                    \"socket-name\": \"" + TEMP_DIR.dirName() + "/socket-v4\",\n"
         "                    \"socket-url\": \"http://127.0.0.1:8000/\"\n"
         "                }\n"
         "            },\n"
@@ -631,7 +648,7 @@ TEST_F(NetconfParserTest, configParse4Servers) {
         "                \"validate-changes\": true,\n"
         "                \"control-socket\": {\n"
         "                    \"socket-type\": \"unix\",\n"
-        "                    \"socket-name\": \"" TEST_DATA_BUILDDIR "/socket-v6\",\n"
+        "                    \"socket-name\": \"" + TEMP_DIR.dirName() + "/socket-v6\",\n"
         "                    \"socket-url\": \"http://127.0.0.1:8000/\"\n"
         "                }\n"
         "            },\n"
@@ -642,7 +659,7 @@ TEST_F(NetconfParserTest, configParse4Servers) {
         "                \"validate-changes\": true,\n"
         "                \"control-socket\": {\n"
         "                    \"socket-type\": \"unix\",\n"
-        "                    \"socket-name\": \"" TEST_DATA_BUILDDIR "/socket-d2\",\n"
+        "                    \"socket-name\": \"" + TEMP_DIR.dirName() + "/socket-d2\",\n"
         "                    \"socket-url\": \"http://127.0.0.1:8000/\"\n"
         "                }\n"
         "            }\n"

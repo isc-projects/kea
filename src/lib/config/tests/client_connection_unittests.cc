@@ -24,6 +24,7 @@ using namespace isc::asiolink;
 using namespace isc::asiolink::test;
 using namespace isc::config;
 using namespace isc::config::test;
+using namespace isc::util::file;
 
 namespace {
 
@@ -40,11 +41,7 @@ public:
         : io_service_(new IOService()), handler_invoked_(false) {
         SocketPath::removeUnixSocketFile();
         setSocketTestPath();
-        socket_name_too_long_ = SocketPath::isTooLong(SocketPath::unixSocketFilePath());
-        if (!socket_name_too_long_) {
-            test_socket_.reset(
-                new TestServerUnixSocket(io_service_, SocketPath::unixSocketFilePath()));
-        }
+        test_socket_.reset(new TestServerUnixSocket(io_service_, SocketPath::unixSocketFilePath()));
     }
 
     /// @brief Destructor.
@@ -62,8 +59,9 @@ public:
     ///
     /// @param explicit_path path to use as the socket path.
     void setSocketTestPath(const std::string explicit_path = std::string()) {
-        std::string const path(UnixCommandConfig::getSocketPath(
-            true, (!explicit_path.empty() ? explicit_path : TEST_DATA_BUILDDIR)));
+        static TemporaryDirectory TEMP_DIR = TemporaryDirectory();
+        std::string const path(UnixCommandConfig::getSocketPath(true, (!explicit_path.empty() ?
+                                                                       explicit_path : TEMP_DIR.dirName())));
         UnixCommandConfig::setSocketPathPerms(isc::util::file::getPermissions(path));
     }
 
@@ -84,16 +82,11 @@ public:
 
     /// @brief Client connection.
     ClientConnectionPtr conn_;
-
-    /// @brief Whether socket name is too long which is determined at test startup.
-    bool socket_name_too_long_;
 };
 
 // Tests successful transaction: connect, send command and receive a
 // response.
 TEST_F(ClientConnectionTest, success) {
-    SKIP_IF(socket_name_too_long_);
-
     // Start timer protecting against test timeouts.
     test_socket_->startTimer(TEST_TIMEOUT);
 
@@ -132,8 +125,6 @@ TEST_F(ClientConnectionTest, success) {
 // This test checks that a timeout is signalled when the communication
 // takes too long.
 TEST_F(ClientConnectionTest, timeout) {
-    SKIP_IF(socket_name_too_long_);
-
     // The server will return only partial JSON response (lacking closing
     // brace). The client will wait for closing brace and eventually the
     // connection should time out.
@@ -173,8 +164,6 @@ TEST_F(ClientConnectionTest, timeout) {
 // This test checks that an error is returned when the client is unable
 // to connect to the server.
 TEST_F(ClientConnectionTest, connectionError) {
-    SKIP_IF(socket_name_too_long_);
-
     // Create the new connection but do not bind the server socket.
     // The connection should be refused and an error returned.
     conn_.reset(new ClientConnection(io_service_));

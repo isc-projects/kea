@@ -32,6 +32,7 @@ using namespace isc::process;
 using namespace isc::test;
 using namespace isc::hooks;
 using namespace isc::util;
+using namespace isc::util::file;
 
 namespace {
 
@@ -179,8 +180,9 @@ public:
     /// @brief Sets the path in which the socket can be created.
     /// @param explicit_path path to use as the socket path.
     void setSocketTestPath(const std::string explicit_path = "") {
+        static TemporaryDirectory TEMP_DIR = TemporaryDirectory();
         UnixCommandConfig::getSocketPath(true, (!explicit_path.empty() ?
-                                         explicit_path : TEST_DATA_BUILDDIR));
+                                                explicit_path : TEMP_DIR.dirName()));
 
         auto path = UnixCommandConfig::getSocketPath();
         UnixCommandConfig::setSocketPathPerms(file::getPermissions(path));

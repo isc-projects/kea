@@ -25,6 +25,7 @@ using namespace isc::config::test;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::util;
+using namespace isc::util::file;
 using namespace std;
 
 // Test class for Unix Command Manager
@@ -46,9 +47,9 @@ public:
     /// @brief Sets the path in which the socket can be created.
     /// @param explicit_path path to use as the hooks path.
     void setSocketTestPath(const std::string explicit_path = "") {
-        UnixCommandConfig::getSocketPath(true,
-                                         (!explicit_path.empty() ?
-                                          explicit_path : TEST_DATA_BUILDDIR));
+        static TemporaryDirectory TEMP_DIR = TemporaryDirectory();
+        UnixCommandConfig::getSocketPath(true, (!explicit_path.empty() ?
+                                                explicit_path : TEMP_DIR.dirName()));
 
         auto path = UnixCommandConfig::getSocketPath();
         UnixCommandConfig::setSocketPathPerms(file::getPermissions(path));

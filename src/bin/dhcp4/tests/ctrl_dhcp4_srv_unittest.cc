@@ -131,16 +131,13 @@ public:
     /// @brief Asynchronous timer service to detect timeouts.
     IntervalTimerPtr test_timer_;
 
-    /// @brief Whether the current test was skipped.
-    bool skipped_;
 
     /// @brief Default constructor
     ///
     /// Sets socket path to its default value.
     CtrlChannelDhcpv4SrvTest()
         : interfaces_("\"*\""),
-          service_sockets_require_all_(false),
-          skipped_(false) {
+          service_sockets_require_all_(false) {
         resetLogPath();
         setSocketTestPath();
         reset();
@@ -288,12 +285,6 @@ public:
 
         int status = 0;
         ConstElementPtr txt = isc::config::parseAnswer(status, answer);
-
-        bool const too_long(SocketPath::isTooLong(socket_path_));
-        if (too_long) {
-            skipped_ = true;
-            SKIP_IF("Socket name too long.");
-        }
 
         // This should succeed. If not, print the error message.
         ASSERT_EQ(0, status) << txt->str();
@@ -610,7 +601,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commandsRegistration) {
 // via ControlChannel
 TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelNegative) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     sendUnixCommand("{ \"command\": \"bogus\" }", response);
@@ -627,7 +617,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelNegative) {
 // via ControlChannel
 TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelShutdown) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     sendUnixCommand("{ \"command\": \"shutdown\" }", response);
@@ -640,7 +629,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelShutdown) {
 // test of Dhcpv4 statistics.
 TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelStats) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     // Check statistic-get
@@ -771,7 +759,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelStats) {
 TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
     setLogTestPath("/dev");
     createUnixChannelServer();
-    SKIP_IF(skipped_);
 
     // Define strings to permutate the config arguments
     // (Note the line feeds makes errors easy to find)
@@ -955,7 +942,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
 TEST_F(CtrlChannelDhcpv4SrvTest, configSetLFCRunning) {
     setLogTestPath("/dev");
     createUnixChannelServer();
-    SKIP_IF(skipped_);
 
     // Define strings to permutate the config arguments
     // (Note the line feeds makes errors easy to find)
@@ -1111,7 +1097,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSetLFCRunning) {
 TEST_F(CtrlChannelDhcpv4SrvTest, configSetLFCRunning2) {
     setLogTestPath("/dev");
     createUnixChannelServer();
-    SKIP_IF(skipped_);
 
     // Define strings to permutate the config arguments
     // (Note the line feeds makes errors easy to find)
@@ -1268,7 +1253,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSetLFCRunning2) {
 // config-get handler are actually converting the configuration correctly.
 TEST_F(CtrlChannelDhcpv4SrvTest, configGet) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     sendUnixCommand("{ \"command\": \"config-get\" }", response);
@@ -1293,7 +1277,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configGet) {
 // config-hash-get.
 TEST_F(CtrlChannelDhcpv4SrvTest, configHashGet) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     sendUnixCommand("{ \"command\": \"config-hash-get\" }", response);
@@ -1325,7 +1308,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configHashGet) {
 TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
     setLogTestPath("/dev");
     createUnixChannelServer();
-    SKIP_IF(skipped_);
 
     // Define strings to permutate the config arguments
     // (Note the line feeds makes errors easy to find)
@@ -1474,7 +1456,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
 // Verify that the "subnet4-select-test" command will do what we expect.
 TEST_F(CtrlChannelDhcpv4SrvTest, subnetSelectTest) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
 
     string command_txt = "{ \"command\": \"subnet4-select-test\", \"arguments\": { \"classes\": [ \"foo\" ] } }";
 
@@ -1489,7 +1470,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, subnetSelectTest) {
 // Verify that the "subnet4o6-select-test" command will do what we expect.
 TEST_F(CtrlChannelDhcpv4SrvTest, subnet4o6SelectTest) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
 
     string command_txt = "{ \"command\": \"subnet4o6-select-test\", \"arguments\": { \"classes\": [ \"foo\" ] } }";
 
@@ -1504,7 +1484,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, subnet4o6SelectTest) {
 // This test verifies that the DHCP server handles version-get commands
 TEST_F(CtrlChannelDhcpv4SrvTest, getVersion) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
 
     std::string response;
 
@@ -1523,7 +1502,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, getVersion) {
 // This test verifies that the DHCP server handles server-tag-get command
 TEST_F(CtrlChannelDhcpv4SrvTest, serverTagGet) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
 
     std::string response;
     std::string expected;
@@ -1545,7 +1523,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, serverTagGet) {
 // This test verifies that the DHCP server handles status-get commands
 TEST_F(CtrlChannelDhcpv4SrvTest, statusGet) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
 
     // start_ is initialized by init.
     ASSERT_THROW(server_->init("/no/such/file"), BadValue);
@@ -1657,7 +1634,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, statusGet) {
 TEST_F(CtrlChannelDhcpv4SrvTest, noManagers) {
     // Send the status-get command.
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     LeaseMgrFactory::destroy();
     HostMgr::create();
     string response_text;
@@ -1682,7 +1658,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, statusGetSockets) {
 
     // Send the status-get command.
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     string response_text;
     sendUnixCommand(R"({ "command": "status-get" })", response_text);
     ConstElementPtr response;
@@ -1722,7 +1697,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, statusGetSocketsErrors) {
 
     // Send the status-get command.
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     string response_text;
     sendUnixCommand(R"({ "command": "status-get" })", response_text);
     ConstElementPtr response;
@@ -1766,7 +1740,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, statusGetSocketsErrors) {
 // This test verifies that the DHCP server handles config-backend-pull command
 TEST_F(CtrlChannelDhcpv4SrvTest, configBackendPull) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
 
     std::string response;
     std::string expected;
@@ -1781,7 +1754,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configBackendPull) {
 // leases on leases-reclaim command
 TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaim) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
 
     // Create expired leases. Leases are expired by 40 seconds ago
     // (valid lifetime = 60, cltt = now - 100).
@@ -1840,7 +1812,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaim) {
 // leases on leases-reclaim command with remove = true
 TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaimRemove) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
 
     // Create expired leases. Leases are expired by 40 seconds ago
     // (valid lifetime = 60, cltt = now - 100).
@@ -1880,7 +1851,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlLeasesReclaimRemove) {
 // via ControlChannel
 TEST_F(CtrlChannelDhcpv4SrvTest, listCommands) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     sendUnixCommand("{ \"command\": \"list-commands\" }", response);
@@ -1922,7 +1892,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, listCommands) {
 // Tests if config-write can be called without any parameters.
 TEST_F(CtrlChannelDhcpv4SrvTest, configWriteNoFilename) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set by the command line -c parameter.
@@ -1939,7 +1908,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configWriteNoFilename) {
 // Tests if config-write can be called with a valid filename as parameter.
 TEST_F(CtrlChannelDhcpv4SrvTest, configWriteFilename) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set by the command line -c parameter.
@@ -1955,7 +1923,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configWriteFilename) {
 // Tests if config-write can be called with a valid full path as parameter.
 TEST_F(CtrlChannelDhcpv4SrvTest, configWriteFullPath) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set by the command line -c parameter.
@@ -1971,7 +1938,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configWriteFullPath) {
 // Tests if config-write raises an error with invalid path as parameter.
 TEST_F(CtrlChannelDhcpv4SrvTest, configWriteBadPath) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set by the command line -c parameter.
@@ -1990,7 +1956,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configWriteBadPath) {
 // Tests if config-write raises an error with invalid full path as parameter.
 TEST_F(CtrlChannelDhcpv4SrvTest, configWriteBadFullPath) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set by the command line -c parameter.
@@ -2010,7 +1975,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configWriteBadFullPath) {
 // file is missing.
 TEST_F(CtrlChannelDhcpv4SrvTest, configReloadMissingFile) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set to whatever value is passed to -c when the server is
@@ -2032,7 +1996,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configReloadMissingFile) {
 // file is not a valid JSON.
 TEST_F(CtrlChannelDhcpv4SrvTest, configReloadBrokenFile) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set to whatever value is passed to -c when the server is
@@ -2060,7 +2023,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configReloadBrokenFile) {
 // Check that the "config-reload" fails when LFC is running.
 TEST_F(CtrlChannelDhcpv4SrvTest, configReloadLFCRunning) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set to whatever value is passed to -c when the server is
@@ -2117,7 +2079,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configReloadLFCRunning) {
 // Check that the "config-reload" fails when LFC is running using a name.
 TEST_F(CtrlChannelDhcpv4SrvTest, configReloadLFCRunning2) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set to whatever value is passed to -c when the server is
@@ -2175,7 +2136,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configReloadLFCRunning2) {
 // file is loaded correctly.
 TEST_F(CtrlChannelDhcpv4SrvTest, configReloadValid) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set to whatever value is passed to -c when the server is
@@ -2239,7 +2199,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configReloadDetectInterfaces) {
     IfaceMgr::instance().closeSockets();
     IfaceMgr::instance().detectIfaces();
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set to whatever value is passed to -c when the server is
@@ -2316,7 +2275,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTestDetectInterfaces) {
     IfaceMgr::instance().closeSockets();
     IfaceMgr::instance().detectIfaces();
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     // Ok, enough fooling around. Let's create a valid config.
@@ -2390,7 +2348,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSetDetectInterfaces) {
     IfaceMgr::instance().closeSockets();
     IfaceMgr::instance().detectIfaces();
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     // Ok, enough fooling around. Let's create a valid config.
@@ -2472,7 +2429,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, interfaceList) {
     createUnixChannelServer();
     PktFilterPtr filter(new PktFilterTestStub());
     IfaceMgr::instance().setPacketFilter(filter);
-    SKIP_IF(skipped_);
     std::string response;
 
     std::string command = "{ \"command\": \"interface-list\" }";
@@ -2517,7 +2473,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, interfaceRedetect) {
     createUnixChannelServer();
     PktFilterPtr filter(new PktFilterTestStub());
     IfaceMgr::instance().setPacketFilter(filter);
-    SKIP_IF(skipped_);
     std::string response;
 
     IfacePtr eth1 = IfaceMgrTestConfig::createIface("eth1", ETH1_INDEX,
@@ -2598,7 +2553,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, interfaceAdd) {
     createUnixChannelServer();
     PktFilterPtr filter(new PktFilterTestStub());
     IfaceMgr::instance().setPacketFilter(filter);
-    SKIP_IF(skipped_);
     std::string response;
 
     std::string command = "{ \"command\": \"interface-add\", \"arguments\": { \"interfaces\": [ \"eth0\" ] } }";
@@ -2649,7 +2603,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, interfaceAddFatal) {
     createUnixChannelServer();
     PktFilterPtr filter(new PktFilterTestStub());
     IfaceMgr::instance().setPacketFilter(filter);
-    SKIP_IF(skipped_);
     std::string response;
 
     std::string command = "{ \"command\": \"interface-add\", \"arguments\": { \"interfaces\": [ \"eth0\" ] } }";
@@ -2668,7 +2621,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, interfaceAddFatal) {
 // parameters.
 TEST_F(CtrlChannelDhcpv4SrvTest, dhcpDisableBadParam) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     sendUnixCommand("{"
@@ -2744,7 +2696,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, dhcpDisableBadParam) {
 // This test verifies if it is possible to disable DHCP service via command.
 TEST_F(CtrlChannelDhcpv4SrvTest, dhcpDisable) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     sendUnixCommand("{ \"command\": \"dhcp-disable\" }", response);
@@ -2829,7 +2780,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, dhcpDisable) {
 // the origin-id.
 TEST_F(CtrlChannelDhcpv4SrvTest, dhcpDisableOriginId) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
@@ -2863,7 +2813,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, dhcpDisableOriginId) {
 // period of time, after which the service is automatically enabled.
 TEST_F(CtrlChannelDhcpv4SrvTest, dhcpDisableTemporarily) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     // Send a command to disable DHCP service for 3 seconds.
@@ -2894,7 +2843,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, dhcpDisableTemporarily) {
 // parameters.
 TEST_F(CtrlChannelDhcpv4SrvTest, dhcpEnableBadParam) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
     ConstElementPtr rsp;
 
@@ -2956,7 +2904,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, dhcpEnableBadParam) {
 // This test verifies if it is possible to enable DHCP service via command.
 TEST_F(CtrlChannelDhcpv4SrvTest, dhcpEnable) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     sendUnixCommand("{ \"command\": \"dhcp-enable\" }", response);
@@ -3037,7 +2984,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, dhcpEnable) {
 // the origin-id.
 TEST_F(CtrlChannelDhcpv4SrvTest, dhcpEnableOriginId) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     ConstElementPtr rsp;
@@ -3092,7 +3038,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, dhcpEnableOriginId) {
 // This test verifies that subnet4-select-test command performs sanity check parameters.
 TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestBadParam) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
     ConstElementPtr rsp;
 
@@ -3366,7 +3311,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestBadParam) {
 // relay link select address.
 TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestRAILinkSelect) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
@@ -3418,7 +3362,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestRAILinkSelect) {
 // subnet select address.
 TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestSubnetSelect) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
@@ -3470,7 +3413,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestSubnetSelect) {
 // relay address.
 TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestRelayAddress) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
@@ -3523,7 +3465,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestRelayAddress) {
 // gateway address.
 TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestGateway) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
@@ -3575,7 +3516,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestGateway) {
 // client address.
 TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestClient) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
@@ -3627,7 +3567,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestClient) {
 // remote/source address.
 TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestRemote) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
@@ -3680,7 +3619,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestRemote) {
 TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestIface) {
     isc::dhcp::test::IfaceMgrTestConfig test_config(true);
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
@@ -3733,7 +3671,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestIface) {
 // This test verifies if subnet4-select-test command returns proper guarded subnet.
 TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestClass) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
@@ -3787,7 +3724,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, subnet4SelectTestClass) {
 // This test verifies that subnet4o6-select-test command performs sanity check parameters.
 TEST_F(CtrlChannelDhcpv4SrvTest, subnet4o6SelectTestBadParam) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
     ConstElementPtr rsp;
 
@@ -4094,7 +4030,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, subnet4o6SelectTestBadParam) {
 // remote/source address.
 TEST_F(CtrlChannelDhcpv4SrvTest, subnet4o6SelectTestRemote) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
@@ -4147,7 +4082,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, subnet4o6SelectTestRemote) {
 // relay interface id.
 TEST_F(CtrlChannelDhcpv4SrvTest, subnet4o6SelectTestRelayInterfaceId) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
@@ -4203,7 +4137,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, subnet4o6SelectTestRelayInterfaceId) {
 // incoming interface.
 TEST_F(CtrlChannelDhcpv4SrvTest, subnet4o6SelectTestIface) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
@@ -4266,7 +4199,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, keaLfcStartNoBackend) {
 /// Verify that kea-lfc-start requires persist true.
 TEST_F(CtrlChannelDhcpv4SrvTest, keaLfcStartPersistFalse) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
     std::string response;
 
     sendUnixCommand("{ \"command\" : \"kea-lfc-start\" }", response);
@@ -4285,7 +4217,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, keaLfcStartPersistFalse) {
 /// connections.
 TEST_F(CtrlChannelDhcpv4SrvTest, concurrentConnections) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
 
     boost::scoped_ptr<UnixControlClient> client1(new UnixControlClient());
     ASSERT_TRUE(client1);
@@ -4357,7 +4288,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, longCommand) {
     );
 
     createUnixChannelServer();
-    SKIP_IF(skipped_);
 
     std::string response;
     std::thread th([this, &response, &command]() {
@@ -4416,7 +4346,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, longResponse) {
     );
 
     createUnixChannelServer();
-    SKIP_IF(skipped_);
 
     // The UnixControlClient doesn't have any means to check that the entire
     // response has been received. What we want to do is to generate a
@@ -4476,7 +4405,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, longResponse) {
 // takes too long, having received a partial command.
 TEST_F(CtrlChannelDhcpv4SrvTest, connectionTimeoutPartialCommand) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
 
     // Set connection timeout to 2s to prevent long waiting time for the
     // timeout during this test.
@@ -4531,7 +4459,6 @@ TEST_F(CtrlChannelDhcpv4SrvTest, connectionTimeoutPartialCommand) {
 // takes too long, having received no data from the client.
 TEST_F(CtrlChannelDhcpv4SrvTest, connectionTimeoutNoData) {
     createUnixChannelServer();
-    SKIP_IF(skipped_);
 
     // Set connection timeout to 2s to prevent long waiting time for the
     // timeout during this test.

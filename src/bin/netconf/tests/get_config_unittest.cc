@@ -227,8 +227,9 @@ public:
     ///
     /// @param explicit_path path to use as the socket path.
     void setSocketTestPath(const std::string explicit_path = string()) {
-        string path(UnixCommandConfig::getSocketPath(
-            true, (!explicit_path.empty() ? explicit_path : TEST_DATA_BUILDDIR)));
+        static TemporaryDirectory TEMP_DIR = TemporaryDirectory();
+        string path(UnixCommandConfig::getSocketPath(true, (!explicit_path.empty() ?
+                                                            explicit_path : TEMP_DIR.dirName())));
         UnixCommandConfig::setSocketPathPerms(getPermissions(path));
     }
 

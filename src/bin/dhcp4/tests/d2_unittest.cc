@@ -299,10 +299,9 @@ TEST_F(Dhcp4SrvD2Test, simpleUDPSend) {
 // being suspended.  This indicates that Dhcp4Srv's error handler has been
 // invoked as expected.  Note that this unit test relies on an attempt to send
 // to a server address of 0.0.0.0 port 0 fails, which it does under all OSes
-// except Solaris 11 and macOS 15.0.
+// except macOS 15.0.
 TEST_F(Dhcp4SrvD2Test, forceUDPSendFailure) {
-#if (defined(OS_SOLARIS) || defined(OS_OSX))
-    /// @todo Eventually we should find a way to test this under Solaris.
+#if defined (OS_OSX)
     SKIP_IF(true);
 #endif
     // Grab the manager and verify that be default ddns is off

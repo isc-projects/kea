@@ -137,8 +137,9 @@ public:
     ///
     /// @param explicit_path path to use as the socket path.
     void setSocketTestPath(const std::string explicit_path = string()) {
+        static TemporaryDirectory TEMP_DIR = TemporaryDirectory();
         string path(UnixCommandConfig::getSocketPath(
-            true, (!explicit_path.empty() ? explicit_path : TEST_DATA_BUILDDIR)));
+            true, (!explicit_path.empty() ? explicit_path : TEMP_DIR.dirName())));
         UnixCommandConfig::setSocketPathPerms(getPermissions(path));
     }
 
@@ -564,8 +565,6 @@ TEST_F(NetconfAgentLogTest, logChanges2) {
 // Verifies that the keaConfig method works as expected.
 TEST_F(NetconfAgentTest, keaConfig) {
     string const socket_path(SocketPath::unixSocketFilePath());
-    bool const socket_name_too_long(SocketPath::isTooLong(socket_path));
-    SKIP_IF(socket_name_too_long);
 
     // Netconf configuration.
     string config_prefix = "{\n"
@@ -649,8 +648,6 @@ TEST_F(NetconfAgentTest, keaConfig) {
 // to the server.
 TEST_F(NetconfAgentTest, yangConfig) {
     string const socket_path(SocketPath::unixSocketFilePath());
-    bool const socket_name_too_long(SocketPath::isTooLong(socket_path));
-    SKIP_IF(socket_name_too_long);
 
     // YANG configuration.
     const YRTree tree = YangRepr::buildTreeFromVector({
@@ -761,8 +758,6 @@ TEST_F(NetconfAgentTest, yangConfig) {
 // Verifies that the subscribeToDataChanges method works as expected.
 TEST_F(NetconfAgentTest, subscribeToDataChanges) {
     string const socket_path(SocketPath::unixSocketFilePath());
-    bool const socket_name_too_long(SocketPath::isTooLong(socket_path));
-    SKIP_IF(socket_name_too_long);
 
     // Netconf configuration.
     string config_prefix = "{\n"
@@ -816,8 +811,6 @@ TEST_F(NetconfAgentTest, subscribeToDataChanges) {
 // to the server. Note it is called by the subscription callback.
 TEST_F(NetconfAgentTest, update) {
     string const socket_path(SocketPath::unixSocketFilePath());
-    bool const socket_name_too_long(SocketPath::isTooLong(socket_path));
-    SKIP_IF(socket_name_too_long);
 
     // Initial YANG configuration.
     const YRTree tree0 = YangRepr::buildTreeFromVector({
@@ -947,8 +940,6 @@ TEST_F(NetconfAgentTest, update) {
 // update is called after.
 TEST_F(NetconfAgentTest, validate) {
     string const socket_path(SocketPath::unixSocketFilePath());
-    bool const socket_name_too_long(SocketPath::isTooLong(socket_path));
-    SKIP_IF(socket_name_too_long);
 
     // Initial YANG configuration.
     const YRTree tree0 = YangRepr::buildTreeFromVector({
@@ -1113,8 +1104,6 @@ TEST_F(NetconfAgentTest, validate) {
 // Verifies what happens when the validate method returns an error.
 TEST_F(NetconfAgentTest, noValidate) {
     string const socket_path(SocketPath::unixSocketFilePath());
-    bool const socket_name_too_long(SocketPath::isTooLong(socket_path));
-    SKIP_IF(socket_name_too_long);
 
     // Initial YANG configuration.
     const YRTree tree0 = YangRepr::buildTreeFromVector({

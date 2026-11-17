@@ -23,6 +23,7 @@ using namespace isc::dhcp;
 using namespace isc::http;
 using namespace isc::test;
 using namespace isc::util;
+using namespace isc::util::file;
 using namespace isc::dhcp::test;
 using namespace std;
 
@@ -45,9 +46,9 @@ public:
     /// @brief Sets the path in which the socket can be created.
     /// @param explicit_path path to use as the hooks path.
     void setSocketTestPath(const std::string explicit_path = "") {
-        UnixCommandConfig::getSocketPath(true,
-                                         (!explicit_path.empty() ?
-                                          explicit_path : TEST_DATA_BUILDDIR));
+        static TemporaryDirectory TEMP_DIR = TemporaryDirectory();
+        UnixCommandConfig::getSocketPath(true, (!explicit_path.empty() ?
+                                                explicit_path : TEMP_DIR.dirName()));
 
         auto path = UnixCommandConfig::getSocketPath();
         UnixCommandConfig::setSocketPathPerms(file::getPermissions(path));
@@ -69,10 +70,10 @@ TEST(SocketPathTest, socketDir) {
 
     auto path = UnixCommandConfig::getSocketPath(true);
     ASSERT_EQ(path, std::string(CONTROL_SOCKET_DIR));
-
-    env.setValue(TEST_DATA_BUILDDIR);
+    TemporaryDirectory TEMP_DIR = TemporaryDirectory();
+    env.setValue(TEMP_DIR.dirName());
     path = UnixCommandConfig::getSocketPath(true);
-    ASSERT_EQ(path, std::string(TEST_DATA_BUILDDIR));
+    ASSERT_EQ(path, std::string(TEMP_DIR.dirName()));
 }
 
 // This test verifies the default UNIX control socket configuration.

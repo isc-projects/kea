@@ -36,6 +36,7 @@ using namespace isc::dhcp::test;
 using namespace isc::process;
 using namespace isc::stats;
 using namespace isc::util;
+using namespace isc::util::file;
 using namespace boost::posix_time;
 
 namespace isc {
@@ -89,9 +90,9 @@ BaseServerTest::resetLogPath() {
 
 void
 BaseServerTest::setSocketTestPath(const std::string explicit_path /* = "" */) {
-    UnixCommandConfig::getSocketPath(true,
-                                     (!explicit_path.empty() ?
-                                     explicit_path : TEST_DATA_BUILDDIR));
+    static TemporaryDirectory TEMP_DIR = TemporaryDirectory();
+    UnixCommandConfig::getSocketPath(true, (!explicit_path.empty() ?
+                                            explicit_path : TEMP_DIR.dirName()));
 
     auto path = UnixCommandConfig::getSocketPath();
     UnixCommandConfig::setSocketPathPerms(file::getPermissions(path));

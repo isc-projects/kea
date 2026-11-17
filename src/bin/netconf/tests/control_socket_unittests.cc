@@ -169,8 +169,9 @@ public:
     ///
     /// @param explicit_path path to use as the socket path.
     void setSocketTestPath(const std::string explicit_path = string()) {
-        string path(UnixCommandConfig::getSocketPath(
-            true, (!explicit_path.empty() ? explicit_path : TEST_DATA_BUILDDIR)));
+        static TemporaryDirectory TEMP_DIR = TemporaryDirectory();
+        string path(UnixCommandConfig::getSocketPath(true, (!explicit_path.empty() ?
+                                                            explicit_path : TEMP_DIR.dirName())));
         UnixCommandConfig::setSocketPathPerms(getPermissions(path));
     }
 
@@ -300,8 +301,6 @@ TEST_F(UnixControlSocketTest, createControlSocket) {
 
 // Verifies that unix control sockets handle configGet() as expected.
 TEST_F(UnixControlSocketTest, configGet) {
-    bool const socket_name_too_long(SocketPath::isTooLong(SocketPath::unixSocketFilePath()));
-    SKIP_IF(socket_name_too_long);
     CfgControlSocketPtr cfg = createCfgControlSocket();
     ASSERT_TRUE(cfg);
     UnixControlSocketPtr ucs(new UnixControlSocket(cfg));
@@ -326,8 +325,6 @@ TEST_F(UnixControlSocketTest, configGet) {
 
 // Verifies that unix control sockets handle configTest() as expected.
 TEST_F(UnixControlSocketTest, configTest) {
-    bool const socket_name_too_long(SocketPath::isTooLong(SocketPath::unixSocketFilePath()));
-    SKIP_IF(socket_name_too_long);
     CfgControlSocketPtr cfg = createCfgControlSocket();
     ASSERT_TRUE(cfg);
     UnixControlSocketPtr ucs(new UnixControlSocket(cfg));
@@ -355,8 +352,6 @@ TEST_F(UnixControlSocketTest, configTest) {
 
 // Verifies that unix control sockets handle configSet() as expected.
 TEST_F(UnixControlSocketTest, configSet) {
-    bool const socket_name_too_long(SocketPath::isTooLong(SocketPath::unixSocketFilePath()));
-    SKIP_IF(socket_name_too_long);
     CfgControlSocketPtr cfg = createCfgControlSocket();
     ASSERT_TRUE(cfg);
     UnixControlSocketPtr ucs(new UnixControlSocket(cfg));
@@ -384,8 +379,6 @@ TEST_F(UnixControlSocketTest, configSet) {
 
 // Verifies that unix control sockets handle timeouts.
 TEST_F(UnixControlSocketTest, timeout) {
-    bool const socket_name_too_long(SocketPath::isTooLong(SocketPath::unixSocketFilePath()));
-    SKIP_IF(socket_name_too_long);
     CfgControlSocketPtr cfg = createCfgControlSocket();
     ASSERT_TRUE(cfg);
     UnixControlSocketPtr ucs(new UnixControlSocket(cfg));
