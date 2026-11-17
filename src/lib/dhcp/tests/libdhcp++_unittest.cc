@@ -2175,14 +2175,16 @@ TEST_F(LibDhcpTest, unpackOptions4RelayPortZeroLength) {
         0x30, 0x39              // ignored payload
     };
 
-    OptionCollection options2;
-    list<uint16_t> deferred2;
+    options.clear();
     ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf_with_data, DHCP4_OPTION_SPACE,
-                                            options2, deferred2, false));
-    ASSERT_EQ(1U, options2.size());
-    OptionPtr relay_port2 = options2.begin()->second->getOption(RAI_OPTION_RELAY_PORT);
-    ASSERT_TRUE(relay_port2);
-    EXPECT_TRUE(relay_port2->getData().empty());
+                                            options, deferred, false));
+    ASSERT_EQ(1U, options.size());
+    relay_port = options.begin()->second->getOption(RAI_OPTION_RELAY_PORT);
+    ASSERT_TRUE(relay_port);
+    EXPECT_TRUE(relay_port->getData().empty());
+
+    // Nothing should be deferred for unpacking.
+    EXPECT_TRUE(deferred.empty());
 }
 
 // This test verifies that the following option structure can be parsed:

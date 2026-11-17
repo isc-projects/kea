@@ -334,3 +334,7 @@ We have received the following contributions:
  - Ada Logics
    2026-01: Added more fuzz harnesses and support for oss-fuzz.
    2026-07: Developed scripts to generate SBOM.
+
+ - hounan (@NaN64)
+   2026-11: Fixed DHCPv4 server handling of relay-port RAI sub-option (code 19)
+   with zero length (RFC 8357).
