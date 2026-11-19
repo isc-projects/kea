@@ -132,6 +132,9 @@ IfacesConfigParser::parse(const CfgIfacePtr& cfg,
             isc_throw(DhcpConfigError, "use-fallbacks requires a raw socket");
         }
         PktFilter::use_fallbacks_ = getBoolean(ifaces_config, "use-fallbacks");
+    } else {
+        // [Re]set to the default value.
+        PktFilter::use_fallbacks_ = true;
     }
 
     // User hasn't specified the socket type. Log that we are using
