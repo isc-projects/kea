@@ -34,7 +34,7 @@ kea_asiolink_tests = executable(
     'unix_domain_socket_unittest.cc',
     cpp_args: [
         f'-DTEST_SCRIPT_SH="@current_build_dir@/process_spawn_app.sh"',
-        f'-DINVALID_TEST_SCRIPT_SH="@TOP_SOURCE_DIR@/README"',
+        f'-DINVALID_TEST_SCRIPT_SH="@TOP_SOURCE_DIR@/README.md"',
         f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
