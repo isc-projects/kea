@@ -283,8 +283,8 @@ TEST_F(ProcessSpawnTest, spawnNoArgs) {
 // This test verifies that the EXIT_FAILURE code is returned when
 // application can't be executed.
 TEST_F(ProcessSpawnTest, invalidExecutable) {
-    std::string expected = "File not found: foo";
-    ASSERT_THROW_MSG(ProcessSpawn process(ProcessSpawn::ASYNC, "foo"),
+    std::string expected = "File not found: foo-oo";
+    ASSERT_THROW_MSG(ProcessSpawn process(ProcessSpawn::ASYNC, "foo-oo"),
                      ProcessSpawnError, expected);
 
     std::string name = INVALID_TEST_SCRIPT_SH;
@@ -499,8 +499,8 @@ TEST_F(ProcessSpawnTest, spawnNoArgsSync) {
 // This test verifies that the EXIT_FAILURE code is returned when
 // application can't be executed synchronously.
 TEST_F(ProcessSpawnTest, invalidExecutableSync) {
-    std::string expected = "File not found: foo";
-    ASSERT_THROW_MSG(ProcessSpawn process(ProcessSpawn::SYNC, "foo"),
+    std::string expected = "File not found: foo-oo";
+    ASSERT_THROW_MSG(ProcessSpawn process(ProcessSpawn::SYNC, "foo-oo"),
                      ProcessSpawnError, expected);
 
     std::string name = INVALID_TEST_SCRIPT_SH;
