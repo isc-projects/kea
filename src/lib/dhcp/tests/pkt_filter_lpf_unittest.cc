@@ -73,12 +73,15 @@ TEST_F(RootPktFilterLPFTest, openSocket) {
 
     // Create object representing loopback interface.
     Iface iface(ifname_, ifindex_);
+    iface.flag_loopback_ = true;
     // Set loopback address.
     IOAddress addr("127.0.0.1");
 
     // Try to open socket.
     PktFilterLPF pkt_filter;
-    sock_info_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
+    ASSERT_NO_THROW(
+        sock_info_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
+    );
 
     // Check that the primary socket has been opened.
     ASSERT_GE(sock_info_.sockfd_, 0);
@@ -111,6 +114,7 @@ TEST_F(RootPktFilterLPFTest, openSocketNoFallback) {
 
     // Create object representing loopback interface.
     Iface iface(ifname_, ifindex_);
+    iface.flag_loopback_ = true;
     // Set loopback address.
     IOAddress addr("127.0.0.1");
 
@@ -119,7 +123,9 @@ TEST_F(RootPktFilterLPFTest, openSocketNoFallback) {
 
     // Try to open socket.
     PktFilterLPF pkt_filter;
-    sock_info_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
+    ASSERT_NO_THROW(
+        sock_info_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
+    );
 
     // Check that the primary socket has been opened.
     ASSERT_GE(sock_info_.sockfd_, 0);
