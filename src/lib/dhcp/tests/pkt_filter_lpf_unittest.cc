@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -140,16 +140,17 @@ TEST_F(RootPktFilterLPFTest, send) {
 
     // Packet will be sent over loopback interface.
     Iface iface(ifname_, ifindex_);
+    iface.flag_loopback_ = true;
     IOAddress addr("127.0.0.1");
 
     // Create an instance of the class which we are testing.
     PktFilterLPF pkt_filter;
+
     // Open socket. We don't check that the socket has appropriate
     // options and family set because we have checked that in the
     // openSocket test already.
-
     sock_info_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
-
+    // Returned descriptor must not be negative. 0 is valid.
     ASSERT_GE(sock_info_.sockfd_, 0);
 
     // Send the packet over the socket.
@@ -196,6 +197,7 @@ TEST_F(RootPktFilterLPFTest, receive) {
 
     // Packet will be received over loopback interface.
     Iface iface(ifname_, ifindex_);
+    iface.flag_loopback_ = true;
     IOAddress addr("127.0.0.1");
 
     // Create an instance of the class which we are testing.
@@ -210,7 +212,8 @@ TEST_F(RootPktFilterLPFTest, receive) {
     sendMessage();
 
     // Receive the packet using LPF packet filter.
-    Pkt4Ptr rcvd_pkt = pkt_filter.receive(iface, sock_info_);
+    Pkt4Ptr rcvd_pkt;
+    ASSERT_NO_THROW(rcvd_pkt = pkt_filter.receive(iface, sock_info_));
     // Check that the packet has been correctly received.
     ASSERT_TRUE(rcvd_pkt);
 

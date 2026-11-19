@@ -85,9 +85,6 @@ TEST_F(RootPktFilterBPFTest, openSocket) {
     ASSERT_GE(sock_info_.fallbackfd_, 0);
 }
 
-// All tests below require root privileges to execute successfully. If they
-// are run as non-root they will be skipped via SKIP_IF(notRoot()).
-
 // This test verifies that the raw AF_PACKET family socket can
 // be opened and bound to the specific interface (no fallback variant).
 TEST_F(RootPktFilterBPFTest, openSocketNoFallback) {
@@ -134,7 +131,9 @@ TEST_F(RootPktFilterBPFTest, send) {
     // Create an instance of the class which we are testing.
     PktFilterBPF pkt_filter;
 
-    // Open BPF device.
+    // Open socket. We don't check that the socket has appropriate
+    // options and family set because we have checked that in the
+    // openSocket test already.
     sock_info_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
     // Returned descriptor must not be negative. 0 is valid.
     ASSERT_GE(sock_info_.sockfd_, 0);
@@ -150,7 +149,7 @@ TEST_F(RootPktFilterBPFTest, send) {
     // We should receive some data from loopback interface.
     ASSERT_GT(result, 0);
 
-    /// Get the actual data.
+    // Get the actual data.
     uint8_t rcv_buf[RECV_BUF_SIZE];
     result = read(sock_info_.sockfd_, rcv_buf, RECV_BUF_SIZE);
     ASSERT_GT(result, 0);
@@ -180,6 +179,7 @@ TEST_F(RootPktFilterBPFTest, send) {
     InputBuffer buf(rcv_buf + bpfh_len + 4, result - bpfh_len - 4);
     ASSERT_GE(buf.getLength(), test_message_->len());
 
+    // Decode ip and udp headers.
     decodeIpUdpHeader(buf, dummy_pkt);
 
     // Create the DHCPv4 packet from the received data.
