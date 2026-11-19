@@ -6,13 +6,16 @@
 
 #include <config.h>
 
-#include <util/patricia_tree.h>
 #include <exceptions/exceptions.h>
-#include <gtest/gtest.h>
-#include <arpa/inet.h>
+#include <util/patricia_tree.h>
+
 #include <list>
 #include <string>
-#include <vector>
+
+#include <gtest/gtest.h>
+
+#include <arpa/inet.h>
+#include <sys/socket.h>
 
 using namespace isc;
 using namespace isc::util;
