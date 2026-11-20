@@ -1,36 +1,106 @@
-2577.	[func]		razvan
+Kea 3.3.4 (development) released on November 25, 2026
+
+2588.	[build]		tsawka
+	The library version numbers have been bumped up for the Kea 3.3.4
+	development release.
+	(Gitlab #4918)
+
+2587.	[func]		fdupont
+	Added a new interface configuration parameter
+	"use-fallbacks" which can disable the use of
+	fallbacks with DHCPv4 raw sockets and allow
+	another DHCPv4 server running on the same system.
+	(Gitlab #4829)
+
+2586.	[doc]		tomek
+	The README, INSTALL and Code of Conduct were modernized.
+	(Gitlab #4897)
+
+2585.	[bug]		hounan
+	The relay-port RAI sub-option (code 19), defined in
+	RFC 8357, is a zero-length sub-option. Kea used to
+	define it as uint16, which caused kea-dhcp4 to drop
+	relayed packets carrying a compliant "19 00"
+	sub-option with an "OptionInt 19 truncated" error.
+	The definition is now "empty" and such packets are
+	processed correctly.
+	(Gitlab #4846)
+
+2584.	[func]		tmark
+	kea-dhcp-ddns will now discard inbound DDNS update requests that
+	duplicate a request already waiting in its queue to be
+	processed. This may improve performance for sites that enable
+	"ddns-update-on-renew" and have clients that renew often.
+	(Gitlab #4870)
+
+2583.	[func]		fdupont
+	Added a warning when security is enforced but the HA
+	hook library is configured with "restrict-commands"
+	parameter set to "false".
+	(Gitlab #4758)
+
+2582.	[func]		fdupont
+	DHCPv4 and DHCPv6 server now log the presence of the
+	"-F" flag (exit on critical error) on their command line.
+	(Gitlab #4689)
+
+2581.	[doc]		tmark
+	Added a discussion of statistics and shared lease back ends
+	to the ARM.
+	(Gitlab #4831)
+
+2580.	[func]*		fdupont
+	Removed support for deprecated config entries for DHCPv4
+	and DHCPv6 servers:
+	 - "control-socket" (root level)
+	 - "only-if-required" (class level)
+	 - "require-client-classes" (network, subnet, pool levels)
+	 - "client-class" (network, subnet, pool levels)
+	(Gitlab #4394)
+
+2579.	[build]		fdupont, sjl
+	Improved portability to OpenBSD from patches
+	submitted by Stuart Lamble.
+	(Gitlab #4785, #4786)
+
+2578.	[func]		razvan
 	Tuples in options are now properly displayed as hexstrings
 	and as text only if all characters are printable.
 	Option strings are displayed as hexstrings when at least
 	a character is not printable.
 	(Gitlab #4456)
 
-2576.	[bug]		razvan
+2577.	[bug]		razvan
 	Fixed a bug which was causing radius access to not function
 	properly after issuing 'config-reload' or 'config-set'
 	commands.
 	(Gitlab #4736)
 
-2575.	[bug]		razvan
+2576.	[bug]		razvan
 	Fixed improper handling of RADIUS attributes that are not
 	defined in the local dictionary.
 	(Gitlab #4892)
 
-2574.	[func]		razvan
+2575.	[func]		razvan
 	The following hook libraries are now open source:
 	for the kea-dhcp4 and the kea-dhcp6 servers
 	'libdhcp_cb_cmds', and 'libdhcp_rbac'.
 	(Gitlab #4889)
 
-2573.	[func]		razvan
+2574.	[func]		razvan
 	Added the 'down' state to the high availability service
 	which makes it possible for the peer to transition to the
 	'partner-down' state in case of a lease database connection
 	loss. This ensures that the DHCP traffic is handled by the
-	peer until the situation is redetiated.
+	peer until the situation is remediated.
 	(Gitlab #4226)
 
 Kea 3.3.3 (development) released on October 28, 2026
+
+2573.	[build]		andrei
+	The library version numbers have been bumped up for the Kea 3.3.3
+	development release.
+	(Gitlab #4875)
 
 2572.	[bug]		fdupont
 	Fixed the creation of option data by the config

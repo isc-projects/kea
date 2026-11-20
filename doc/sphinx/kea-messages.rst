@@ -6023,6 +6023,16 @@ DHCP4_SHUTDOWN
 Logged at debug log level 40.
 The DHCPv4 server has terminated normally.
 
+DHCP4_SHUTDOWN_ON_FATAL_ERROR
+=============================
+
+.. code-block:: text
+
+    Invoked with command line option -F, exit on critical error
+
+This warning is emitted when exit on critical error was required via
+command line option '-F'.
+
 DHCP4_SHUTDOWN_REQUEST
 ======================
 
@@ -8489,6 +8499,16 @@ DHCP6_SHUTDOWN
 Logged at debug log level 40.
 The IPv6 DHCP server has terminated normally.
 
+DHCP6_SHUTDOWN_ON_FATAL_ERROR
+=============================
+
+.. code-block:: text
+
+    Invoked with command line option -F, exit on critical error
+
+This warning is emitted when exit on critical error was required via
+command line option '-F'.
+
 DHCP6_SHUTDOWN_REQUEST
 ======================
 
@@ -9173,18 +9193,6 @@ more lease life time parameters (e.g. 'valid-lifetime',
 'preferred-lifetime', or 'offer-lifetime'). Additional list classes
 are evaluated after lease assignment, thus parameters that would otherwise
 impact lease life times will have no affect.
-
-DHCPSRV_CLIENT_CLASS_DEPRECATED
-===============================
-
-.. code-block:: text
-
-    The parameter 'client-class' is deprecated. Use 'client-classes' list parameter instead
-
-This warning message is emitted when configuration parsing detects
-the use of the deprecated 'client-class' parameter. It has
-been replaced by 'client-classes'.  Users should migrate
-to the new list parameter.
 
 DHCPSRV_CLOSE_DB
 ================
@@ -10474,18 +10482,6 @@ This warning message is issued when the current server configuration specifies
 no interfaces that the server should listen on, or when the specified interfaces are not
 configured to receive the traffic.
 
-DHCPSRV_ONLY_IF_REQUIRED_DEPRECATED
-===================================
-
-.. code-block:: text
-
-    The parameter 'only-if-required' is deprecated. Use 'only-in-additional-list' instead
-
-This warning message is emitted when configuration parsing detects
-the use of the deprecated 'only-if-required' parameter. It has
-been replaced by 'only-in-additional-list'.  Users should migrate
-to the new parameter.
-
 DHCPSRV_OPEN_SOCKET_FAIL
 ========================
 
@@ -10536,18 +10532,6 @@ change request because the lease doesn't include the FQDN, the forward and
 reverse update is disabled for this lease or the DNS updates are disabled
 in the configuration. The first argument includes the client identification
 information. The second argument includes the leased address.
-
-DHCPSRV_REQUIRE_CLIENT_CLASSES_DEPRECATED
-=========================================
-
-.. code-block:: text
-
-    The parameter 'require-client-classes' is deprecated. Use 'evaluate-additional-classes' instead
-
-This warning message is emitted when configuration parsing detects
-the use of the deprecated 'require-client-classes' parameter. It has
-been replaced by 'evaluate-additional-classes'.  Users should migrate
-to the new parameter.
 
 DHCPSRV_SUBNET4O6_SELECT_FAILED
 ===============================
@@ -11429,6 +11413,21 @@ no configured DDNS domains in the DHCP_DDNS configuration.  Either the DHCP_DDNS
 configuration needs to be updated or the source of the FQDN itself should be
 investigated.
 
+DHCP_DDNS_QUEUE_MGR_DUPLICATE_NCR
+=================================
+
+.. code-block:: text
+
+    Received NCR duplicates an entry on the queue, discarding it: %1
+
+Logged at debug log level 55.
+This is a debug message issued when DHCP_DDNS detects that a received NCR
+duplicates an NCR already in the queue waiting to be processed. This is
+most likely to occur when kea-dhcp<4/6> is configured with
+"ddns-update-on-renew" set true and has clients that renew often. The
+number of duplicates can be monitored with the global statistic,
+"ncr-duplicate".
+
 DHCP_DDNS_QUEUE_MGR_QUEUE_FULL
 ==============================
 
@@ -11928,7 +11927,7 @@ DHCP_DDNS_UPDATE_RESPONSE_RECEIVED
     Request ID %1: to server: %2 status: %3
 
 Logged at debug log level 50.
-This is a debug message issued when DHCP_DDNS receives sends a DNS update
+This is a debug message issued when DHCP_DDNS receives a DNS update
 response from a DNS server.
 
 DHCP_DELETE_ALL_EXTERNAL_SOCKETS_BAD_THREAD
@@ -13607,6 +13606,17 @@ This informational message is issued as a reminder that the lease updates
 are administratively disabled and will not be issued in the HA state to
 which the server has transitioned. The sole argument specifies the state
 into which the server has transitioned.
+
+HA_CONFIG_NO_RESTRICT_COMMANDS
+==============================
+
+.. code-block:: text
+
+    commands are not restricted
+
+This warning message is issued when security is enforced but the
+"restrict-commands" parameter is configured to "false" so the dedicated
+listener can execute any command vs only commands used by HA peers.
 
 HA_CONFIG_SYSTEM_MT_UNSUPPORTED
 ===============================

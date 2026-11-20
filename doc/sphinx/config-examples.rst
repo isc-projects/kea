@@ -1867,7 +1867,7 @@ kea4/all-keys-netconf.json
                 // "raw" sockets to listen to DHCP traffic. The "raw"
                 // sockets are useful when direct DHCP traffic is being
                 // received.
-                "dhcp-socket-type": "udp",
+                "dhcp-socket-type": "raw",
 
                 // Specifies a list of interfaces on which the Kea DHCPv4
                 // server should listen to DHCP requests.
@@ -3377,7 +3377,7 @@ kea4/all-keys.json
                 // "raw" sockets to listen to DHCP traffic. The "raw"
                 // sockets are useful when direct DHCP traffic is being
                 // received.
-                "dhcp-socket-type": "udp",
+                "dhcp-socket-type": "raw",
 
                 // Specifies a list of interfaces on which the Kea DHCPv4
                 // server should listen to DHCP requests.
@@ -3415,7 +3415,11 @@ kea4/all-keys.json
 
                 // The time interval in milliseconds to wait before the next attempt to
                 // retry opening a service socket.
-                "service-sockets-retry-wait-time": 5000
+                "service-sockets-retry-wait-time": 5000,
+
+                // Raw sockets use a fallback which can be disabled when
+                // another DHCP server is used on the same system.
+                "use-fallbacks": true
             },
 
             // Boolean parameter which controls whether an early global host

@@ -264,6 +264,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      interfaces_config_param ::= interfaces_list
                             | dhcp_socket_type
+                            | use_fallbacks
                             | outbound_interface
                             | re_detect
                             | service_sockets_require_all
@@ -281,6 +282,8 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
 
      socket_type ::= "raw"
                 | "udp"
+
+     use_fallbacks ::= "use-fallbacks" ":" BOOLEAN
 
      outbound_interface ::= "outbound-interface" ":" outbound_interface_value
 

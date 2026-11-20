@@ -1,9 +1,0 @@
-[bug]		hounan
-	The relay-port RAI sub-option (code 19), defined in
-	RFC 8357, is a zero-length sub-option. Kea used to
-	define it as uint16, which caused kea-dhcp4 to drop
-	relayed packets carrying a compliant "19 00"
-	sub-option with an "OptionInt 19 truncated" error.
-	The definition is now "empty" and such packets are
-	processed correctly.
-	(Gitlab #4846)
