@@ -290,8 +290,10 @@ void testFile(const std::string& fname) {
 
     cout << "Parsing file " << fname << " (" << decommented << ")" << endl;
 
-    EXPECT_NO_THROW_LOG(json = Element::fromJSONFile(decommented, true));
+    ASSERT_NO_THROW_LOG(json = Element::fromJSONFile(decommented, true));
+    ASSERT_TRUE(json);
     reference_json = moveComments(json);
+    ASSERT_TRUE(reference_json);
 
     // remove the temporary file
     EXPECT_NO_THROW(::remove(decommented.c_str()));
@@ -305,7 +307,6 @@ void testFile(const std::string& fname) {
         throw;
     });
 
-    ASSERT_TRUE(reference_json);
     ASSERT_TRUE(test_json);
 
     compareJSON(reference_json, test_json);
