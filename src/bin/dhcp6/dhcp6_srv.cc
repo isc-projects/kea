@@ -2192,7 +2192,7 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question, bool& drop) {
             uint32_t const limit(get<1>(tpl));
             // We can't park it so we're going to throw it on the floor.
             LOG_DEBUG(packet6_logger, DBGLVL_PKT_HANDLING,
-                      DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL)
+                      DHCP6_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL)
                 .arg(limit)
                 .arg(question->getLabel());
             StatsMgr::instance().addValue("pkt6-queue-full",
