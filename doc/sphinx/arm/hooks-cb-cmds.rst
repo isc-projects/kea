@@ -21,11 +21,6 @@ More information on how to configure the Configuration Backend hook library for
 use with a MySQL or PostgreSQL database can be found in the :ref:`dhcp4-cb`
 and :ref:`dhcp6-cb` sections.
 
-.. note::
-
-    :ischooklib:`libdhcp_cb_cmds.so` is available only to ISC customers with
-    a paid support contract. For more information on subscription options,
-    please complete the form at https://www.isc.org/contact.
 
 .. note::
 

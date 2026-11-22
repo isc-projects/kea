@@ -57,74 +57,14 @@ compilation switches to be enabled.
 Installing Hook Packages
 ========================
 
-.. note::
 
-    For more details about installing the Kea Subscriber Hooks, please read
-    `this Knowledgebase article <https://kb.isc.org/docs/aa-01587>`__.
-
-Most hook packages are now included in the base Kea sources. There is no
+All hook packages are now included in the base Kea sources (starting from Kea 3.3.4). There is no
 need to do anything special to compile or install them, as they are covered
 by the usual building and installation procedures. Please
 refer to :ref:`installation` for a general overview of the installation process.
 
-ISC provides several additional subscriber-only hooks in the form of packages, which
-follow a similar installation procedure but with several additional steps.
-For our users' convenience, the subscriber hooks' installation procedure is described in this section.
 
-1. Download the package; detailed instructions are provided in the KB article
-above. The package will be a file with a name similar to
-``kea-subscriber-|release|.tar.xz``.
-
-2. Administrators who have the sources for the corresponding version of the
-open-source Kea package on their system from the initial Kea installation
-should skip this step. Otherwise, extract the Kea source from the original
-tarball that was downloaded. For example, with a download of Kea |release|,
-there should be a tarball called ``kea-|release|.tar.xz`` on the system.
-Unpack this tarball:
-
-.. parsed-literal::
-
-    $ tar -Jxvf kea-|release|.tar.xz
-
-This will unpack the tarball into the ``kea-|release|`` subdirectory of
-the current working directory.
-
-3. Unpack the Kea subscriber hooks tarball into the same directory where the
-original Kea source is located. Once Kea |release| has been unpacked into a ``kea-|release|``
-subdirectory and the Kea subscriber tarball is in the current directory, the following
-steps will unpack the subscriber tarball into the correct location:
-
-.. parsed-literal::
-
-    $ cd kea-|release|
-    $ tar -Jxvf ../kea-subscriber-|release|.tar.xz
-
-4. Set up the build. Make sure ``meson`` and ``ninja`` are installed on your
-   system. The first section of the output should look something like this:
-
-.. code-block:: console
-
-     $ meson setup build
-
-.. parsed-literal::
-
-    Package:
-      Name:               kea
-      Version:            |release|
-      Extended version:   |release| (tarball)
-      Version type:       development
-      OS Family:          Linux
-
-      Prefix:             /opt/kea
-      Hooks directory:    /opt/kea/lib/kea/hooks
-
-6. Compile Kea.
-
-.. code-block:: console
-
-    $ meson compile -C build
-
-7. Install Kea sources along with the hooks:
+Hooks are installed along with the Kea sources during:
 
 ::
 
@@ -471,10 +411,7 @@ libraries, discussed in the following sections.
 
 .. note::
 
-   As of Kea 3.0.0, most of these libraries are available at no cost with the open source base code;
-   a few are only available to organizations
-   that contribute to Kea's development through paid ISC support contracts. Paid support
-   includes professional engineering assistance, advance security notifications, input
+   As of Kea 3.3.4, all of these libraries are available at no cost with the open source base code.
    into ISC's roadmap planning, and many other benefits, while helping
    keep Kea sustainable in the long term. ISC encourages companies and organizations
    to consider purchasing a paid support contract; further information can be

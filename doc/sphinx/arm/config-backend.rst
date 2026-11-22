@@ -33,8 +33,6 @@ Potential drawbacks include:
 
 -  Supported scenarios require use of API for most configuration
 
--  The API is only available to ISC customers with a paid support contract
-
 -  Incompatible with some uses, software, and scenarios
 
 .. note::
@@ -55,14 +53,6 @@ The CB is ideal for such deployments.  While some effort is required to integrat
 Limitations and Warnings
 ------------------------
 
-Availability
-^^^^^^^^^^^^
-
-:ischooklib:`libdhcp_cb_cmds.so` is available only to ISC customers with a
-paid support contract. For more information on subscription options, please
-complete the form at https://www.isc.org/contact.  While it is theoretically
-possible to use the CB without this hook, this is neither supported nor
-recommended.
 
 Preparation is Required
 ^^^^^^^^^^^^^^^^^^^^^^^

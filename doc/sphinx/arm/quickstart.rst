@@ -158,7 +158,7 @@ or specific packages:
             $ apk add isc-kea-dhcp6
 
 or ALL Kea-related packages, including development headers, debug
-symbols, and subscriber hooks (if available):
+symbols, and hooks:
 
 .. list-table::
     :stub-columns: 1

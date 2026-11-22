@@ -126,11 +126,11 @@ are logged according to the configuration set by the second entry.
 The currently defined loggers are listed in the following table. The
 "Software Package" column of this table specifies whether the particular
 loggers belong to the core Kea code (open source Kea binaries and
-libraries), or hook libraries (open source or subscriber).
+libraries), or hook libraries.
 
 .. tabularcolumns:: |p{0.2\linewidth}|p{0.2\linewidth}|p{0.6\linewidth}|
 
-.. table:: List of loggers supported by Kea servers and hook libraries shipped with Kea/subscriber packages
+.. table:: List of loggers supported by Kea servers and hook libraries shipped with Kea packages
    :class: longtable
    :widths: 20 20 60
 
