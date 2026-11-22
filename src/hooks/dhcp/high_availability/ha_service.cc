@@ -2349,7 +2349,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                     ConstElementPtr args = verifyAsyncResponse(http_response, rcode);
 
                     // Arguments must be a map.
-                    if (args && (args->getType() != Element::map)) {
+                    if (!args || (args->getType() != Element::map)) {
                         isc_throw(CtrlChannelError,
                                   "arguments in the received response must be a map");
                     }
