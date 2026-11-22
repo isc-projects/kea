@@ -25,11 +25,12 @@ namespace {
 
 /// Structure that holds registered hook indexes
 struct BaseCommandMgrHooks {
-    int hook_index_command_processed_; ///< index for "command_processe" hook point
-
+    int hook_index_command_processed_; ///< index for "command_processed" hook point
+    int hook_index_command_processing_; ///< index for "command_processing" hook point
     /// Constructor that registers hook points for AllocationEngine
     BaseCommandMgrHooks() {
         hook_index_command_processed_ = HooksManager::registerHook("command_processed");
+        hook_index_command_processing_ = HooksManager::registerHook("command_processing");
     }
 };
 
@@ -128,6 +129,21 @@ BaseCommandMgr::processCommand(const isc::data::ConstElementPtr& cmd) {
 
         LOG_INFO(command_logger, COMMAND_RECEIVED).arg(name);
 
+        // If there any callouts for command-processing hook point call them
+        if (HooksManager::calloutsPresent(Hooks.hook_index_command_processing_)) {
+            // Commands are not associated with anything so there's no pre-existing
+            // callout.
+            CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+
+            // Add the command name, and arguments to the callout context
+            callout_handle->setArgument("name", name);
+            callout_handle->setArgument("arguments", arg);
+
+            // Call callouts
+            HooksManager::callCallouts(Hooks.hook_index_command_processing_,
+                                       *callout_handle);
+        }
+
         ConstElementPtr response = handleCommand(name, arg, cmd);
 
         // If there any callouts for command-processed hook point call them
@@ -146,7 +162,6 @@ BaseCommandMgr::processCommand(const isc::data::ConstElementPtr& cmd) {
                                        *callout_handle);
 
             // Refresh the response from the callout context in case it was modified.
-            // @todo Should we allow this?
             callout_handle->getArgument("response", response);
         }
 

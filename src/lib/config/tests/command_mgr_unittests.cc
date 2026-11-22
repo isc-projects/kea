@@ -33,7 +33,9 @@ public:
         handler_called_ = false;
         callout_name_ = "";
         callout_argument_names_.clear();
+        processing_log_ = "";
         processed_log_ = "";
+
 
         CommandMgr::instance().deregisterAll();
 
@@ -98,7 +100,29 @@ public:
     }
 
     /// @brief Test callback which stores callout name and passed arguments and
-    /// which handles the command.
+    /// which handles the command before its execution.
+    ///
+    /// @param callout_handle Handle passed by the hooks framework.
+    /// @return Always 0.
+    static int
+    command_processing_callout(CalloutHandle& callout_handle) {
+        callout_name_ = "command_processing_handler";
+
+        std::string name;
+        callout_handle.getArgument("name", name);
+
+        ConstElementPtr arguments;
+        callout_handle.getArgument("arguments", arguments);
+
+        std::ostringstream os;
+        os << name << ":" << arguments->str();
+        processing_log_ = os.str();
+
+        return (0);
+    }
+
+    /// @brief Test callback which stores callout name and passed arguments and
+    /// which handles the command after its execution.
     ///
     /// @param callout_handle Handle passed by the hooks framework.
     /// @return Always 0.
@@ -141,7 +165,10 @@ public:
     /// @brief Holds a list of arguments passed to the callout.
     static std::vector<std::string> callout_argument_names_;
 
-    /// @brief Holds the generated command process log
+    /// @brief Holds the generated command process log (before)
+    static std::string processing_log_;
+
+    /// @brief Holds the generated command process log (after)
     static std::string processed_log_;
 };
 
@@ -157,11 +184,14 @@ bool CommandMgrTest::handler_called_(false);
 /// Holds invoked callout name.
 std::string CommandMgrTest::callout_name_("");
 
-/// @brief Holds the generated command process log
-std::string CommandMgrTest::processed_log_;
-
 /// Holds a list of arguments passed to the callout.
 std::vector<std::string> CommandMgrTest::callout_argument_names_;
+
+/// @brief Holds the generated command process log (before)
+std::string CommandMgrTest::processing_log_;
+
+/// @brief Holds the generated command process log (after)
+std::string CommandMgrTest::processed_log_;
 
 // Test checks whether the internal command 'list-commands'
 // is working properly.
@@ -400,10 +430,47 @@ TEST_F(CommandMgrTest, delegateListCommands) {
     EXPECT_EQ("my-command-bis", command_names_list[2]);
 }
 
+// This test verifies that a registered callout for the command_processing
+// hookpoint is invoked and passed the correct information.
+TEST_F(CommandMgrTest, commandProcessingHook) {
+    // Register callout so as we can check that it is called before
+    // processing the command by the manager.
+    HooksManager::preCalloutsLibraryHandle().registerCallout(
+        "command_processing", command_processing_callout);
+
+    // Install local handler
+    EXPECT_NO_THROW(CommandMgr::instance().registerCommand("my-command",
+                                                           my_handler));
+
+    // Now tell CommandMgr to process a command 'my-command' with the
+    // specified parameter.
+    ElementPtr my_params = Element::fromJSON("[ \"just\", \"some\", \"data\" ]");
+    ConstElementPtr command = createCommand("my-command", my_params);
+    ConstElementPtr answer;
+    ASSERT_NO_THROW(answer = CommandMgr::instance().processCommand(command));
+
+    // There should be an answer.
+    ASSERT_TRUE(answer);
+
+    // Local handler should be called
+    ASSERT_TRUE(handler_called_);
+
+    // Verify that the response came through intact
+    EXPECT_EQ("{ \"result\": 123, \"text\": \"test error message\" }",
+              answer->str());
+
+    // Make sure invoked the command_processing callout
+    EXPECT_EQ("command_processing_handler", callout_name_);
+
+    // Verify the callout could extract all the context arguments
+    EXPECT_EQ("my-command:[ \"just\", \"some\", \"data\" ]",
+              processing_log_);
+}
+
 // This test verifies that a registered callout for the command_processed
 // hookpoint is invoked and passed the correct information.
 TEST_F(CommandMgrTest, commandProcessedHook) {
-    // Register callout so as we can check that it is called before
+    // Register callout so as we can check that it is called after
     // processing the command by the manager.
     HooksManager::preCalloutsLibraryHandle().registerCallout(
         "command_processed", command_processed_callout);
@@ -441,7 +508,7 @@ TEST_F(CommandMgrTest, commandProcessedHook) {
 // This test verifies that a registered callout for the command_processed
 // hookpoint is invoked and can replace the command response content.
 TEST_F(CommandMgrTest, commandProcessedHookReplaceResponse) {
-    // Register callout so as we can check that it is called before
+    // Register callout so as we can check that it is called after
     // processing the command by the manager.
     HooksManager::preCalloutsLibraryHandle().registerCallout(
         "command_processed", command_processed_callout);

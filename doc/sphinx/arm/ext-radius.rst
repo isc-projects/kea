@@ -657,8 +657,8 @@ lease allocation process in :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6`.
 .. figure:: ../uml/radius.*
 
 Somewhat tangential to lease allocation, and not shown in the diagrams above,
-is the ``command_processed`` callout, which sends Accounting-Request messages
-when a lease command is received.
+are the ``command_processing`` and ``command_processed`` callouts, which
+sends Accounting-Request messages when a lease command is received.
 
 .. _radius-parked-packet-limit:
 

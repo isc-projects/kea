@@ -505,6 +505,20 @@ called before "subnet6_select".
   expired leases will remain in the database and their recovery will
   be attempted during the next reclaim cycle.
 
+@subsection dhcpv6HooksCommandProcessing command_processing
+
+ - @b Arguments:
+   - name: @b name, type: std::string, direction: <b>in</b>
+   - name: @b arguments type: isc::data::ConstElementPtr, direction: <b>in</b>
+
+ - @b Description: this callout is executed after the DHCPv6 server receives
+   and processes a control command over the command channel (typically unix domain socket).
+   The "name" argument is the name of the command processing.
+   The "arguments" argument is a pointer to the parsed JSON structure
+   containing the command's input arguments.
+
+ - <b>Next step status</b>: Not applicable, its value will be ignored.
+
 @subsection dhcpv6HooksCommandProcessed command_processed
 
  - @b Arguments:
