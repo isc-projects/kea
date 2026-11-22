@@ -345,7 +345,7 @@ const char* values[] = {
     "DHCP4_QUERY_DATA", "%1, packet details: %2",
     "DHCP4_QUERY_LABEL", "received query: %1",
     "DHCP4_RECLAIM_EXPIRED_LEASES_FAIL", "failed to reclaim expired leases: %1",
-    "DHCP4_RECLAIM_EXPIRED_LEASES_SKIPPED", "dhcp6 service is currently disabled. Try again in %1 seconds.",
+    "DHCP4_RECLAIM_EXPIRED_LEASES_SKIPPED", "dhcp4 service is currently disabled. Try again in %1 seconds.",
     "DHCP4_RECOVERED_STASHED_RELAY_AGENT_INFO", "recovered for query %1 relay agent option from lease %2: %3",
     "DHCP4_RELEASE", "%1: address %2 was released properly.",
     "DHCP4_RELEASE_DELETED", "%1: address %2 was deleted on release.",

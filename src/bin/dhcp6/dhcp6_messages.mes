@@ -6,12 +6,12 @@
 
 $NAMESPACE isc::dhcp
 
-% DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL The parked-packet-limit %1, has been reached, dropping query: %2
+% DHCP6_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL The parked-packet-limit %1, has been reached, dropping query: %2
 Logged at debug log level 15.
 This debug message occurs when the parking lot used to hold client queries
 while the hook library work for them completes has reached or exceeded the
 limit set by the parked-packet-limit global parameter. This can occur when
-kea-dhcp4 is using hook libraries (e.g. radius) that implement the
+kea-dhcp6 is using hook libraries (e.g. radius) that implement the
 "subnet6_select" callout and client queries are arriving faster than
 those callouts can fulfill them.
 

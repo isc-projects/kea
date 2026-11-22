@@ -8,7 +8,6 @@
 namespace isc {
 namespace dhcp {
 
-extern const isc::log::MessageID DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL;
 extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_EVAL_ERROR;
 extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_EVAL_RESULT;
 extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_NO_TEST;
@@ -94,6 +93,7 @@ extern const isc::log::MessageID DHCP6_HOOK_PACKET_SEND_DROP;
 extern const isc::log::MessageID DHCP6_HOOK_PACKET_SEND_SKIP;
 extern const isc::log::MessageID DHCP6_HOOK_SUBNET6_SELECT_DROP;
 extern const isc::log::MessageID DHCP6_HOOK_SUBNET6_SELECT_PARK;
+extern const isc::log::MessageID DHCP6_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL;
 extern const isc::log::MessageID DHCP6_HOOK_SUBNET6_SELECT_SKIP;
 extern const isc::log::MessageID DHCP6_INIT_FAIL;
 extern const isc::log::MessageID DHCP6_LEASE_ADVERT;

@@ -7,7 +7,6 @@
 namespace isc {
 namespace dhcp {
 
-extern const isc::log::MessageID DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL = "DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL";
 extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_EVAL_ERROR = "DHCP6_ADDITIONAL_CLASS_EVAL_ERROR";
 extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_EVAL_RESULT = "DHCP6_ADDITIONAL_CLASS_EVAL_RESULT";
 extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_NO_TEST = "DHCP6_ADDITIONAL_CLASS_NO_TEST";
@@ -93,6 +92,7 @@ extern const isc::log::MessageID DHCP6_HOOK_PACKET_SEND_DROP = "DHCP6_HOOK_PACKE
 extern const isc::log::MessageID DHCP6_HOOK_PACKET_SEND_SKIP = "DHCP6_HOOK_PACKET_SEND_SKIP";
 extern const isc::log::MessageID DHCP6_HOOK_SUBNET6_SELECT_DROP = "DHCP6_HOOK_SUBNET6_SELECT_DROP";
 extern const isc::log::MessageID DHCP6_HOOK_SUBNET6_SELECT_PARK = "DHCP6_HOOK_SUBNET6_SELECT_PARK";
+extern const isc::log::MessageID DHCP6_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL = "DHCP6_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL";
 extern const isc::log::MessageID DHCP6_HOOK_SUBNET6_SELECT_SKIP = "DHCP6_HOOK_SUBNET6_SELECT_SKIP";
 extern const isc::log::MessageID DHCP6_INIT_FAIL = "DHCP6_INIT_FAIL";
 extern const isc::log::MessageID DHCP6_LEASE_ADVERT = "DHCP6_LEASE_ADVERT";
@@ -197,7 +197,6 @@ extern const isc::log::MessageID DHCP6_USING_SERVERID = "DHCP6_USING_SERVERID";
 namespace {
 
 const char* values[] = {
-    "DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL", "The parked-packet-limit %1, has been reached, dropping query: %2",
     "DHCP6_ADDITIONAL_CLASS_EVAL_ERROR", "%1: Expression '%2' evaluated to %3",
     "DHCP6_ADDITIONAL_CLASS_EVAL_RESULT", "%1: Expression '%2' evaluated to %3",
     "DHCP6_ADDITIONAL_CLASS_NO_TEST", "additional class %1 has no test expression, adding it to client's classes unconditionally",
@@ -283,6 +282,7 @@ const char* values[] = {
     "DHCP6_HOOK_PACKET_SEND_SKIP", "%1: prepared DHCPv6 response is not built because a callout set the next step to SKIP",
     "DHCP6_HOOK_SUBNET6_SELECT_DROP", "%1: packet was dropped because a callout set the drop flag",
     "DHCP6_HOOK_SUBNET6_SELECT_PARK", "%1: packet was parked",
+    "DHCP6_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL", "The parked-packet-limit %1, has been reached, dropping query: %2",
     "DHCP6_HOOK_SUBNET6_SELECT_SKIP", "%1: no subnet was selected because a callout set the next step to SKIP",
     "DHCP6_INIT_FAIL", "failed to initialize Kea server: %1",
     "DHCP6_LEASE_ADVERT", "%1: lease for address %2 and iaid=%3 will be advertised",
