@@ -35,7 +35,8 @@ public:
         callout_argument_names_.clear();
         processing_log_ = "";
         processed_log_ = "";
-
+        callout_in_context_ = "";
+        callout_out_context_ = "";
 
         CommandMgr::instance().deregisterAll();
 
@@ -118,6 +119,10 @@ public:
         os << name << ":" << arguments->str();
         processing_log_ = os.str();
 
+        if (!callout_in_context_.empty()) {
+            callout_handle.setContext("my-context", callout_in_context_);
+        }
+
         return (0);
     }
 
@@ -147,6 +152,8 @@ public:
                 createAnswer(777, "replaced response text"));
         }
 
+        callout_handle.getOptionalContext("my-context", callout_out_context_);
+
         return (0);
     }
 
@@ -170,6 +177,12 @@ public:
 
     /// @brief Holds the generated command process log (after)
     static std::string processed_log_;
+
+    /// @brief Optional callout input context
+    static std::string callout_in_context_;
+
+    /// @brief Optional callout output context
+    static std::string callout_out_context_;
 };
 
 /// Name passed to the handler (used in my_handler)
@@ -192,6 +205,12 @@ std::string CommandMgrTest::processing_log_;
 
 /// @brief Holds the generated command process log (after)
 std::string CommandMgrTest::processed_log_;
+
+/// @brief Optional callout input context
+std::string CommandMgrTest::callout_in_context_("");
+
+/// @brief Optional callout output context
+std::string CommandMgrTest::callout_out_context_("");
 
 // Test checks whether the internal command 'list-commands'
 // is working properly.
@@ -541,4 +560,35 @@ TEST_F(CommandMgrTest, commandProcessedHookReplaceResponse) {
     EXPECT_EQ("change-response:[ \"just\", \"some\", \"data\" ]:"
              "{ \"result\": 2, \"text\": \"'change-response' command not supported.\" }",
               processed_log_);
+}
+
+// This test verifies that a context can be passed between command_processing
+// and command_processed callouts.
+TEST_F(CommandMgrTest, calloutContext) {
+    // Register callout so as we can check that it is called before
+    // processing the command by the manager.
+     HooksManager::preCalloutsLibraryHandle().registerCallout(
+        "command_processing", command_processing_callout);
+
+     // Register callout so as we can check that it is called after
+     // processing the command by the manager.
+     HooksManager::preCalloutsLibraryHandle().registerCallout(
+        "command_processed", command_processed_callout);
+
+     // Install local handler
+     EXPECT_NO_THROW(CommandMgr::instance().registerCommand("my-command",
+                                                            my_handler));
+
+     // Set the input context
+     callout_in_context_ = "my context is here";
+
+     // Now tell CommandMgr to process a command 'my-command' with the
+     // specified parameter.
+     ElementPtr my_params = Element::fromJSON("[ \"foo\", \"bar\" ]");
+
+     ConstElementPtr command = createCommand("my-command", my_params);
+     ASSERT_NO_THROW(CommandMgr::instance().processCommand(command));
+
+     // Check the output context
+     EXPECT_EQ(callout_in_context_, callout_out_context_);
 }

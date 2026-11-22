@@ -129,11 +129,14 @@ BaseCommandMgr::processCommand(const isc::data::ConstElementPtr& cmd) {
 
         LOG_INFO(command_logger, COMMAND_RECEIVED).arg(name);
 
+        // Share the callou handle between the two callout points.
+        CalloutHandlePtr callout_handle;
+
         // If there any callouts for command-processing hook point call them
         if (HooksManager::calloutsPresent(Hooks.hook_index_command_processing_)) {
             // Commands are not associated with anything so there's no pre-existing
             // callout.
-            CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+            callout_handle = HooksManager::createCalloutHandle();
 
             // Add the command name, and arguments to the callout context
             callout_handle->setArgument("name", name);
@@ -148,9 +151,10 @@ BaseCommandMgr::processCommand(const isc::data::ConstElementPtr& cmd) {
 
         // If there any callouts for command-processed hook point call them
         if (HooksManager::calloutsPresent(Hooks.hook_index_command_processed_)) {
-            // Commands are not associated with anything so there's no pre-existing
-            // callout.
-            CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+            // Create the callout handle if it does not already exist.
+            if (!callout_handle) {
+                callout_handle = HooksManager::createCalloutHandle();
+            }
 
             // Add the command name, arguments, and response to the callout context
             callout_handle->setArgument("name", name);
