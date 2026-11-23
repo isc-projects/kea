@@ -403,6 +403,18 @@ void Netlink::release_list(NetlinkMessages& messages) {
     messages.clear();
 }
 
+static const uint8_t default_ib_bcast_addr[20] = {
+       0x00, 0xff, 0xff, 0xff,
+       0xff, 0x12, 0x40, 0x1b,
+       0x00, 0x00, 0x00, 0x00,
+       0x00, 0x00, 0x00, 0x00,
+       0xff, 0xff, 0xff, 0xff
+};
+
+static const uint8_t default_ether_bcast_addr[6] = {
+       0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+};
+
 } // end of anonymous namespace
 
 namespace isc {
@@ -502,6 +514,16 @@ void IfaceMgr::detectIfaces(bool update_only) {
         } else {
             // Tunnels can have no LL_ADDR. RTA_PAYLOAD doesn't check it and
             // try to dereference it in this manner
+        }
+
+        // Does interface have an L2 broadcast address?
+        if ((interface_info->ifi_flags & IFF_BROADCAST) && attribs_table[IFLA_BROADCAST]) {
+            iface->setBcastMac(static_cast<const uint8_t*>(RTA_DATA(attribs_table[IFLA_BROADCAST])),
+                               RTA_PAYLOAD(attribs_table[IFLA_BROADCAST]));
+        } else if (interface_info->ifi_type == HTYPE_INFINIBAND) {
+            iface->setBcastMac(default_ib_bcast_addr, sizeof(default_ib_bcast_addr));
+        } else if (interface_info->ifi_type == HTYPE_ETHER) {
+            iface->setBcastMac(default_ether_bcast_addr, sizeof(default_ether_bcast_addr));
         }
 
         nl.ipaddrs_get(*iface, addr_info);
