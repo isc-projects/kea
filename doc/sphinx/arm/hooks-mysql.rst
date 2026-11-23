@@ -11,6 +11,11 @@ This hook library implements MySQL database storage for:
 
 .. _mysql-configuration-backend:
 
+.. note::
+
+    :ischooklib:`libdhcp_mysql.so` is part of the open source code and is
+    available to every Kea user.
+
 MySQL Configuration Backend
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

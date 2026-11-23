@@ -31,6 +31,11 @@ Here is a summary of the steps in processing a response:
    request processing (when the request was accepted).
  - Request filters are applied to the response.
 
+.. note::
+
+    :ischooklib:`libdhcp_rbac.so` is part of the open source code and is
+    available to every Kea user.
+    It was previously available only to ISC customers with a paid support contract.
 
 .. note::
 

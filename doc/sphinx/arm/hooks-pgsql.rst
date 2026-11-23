@@ -11,6 +11,11 @@ This hook library implements PostgreSQL database storage for:
 
 .. _pgsql-configuration-backend:
 
+.. note::
+
+    :ischooklib:`libdhcp_pgsql.so` is part of the open source code and is
+    available to every Kea user.
+
 PostgreSQL Configuration Backend
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
