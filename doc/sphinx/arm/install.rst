@@ -51,7 +51,7 @@ can be installed individually, with any of the following packages:
 - ``isc-kea-hooks`` — Kea open source DHCP hooks
 
 Starting with Kea 3.3.4, subscriber hooks that previously were available only for ISC customers via separate packages with ``isc-kea-subscriber-`` prefix are now part of ``isc-kea-hooks`` available for everyone free of charge.
-For users interested in purchasing professional support services from ISC, those remain available. Please
+For users interested in purchasing professional support services from ISC, please
 fill out our contact form at https://www.isc.org/contact.
 
 Once installed, the services can be managed through the distribution's
