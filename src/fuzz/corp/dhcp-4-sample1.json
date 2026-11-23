@@ -48,7 +48,7 @@
     },
 
     // Let's configure some global parameters. The home network is not very dynamic
-    // and there's no shortage of addresses, so no need to recycle aggresively.
+    // and there's no shortage of addresses, so no need to recycle aggressively.
     "valid-lifetime": 43200, // leases will be valid for 12h
     "renew-timer": 21600, // clients should renew every 6h
     "rebind-timer": 32400, // clients should start looking for other servers after 9h

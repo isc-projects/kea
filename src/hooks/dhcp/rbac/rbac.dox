@@ -149,13 +149,13 @@ An access list specification is either an access list name or a map
 with one entry specifying for its name an access list kind and
 for its value parameter(s).
 
-Predified named access list are:
+Predefined named access list are:
  - ALL - matches everything
  - NONE - matches nothing
  - READ - matches commands with the read access right
  - WRITE - matches commands with the write access right
 
-Predified access list kinds are:
+Predefined access list kinds are:
  - not - negates the access list specification it takes as parameter.
  - and - makes the logical and on the list of access list specifications
    it takes as parameter.

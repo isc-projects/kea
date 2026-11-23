@@ -694,7 +694,7 @@ TEST_F(D2QueueMgrTest, findLast) {
         int exp_last_dhcid3_idx_;   // expected idx of last NCR for dhcid3
     };
 
-    //  List of scenarios to peform.
+    //  List of scenarios to perform.
     std::list<Scenario> scenarios = {
         { dhcid1, CHG_ADD,      100, 0, -1, -1 },
         { dhcid1, CHG_REMOVE,   200, 1, -1, -1 },
@@ -783,7 +783,7 @@ TEST_F(D2QueueMgrTest, duplicateSuppression) {
         bool should_queue_;     // true if NCR should queue successfully
     };
 
-    //  List of scenarios to peform.
+    //  List of scenarios to perform.
     std::list<Scenario> scenarios = {
         { dhcid1, CHG_ADD,      true  },
         { dhcid1, CHG_ADD,      false },
