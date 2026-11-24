@@ -3395,7 +3395,8 @@ HAService::verifyAsyncResponse(const HttpResponsePtr& response, int& rcode) {
                 auto error_message = lease->get("error-message");
                 // Error status code takes precedence over the conflict.
                 if (result->intValue() == CONTROL_RESULT_ERROR) {
-                    if (error_message && error_message->getType()) {
+                    if (error_message &&
+                        (error_message->getType() == Element::string)) {
                         s << error_message->stringValue() << " (";
                     }
                     s << "error code " << result->intValue() << ")";
