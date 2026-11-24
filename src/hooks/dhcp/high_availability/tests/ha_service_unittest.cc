@@ -233,8 +233,9 @@ public:
     /// @brief Constructor.
     TestHttpResponseCreator() :
         requests_(), control_result_(CONTROL_RESULT_SUCCESS),
-        arguments_(), per_request_control_result_(),
-        per_request_arguments_(), request_index_(), basic_auth_() {
+        control_text_("response returned"), arguments_(),
+        per_request_control_result_(), per_request_arguments_(),
+        request_index_(), basic_auth_() {
     }
 
     /// @brief Removes all received requests.
@@ -278,11 +279,18 @@ public:
         return (PostHttpRequestJsonPtr());
     }
 
-    /// @brief Sets control result  to be included in the responses.
+    /// @brief Sets control result to be included in the responses.
     ///
     /// @param control_result new control result value.
     void setControlResult(const int control_result) {
         control_result_ = control_result;
+    }
+
+    /// @brief Sets control text to be included in the responses.
+    ///
+    /// @param control_text new control text value.
+    void setControlText(const std::string control_text) {
+        control_text_ = control_text;
     }
 
     /// @brief Sets control result to be returned for the particular command.
@@ -496,7 +504,7 @@ private:
         }
 
         response_body->add(boost::const_pointer_cast<Element>
-                           (createAnswer(control_result, "response returned",
+                           (createAnswer(control_result, control_text_,
                                          arguments)));
         response->setBodyAsJson(response_body);
         response->finalize();
@@ -508,6 +516,9 @@ private:
 
     /// @brief Control result to be returned in the server responses.
     int control_result_;
+
+    /// @brief Control text to be returned in the server responses.
+    std::string control_text_;
 
     /// @brief Arguments to be included in the responses.
     ElementPtr arguments_;
@@ -695,7 +706,7 @@ public:
                                                        leases6_.begin() + last_index)));
     }
 
-    /// @brief Configure server side to return  IPv4 leases in 3-element
+    /// @brief Configure server side to return IPv4 leases in 3-element
     /// chunks.
     ///
     /// Leases are fetched in pages, so the lease4-get-page should be
@@ -733,7 +744,7 @@ public:
         factory3_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
     }
 
-    /// @brief Configure server side to return  IPv6 leases in 3-element
+    /// @brief Configure server side to return IPv6 leases in 3-element
     /// chunks.
     ///
     /// Leases are fetched in pages, so the lease6-get-page should be
@@ -3224,7 +3235,7 @@ TEST_F(HAServiceTest, processHeartbeat) {
     HAConfigMapperPtr config_storage;
     ASSERT_NO_THROW(config_storage = HAConfigParser::parse(Element::fromJSON(config_text)));
 
-    TestHAService service(1, io_service_,  network_state_, config_storage->get());
+    TestHAService service(1, io_service_, network_state_, config_storage->get());
     service.query_filter_.serveDefaultScopes();
 
     int unsent_updates = 6;
@@ -3542,6 +3553,95 @@ TEST_F(HAServiceTest, asyncSyncLeases4) {
     // We should now have 9 assigned and 1 declined.
     EXPECT_EQ(9, assigned_addrs->getInteger().first);
     EXPECT_EQ(1, declined_addrs->getInteger().first);
+}
+
+// This test verifies that the server properly handles malformed sync response.
+TEST_F(HAServiceTest, asyncSyncLeases4NullArgs) {
+    // Create lease manager.
+    ASSERT_NO_THROW(LeaseMgrFactory::create("universe=4 type=memfile persist=false"));
+
+    // Create IPv4 leases which will be fetched from the other server.
+    ASSERT_NO_THROW(generateTestLeases4());
+
+    for (size_t i = 0; i < leases4_.size(); ++i) {
+        // For every even lease index we add this lease to the database to exercise
+        // the scenario when a lease is already in the database and may be updated
+        // by the lease synchronization procedure.
+        if ((i % 2) == 0) {
+            // Add a copy of the lease to make sure that by modifying the lease
+            // contents we don't affect the lease in the database.
+            Lease4Ptr lease_to_add(new Lease4(*leases4_[i]));
+            // Modify valid lifetime of the lease in the database so we can
+            // later use this value to verify if the lease has been updated.
+            --lease_to_add->valid_lft_;
+            LeaseMgrFactory::instance().addLease(lease_to_add);
+        }
+    }
+
+    // Recount the lease stats, we should have 5 assigned.
+    LeaseMgrFactory::instance().recountLeaseStats4();
+    auto assigned_addrs = StatsMgr::instance().getObservation("assigned-addresses");
+    ASSERT_TRUE(assigned_addrs);
+    EXPECT_EQ(5, assigned_addrs->getInteger().first);
+    auto declined_addrs = StatsMgr::instance().getObservation("declined-addresses");
+    ASSERT_TRUE(declined_addrs);
+    EXPECT_EQ(0, declined_addrs->getInteger().first);
+
+    // Create HA configuration.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
+    // Convert leases to the JSON format, the same as used by the lease_cmds
+    // hook library. Configure our test HTTP servers to return those
+    // leases in this format.
+    ElementPtr response_arguments = Element::createMap();
+
+    factory_->getResponseCreator()->setControlText("");
+    factory2_->getResponseCreator()->setControlText("");
+    factory3_->getResponseCreator()->setControlText("");
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+        listener3_->start();
+    });
+
+    TestHAService service(1, io_service_, network_state_, config_storage);
+    // Setting the heartbeat delay to 0 disables the recurring heartbeat.
+    // We just want to synchronize leases and not send the heartbeat.
+    config_storage->setHeartbeatDelay(0);
+
+    // Start fetching leases asynchronously.
+    ASSERT_NO_THROW(service.asyncSyncLeases());
+
+    // Run IO service to actually perform the transaction.
+    ASSERT_NO_THROW(runIOService(100));
+
+    // Check if all leases have been stored in the local database.
+    for (size_t i = 0; i < leases4_.size(); ++i) {
+        if (i % 2) {
+            // This lease was purposely malformed and thus shouldn't be
+            // inserted into the database.
+            EXPECT_FALSE(LeaseMgrFactory::instance().getLease4(leases4_[i]->addr_))
+                << "lease " << leases4_[i]->addr_.toText()
+                << " was inserted into the database, but it shouldn't";
+
+        } else {
+            // All other leases should be in the database.
+            Lease4Ptr existing_lease = LeaseMgrFactory::instance().getLease4(leases4_[i]->addr_);
+            ASSERT_TRUE(existing_lease) << "lease " << leases4_[i]->addr_.toText()
+                                        << " not in the lease database";
+
+            // All leases should have the same cltt.
+            EXPECT_EQ(leases4_[i]->cltt_, existing_lease->cltt_);
+            EXPECT_EQ(leases4_[i]->valid_lft_ - 1, existing_lease->valid_lft_);
+        }
+    }
+
+    // We should now have 5 assigned and 0 declined.
+    EXPECT_EQ(5, assigned_addrs->getInteger().first);
+    EXPECT_EQ(0, declined_addrs->getInteger().first);
 }
 
 // This test verifies that IPv4 leases can be fetched from the peer and inserted
@@ -3942,7 +4042,7 @@ TEST_F(HAServiceTest, asyncSyncLeases6) {
                 << "lease " << leases6_[i]->addr_.toText()
                 << " was inserted into the database, but it shouldn't";
         } else {
-            // Other leases should be inserted/updated.
+            // All other leases should be in the database.
             Lease6Ptr existing_lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                                              leases6_[i]->addr_);
             ASSERT_TRUE(existing_lease) << "lease " << leases6_[i]->addr_.toText()
@@ -3977,6 +4077,98 @@ TEST_F(HAServiceTest, asyncSyncLeases6) {
     // We should now have 9 assigned and 1 declined.
     EXPECT_EQ(9, assigned_addrs->getInteger().first);
     EXPECT_EQ(1, declined_addrs->getInteger().first);
+}
+
+// This test verifies that the server properly handles malformed sync response.
+TEST_F(HAServiceTest, asyncSyncLeases6NullArgs) {
+    // Create lease manager.
+    ASSERT_NO_THROW(LeaseMgrFactory::create("universe=6 type=memfile persist=false"));
+
+    // Create IPv6 leases which will be fetched from the other server.
+    ASSERT_NO_THROW(generateTestLeases6());
+
+    for (size_t i = 0; i < leases6_.size(); ++i) {
+        // For every even lease index we add this lease to the database to exercise
+        // the scenario when a lease is already in the database and may be updated
+        // by the lease synchronization procedure.
+        if ((i % 2) == 0) {
+            // Add a copy of the lease to make sure that by modifying the lease
+            // contents we don't affect the lease in the database.
+            Lease6Ptr lease_to_add(new Lease6(*leases6_[i]));
+            // Modify valid lifetime of the lease in the database so we can
+            // later use this value to verify if the lease has been updated.
+            --lease_to_add->valid_lft_;
+            LeaseMgrFactory::instance().addLease(lease_to_add);
+        }
+    }
+
+    // Recount the lease stats, we should have 5 assigned.
+    LeaseMgrFactory::instance().recountLeaseStats6();
+    auto assigned_addrs = StatsMgr::instance().getObservation("assigned-nas");
+    ASSERT_TRUE(assigned_addrs);
+    EXPECT_EQ(5, assigned_addrs->getInteger().first);
+    auto declined_addrs = StatsMgr::instance().getObservation("declined-addresses");
+    ASSERT_TRUE(declined_addrs);
+    EXPECT_EQ(0, declined_addrs->getInteger().first);
+
+    // Create HA configuration.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
+    // Convert leases to the JSON format, the same as used by the lease_cmds
+    // hook library. Configure our test HTTP servers to return those
+    // leases in this format.
+    ElementPtr response_arguments = Element::createMap();
+
+    factory_->getResponseCreator()->setControlText("");
+    factory2_->getResponseCreator()->setControlText("");
+    factory3_->getResponseCreator()->setControlText("");
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+        listener3_->start();
+    });
+
+    TestHAService service(1, io_service_, network_state_, config_storage,
+                          HAServerType::DHCPv6);
+    // Setting the heartbeat delay to 0 disables the recurring heartbeat.
+    // We just want to synchronize leases and not send the heartbeat.
+    config_storage->setHeartbeatDelay(0);
+
+    // Start fetching leases asynchronously.
+    ASSERT_NO_THROW(service.asyncSyncLeases());
+
+    // Run IO service to actually perform the transaction.
+    ASSERT_NO_THROW(runIOService(100));
+
+    // Check if all leases have been stored in the local database.
+    for (size_t i = 0; i < leases6_.size(); ++i) {
+        if (i % 2) {
+            // This lease was purposely malformed and thus shouldn't be
+            // inserted into the database.
+            EXPECT_FALSE(LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                               leases6_[i]->addr_))
+                << "lease " << leases6_[i]->addr_.toText()
+                << " was inserted into the database, but it shouldn't";
+
+        } else {
+            // All other leases should be in the database.
+            Lease6Ptr existing_lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                                             leases6_[i]->addr_);
+            ASSERT_TRUE(existing_lease) << "lease " << leases6_[i]->addr_.toText()
+                                        << " not in the lease database";
+
+            // All leases should have the same cltt.
+            EXPECT_EQ(leases6_[i]->cltt_, existing_lease->cltt_);
+            EXPECT_EQ(leases6_[i]->valid_lft_ - 1, existing_lease->valid_lft_);
+        }
+    }
+
+    // We should now have 5 assigned and 0 declined.
+    EXPECT_EQ(5, assigned_addrs->getInteger().first);
+    EXPECT_EQ(0, declined_addrs->getInteger().first);
 }
 
 // This test verifies that IPv6 leases can be fetched from the peer and inserted
@@ -4076,7 +4268,7 @@ TEST_F(HAServiceTest, asyncSyncLeases6Authorized) {
                 << "lease " << leases6_[i]->addr_.toText()
                 << " was inserted into the database, but it shouldn't";
         } else {
-            // Other leases should be inserted/updated.
+            // All other leases should be in the database.
             Lease6Ptr existing_lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                                              leases6_[i]->addr_);
             ASSERT_TRUE(existing_lease) << "lease " << leases6_[i]->addr_.toText()
@@ -4275,7 +4467,7 @@ TEST_F(HAServiceTest, asyncSyncLeases6Hub) {
     // Check that some leases have been added to the lease database and
     // some not.
     for (size_t i = 0; i < leases6_.size(); ++i) {
-        // Other leases should be inserted/updated.
+        // All other leases should be in the database.
         Lease6Ptr existing_lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                                          leases6_[i]->addr_);
         // This time we take odd indexes because we count from 0 (not from 1).
@@ -6487,7 +6679,7 @@ public:
         }
         if (!static_scopes_.empty()) {
             auto json_scopes = Element::createList();
-            for (auto const&  scope : static_scopes_) {
+            for (auto const& scope : static_scopes_) {
                 json_scopes->add(Element::create(scope));
             }
             response_arguments->set("scopes", json_scopes);
@@ -6573,7 +6765,7 @@ public:
     /// of receiving a response to an IO operation. IO operations such as
     /// lease updates, heartbeats etc. trigger state machine changes.
     /// We can capture certain events to detect when a response to the heartbeat
-    /// or other control commands  is received. This is useful to return control
+    /// or other control commands is received. This is useful to return control
     /// to a test to verify that the state machine remains in the expected state
     /// after receiving such response.
     ///

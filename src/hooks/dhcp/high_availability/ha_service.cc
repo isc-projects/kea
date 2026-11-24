@@ -2712,7 +2712,8 @@ HAService::asyncSendLeaseUpdatesFromBacklog(HttpClient& http_client,
              } else {
                  // Handle third group of errors.
                  try {
-                    auto args = verifyAsyncResponse(http_response, rcode);
+                     static_cast<void>(verifyAsyncResponse(http_response, rcode));
+
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
                      LOG_WARN(ha_logger, HA_LEASES_BACKLOG_FAILED)
@@ -2822,7 +2823,8 @@ HAService::asyncSendHAReset(HttpClient& http_client,
              } else {
                  // Handle third group of errors.
                  try {
-                    auto args = verifyAsyncResponse(http_response, rcode);
+                     static_cast<void>(verifyAsyncResponse(http_response, rcode));
+
                  } catch (const std::exception& ex) {
                      error_message = ex.what();
                      LOG_WARN(ha_logger, HA_RESET_FAILED)
