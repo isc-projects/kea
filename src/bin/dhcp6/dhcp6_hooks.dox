@@ -536,10 +536,10 @@ called before "subnet6_select".
 
  - <b>Next step status</b>: Not applicable, its value will be ignored.
 
- - @b Note: command_processing and command_processed shares the same
+ - @b Note: command_processing and command_processed share the same
    callout handle so something added to the handle context by
    the command_processing hook code can be retrieved by the
-   command_processed one.
+   command_processed hook code.
 
 @section dhcpv6HooksOptionsAccess Accessing DHCPv6 Options within a Packet
 When the server constructs a response message to a client it includes

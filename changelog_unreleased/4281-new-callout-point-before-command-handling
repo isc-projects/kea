@@ -1,6 +1,6 @@
 [func]		fdupont
 	Added the command_processing callout point: a hook attached
 	to it is called before a command is executed. The calls
-	from already existing command_processed callout point are
-	done after command execution.
+	from the already existing command_processed callout point
+	are done after command execution.
 	(Gitlab #4785, #4281)
