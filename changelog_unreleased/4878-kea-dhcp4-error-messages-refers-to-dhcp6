@@ -1,0 +1,6 @@
+[bug]		fdupont
+	Fixed 4/6 bugs in log message description or name:
+	 - DHCP4_RECLAIM_EXPIRED_LEASES_SKIPPED description
+	 - DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL became
+	   DHCP6_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL
+	(Gitlab #4878)
