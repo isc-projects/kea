@@ -129,7 +129,9 @@ BaseCommandMgr::processCommand(const isc::data::ConstElementPtr& cmd) {
 
         LOG_INFO(command_logger, COMMAND_RECEIVED).arg(name);
 
-        // Share the callou handle between the two callout points.
+        // Share the callout handle between the two callout points so
+        // something added to its context by a command_processing handler
+        // can be retrieved by the command_processed one.
         CalloutHandlePtr callout_handle;
 
         // If there any callouts for command-processing hook point call them
