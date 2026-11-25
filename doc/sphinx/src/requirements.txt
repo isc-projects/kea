@@ -6,11 +6,11 @@
 #
 alabaster==1.0.0
     # via sphinx
-babel==2.18.0
+babel==2.19.0
     # via sphinx
-certifi==2026.10.23
+certifi==2026.11.20
     # via requests
-charset-normalizer==3.5.2
+charset-normalizer==3.5.3
     # via requests
 docutils==0.22.4
     # via
@@ -24,7 +24,7 @@ jinja2==3.1.6
     # via sphinx
 markupsafe==3.0.4
     # via jinja2
-packaging==26.3
+packaging==26.4
     # via sphinx
 pygments==2.21.0
     # via sphinx
