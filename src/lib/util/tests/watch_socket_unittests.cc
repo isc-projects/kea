@@ -13,7 +13,6 @@
 #include <gtest/gtest.h>
 
 #ifdef HAVE_SYS_FILIO_H
-// FIONREAD is here on Solaris
 #include <sys/filio.h>
 #endif
 

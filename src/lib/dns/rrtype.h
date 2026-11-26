@@ -15,13 +15,7 @@
 #include <dns/exceptions.h>
 #include <util/buffer.h>
 
-// Solaris x86 defines DS in <sys/regset.h>, which gets pulled in by Boost
-#if defined(__sun) && defined(DS)
-# undef DS
-#endif
-
 namespace isc {
-
 namespace dns {
 
 // forward declarations

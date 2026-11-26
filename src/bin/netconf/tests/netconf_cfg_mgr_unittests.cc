@@ -189,7 +189,7 @@ TEST(NetconfCfgMgr, contextGlobals) {
 static TemporaryDirectory TEMP_DIR = TemporaryDirectory();
 
 /// @brief Netconf configurations used in tests.
-static std::string NETCONF_CONFIGS_DATA[] = {
+static string const NETCONF_CONFIGS[] = {
 
     // configuration 0: empty (nothing specified)
     "{ }",
@@ -357,21 +357,6 @@ static std::string NETCONF_CONFIGS_DATA[] = {
     "}"
 };  // NETCONF_CONFIGS
 
-static const char* NETCONF_CONFIGS[] = {
-    NETCONF_CONFIGS_DATA[0].c_str(),
-    NETCONF_CONFIGS_DATA[1].c_str(),
-    NETCONF_CONFIGS_DATA[2].c_str(),
-    NETCONF_CONFIGS_DATA[3].c_str(),
-    NETCONF_CONFIGS_DATA[4].c_str(),
-    NETCONF_CONFIGS_DATA[5].c_str(),
-    NETCONF_CONFIGS_DATA[6].c_str(),
-    NETCONF_CONFIGS_DATA[7].c_str(),
-    NETCONF_CONFIGS_DATA[8].c_str(),
-    NETCONF_CONFIGS_DATA[9].c_str(),
-    NETCONF_CONFIGS_DATA[10].c_str(),
-    NETCONF_CONFIGS_DATA[11].c_str(),
-};
-
 // Tests the handling of bad socket type. Can't use the fixture class
 // because the Netconf parser does not allow bad socket types.
 TEST(NetconfParser, badSocketType) {
@@ -428,7 +413,7 @@ public:
     ///
     /// @param config text containing input configuration
     /// @param expected_answer expected result of configuration (0 = success)
-    void configParse(const char* config, int expected_answer) {
+    void configParse(string const& config, int expected_answer) {
         isc::netconf::ParserContext parser;
         ElementPtr json = parser.parseString(config, ParserContext::PARSER_SUB_NETCONF);
 
@@ -441,7 +426,7 @@ public:
     /// @param config input config text (should contain "%LIBRARY%" string)
     /// @param lib_name %LIBRARY% will be replaced with that name
     /// @return configuration text with library name replaced
-    string pathReplacer(const char* config, const char* lib_name) {
+    string pathReplacer(string const& config, const char* lib_name) {
         string txt(config);
         txt.replace(txt.find("%LIBRARY%"), strlen("%LIBRARY%"), string(lib_name));
         return (txt);

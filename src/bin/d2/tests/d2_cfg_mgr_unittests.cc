@@ -84,7 +84,7 @@ public:
     /// @brief Sets the path in which the socket can be created.
     /// @param explicit_path path to use as the socket path.
     void setSocketTestPath(const std::string explicit_path = "") {
-        static TemporaryDirectory TEMP_DIR = util::file::TemporaryDirectory();
+        static TemporaryDirectory TEMP_DIR = TemporaryDirectory();
         UnixCommandConfig::getSocketPath(true, (!explicit_path.empty() ?
                                                 explicit_path : TEMP_DIR.dirName()));
 

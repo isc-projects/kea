@@ -76,9 +76,6 @@
 /* Running on OSX? */
 #mesondefine OS_OSX
 
-/* Running on Solaris? */
-#mesondefine OS_SOLARIS
-
 /* Name of package */
 #mesondefine PACKAGE
 

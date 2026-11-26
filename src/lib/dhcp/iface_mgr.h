@@ -246,7 +246,6 @@ public:
     ///
     /// @note Implementation of this method is OS-dependent as bits have
     /// different meaning on each OS.
-    /// We need to make it 64 bits, because Solaris uses 64, not 32 bits.
     ///
     /// @param flags bitmask value returned by OS in interface detection
     void setFlags(uint64_t flags);
@@ -523,7 +522,6 @@ public:
 
     /// Interface flags (this value is as is returned by OS,
     /// it may mean different things on different OSes).
-    /// Solaris based os have unsigned long flags field (64 bits).
     /// It is usually 32 bits, though.
     uint64_t flags_;
 
@@ -1424,7 +1422,7 @@ public:
     /// socket is bound to the port (and address is unspecified), the
     /// method will check if the address passed in the argument is configured
     /// on an interface.
-    /// Note: On BSD and Solaris the socket is opened for "::" address instead
+    /// Note: On BSD the socket is opened for "::" address instead
     /// of the link-local address or a multicast address. If there are
     /// multiple interfaces joining the multicast group, this function matches
     /// the "::" address bound by any interface, not necessary the one with the

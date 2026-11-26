@@ -726,7 +726,7 @@ IfaceMgr::openSockets6(const uint16_t port,
             // Skip the address that already has a bound socket. It allows
             // for preventing bind errors or re-opening sockets.
             // The @ref IfaceMgr::hasOpenSocket(addr) does match the "::"
-            // address on BSD and Solaris on any interface, so we make sure that
+            // address on BSD on any interface, so we make sure that
             // that interface actually has opened sockets by checking the number
             // of sockets to be non zero.
             if (!skip_opened || !IfaceMgr::hasOpenSocket(addr, true) ||
@@ -767,7 +767,7 @@ IfaceMgr::openSockets6(const uint16_t port,
             // Skip the address that already has a bound socket. It allows
             // for preventing bind errors or re-opening sockets.
             // The @ref IfaceMgr::hasOpenSocket(addr) does match the "::"
-            // address on BSD and Solaris on any interface, so we make sure that
+            // address on BSD on any interface, so we make sure that
             // the interface actually has opened sockets by checking the number
             // of sockets to be non zero.
             if (!skip_opened || !IfaceMgr::hasOpenSocket(addr) ||

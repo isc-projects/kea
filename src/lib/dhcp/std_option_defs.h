@@ -502,9 +502,6 @@ RECORD_DECL(CLIENT_NII_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE);
 /// 'records' and 'record_size' could be omitted for entries for
 /// which 'type' does not equal to OPT_RECORD_TYPE. If initializers
 /// are omitted the corresponding values should default to 0.
-/// This however does not work on Solaris (GCC) which issues a
-/// warning about lack of initializers for some struct members
-/// causing build to fail.
 const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
     { "clientid", D6O_CLIENTID, DHCP6_OPTION_SPACE, OPT_BINARY_TYPE, false,
       NO_RECORD_DEF, "" },

@@ -178,9 +178,6 @@ elif SYSTEM == 'openbsd'
     conf_data.set('OS_BSD', true)
     conf_data.set('OS_OPENBSD', true)
     OS_TYPE = 'BSD'
-elif SYSTEM == 'sun'
-    conf_data.set('OS_SOLARIS', true)
-    OS_TYPE = 'Solaris'
 elif SYSTEM == 'darwin'
     conf_data.set('OS_BSD', true)
     conf_data.set('OS_OSX', true)
@@ -662,7 +659,6 @@ if POSTGRESQL_DEP.found()
     )
 endif
 
-# For Solaris.
 conf_data.set('HAVE_SYS_FILIO_H', cpp.has_header('sys/filio.h', required: false))
 
 if valgrind.found()

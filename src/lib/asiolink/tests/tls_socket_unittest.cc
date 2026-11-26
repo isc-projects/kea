@@ -514,8 +514,7 @@ TEST(TLSSocket, sequenceTest) {
     client.asyncSend(client_cb.data() + 2, sizeof(OUTBOUND_DATA),
                      &server_endpoint, client_cb);
 
-    // Wait for the client callback to complete. (Must do this first on
-    // Solaris: if we do the synchronous read first, the test hangs.)
+    // Wait for the client callback to complete.
     while (client_cb.called() == TLSCallback::NONE ||
            client_cb.expected() != client_cb.length()) {
         service->runOne();
@@ -531,8 +530,7 @@ TEST(TLSSocket, sequenceTest) {
     // Synchronously read the data from the server.
     serverRead(server, server_cb);
 
-    // Wait for the client callback to complete. (Must do this first on
-    // Solaris: if we do the synchronous read first, the test hangs.)
+    // Wait for the client callback to complete.
     while (server_cb.called() == TLSCallback::NONE ||
            server_cb.expected() != server_cb.cumulative()) {
         service->runOne();
@@ -570,8 +568,7 @@ TEST(TLSSocket, sequenceTest) {
     // Synchronously write the data to the server.
     serverWrite(server, server_cb);
 
-    // Wait for the client callback to complete. (Must do this first on
-    // Solaris: if we do the synchronous read first, the test hangs.)
+    // Wait for the client callback to complete.
     while (server_cb.called() == TLSCallback::NONE ||
            server_cb.expected() != server_cb.cumulative()) {
         service->runOne();

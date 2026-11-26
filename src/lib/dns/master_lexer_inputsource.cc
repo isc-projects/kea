@@ -45,11 +45,11 @@ getStreamSize(std::istream& is) {
         // the input source work fine, so we continue with just setting
         // the stream size to "unknown".
         //
-        // (At least some versions of) Solaris + SunStudio shows deviant
-        // behavior here: seekg() apparently calls lseek(2) internally, but
-        // even if it fails it doesn't set the error bits of istream. That will
-        // confuse the rest of this function, so, as a heuristic workaround
-        // we check errno and handle any non 0 value as fail().
+        // In case of some deviant behavior here: seekg() calls lseek(2)
+        // internally, but even if it fails it doesn't set the error bits of
+        // istream. That will confuse the rest of this function, so, as a
+        // heuristic workaround we check errno and handle any non 0 value as
+        // fail().
         is.clear();   // clear this error not to confuse later ops.
         return (MasterLexer::SOURCE_SIZE_UNKNOWN);
     }

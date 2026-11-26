@@ -12,7 +12,7 @@
 libdhcp++ is an all-purpose DHCP-manipulation library, written in
 C++. It offers packet parsing and assembly, DHCPv4 and DHCPv6
 options parsing and assembly, interface detection (currently on
-Linux, FreeBSD, NetBSD, OpenBSD, Max OS X, and Solaris 11) and socket operations.
+Linux, FreeBSD, NetBSD, OpenBSD, Max OS X) and socket operations.
 It is a generic purpose library that
 can be used by server, client, relay, performance tools and other DHCP-related
 tools. For server specific library, see \ref libdhcpsrv. Please do not
