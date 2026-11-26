@@ -338,3 +338,7 @@ We have received the following contributions:
  - hounan (@NaN64)
    2026-11: Fixed DHCPv4 server handling of relay-port RAI sub-option (code 19)
    with zero length (RFC 8357).
+
+ - Zachary McGibbon
+   2026-11: Fixed incorrect handling of lease synchronization responses in HA
+   hook library.

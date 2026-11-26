@@ -1,0 +1,6 @@
+[bug]		fdupont, razvan
+	Fixed incorrect handling of responses in the lease
+	synchronization of the HA hook library. Thanks
+	to Zachary McGibbon (zachary.mcgibbon@gmail.com)
+	for reporting and suggesting a fix for this issue.
+	(Gitlab #4911)
